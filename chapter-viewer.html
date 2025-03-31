@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter Viewer - Pyr Learning</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
+    <!-- Make sure to include PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <!-- Set up PDF.js worker -->
+    <script>
+      // Specify the worker source for PDF.js (essential)
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+    </script>
+    <style>
+        /* --------------------------------
+           CSS Variables - Design System
+        -------------------------------- */
+        :root {
+            /* Color System */
+            --lab-blue: #0F172A;
+            --deep-blue: #1E293B;
+            --flame: #F97316;
+            --amber: #FBBF24;
+            --papyrus: #F8F5EF;
+            --parchment: #EFE6D5;
+            --scroll: #E0D5C0;
+            --success: #14B8A6;
+            --warning: #FBBF24;
+            --error: #F43F5E;
+            --info: #3B82F6;
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --text-dark: #1E293B;
+            --text-light-bg-primary: #1F2937;
+            --text-light-bg-secondary: #4b5563;
+            --text-light-bg-muted: #6b7280;
+            --heading-accent: #A0522D;
+
+            /* Navbar variables */
+            --navbar-base-left: #0F172A;
+            --navbar-base-right: #111529;
+
+            /* Gradients */
+            --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
+            --gradient-tech: conic-gradient(at 50% 50%, #0099F7 0%, #00c2a8 15%, #9DEC3E 30%, #FFC837 45%, #FF3D7A 60%, #C353EB 75%, #5586F4 90%, #0099F7 100%);
+            --gradient-dark-nav: linear-gradient(to bottom right, #1a202c, #2d3748);
+            --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
+
+            /* Spacing */
+            --space-xxs: 0.125rem;
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+            --space-4xl: 6rem;
+
+            /* Border Radius */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-2xl: 2rem;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+            --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+
+            /* Transitions */
+            --transition-fast: 0.15s ease-out;
+            --transition-medium: 0.3s ease-out;
+            --transition-slow: 0.5s ease-out;
+            --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition-spring: 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+        }
+
+        /* --------------------------------
+           Reset & Global Styles
+        -------------------------------- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            height: 100%; /* Ensure html and body take full height */
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--papyrus);
+            color: var(--text-light-bg-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Background Textures */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231E293B' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+            width: 100%; /* Ensure container takes full width */
+            display: flex; /* Make container flex */
+            flex-direction: column; /* Stack children vertically */
+            flex-grow: 1; /* Allow container to grow */
+        }
+
+         /* Allow main content to grow */
+        main {
+            flex-grow: 1;
+            display: flex; /* Make main a flex container */
+            flex-direction: column; /* Stack children vertically */
+        }
+
+        /* --------------------------------
+           Typography
+        -------------------------------- */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: var(--space-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            padding-bottom: var(--space-sm);
+            margin-bottom: var(--space-lg);
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+        }
+
+        p {
+            margin-bottom: var(--space-md);
+        }
+
+        .gradient-title {
+            background: var(--gradient-flame);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+        }
+
+        /* --------------------------------
+           Navigation - Top Navbar Styles
+        -------------------------------- */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-lg) var(--space-2xl);
+            background-image: linear-gradient(to right, var(--navbar-base-left), var(--navbar-base-right));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            /* Removed sticky positioning for viewer */
+            /* position: sticky; */
+            /* top: 0; */
+            /* left: 0; */
+            /* right: 0; */
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+            flex-shrink: 0; /* Prevent navbar from shrinking */
+        }
+
+        .logo-section { display: flex; align-items: center; }
+        .logo {
+            background: var(--gradient-flame); -webkit-background-clip: text; background-clip: text; color: transparent;
+            font-size: 2rem; font-weight: 800; line-height: 1.2; padding-bottom: 0.2rem; position: relative;
+            text-shadow: 0 0 15px rgba(249, 115, 22, 0.25); transition: transform var(--transition-spring); text-decoration: none;
+        }
+        .logo:hover { transform: scale(1.05); }
+        .divider { height: 24px; width: 1px; background: rgba(255, 255, 255, 0.15); margin: 0 var(--space-md); align-self: center; }
+        .brand-name { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
+        .nav-links { display: flex; align-items: center; gap: var(--space-xl); }
+        .nav-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
+            transition: color var(--transition-fast); position: relative; padding: var(--space-xs) 0; white-space: nowrap;
+        }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background: var(--gradient-flame); transition: width var(--transition-medium); }
+        .nav-link:hover { color: var(--text-primary); }
+        .nav-link:hover::after { width: 100%; }
+
+        .notification { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color var(--transition-fast); }
+        .notification:hover { color: var(--text-primary); }
+        .notification .icon { width: 24px; height: 24px; stroke: currentColor; }
+        .notification-badge {
+            position: absolute; top: -6px; right: -8px; background: var(--error); color: white;
+            border-radius: var(--radius-full); min-width: 18px; height: 18px; display: flex;
+            align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;
+            padding: 0 5px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); animation: pulse-badge 2s infinite;
+        }
+        @keyframes pulse-badge { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); } 70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
+        .avatar {
+            width: 40px; height: 40px; background: linear-gradient(135deg, #475569, #64748b); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white;
+            font-weight: 600; letter-spacing: -0.5px; border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all var(--transition-bounce); cursor: pointer;
+        }
+        .avatar:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.1) rotate(5deg); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
+
+        /* --------------------------------
+           Chapter Viewer Styles
+        -------------------------------- */
+        .chapter-viewer {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; /* Allow viewer section to grow */
+            margin: var(--space-2xl) 0;
+            min-height: 0; /* Important for flex children */
+        }
+
+        .viewer-header {
+            background: var(--parchment);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+            padding: var(--space-lg);
+            border: 1px solid var(--scroll);
+            border-bottom: none;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            position: relative;
+            z-index: 2;
+            flex-shrink: 0; /* Prevent header from shrinking */
+        }
+
+        .viewer-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: -1;
+            border-radius: inherit;
+        }
+
+        .chapter-title-container {
+             /* Wrapper div for title and meta */
+             flex-grow: 1; /* Allow title container to take space */
+        }
+
+        .chapter-title {
+            color: var(--text-light-bg-primary);
+            font-size: 1.5rem;
+            margin-bottom: var(--space-xs); /* Reduced margin */
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .chapter-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: rgba(249, 115, 22, 0.15);
+            border-radius: var(--radius-md);
+            color: var(--flame);
+            flex-shrink: 0;
+        }
+
+        .chapter-meta {
+            display: flex;
+            gap: var(--space-lg);
+            color: var(--text-light-bg-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap; /* Allow meta items to wrap */
+            margin-top: var(--space-xs);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        .meta-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        .viewer-controls {
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+            flex-shrink: 0; /* Prevent controls from shrinking */
+        }
+
+        /* PDF Container */
+        .pdf-container {
+            background: white;
+            border: 1px solid var(--scroll);
+            border-top: none;
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 1;
+            flex-grow: 1; /* Allow PDF container to take remaining space */
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Crucial for flex child growth */
+        }
+
+        .pdf-toolbar {
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            padding: var(--space-sm) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-md);
+            flex-shrink: 0; /* Prevent toolbar from shrinking */
+        }
+
+        .pdf-navigation {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .pdf-page-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        .pdf-page-input {
+            width: 45px; /* Slightly wider */
+            padding: var(--space-xs);
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: var(--radius-sm);
+            -moz-appearance: textfield; /* Firefox */
+        }
+        .pdf-page-input::-webkit-outer-spin-button,
+        .pdf-page-input::-webkit-inner-spin-button {
+            -webkit-appearance: none; /* Chrome, Safari, Edge, Opera */
+            margin: 0;
+        }
+
+
+        .pdf-total-pages {
+            color: #777;
+        }
+
+        .pdf-zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .zoom-button, .nav-button {
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: var(--radius-sm);
+            padding: var(--space-xs) var(--space-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            transition: all var(--transition-fast);
+            min-width: 30px; /* Ensure minimum width */
+            height: 30px;
+        }
+         /* Disable buttons visually */
+         .zoom-button:disabled, .nav-button:disabled {
+             cursor: not-allowed;
+             opacity: 0.5;
+             background: #eee;
+         }
+
+        .zoom-button:not(:disabled):hover,
+        .nav-button:not(:disabled):hover {
+            background: #eee;
+            border-color: #aaa;
+        }
+
+
+        .pdf-canvas-container {
+            flex-grow: 1; /* Allow canvas container to take remaining space */
+            overflow: auto; /* Enable scrolling for the canvas */
+            display: flex;
+            justify-content: center; /* Center canvas horizontally */
+            align-items: flex-start; /* Align canvas to the top */
+            padding: var(--space-md);
+            background: #e0e0e0; /* Slightly darker background */
+            min-height: 0; /* Crucial for flex child growth */
+        }
+
+        #pdf-canvas {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            background: white;
+            /* Canvas dimensions are set by JS */
+             display: block; /* Prevent extra space below canvas */
+             margin: 0 auto; /* Keep centering */
+        }
+
+        /* Loading/Error Message */
+        #loading-message, #error-message {
+             display: none; /* Hidden by default */
+             text-align: center;
+             padding: var(--space-2xl);
+             font-size: 1.1rem;
+             color: var(--text-light-bg-secondary);
+             margin: auto; /* Center message within the container */
+        }
+        #loading-message.visible, #error-message.visible {
+             display: block;
+        }
+
+
+        /* --------------------------------
+           Buttons
+        -------------------------------- */
+        .button {
+            position: relative;
+            background: var(--gradient-flame);
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-full);
+            transition: all var(--transition-bounce);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: var(--text-light-bg-secondary);
+            border: 1px solid var(--scroll);
+        }
+
+        .button-secondary:hover {
+            background: rgba(30, 41, 59, 0.05);
+            border-color: var(--flame);
+            color: var(--text-light-bg-primary);
+        }
+
+        .button .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: var(--space-sm);
+        }
+
+        /* --------------------------------
+           Notes Panel
+        -------------------------------- */
+        .notes-panel {
+            margin-top: var(--space-2xl);
+            background: var(--parchment);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--scroll);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transition: all var(--transition-medium);
+             flex-shrink: 0; /* Prevent notes panel from shrinking */
+        }
+
+        .notes-panel-header {
+            padding: var(--space-lg);
+            background: rgba(224, 213, 192, 0.3);
+            border-bottom: 1px solid var(--scroll);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notes-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-light-bg-primary);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        .notes-title .icon { /* Style icon within title */
+             width: 20px;
+             height: 20px;
+             flex-shrink: 0;
+        }
+
+        .notes-body {
+            padding: var(--space-lg);
+        }
+
+        .notes-textarea {
+            width: 100%;
+            min-height: 150px; /* Slightly reduced default height */
+            padding: var(--space-md);
+            background: white;
+            border: 1px solid var(--scroll);
+            border-radius: var(--radius-md);
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.6;
+            color: var(--text-light-bg-primary);
+            box-shadow: var(--shadow-inner);
+        }
+
+        .notes-textarea:focus {
+            outline: none;
+            border-color: var(--flame);
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+        }
+
+        .notes-footer {
+            padding: var(--space-md) var(--space-lg);
+            background: rgba(224, 213, 192, 0.3);
+            border-top: 1px solid var(--scroll);
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--space-md);
+        }
+
+        /* --------------------------------
+           Footer - Light Footer Styles
+        -------------------------------- */
+        .footer-light {
+            background-color: var(--papyrus);
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.2 0'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+                radial-gradient(circle at 25% 25%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
+                linear-gradient(to right, rgba(250, 240, 220, 0.1), rgba(226, 210, 175, 0.1), rgba(250, 240, 220, 0.1));
+            color: var(--text-light-bg-secondary);
+            /* margin-top: auto; Removed - let flexbox handle spacing */
+            padding: var(--space-xl) 0;
+            border-top: 1px solid var(--scroll);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0; /* Prevent footer from shrinking */
+        }
+
+        .footer-light::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: inset 0 0 20px rgba(120, 100, 60, 0.15);
+            pointer-events: none;
+        }
+
+        .footer-light .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-lg);
+            padding: 0 var(--space-2xl);
+        }
+
+        .footer-light .footer-logo {
+            background: var(--gradient-flame);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .footer-light .footer-copyright {
+            color: var(--text-light-bg-secondary);
+            font-size: 0.8rem;
+            margin-top: var(--space-xs);
+        }
+
+        .footer-light .footer-links {
+            display: flex;
+            gap: var(--space-lg);
+        }
+
+        .footer-light .footer-link {
+            color: var(--text-light-bg-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            position: relative;
+        }
+
+        .footer-light .footer-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background: var(--gradient-flame);
+            transition: width var(--transition-medium);
+            border-radius: var(--radius-full);
+        }
+
+        .footer-light .footer-link:hover {
+            color: var(--flame);
+        }
+
+        .footer-light .footer-link:hover::after {
+            width: 100%;
+        }
+
+        /* --------------------------------
+           Responsive Design
+        -------------------------------- */
+        @media (max-width: 1024px) {
+            .top-navbar, .footer-content {
+                padding-left: var(--space-xl);
+                padding-right: var(--space-xl);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar, .footer-content {
+                padding-left: var(--space-lg);
+                padding-right: var(--space-lg);
+            }
+
+             .viewer-header {
+                 flex-direction: column;
+                 align-items: flex-start;
+             }
+
+            .chapter-title-container {
+                 width: 100%; /* Take full width */
+            }
+
+             .chapter-title {
+                 font-size: 1.3rem;
+                 /* Removed column direction for title */
+                 /* flex-direction: column; */
+                 /* align-items: flex-start; */
+                 gap: var(--space-sm);
+             }
+
+
+            .chapter-meta {
+                flex-direction: row; /* Keep meta horizontal but allow wrap */
+                gap: var(--space-md); /* Adjust gap */
+            }
+
+            .nav-link {
+                display: none;
+            }
+
+            .viewer-controls {
+                width: 100%;
+                justify-content: flex-end; /* Align controls to the right */
+                 margin-top: var(--space-md); /* Add space above controls */
+            }
+
+            .pdf-toolbar {
+                flex-direction: column;
+                align-items: stretch; /* Stretch items */
+                gap: var(--space-md); /* Increase gap */
+            }
+
+            .pdf-navigation, .pdf-zoom-controls {
+                width: 100%;
+                justify-content: space-between; /* Space out items */
+            }
+             .pdf-page-info {
+                 justify-content: center; /* Center page info */
+             }
+
+
+            .footer-light .footer-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-light .footer-links {
+                justify-content: center;
+                margin-top: var(--space-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-navbar {
+                padding-left: var(--space-lg);
+                padding-right: var(--space-lg);
+            }
+
+            .logo-section {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .divider {
+                display: none;
+            }
+
+            .brand-name {
+                margin-top: var(--space-xs);
+            }
+
+            .chapter-title {
+                font-size: 1.2rem;
+                 /* Align icon above text on smallest screens */
+                 flex-direction: column;
+                 align-items: flex-start;
+            }
+             .chapter-icon-container {
+                 margin-bottom: var(--space-xs);
+             }
+
+
+            .notes-footer {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+
+            .notes-footer .button {
+                width: 100%;
+            }
+             /* Stack PDF toolbar controls */
+             .pdf-toolbar { gap: var(--space-sm); }
+             .pdf-navigation { gap: var(--space-sm); }
+             .pdf-zoom-controls { gap: var(--space-xs); }
+             .pdf-navigation, .pdf-zoom-controls { flex-wrap: wrap; justify-content: center; }
+        }
+
+        /* Accessibility: Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+             .notification-badge { animation: none; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="top-navbar">
+        <div class="logo-section">
+            <a href="index.html" class="logo" aria-label="Pyr Home">Pyr</a>
+            <div class="divider" aria-hidden="true"></div>
+            <div class="brand-name">The Great Human Lab</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="course.html" class="nav-link">Back to Course</a>
+            <a href="#" class="nav-link">Resources</a>
+            <a href="#" class="notification" aria-label="Notifications">
+                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <div class="notification-badge">3</div>
+            </a>
+            <div class="avatar">PY</div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <!-- Chapter Viewer -->
+            <section class="chapter-viewer">
+                <div class="viewer-header">
+                     <!-- Group title and meta together -->
+                     <div class="chapter-title-container">
+                         <h1 class="chapter-title" id="chapter-main-title">
+                            <span class="chapter-icon-container">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </span>
+                            <!-- Title will be dynamically set if needed -->
+                            Loading Chapter...
+                        </h1>
+                        <div class="chapter-meta">
+                            <span class="meta-item">
+                                <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Estimating time...
+                            </span>
+                            <span class="meta-item">
+                                <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                Chapter X of Y
+                            </span>
+                        </div>
+                    </div>
+                    <div class="viewer-controls">
+                        <a href="course.html" class="button button-secondary">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 18l-6-6 6-6"></path>
+                            </svg>
+                            Back to Course
+                        </a>
+                        <button class="button">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Mark as Completed
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pdf-container">
+                    <div class="pdf-toolbar">
+                        <div class="pdf-navigation">
+                            <button class="nav-button" id="prev-page" title="Previous Page" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M15 18l-6-6 6-6"></path>
+                                </svg>
+                            </button>
+                            <div class="pdf-page-info">
+                                <input type="number" class="pdf-page-input" id="current-page" value="1" min="1" disabled>
+                                <span> / </span>
+                                <span class="pdf-total-pages" id="total-pages">...</span>
+                            </div>
+                            <button class="nav-button" id="next-page" title="Next Page" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 18l6-6-6-6"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="pdf-zoom-controls">
+                            <button class="zoom-button" id="zoom-out" title="Zoom Out" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
+                            <span id="zoom-level">100%</span>
+                            <button class="zoom-button" id="zoom-in" title="Zoom In" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pdf-canvas-container" id="pdf-render-area">
+                         <!-- Loading/Error Messages -->
+                         <div id="loading-message" class="visible">Loading PDF...</div>
+                         <div id="error-message">Failed to load PDF. Please try again or select a different chapter.</div>
+                         <!-- Canvas for rendering PDF -->
+                        <canvas id="pdf-canvas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notes Panel -->
+            <section class="notes-panel">
+                <div class="notes-panel-header">
+                    <h2 class="notes-title">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        My Notes
+                    </h2>
+                </div>
+                <div class="notes-body">
+                    <textarea class="notes-textarea" placeholder="Take notes while reading..."></textarea>
+                </div>
+                <div class="notes-footer">
+                    <button class="button button-secondary" id="clear-notes">Clear</button>
+                    <button class="button" id="save-notes">Save Notes</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-light">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">Pyr</div>
+                    <div class="footer-copyright">© 2025 The Great Human Lab</div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Help Center</a>
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Terms</a>
+                    <a href="#" class="footer-link">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for PDF Viewer -->
+    <script>
+        // PDF.js state variables
+        let pdfDoc = null;
+        let currentPageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let currentScale = 1.0;
+        const MAX_SCALE = 3.0; // Increased max zoom
+        const MIN_SCALE = 0.25; // Decreased min zoom
+        const SCALE_DELTA = 0.1;
+
+        // DOM Elements
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+        const pageNumInput = document.getElementById('current-page');
+        const totalPagesSpan = document.getElementById('total-pages');
+        const prevPageButton = document.getElementById('prev-page');
+        const nextPageButton = document.getElementById('next-page');
+        const zoomInButton = document.getElementById('zoom-in');
+        const zoomOutButton = document.getElementById('zoom-out');
+        const zoomLevelSpan = document.getElementById('zoom-level');
+        const chapterTitleElement = document.getElementById('chapter-main-title'); // Get title element
+
+         // Show/Hide UI elements
+         function showLoading() {
+             loadingMessage.classList.add('visible');
+             errorMessage.classList.remove('visible');
+             canvas.style.display = 'none'; // Hide canvas while loading
+             disableControls();
+         }
+
+         function showError(message = 'Failed to load PDF.') {
+             loadingMessage.classList.remove('visible');
+             errorMessage.textContent = message;
+             errorMessage.classList.add('visible');
+             canvas.style.display = 'none';
+             disableControls();
+         }
+
+         function showContent() {
+             loadingMessage.classList.remove('visible');
+             errorMessage.classList.remove('visible');
+             canvas.style.display = 'block'; // Show canvas
+             enableControls();
+         }
+
+         function disableControls() {
+            prevPageButton.disabled = true;
+            nextPageButton.disabled = true;
+            pageNumInput.disabled = true;
+            zoomInButton.disabled = true;
+            zoomOutButton.disabled = true;
+            pageNumInput.value = ''; // Clear page number input
+            totalPagesSpan.textContent = '...'; // Reset total pages
+            zoomLevelSpan.textContent = '---%'; // Reset zoom level
+         }
+
+         function enableControls() {
+             pageNumInput.disabled = false;
+             zoomInButton.disabled = currentScale >= MAX_SCALE;
+             zoomOutButton.disabled = currentScale <= MIN_SCALE;
+             updateNavButtons(); // Update prev/next based on current page
+         }
+
+         function updateNavButtons() {
+             if (!pdfDoc) return;
+             prevPageButton.disabled = currentPageNum <= 1;
+             nextPageButton.disabled = currentPageNum >= pdfDoc.numPages;
+         }
+
+
+        /**
+         * Renders a specific page of the PDF.
+         * @param {number} num The page number to render.
+         */
+        function renderPage(num) {
+            pageRendering = true;
+            document.body.style.cursor = 'wait'; // Indicate loading
+            pageNumInput.disabled = true; // Disable input during render
+
+            // Get page from the loaded PDF document
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({ scale: currentScale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Prepare canvas context for rendering
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                // Render the page content
+                const renderTask = page.render(renderContext);
+
+                // Wait for rendering to finish
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    document.body.style.cursor = 'default';
+                    showContent(); // Ensure canvas is visible after render
+                    pageNumInput.value = num; // Update input value *after* render
+                    enableControls(); // Enable controls including input
+
+                    // If there's a pending page, render it
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                }).catch(function(error){
+                    console.error('Error rendering page:', error);
+                    showError('Error rendering page ' + num);
+                    pageRendering = false;
+                    document.body.style.cursor = 'default';
+                });
+            }).catch(function(error){
+                 console.error('Error getting page:', error);
+                 showError('Error getting page ' + num);
+                 pageRendering = false;
+                 document.body.style.cursor = 'default';
+            });
+
+            // Update page number display (immediately for feedback, will be confirmed after render)
+            // pageNumInput.value = num; // Moved this to after render success
+        }
+
+        /**
+         * If another page rendering is in progress, waits until the rendering is
+         * finished. Otherwise, executes rendering immediately.
+         * @param {number} num Page number.
+         */
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        // --- Event Handlers ---
+
+        function onPrevPage() {
+            if (currentPageNum <= 1) {
+                return;
+            }
+            currentPageNum--;
+            queueRenderPage(currentPageNum);
+        }
+
+        function onNextPage() {
+            if (!pdfDoc || currentPageNum >= pdfDoc.numPages) {
+                return;
+            }
+            currentPageNum++;
+            queueRenderPage(currentPageNum);
+        }
+
+        function onZoomIn() {
+            if (currentScale >= MAX_SCALE) {
+                return;
+            }
+            currentScale = parseFloat((currentScale + SCALE_DELTA).toFixed(2)); // Use parseFloat and toFixed for precision
+            currentScale = Math.min(currentScale, MAX_SCALE); // Ensure max
+            zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%';
+            queueRenderPage(currentPageNum);
+        }
+
+        function onZoomOut() {
+            if (currentScale <= MIN_SCALE) {
+                return;
+            }
+            currentScale = parseFloat((currentScale - SCALE_DELTA).toFixed(2)); // Use parseFloat and toFixed for precision
+            currentScale = Math.max(currentScale, MIN_SCALE); // Ensure min
+            zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%';
+            queueRenderPage(currentPageNum);
+        }
+
+        function onPageNumberChange() {
+            if (!pdfDoc) return; // Don't do anything if PDF isn't loaded
+
+            const desiredPage = parseInt(pageNumInput.value, 10);
+
+            // Validate the input
+            if (isNaN(desiredPage) || desiredPage < 1 || desiredPage > pdfDoc.numPages) {
+                 // Input is invalid, reset it to the current page number visually
+                 pageNumInput.value = currentPageNum;
+                 // Optionally provide feedback (e.g., shake animation, border color change)
+                 pageNumInput.style.borderColor = 'red';
+                 setTimeout(() => { pageNumInput.style.borderColor = '#ccc'; }, 500);
+                 return; // Stop processing
+            }
+
+            // If the desired page is different from the current one, update and render
+            if (desiredPage !== currentPageNum) {
+                currentPageNum = desiredPage;
+                queueRenderPage(currentPageNum);
+            }
+        }
+
+
+        function onClearNotes() {
+            document.querySelector('.notes-textarea').value = '';
+            // Optionally add feedback like a toast notification
+            console.log("Notes cleared.");
+        }
+
+        function onSaveNotes() {
+            // In a real implementation, this would save notes to localStorage or a server
+            const notes = document.querySelector('.notes-textarea').value;
+            try {
+                localStorage.setItem(`notes_${pdfPath}`, notes); // Save notes associated with the specific PDF
+                console.log(`Notes saved for ${pdfPath}:`, notes);
+                alert('Notes saved locally for this chapter!'); // Simple feedback
+            } catch (e) {
+                console.error("Failed to save notes to localStorage:", e);
+                alert("Could not save notes. LocalStorage might be full or disabled.");
+            }
+        }
+
+        function loadNotes(pdfPath) {
+            try {
+                const savedNotes = localStorage.getItem(`notes_${pdfPath}`);
+                if (savedNotes !== null) {
+                    document.querySelector('.notes-textarea').value = savedNotes;
+                    console.log(`Notes loaded for ${pdfPath}`);
+                } else {
+                     document.querySelector('.notes-textarea').value = ''; // Ensure it's empty if no notes saved
+                }
+            } catch (e) {
+                console.error("Failed to load notes from localStorage:", e);
+                document.querySelector('.notes-textarea').value = ''; // Ensure empty on error
+            }
+        }
+
+        let pdfPath = null; // Make pdfPath globally accessible within the script scope
+
+        // --- Initialization ---
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get PDF filename from URL query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            pdfPath = urlParams.get('pdf'); // Assign to global variable
+
+            if (!pdfPath) {
+                showError('No PDF specified in URL. Please go back to the course page and select a chapter.');
+                 if (chapterTitleElement) {
+                    const titleSpan = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
+                    if (titleSpan.nodeType === Node.TEXT_NODE) {
+                        titleSpan.textContent = ' Error Loading Chapter';
+                    }
+                 }
+                return;
+            }
+
+            // Dynamically set the chapter title based on the PDF filename
+            if (chapterTitleElement) {
+                 let baseTitle = 'Chapter Viewer'; // Default
+                 try {
+                     const filename = pdfPath.split('/').pop(); // Get 'chapter7.pdf'
+                     const chapterNumMatch = filename.match(/chapter(\d+)/i); // Extract number
+                     if (chapterNumMatch && chapterNumMatch[1]) {
+                         // Example: Map number to a more descriptive title if available
+                         const chapterTitles = {
+                             '1': 'Dawn of Civilization',
+                             '2': 'Ancient Sumer',
+                             '3': 'Babylonian Empire',
+                             '4': 'Ancient Egypt',
+                             '5': 'Indus Valley',
+                             '6': 'Ancient China',
+                             '7': 'Rise of Ancient Greece',
+                             // Add other titles here...
+                         };
+                         baseTitle = chapterTitles[chapterNumMatch[1]] ? `Chapter ${chapterNumMatch[1]}: ${chapterTitles[chapterNumMatch[1]]}` : `Chapter ${chapterNumMatch[1]}`;
+                     }
+                     // Find the text node to update, assuming it's the last child
+                     const titleTextNode = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
+                     if (titleTextNode && titleTextNode.nodeType === Node.TEXT_NODE) {
+                         titleTextNode.textContent = ' ' + baseTitle; // Add space after icon
+                     } else {
+                         // Fallback if structure changes
+                         chapterTitleElement.appendChild(document.createTextNode(' ' + baseTitle));
+                     }
+
+                 } catch (e) {
+                     console.warn("Could not parse chapter title from PDF path:", e);
+                     const titleTextNode = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
+                     if (titleTextNode && titleTextNode.nodeType === Node.TEXT_NODE) {
+                         titleTextNode.textContent = ' Chapter Viewer';
+                     } else {
+                         chapterTitleElement.appendChild(document.createTextNode(' Chapter Viewer'));
+                     }
+                 }
+             }
+
+
+            showLoading();
+
+            // Asynchronously download PDF
+            const loadingTask = pdfjsLib.getDocument(pdfPath);
+            loadingTask.promise.then(function(pdfDoc_) {
+                pdfDoc = pdfDoc_;
+                totalPagesSpan.textContent = pdfDoc.numPages;
+                pageNumInput.max = pdfDoc.numPages; // Set max for input validation
+                zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%'; // Set initial zoom display
+
+                // Initial render of the first page
+                currentPageNum = 1; // Ensure we start at page 1
+                renderPage(currentPageNum);
+
+                // Load notes for this specific PDF after PDF is loaded
+                loadNotes(pdfPath);
+
+            }, function (reason) {
+                // PDF loading error
+                console.error('PDF Loading Error:', reason);
+                let detailedError = `Error loading PDF: ${pdfPath}.`;
+                 if (reason.name === 'MissingPDFException' || (reason.xhr && reason.xhr.status === 404)) {
+                    detailedError += ' File not found. Please check the file path.';
+                 } else if (reason.name === 'InvalidPDFException') {
+                     detailedError += ' Invalid or corrupted PDF file.';
+                 } else {
+                     detailedError += ' An unexpected error occurred.';
+                 }
+                showError(detailedError);
+                 if (chapterTitleElement) {
+                    const titleSpan = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
+                    if (titleSpan && titleSpan.nodeType === Node.TEXT_NODE) {
+                        titleSpan.textContent = ' Error Loading Chapter';
+                    }
+                 }
+            });
+
+            // --- Attach Event Listeners ---
+            prevPageButton.addEventListener('click', onPrevPage);
+            nextPageButton.addEventListener('click', onNextPage);
+            zoomInButton.addEventListener('click', onZoomIn);
+            zoomOutButton.addEventListener('click', onZoomOut);
+            pageNumInput.addEventListener('change', onPageNumberChange);
+            // Handle Enter key press in page number input
+            pageNumInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Prevent potential form submission
+                    onPageNumberChange();
+                    pageNumInput.blur(); // Remove focus from input
+                }
+            });
+            document.getElementById('clear-notes').addEventListener('click', onClearNotes);
+            document.getElementById('save-notes').addEventListener('click', onSaveNotes);
+
+        });
+
+    </script>
+</body>
+</html>
