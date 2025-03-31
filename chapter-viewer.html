@@ -2,1327 +2,383 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chapter Viewer - Pyr Learning</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
-    <!-- Make sure to include PDF.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <!-- Set up PDF.js worker -->
-    <script>
-      // Specify the worker source for PDF.js (essential)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Heritage History™ - Digital Book Reader</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <style>
-        /* --------------------------------
-           CSS Variables - Design System
-        -------------------------------- */
-        :root {
-            /* Color System */
-            --lab-blue: #0F172A;
-            --deep-blue: #1E293B;
-            --flame: #F97316;
-            --amber: #FBBF24;
-            --papyrus: #F8F5EF;
-            --parchment: #EFE6D5;
-            --scroll: #E0D5C0;
-            --success: #14B8A6;
-            --warning: #FBBF24;
-            --error: #F43F5E;
-            --info: #3B82F6;
-            --text-primary: rgba(255, 255, 255, 0.95);
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-muted: rgba(255, 255, 255, 0.5);
-            --text-dark: #1E293B;
-            --text-light-bg-primary: #1F2937;
-            --text-light-bg-secondary: #4b5563;
-            --text-light-bg-muted: #6b7280;
-            --heading-accent: #A0522D;
-
-            /* Navbar variables */
-            --navbar-base-left: #0F172A;
-            --navbar-base-right: #111529;
-
-            /* Gradients */
-            --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
-            --gradient-tech: conic-gradient(at 50% 50%, #0099F7 0%, #00c2a8 15%, #9DEC3E 30%, #FFC837 45%, #FF3D7A 60%, #C353EB 75%, #5586F4 90%, #0099F7 100%);
-            --gradient-dark-nav: linear-gradient(to bottom right, #1a202c, #2d3748);
-            --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
-
-            /* Spacing */
-            --space-xxs: 0.125rem;
-            --space-xs: 0.25rem;
-            --space-sm: 0.5rem;
-            --space-md: 1rem;
-            --space-lg: 1.5rem;
-            --space-xl: 2rem;
-            --space-2xl: 3rem;
-            --space-3xl: 4rem;
-            --space-4xl: 6rem;
-
-            /* Border Radius */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 1rem;
-            --radius-xl: 1.5rem;
-            --radius-2xl: 2rem;
-            --radius-full: 9999px;
-
-            /* Shadows */
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-            --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
-            --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.06);
-
-            /* Transitions */
-            --transition-fast: 0.15s ease-out;
-            --transition-medium: 0.3s ease-out;
-            --transition-slow: 0.5s ease-out;
-            --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            --transition-spring: 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-        }
-
-        /* --------------------------------
-           Reset & Global Styles
-        -------------------------------- */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html, body {
-            height: 100%; /* Ensure html and body take full height */
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--papyrus);
-            color: var(--text-light-bg-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* Background Textures */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            opacity: 0.5;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231E293B' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 var(--space-lg);
-            width: 100%; /* Ensure container takes full width */
-            display: flex; /* Make container flex */
-            flex-direction: column; /* Stack children vertically */
-            flex-grow: 1; /* Allow container to grow */
-        }
-
-         /* Allow main content to grow */
-        main {
-            flex-grow: 1;
-            display: flex; /* Make main a flex container */
-            flex-direction: column; /* Stack children vertically */
-        }
-
-        /* --------------------------------
-           Typography
-        -------------------------------- */
-        h1, h2, h3, h4, h5, h6 {
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: var(--space-md);
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            padding-bottom: var(--space-sm);
-            margin-bottom: var(--space-lg);
-            display: inline-block;
-        }
-
-        h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: var(--space-md);
-        }
-
-        p {
-            margin-bottom: var(--space-md);
-        }
-
-        .gradient-title {
-            background: var(--gradient-flame);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            position: relative;
-        }
-
-        /* --------------------------------
-           Navigation - Top Navbar Styles
-        -------------------------------- */
-        .top-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--space-lg) var(--space-2xl);
-            background-image: linear-gradient(to right, var(--navbar-base-left), var(--navbar-base-right));
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            /* Removed sticky positioning for viewer */
-            /* position: sticky; */
-            /* top: 0; */
-            /* left: 0; */
-            /* right: 0; */
-            z-index: 100;
-            box-shadow: var(--shadow-lg);
-            flex-shrink: 0; /* Prevent navbar from shrinking */
-        }
-
-        .logo-section { display: flex; align-items: center; }
-        .logo {
-            background: var(--gradient-flame); -webkit-background-clip: text; background-clip: text; color: transparent;
-            font-size: 2rem; font-weight: 800; line-height: 1.2; padding-bottom: 0.2rem; position: relative;
-            text-shadow: 0 0 15px rgba(249, 115, 22, 0.25); transition: transform var(--transition-spring); text-decoration: none;
-        }
-        .logo:hover { transform: scale(1.05); }
-        .divider { height: 24px; width: 1px; background: rgba(255, 255, 255, 0.15); margin: 0 var(--space-md); align-self: center; }
-        .brand-name { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
-        .nav-links { display: flex; align-items: center; gap: var(--space-xl); }
-        .nav-link {
-            color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
-            transition: color var(--transition-fast); position: relative; padding: var(--space-xs) 0; white-space: nowrap;
-        }
-        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background: var(--gradient-flame); transition: width var(--transition-medium); }
-        .nav-link:hover { color: var(--text-primary); }
-        .nav-link:hover::after { width: 100%; }
-
-        .notification { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color var(--transition-fast); }
-        .notification:hover { color: var(--text-primary); }
-        .notification .icon { width: 24px; height: 24px; stroke: currentColor; }
-        .notification-badge {
-            position: absolute; top: -6px; right: -8px; background: var(--error); color: white;
-            border-radius: var(--radius-full); min-width: 18px; height: 18px; display: flex;
-            align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;
-            padding: 0 5px; border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); animation: pulse-badge 2s infinite;
-        }
-        @keyframes pulse-badge { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); } 70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
-        .avatar {
-            width: 40px; height: 40px; background: linear-gradient(135deg, #475569, #64748b); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white;
-            font-weight: 600; letter-spacing: -0.5px; border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: all var(--transition-bounce); cursor: pointer;
-        }
-        .avatar:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.1) rotate(5deg); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
-
-        /* --------------------------------
-           Chapter Viewer Styles
-        -------------------------------- */
-        .chapter-viewer {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1; /* Allow viewer section to grow */
-            margin: var(--space-2xl) 0;
-            min-height: 0; /* Important for flex children */
-        }
-
-        .viewer-header {
-            background: var(--parchment);
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-            padding: var(--space-lg);
-            border: 1px solid var(--scroll);
-            border-bottom: none;
-            box-shadow: var(--shadow-md);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: var(--space-md);
-            position: relative;
-            z-index: 2;
-            flex-shrink: 0; /* Prevent header from shrinking */
-        }
-
-        .viewer-header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: -1;
-            border-radius: inherit;
-        }
-
-        .chapter-title-container {
-             /* Wrapper div for title and meta */
-             flex-grow: 1; /* Allow title container to take space */
-        }
-
-        .chapter-title {
-            color: var(--text-light-bg-primary);
-            font-size: 1.5rem;
-            margin-bottom: var(--space-xs); /* Reduced margin */
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-        }
-
-        .chapter-icon-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            background: rgba(249, 115, 22, 0.15);
-            border-radius: var(--radius-md);
-            color: var(--flame);
-            flex-shrink: 0;
-        }
-
-        .chapter-meta {
-            display: flex;
-            gap: var(--space-lg);
-            color: var(--text-light-bg-secondary);
-            font-size: 0.9rem;
-            flex-wrap: wrap; /* Allow meta items to wrap */
-            margin-top: var(--space-xs);
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-        }
-
-        .meta-icon {
-            width: 16px;
-            height: 16px;
-            opacity: 0.7;
-            flex-shrink: 0;
-        }
-
-        .viewer-controls {
-            display: flex;
-            gap: var(--space-md);
-            align-items: center;
-            flex-shrink: 0; /* Prevent controls from shrinking */
-        }
-
-        /* PDF Container */
-        .pdf-container {
-            background: white;
-            border: 1px solid var(--scroll);
-            border-top: none;
-            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 1;
-            flex-grow: 1; /* Allow PDF container to take remaining space */
-            display: flex;
-            flex-direction: column;
-            min-height: 0; /* Crucial for flex child growth */
-        }
-
-        .pdf-toolbar {
-            background: #f5f5f5;
-            border-bottom: 1px solid #ddd;
-            padding: var(--space-sm) var(--space-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: var(--space-md);
-            flex-shrink: 0; /* Prevent toolbar from shrinking */
-        }
-
-        .pdf-navigation {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-        }
-
-        .pdf-page-info {
-            display: flex;
-            align-items: center;
-            gap: var(--space-xs);
-            font-size: 0.9rem;
-            color: #555;
-        }
-
-        .pdf-page-input {
-            width: 45px; /* Slightly wider */
-            padding: var(--space-xs);
-            text-align: center;
-            border: 1px solid #ccc;
-            border-radius: var(--radius-sm);
-            -moz-appearance: textfield; /* Firefox */
-        }
-        .pdf-page-input::-webkit-outer-spin-button,
-        .pdf-page-input::-webkit-inner-spin-button {
-            -webkit-appearance: none; /* Chrome, Safari, Edge, Opera */
-            margin: 0;
-        }
-
-
-        .pdf-total-pages {
-            color: #777;
-        }
-
-        .pdf-zoom-controls {
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-
-        .zoom-button, .nav-button {
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: var(--radius-sm);
-            padding: var(--space-xs) var(--space-sm);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #555;
-            transition: all var(--transition-fast);
-            min-width: 30px; /* Ensure minimum width */
-            height: 30px;
-        }
-         /* Disable buttons visually */
-         .zoom-button:disabled, .nav-button:disabled {
-             cursor: not-allowed;
-             opacity: 0.5;
-             background: #eee;
-         }
-
-        .zoom-button:not(:disabled):hover,
-        .nav-button:not(:disabled):hover {
-            background: #eee;
-            border-color: #aaa;
-        }
-
-
-        .pdf-canvas-container {
-            flex-grow: 1; /* Allow canvas container to take remaining space */
-            overflow: auto; /* Enable scrolling for the canvas */
-            display: flex;
-            justify-content: center; /* Center canvas horizontally */
-            align-items: flex-start; /* Align canvas to the top */
-            padding: var(--space-md);
-            background: #e0e0e0; /* Slightly darker background */
-            min-height: 0; /* Crucial for flex child growth */
-        }
-
-        #pdf-canvas {
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            background: white;
-            /* Canvas dimensions are set by JS */
-             display: block; /* Prevent extra space below canvas */
-             margin: 0 auto; /* Keep centering */
-        }
-
-        /* Loading/Error Message */
-        #loading-message, #error-message {
-             display: none; /* Hidden by default */
-             text-align: center;
-             padding: var(--space-2xl);
-             font-size: 1.1rem;
-             color: var(--text-light-bg-secondary);
-             margin: auto; /* Center message within the container */
-        }
-        #loading-message.visible, #error-message.visible {
-             display: block;
-        }
-
-
-        /* --------------------------------
-           Buttons
-        -------------------------------- */
-        .button {
-            position: relative;
-            background: var(--gradient-flame);
-            color: white;
-            font-weight: 600;
-            font-size: 0.875rem;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius-full);
-            transition: all var(--transition-bounce);
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .button:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: var(--shadow-md);
-        }
-
-        .button:active {
-            transform: translateY(1px);
-        }
-
-        .button-secondary {
-            background: transparent;
-            color: var(--text-light-bg-secondary);
-            border: 1px solid var(--scroll);
-        }
-
-        .button-secondary:hover {
-            background: rgba(30, 41, 59, 0.05);
-            border-color: var(--flame);
-            color: var(--text-light-bg-primary);
-        }
-
-        .button .icon {
-            width: 16px;
-            height: 16px;
-            margin-right: var(--space-sm);
-        }
-
-        /* --------------------------------
-           Notes Panel
-        -------------------------------- */
-        .notes-panel {
-            margin-top: var(--space-2xl);
-            background: var(--parchment);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--scroll);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            transition: all var(--transition-medium);
-             flex-shrink: 0; /* Prevent notes panel from shrinking */
-        }
-
-        .notes-panel-header {
-            padding: var(--space-lg);
-            background: rgba(224, 213, 192, 0.3);
-            border-bottom: 1px solid var(--scroll);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notes-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--text-light-bg-primary);
-            margin-bottom: 0;
-            display: flex;
-            align-items: center;
-            gap: var(--space-sm);
-        }
-        .notes-title .icon { /* Style icon within title */
-             width: 20px;
-             height: 20px;
-             flex-shrink: 0;
-        }
-
-        .notes-body {
-            padding: var(--space-lg);
-        }
-
-        .notes-textarea {
-            width: 100%;
-            min-height: 150px; /* Slightly reduced default height */
-            padding: var(--space-md);
-            background: white;
-            border: 1px solid var(--scroll);
-            border-radius: var(--radius-md);
-            resize: vertical;
-            font-family: inherit;
-            line-height: 1.6;
-            color: var(--text-light-bg-primary);
-            box-shadow: var(--shadow-inner);
-        }
-
-        .notes-textarea:focus {
-            outline: none;
-            border-color: var(--flame);
-            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
-        }
-
-        .notes-footer {
-            padding: var(--space-md) var(--space-lg);
-            background: rgba(224, 213, 192, 0.3);
-            border-top: 1px solid var(--scroll);
-            display: flex;
-            justify-content: flex-end;
-            gap: var(--space-md);
-        }
-
-        /* --------------------------------
-           Footer - Light Footer Styles
-        -------------------------------- */
-        .footer-light {
-            background-color: var(--papyrus);
-            background-image:
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.2 0'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
-                radial-gradient(circle at 25% 25%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
-                linear-gradient(to right, rgba(250, 240, 220, 0.1), rgba(226, 210, 175, 0.1), rgba(250, 240, 220, 0.1));
-            color: var(--text-light-bg-secondary);
-            /* margin-top: auto; Removed - let flexbox handle spacing */
-            padding: var(--space-xl) 0;
-            border-top: 1px solid var(--scroll);
-            position: relative;
-            overflow: hidden;
-            flex-shrink: 0; /* Prevent footer from shrinking */
-        }
-
-        .footer-light::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            box-shadow: inset 0 0 20px rgba(120, 100, 60, 0.15);
-            pointer-events: none;
-        }
-
-        .footer-light .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-lg);
-            padding: 0 var(--space-2xl);
-        }
-
-        .footer-light .footer-logo {
-            background: var(--gradient-flame);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
-
-        .footer-light .footer-copyright {
-            color: var(--text-light-bg-secondary);
-            font-size: 0.8rem;
-            margin-top: var(--space-xs);
-        }
-
-        .footer-light .footer-links {
-            display: flex;
-            gap: var(--space-lg);
-        }
-
-        .footer-light .footer-link {
-            color: var(--text-light-bg-secondary);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color var(--transition-fast);
-            position: relative;
-        }
-
-        .footer-light .footer-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 1px;
-            bottom: -2px;
-            left: 0;
-            background: var(--gradient-flame);
-            transition: width var(--transition-medium);
-            border-radius: var(--radius-full);
-        }
-
-        .footer-light .footer-link:hover {
-            color: var(--flame);
-        }
-
-        .footer-light .footer-link:hover::after {
-            width: 100%;
-        }
-
-        /* --------------------------------
-           Responsive Design
-        -------------------------------- */
-        @media (max-width: 1024px) {
-            .top-navbar, .footer-content {
-                padding-left: var(--space-xl);
-                padding-right: var(--space-xl);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-navbar, .footer-content {
-                padding-left: var(--space-lg);
-                padding-right: var(--space-lg);
-            }
-
-             .viewer-header {
-                 flex-direction: column;
-                 align-items: flex-start;
-             }
-
-            .chapter-title-container {
-                 width: 100%; /* Take full width */
-            }
-
-             .chapter-title {
-                 font-size: 1.3rem;
-                 /* Removed column direction for title */
-                 /* flex-direction: column; */
-                 /* align-items: flex-start; */
-                 gap: var(--space-sm);
-             }
-
-
-            .chapter-meta {
-                flex-direction: row; /* Keep meta horizontal but allow wrap */
-                gap: var(--space-md); /* Adjust gap */
-            }
-
-            .nav-link {
-                display: none;
-            }
-
-            .viewer-controls {
-                width: 100%;
-                justify-content: flex-end; /* Align controls to the right */
-                 margin-top: var(--space-md); /* Add space above controls */
-            }
-
-            .pdf-toolbar {
-                flex-direction: column;
-                align-items: stretch; /* Stretch items */
-                gap: var(--space-md); /* Increase gap */
-            }
-
-            .pdf-navigation, .pdf-zoom-controls {
-                width: 100%;
-                justify-content: space-between; /* Space out items */
-            }
-             .pdf-page-info {
-                 justify-content: center; /* Center page info */
-             }
-
-
-            .footer-light .footer-content {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .footer-light .footer-links {
-                justify-content: center;
-                margin-top: var(--space-md);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .top-navbar {
-                padding-left: var(--space-lg);
-                padding-right: var(--space-lg);
-            }
-
-            .logo-section {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .divider {
-                display: none;
-            }
-
-            .brand-name {
-                margin-top: var(--space-xs);
-            }
-
-            .chapter-title {
-                font-size: 1.2rem;
-                 /* Align icon above text on smallest screens */
-                 flex-direction: column;
-                 align-items: flex-start;
-            }
-             .chapter-icon-container {
-                 margin-bottom: var(--space-xs);
-             }
-
-
-            .notes-footer {
-                flex-direction: column;
-                gap: var(--space-sm);
-            }
-
-            .notes-footer .button {
-                width: 100%;
-            }
-             /* Stack PDF toolbar controls */
-             .pdf-toolbar { gap: var(--space-sm); }
-             .pdf-navigation { gap: var(--space-sm); }
-             .pdf-zoom-controls { gap: var(--space-xs); }
-             .pdf-navigation, .pdf-zoom-controls { flex-wrap: wrap; justify-content: center; }
-        }
-
-        /* Accessibility: Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-                scroll-behavior: auto !important;
-            }
-             .notification-badge { animation: none; }
-        }
+:root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Georgia',serif;background-color:var(--lab-blue);color:var(--text-on-dark);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;position:fixed;line-height:1.6}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
+@keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
+@media (prefers-reduced-motion:reduce){body::before{animation:none!important}}
+#new-toolbar{position:fixed!important;top:15px!important;right:-60px!important;z-index:9999!important;display:flex!important;flex-direction:column!important;gap:10px!important;transition:right .3s ease,bottom .3s ease,transform .3s ease!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:5px!important;border-radius:8px 0 0 8px!important;box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;width:58px;border:1px solid rgba(255,255,255,.1)}
+#new-toolbar::before{content:"≡";position:absolute;left:-25px;top:50%;transform:translateY(-50%);background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);width:25px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:4px 0 0 4px;color:var(--text-on-dark);font-size:20px;box-shadow:-2px 2px 5px rgba(0,0,0,.3);transition:all .3s ease;border:1px solid rgba(255,255,255,.1);border-right:none;cursor:pointer}
+.toolbar-trigger-area{position:fixed;top:0;right:0;width:30px;height:100%;z-index:9998;transition:all .3s ease}
+#new-toolbar.visible{right:0!important;transform:none!important}
+.new-btn{background:rgba(44,62,80,.8)!important;border:1px solid rgba(255,255,255,.15)!important;color:var(--text-on-dark)!important;width:48px!important;height:48px!important;border-radius:4px!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:25px!important;cursor:pointer!important;transition:all .2s!important;box-shadow:0 2px 5px rgba(0,0,0,.2)!important;user-select:none!important;flex-shrink:0}
+.new-btn:hover{background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important;transform:translateY(-2px)!important}
+.new-btn:active{transform:translateY(1px)!important}
+.new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+.rotated-mode #new-toolbar{top:auto!important;right:50%!important;bottom:-60px!important;transform:translateX(50%)!important;flex-direction:row!important;width:auto!important;height:58px!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:8px 8px 0 0!important;padding:5px 10px!important;box-shadow:0 -2px 10px rgba(0,0,0,.4)!important;border:1px solid rgba(255,255,255,.1);border-bottom:none}
+.rotated-mode #new-toolbar.visible{bottom:0!important;transform:translateX(50%)!important}
+.rotated-mode #new-toolbar::before{left:50%!important;transform:translateX(-50%)!important;top:-25px!important;width:40px!important;height:25px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:4px 4px 0 0!important;content:"≡";padding-bottom:5px;color:var(--text-on-dark);border:1px solid rgba(255,255,255,.1);border-bottom:none;cursor:pointer}
+.rotated-mode .toolbar-trigger-area{top:auto!important;bottom:0!important;left:0!important;transform:none!important;right:auto!important;width:100%!important;height:30px!important}
+.rotated-mode #new-toolbar .new-btn{width:40px!important;height:40px!important;font-size:20px!important;transform: rotate(90deg)}
+.rotated-mode .new-btn:hover {transform: rotate(90deg) scale(1.1);background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important}
+.rotated-mode .new-btn:active {transform: rotate(90deg) scale(0.95)}
+.main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
+.book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden;flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:var(--page-padding)}
+.book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
+.book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
+.fullscreen-mode:not(.rotated-mode) .book-page.left{border-right:1px solid rgba(255,255,255,.08)!important}
+.pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none;}
+.page-number{display:none}
+.page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
+.page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.page-edge-nav{position:absolute;top:0;height:100%;width:50px;cursor:pointer;z-index:10;transition:background-color .2s;-webkit-tap-highlight-color:transparent}
+.page-edge-nav:hover{background-color:rgba(0,0,0,.03)}
+.page-edge-left{left:0;border-radius:3px 0 0 3px}
+.page-edge-right{right:0;border-radius:0 3px 3px 0}
+.page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
+.page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
+.page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
+.fullscreen-mode .book-page.right{display:none!important}
+.fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:var(--page-padding)}
+.fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain}
+.rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:10px!important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
+.rotated-mode .book-page.right{display:none!important}
+.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain}
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
+.book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
+.book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
+.book-page.right.placeholder-page .pdf-canvas,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
+
+/* --- START: Book Spine Shadow --- */
+/* Apply only in default double-page view */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left,
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) { /* Don't apply shadow styles to placeholder */
+    position: relative;
+    overflow: visible;
+}
+
+/* Remove inner borders in double-page view to prevent white line */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left {
+    border-right: none !important; /* <<< FIX: Remove inner border */
+}
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) {
+    border-left: none !important; /* <<< FIX: Remove inner border (ignore placeholder) */
+}
+
+/* Shadow on the right edge of the left page */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 15px;
+    height: 100%;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); /* Slightly darker shadow */
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 0 2px 2px 0;
+}
+/* Shadow on the left edge of the right page */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 15px;
+    height: 100%;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); /* Slightly darker shadow */
+    pointer-events: none;
+    z-index: 5;
+    border-radius: 2px 0 0 2px;
+}
+/* Ensure placeholder keeps its standard left border if needed */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page {
+    border-left: 1px solid rgba(0,0,0,.1) !important; /* Keep placeholder border */
+}
+/* --- END: Book Spine Shadow --- */
+
+.toc-panel,.upload-modal{position:fixed;z-index:10000;display:none;color:var(--text-on-page)}
+.toc-panel{left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden}
+.toc-panel.visible,.upload-modal.visible,.loading-overlay.visible{display:flex!important}
+.toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
+.toc-content{flex:1;padding:10px 20px;overflow-y:auto}
+.toc-chapter{padding:8px 0;border-bottom:1px solid #d8dfe6}
+.toc-chapter-title{font-weight:700;color:var(--primary);cursor:pointer;padding:5px 0}
+.toc-chapter-title:hover,.toc-section:hover{color:var(--accent)}
+.toc-sections{padding-left:20px;margin-top:5px}
+.toc-section{padding:4px 0;cursor:pointer;color:#4a5568;font-size:.95em}
+.upload-modal{inset:0;background:rgba(8,14,28,.8);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);justify-content:center;align-items:center}
+.upload-container{background:#f0f4f8;color:var(--text-on-page);padding:30px;border-radius:8px;width:90%;max-width:500px;box-shadow:0 5px 25px rgba(0,0,0,.3)}
+.upload-header{font-size:18px;font-weight:700;margin-bottom:20px;color:var(--primary)}
+.upload-form{display:flex;flex-direction:column;gap:15px}
+.upload-input-group{display:flex;flex-direction:column;gap:5px}
+.upload-input-group label{font-size:14px;color:#4a5568}
+.upload-input-group input[type=file]{padding:8px;border:1px solid #ccc;border-radius:4px;background:#fff}
+.upload-buttons{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.upload-btn-cancel,.upload-btn-submit{padding:8px 15px;border-radius:4px;cursor:pointer;font-size:14px}
+.upload-btn-cancel{background:#e2e8f0;border:1px solid #cbd5e0;color:#4a5568}
+.upload-btn-submit{background:var(--primary);color:#fff;border:none}
+.loading-overlay{position:fixed;inset:0;background:rgba(8,14,28,.85);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:10001;display:none;justify-content:center;align-items:center;flex-direction:column}
+.loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
+.loading-message{font-size:16px;color:var(--text-on-dark)}
+#status-indicator{display:none}
+.page-slider-container{position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);width:90%;max-width:700px;padding:14px 20px;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-bottom:none;box-shadow:0 -4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;z-index:9998;transition:bottom .35s cubic-bezier(.2,.9,.3,1),transform .35s cubic-bezier(.2,.9,.3,1), left .35s cubic-bezier(.2,.9,.3,1);border-radius:16px 16px 0 0}
+.page-slider-container.visible{bottom:0}
+.page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
+.page-slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.1);outline:none;border-radius:3px;overflow:visible;cursor:pointer;transition:height .2s}
+.page-slider:hover{height:8px}
+.page-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition:all .2s ease;margin-top:-7px}
+.page-slider::-webkit-slider-thumb:hover{width:24px;height:24px;margin-top:-8px}
+.page-slider::-webkit-slider-runnable-track{height:100%;background:linear-gradient(to right,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%));border-radius:3px}
+.page-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.page-slider::-moz-range-thumb:hover{width:24px;height:24px}
+.page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
+.page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
+.page-slider-info{font-size:12px;color:var(--text-on-dark);font-weight:500;letter-spacing:.3px;opacity:.8}
+.rotated-mode .page-slider-container{bottom:50%!important;left:-80px!important;top:auto!important;transform:translateY(50%)!important;width:60px!important;height:70vh!important;max-width:none!important;max-height:500px;flex-direction:column-reverse!important;padding:10px 5px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-left:none;border-radius:0 12px 12px 0!important;box-shadow:2px 0 20px rgba(0,0,0,.4)!important}
+.rotated-mode .page-slider-container.visible{left:0!important}
+.rotated-mode .page-slider-track{width:100%!important;height:100%!important;margin-bottom:0!important;padding:10px 0!important;display:flex;align-items:center;flex:1}
+.rotated-mode .page-slider{width:6px!important;height:100%!important;writing-mode:vertical-lr!important;-webkit-appearance:slider-vertical!important;appearance:slider-vertical;margin:0 auto!important;padding:0!important;background:rgba(255,255,255,.1)!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-runnable-track{width:6px!important;height:100%;background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-thumb{-webkit-appearance: none;appearance: none;width:20px!important;height:20px!important;border-radius: 50%;background: var(--accent);cursor: pointer;border: 3px solid rgba(28,37,54,.9)!important;box-shadow: 0 1px 6px rgba(0,0,0,.4);transition: all .2s ease;margin-top:0!important;margin-left:-7px!important}
+.rotated-mode .page-slider:hover::-webkit-slider-thumb {width: 24px !important;height: 24px !important;margin-left: -9px !important}
+.rotated-mode .page-slider::-moz-range-thumb{width: 20px;height: 20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition: all .2s ease}
+.rotated-mode .page-slider:hover::-moz-range-thumb {width: 24px;height: 24px}
+.rotated-mode .page-slider::-moz-range-progress{background-color:var(--accent)!important;width:6px!important;border-radius:3px}
+.rotated-mode .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);width:6px!important;border-radius:3px}
+.rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
+#page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
+.rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 60px;height: 50%}
     </style>
 </head>
-
 <body>
-    <!-- Navigation Bar -->
-    <nav class="top-navbar">
-        <div class="logo-section">
-            <a href="index.html" class="logo" aria-label="Pyr Home">Pyr</a>
-            <div class="divider" aria-hidden="true"></div>
-            <div class="brand-name">The Great Human Lab</div>
+    <div id="new-toolbar"></div>
+    <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
+    <div id="status-indicator">Status: Initializing...</div>
+    <div class="main-container">
+        <div class="book-spread">
+            <div class="book-page left"></div>
+            <div class="book-page right placeholder-page"></div>
         </div>
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="course.html" class="nav-link">Back to Course</a>
-            <a href="#" class="nav-link">Resources</a>
-            <a href="#" class="notification" aria-label="Notifications">
-                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <div class="notification-badge">3</div>
-            </a>
-            <div class="avatar">PY</div>
-        </div>
-    </nav>
+    </div>
+    <div class="toc-panel" id="toc-panel"></div>
+    <div class="upload-modal" id="upload-modal"></div>
+    <div class="loading-overlay" id="loading-overlay"></div>
+    <div class="page-slider-container" id="page-slider-container"></div>
+    <div id="page-slider-trigger-zone"></div>
 
-    <!-- Main Content -->
-    <main>
-        <div class="container">
-            <!-- Chapter Viewer -->
-            <section class="chapter-viewer">
-                <div class="viewer-header">
-                     <!-- Group title and meta together -->
-                     <div class="chapter-title-container">
-                         <h1 class="chapter-title" id="chapter-main-title">
-                            <span class="chapter-icon-container">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                            </span>
-                            <!-- Title will be dynamically set if needed -->
-                            Loading Chapter...
-                        </h1>
-                        <div class="chapter-meta">
-                            <span class="meta-item">
-                                <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <polyline points="12 6 12 12 16 14"></polyline>
-                                </svg>
-                                Estimating time...
-                            </span>
-                            <span class="meta-item">
-                                <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                                </svg>
-                                Chapter X of Y
-                            </span>
-                        </div>
-                    </div>
-                    <div class="viewer-controls">
-                        <a href="course.html" class="button button-secondary">
-                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M15 18l-6-6 6-6"></path>
-                            </svg>
-                            Back to Course
-                        </a>
-                        <button class="button">
-                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                            </svg>
-                            Mark as Completed
-                        </button>
-                    </div>
-                </div>
-
-                <div class="pdf-container">
-                    <div class="pdf-toolbar">
-                        <div class="pdf-navigation">
-                            <button class="nav-button" id="prev-page" title="Previous Page" disabled>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M15 18l-6-6 6-6"></path>
-                                </svg>
-                            </button>
-                            <div class="pdf-page-info">
-                                <input type="number" class="pdf-page-input" id="current-page" value="1" min="1" disabled>
-                                <span> / </span>
-                                <span class="pdf-total-pages" id="total-pages">...</span>
-                            </div>
-                            <button class="nav-button" id="next-page" title="Next Page" disabled>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 18l6-6-6-6"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="pdf-zoom-controls">
-                            <button class="zoom-button" id="zoom-out" title="Zoom Out" disabled>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                            </button>
-                            <span id="zoom-level">100%</span>
-                            <button class="zoom-button" id="zoom-in" title="Zoom In" disabled>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="pdf-canvas-container" id="pdf-render-area">
-                         <!-- Loading/Error Messages -->
-                         <div id="loading-message" class="visible">Loading PDF...</div>
-                         <div id="error-message">Failed to load PDF. Please try again or select a different chapter.</div>
-                         <!-- Canvas for rendering PDF -->
-                        <canvas id="pdf-canvas"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Notes Panel -->
-            <section class="notes-panel">
-                <div class="notes-panel-header">
-                    <h2 class="notes-title">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        My Notes
-                    </h2>
-                </div>
-                <div class="notes-body">
-                    <textarea class="notes-textarea" placeholder="Take notes while reading..."></textarea>
-                </div>
-                <div class="notes-footer">
-                    <button class="button button-secondary" id="clear-notes">Clear</button>
-                    <button class="button" id="save-notes">Save Notes</button>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer-light">
-        <div class="container">
-            <div class="footer-content">
-                <div>
-                    <div class="footer-logo">Pyr</div>
-                    <div class="footer-copyright">© 2025 The Great Human Lab</div>
-                </div>
-                <div class="footer-links">
-                    <a href="#" class="footer-link">Help Center</a>
-                    <a href="#" class="footer-link">Privacy</a>
-                    <a href="#" class="footer-link">Terms</a>
-                    <a href="#" class="footer-link">Contact Support</a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- JavaScript for PDF Viewer -->
     <script>
-        // PDF.js state variables
-        let pdfDoc = null;
-        let currentPageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-        let currentScale = 1.0;
-        const MAX_SCALE = 3.0; // Increased max zoom
-        const MIN_SCALE = 0.25; // Decreased min zoom
-        const SCALE_DELTA = 0.1;
+        // Populate Inner HTML directly
+        document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="upload-btn" title="Upload PDF">📂</button><button class="new-btn" id="single-page-btn" title="Single Page View">☰</button><button class="new-btn" id="double-page-btn" title="Double Page View">◫</button><button class="new-btn" id="rotate-btn" title="Rotate View">📱</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
+        document.querySelector('.book-page.left').innerHTML = `<div class="page-edge-nav page-edge-left"></div><div class="page-edge-nav page-edge-right"></div><canvas id="left-page-canvas" class="pdf-canvas"></canvas><div class="page-number" id="left-page-number"></div><div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>`;
+        document.querySelector('.book-page.right').innerHTML = `<div class="page-edge-nav page-edge-left"></div><div class="page-edge-nav page-edge-right"></div><canvas id="right-page-canvas" class="pdf-canvas"></canvas><div class="page-number" id="right-page-number"></div><div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>`;
+        document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
+        document.getElementById('upload-modal').innerHTML = `<div class="upload-container"><div class="upload-header">Upload PDF</div><div class="upload-form"><div class="upload-input-group"><label for="pdf-file">Choose PDF File:</label><input type="file" id="pdf-file" accept=".pdf,.PDF"></div><div class="upload-buttons"><button class="upload-btn-cancel" id="cancel-upload-btn">Cancel</button><button class="upload-btn-submit" id="submit-upload-btn">Process File</button></div></div></div>`;
+        document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing PDF document...</div>`;
+        document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
+    </script>
+    <script>
+        // --- MODIFIED JAVASCRIPT ---
+        pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        const book={title:"No Document",author:"Unknown",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]}; // Default to true, will be set based on width
+        const user={readingProgress:{furthestPage:1}};
+        let toolbarTimer=null;
+        let toolbarHover=!1;
+        const pageCache=new Map();
+        const MAX_CACHE_SIZE=15;
+        let PAGE_PADDING=15;
+        let resizeTimer;
+        let sliderHideTimeout=null;
+        const updateStatus=m=>console.log("Status:",m);
+        function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{!toolbarHover&&t.classList.remove('visible')},500)}}
+        function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar or trigger area not found");return}const enter=()=>{toolbarHover=!0;manageToolbar(!0)};const leave=()=>{toolbarHover=!1;manageToolbar(!1)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=!1;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=!0}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=!0}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar hover/click setup complete")}
+        function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){const k=pageCache.keys().next().value;pageCache.delete(k);updateStatus(`Removed page ${k} from cache`)}}
+        function showPageLoading(cId){const c=document.getElementById(cId),l=c?.parentElement?.querySelector('.page-loading-overlay');l&&(l.style.display='flex')}
+        function hidePageLoading(cId){const c=document.getElementById(cId),l=c?.parentElement?.querySelector('.page-loading-overlay');l&&(l.style.display='none')}
+        async function renderPage(pn,cId){const c=document.getElementById(cId),x=c?.getContext('2d'),pEl=c?.parentElement;if(!book.pdfDocument||!c||!x||!pEl||pn<1||pn>book.totalPages){if(c)x.clearRect(0,0,c.width,c.height);hidePageLoading(cId);return}showPageLoading(cId);pEl.classList.remove('placeholder-page');if(pageCache.has(pn)){const d=pageCache.get(pn);c.width=d.width;c.height=d.height;c.style.width=`${d.styleWidth}px`;c.style.height=`${d.styleHeight}px`;x.putImageData(d.imageData,0,0);pageCache.delete(pn);pageCache.set(pn,d);hidePageLoading(cId);updateStatus(`Rendered page ${pn} from cache to ${cId}`);return}try{const p=await book.pdfDocument.getPage(pn);const ps=getComputedStyle(pEl),aw=parseFloat(ps.width)-(2*PAGE_PADDING),ah=parseFloat(ps.height)-(2*PAGE_PADDING);
+        if(aw<=0||ah<=0){console.warn(`Canvas container ${cId} has zero/negative dimensions: w=${aw}, h=${ah}. Aborting render.`);hidePageLoading(cId);return}const v=p.getViewport({scale:1});
+        const s=Math.min(aw/v.width,ah/v.height);
+        const sv=p.getViewport({scale:s});const dpr=window.devicePixelRatio||1;c.width=Math.floor(sv.width*dpr);c.height=Math.floor(sv.height*dpr);c.style.width=`${Math.floor(sv.width)}px`;c.style.height=`${Math.floor(sv.height)}px`;x.scale(dpr,dpr);const rc={canvasContext:x,viewport:sv};await p.render(rc).promise;const iData=x.getImageData(0,0,c.width,c.height);pageCache.set(pn,{imageData:iData,width:c.width,height:c.height,styleWidth:Math.floor(sv.width),styleHeight:Math.floor(sv.height)});trimCache();updateStatus(`Rendered page ${pn} to ${cId} and cached`)}catch(e){console.error(`Error rendering page ${pn}:`,e);updateStatus(`Failed to render page ${pn}`);x.clearRect(0,0,c.width,c.height)}finally{hidePageLoading(cId)}}
+        function preloadAdjacentPages(cp){const pToLoad=[];if(book.isDoublePageView){if(cp>2)pToLoad.push(cp-2,cp-1);if(cp+2<=book.totalPages)pToLoad.push(cp+2);if(cp+3<=book.totalPages)pToLoad.push(cp+3)}else{if(cp>1)pToLoad.push(cp-1);if(cp+1<=book.totalPages)pToLoad.push(cp+1)}const uniqueP=[...new Set(pToLoad)].filter(p=>p>0&&p<=book.totalPages&&!pageCache.has(p));if(uniqueP.length===0)return;updateStatus(`Preloading pages: ${uniqueP.join(', ')}`);uniqueP.forEach(pn=>{book.pdfDocument?.getPage(pn).then(p=>{const bw=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'))||650;const bh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'))||842;const aw=bw-(2*PAGE_PADDING);const ah=bh-(2*PAGE_PADDING);const v=p.getViewport({scale:1});const s=Math.min(aw/v.width,ah/v.height);const sv=p.getViewport({scale:s});const tc=document.createElement('canvas');const tx=tc.getContext('2d');const dpr=window.devicePixelRatio||1;tc.width=Math.floor(sv.width*dpr);tc.height=Math.floor(sv.height*dpr);tx.scale(dpr,dpr);p.render({canvasContext:tx,viewport:sv}).promise.then(()=>{const iData=tx.getImageData(0,0,tc.width,tc.height);if(!pageCache.has(pn)){pageCache.set(pn,{imageData:iData,width:tc.width,height:tc.height,styleWidth:Math.floor(sv.width),styleHeight:Math.floor(sv.height)});trimCache();updateStatus(`Preloaded and cached page ${pn}`)}}).catch(re=>console.warn(`Failed preload render page ${pn}: ${re}`))}).catch(pe=>console.warn(`Failed getting page ${pn} for preload: ${pe}`))})}
+        async function updateDisplay(){if(!book.pdfDocument){updateStatus("UpdateDisplay: No PDF");const lDiv=document.querySelector('.book-page.left'),rDiv=document.querySelector('.book-page.right'),lC=document.getElementById('left-page-canvas'),rC=document.getElementById('right-page-canvas');lC?.getContext('2d').clearRect(0,0,lC.width,lC.height);rC?.getContext('2d').clearRect(0,0,rC.width,rC.height);lDiv?.style.setProperty('visibility','hidden');rDiv?.classList.add('placeholder-page');rDiv?.style.setProperty('display',book.isDoublePageView?'flex':'none');return}const lpNum=book.currentPage;const rpNum=book.isDoublePageView?book.currentPage+1:0;updateStatus(`Updating display for page(s): ${lpNum}${rpNum>0?', '+rpNum:''}`);const lDiv=document.querySelector('.book-page.left'),rDiv=document.querySelector('.book-page.right'),lNum=document.getElementById('left-page-number'),rNum=document.getElementById('right-page-number');if(!lDiv||!rDiv||!lNum||!rNum){console.error("Critical page elements not found!");return}
+        lDiv.style.visibility = 'hidden';rDiv.style.display = 'none';rDiv.classList.remove('placeholder-page');
+        if(lpNum>=1&&lpNum<=book.totalPages){lNum.textContent=lpNum;lDiv.style.visibility='visible';await renderPage(lpNum,'left-page-canvas')}else{lNum.textContent='';const lCtx=document.getElementById('left-page-canvas')?.getContext('2d');if(lCtx)lCtx.clearRect(0,0,lCtx.canvas.width,lCtx.canvas.height)}
+        if(book.isDoublePageView){if(rpNum>=1&&rpNum<=book.totalPages){rDiv.style.display='flex';rNum.textContent=rpNum;await renderPage(rpNum,'right-page-canvas')} else if (lpNum >= 1 && lpNum <= book.totalPages) {rDiv.style.display='flex';rDiv.classList.add('placeholder-page');rNum.textContent='';const rCtx=document.getElementById('right-page-canvas')?.getContext('2d');if(rCtx) rCtx.clearRect(0,0,rCtx.canvas.width,rCtx.canvas.height)}}
+        updateSliderPosition();preloadAdjacentPages(book.currentPage);updateStatus("Display update complete.")}
+        function nextPage(){const i=book.isDoublePageView?2:1;const np=book.currentPage+i;if(np<=book.totalPages){jumpToPage(np);showPageSlider();manageToolbar(!1)}}
+        function prevPage(){const d=book.isDoublePageView?2:1;const pp=book.currentPage-d;if(pp>=1){jumpToPage(pp);showPageSlider();manageToolbar(!1)}}
+        function jumpToPage(pn){if(!book.pdfDocument||pn<1||pn>book.totalPages){updateStatus(`Jump to ${pn} ignored (invalid)`);return}let tp=pn;if(book.isDoublePageView&&tp>1&&tp%2!==1){tp--}if(tp<1) tp=1;if(tp===book.currentPage){updateStatus(`Jump to ${pn} ignored (already on ${tp})`);showPageSlider();return}book.currentPage=tp;updateStatus(`Jumping to page ${tp}`);if(tp>user.readingProgress.furthestPage){user.readingProgress.furthestPage=tp}updateDisplay();showPageSlider()}
+        function setSinglePageView(){if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting single page view");book.isDoublePageView=!1;document.body.classList.remove('rotated-mode');document.body.classList.add('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function setDoublePageView(){if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting double page view");book.isDoublePageView=!0;document.body.classList.remove('rotated-mode');document.body.classList.remove('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';if(book.currentPage>1&&book.currentPage%2===0){book.currentPage--}updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function setRotatedView(){updateStatus("Setting rotated view");book.isDoublePageView=!1;document.body.classList.remove('fullscreen-mode');document.body.classList.add('rotated-mode');const vpW=window.innerWidth;const vpH=window.innerHeight;const opW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'))||650;const opH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'))||842;const sX=vpW/opH;const sY=vpH/opW;const s=Math.min(sX,sY)*.95;const sp=document.querySelector('.book-spread');sp.style.transformOrigin='center center';sp.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${s})`;updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function toggleElement(id,show){const el=document.getElementById(id);if(el){el.classList.toggle('visible',show);updateStatus(`${id} visibility set to ${show}`)}else{console.warn(`Element ${id} not found`)}}
+        function showUploadModal(){toggleElement('upload-modal',!0);manageToolbar(!1)}
+        function hideUploadModal(){toggleElement('upload-modal',!1)}
+        function showTableOfContents(){document.getElementById('toc-btn')?.hasAttribute('disabled')||(toggleElement('toc-panel',!0),manageToolbar(!1))}
+        function hideTableOfContents(){toggleElement('toc-panel',!1)}
+        function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
+        function hideLoading(){toggleElement('loading-overlay',!1)}
+        function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}else{console.log('showPageSlider ignored')}}
+        function hidePageSlider(){const s=document.getElementById('page-slider-container');s&&s.classList.remove('visible')}
+        function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(()=>{hidePageSlider()},3000)}
+        function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;const inputHandler=()=>{const pn=parseInt(s.value,10);const d=document.getElementById('current-page-display');if(d) { let pt=`Page ${pn}`; if(book.isDoublePageView && pn+1 <= book.totalPages) {pt +=`-${pn+1}`} d.textContent = pt; }; updateSliderStyle(s,pn);resetSliderHideTimer()};const changeHandler=()=>{const pn=parseInt(s.value,10);jumpToPage(pn);resetSliderHideTimer()};s.addEventListener('input',inputHandler);s.addEventListener('change',changeHandler);sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
+        function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
+        function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const cp=book.currentPage>0?book.currentPage:1;const tt=book.totalPages>0?book.totalPages:1;s.value=cp;let pt=`Page ${cp}`;if(book.isDoublePageView&&cp+1<=tt){pt+=`-${cp+1}`}d.textContent=pt;updateSliderStyle(s,cp)}}
+        function updateSliderStyle(sEl,val){const min=parseInt(sEl.min||1);const max=parseInt(sEl.max||1);const range=(max>min)?(max-min):1;const p=((val-min)/range)*100;sEl.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
+        function processUploadedFile(){const fi=document.getElementById('pdf-file');if(!fi||!fi.files||fi.files.length===0){alert("Please select a PDF file first.");return}const f=fi.files[0];updateStatus(`Processing uploaded file: ${f.name}`);hideUploadModal();showLoading(`Loading ${f.name}...`);const r=new FileReader();r.onload=async e=>{if(e.target?.result){const d=new Uint8Array(e.target.result);await loadPdf(d,f.name)}else{console.error("File reading failed");alert("Error reading PDF file.");hideLoading()}};r.onerror=e=>{console.error("File reading error:",e);alert("Error reading PDF file.");hideLoading()};r.readAsArrayBuffer(f)}
+        // --- MODIFIED loadPdf function ---
+        async function loadPdf(source, filename = "Document") {
+            updateStatus("loadPdf started");
+            showLoading("Initializing PDF...");
+            pageCache.clear();
+            if (book.pdfDocument) {
+                try {
+                    book.pdfDocument.destroy();
+                    updateStatus("Previous PDF cleaned up.");
+                } catch (e) {
+                    console.warn("Error cleaning up previous PDF:", e);
+                }
+                book.pdfDocument = null;
+            }
+            try {
+                let loadTask;
+                let inferredFilename = filename;
 
-        // DOM Elements
-        const canvas = document.getElementById('pdf-canvas');
-        const ctx = canvas.getContext('2d');
-        const loadingMessage = document.getElementById('loading-message');
-        const errorMessage = document.getElementById('error-message');
-        const pageNumInput = document.getElementById('current-page');
-        const totalPagesSpan = document.getElementById('total-pages');
-        const prevPageButton = document.getElementById('prev-page');
-        const nextPageButton = document.getElementById('next-page');
-        const zoomInButton = document.getElementById('zoom-in');
-        const zoomOutButton = document.getElementById('zoom-out');
-        const zoomLevelSpan = document.getElementById('zoom-level');
-        const chapterTitleElement = document.getElementById('chapter-main-title'); // Get title element
-
-         // Show/Hide UI elements
-         function showLoading() {
-             loadingMessage.classList.add('visible');
-             errorMessage.classList.remove('visible');
-             canvas.style.display = 'none'; // Hide canvas while loading
-             disableControls();
-         }
-
-         function showError(message = 'Failed to load PDF.') {
-             loadingMessage.classList.remove('visible');
-             errorMessage.textContent = message;
-             errorMessage.classList.add('visible');
-             canvas.style.display = 'none';
-             disableControls();
-         }
-
-         function showContent() {
-             loadingMessage.classList.remove('visible');
-             errorMessage.classList.remove('visible');
-             canvas.style.display = 'block'; // Show canvas
-             enableControls();
-         }
-
-         function disableControls() {
-            prevPageButton.disabled = true;
-            nextPageButton.disabled = true;
-            pageNumInput.disabled = true;
-            zoomInButton.disabled = true;
-            zoomOutButton.disabled = true;
-            pageNumInput.value = ''; // Clear page number input
-            totalPagesSpan.textContent = '...'; // Reset total pages
-            zoomLevelSpan.textContent = '---%'; // Reset zoom level
-         }
-
-         function enableControls() {
-             pageNumInput.disabled = false;
-             zoomInButton.disabled = currentScale >= MAX_SCALE;
-             zoomOutButton.disabled = currentScale <= MIN_SCALE;
-             updateNavButtons(); // Update prev/next based on current page
-         }
-
-         function updateNavButtons() {
-             if (!pdfDoc) return;
-             prevPageButton.disabled = currentPageNum <= 1;
-             nextPageButton.disabled = currentPageNum >= pdfDoc.numPages;
-         }
-
-
-        /**
-         * Renders a specific page of the PDF.
-         * @param {number} num The page number to render.
-         */
-        function renderPage(num) {
-            pageRendering = true;
-            document.body.style.cursor = 'wait'; // Indicate loading
-            pageNumInput.disabled = true; // Disable input during render
-
-            // Get page from the loaded PDF document
-            pdfDoc.getPage(num).then(function(page) {
-                const viewport = page.getViewport({ scale: currentScale });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                // Prepare canvas context for rendering
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-
-                // Render the page content
-                const renderTask = page.render(renderContext);
-
-                // Wait for rendering to finish
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    document.body.style.cursor = 'default';
-                    showContent(); // Ensure canvas is visible after render
-                    pageNumInput.value = num; // Update input value *after* render
-                    enableControls(); // Enable controls including input
-
-                    // If there's a pending page, render it
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
+                // Determine if source is URL (string) or data (Uint8Array)
+                if (typeof source === 'string') {
+                    updateStatus(`Loading PDF from URL: ${source}`);
+                    loadTask = pdfjsLib.getDocument(source);
+                    // Extract filename from URL if not provided otherwise
+                    if (filename === "Document") {
+                        try {
+                           const urlParts = source.split('/');
+                           inferredFilename = decodeURIComponent(urlParts[urlParts.length - 1]);
+                        } catch(e) { /* ignore filename inference error */ }
                     }
-                }).catch(function(error){
-                    console.error('Error rendering page:', error);
-                    showError('Error rendering page ' + num);
-                    pageRendering = false;
-                    document.body.style.cursor = 'default';
-                });
-            }).catch(function(error){
-                 console.error('Error getting page:', error);
-                 showError('Error getting page ' + num);
-                 pageRendering = false;
-                 document.body.style.cursor = 'default';
-            });
-
-            // Update page number display (immediately for feedback, will be confirmed after render)
-            // pageNumInput.value = num; // Moved this to after render success
-        }
-
-        /**
-         * If another page rendering is in progress, waits until the rendering is
-         * finished. Otherwise, executes rendering immediately.
-         * @param {number} num Page number.
-         */
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        // --- Event Handlers ---
-
-        function onPrevPage() {
-            if (currentPageNum <= 1) {
-                return;
-            }
-            currentPageNum--;
-            queueRenderPage(currentPageNum);
-        }
-
-        function onNextPage() {
-            if (!pdfDoc || currentPageNum >= pdfDoc.numPages) {
-                return;
-            }
-            currentPageNum++;
-            queueRenderPage(currentPageNum);
-        }
-
-        function onZoomIn() {
-            if (currentScale >= MAX_SCALE) {
-                return;
-            }
-            currentScale = parseFloat((currentScale + SCALE_DELTA).toFixed(2)); // Use parseFloat and toFixed for precision
-            currentScale = Math.min(currentScale, MAX_SCALE); // Ensure max
-            zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%';
-            queueRenderPage(currentPageNum);
-        }
-
-        function onZoomOut() {
-            if (currentScale <= MIN_SCALE) {
-                return;
-            }
-            currentScale = parseFloat((currentScale - SCALE_DELTA).toFixed(2)); // Use parseFloat and toFixed for precision
-            currentScale = Math.max(currentScale, MIN_SCALE); // Ensure min
-            zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%';
-            queueRenderPage(currentPageNum);
-        }
-
-        function onPageNumberChange() {
-            if (!pdfDoc) return; // Don't do anything if PDF isn't loaded
-
-            const desiredPage = parseInt(pageNumInput.value, 10);
-
-            // Validate the input
-            if (isNaN(desiredPage) || desiredPage < 1 || desiredPage > pdfDoc.numPages) {
-                 // Input is invalid, reset it to the current page number visually
-                 pageNumInput.value = currentPageNum;
-                 // Optionally provide feedback (e.g., shake animation, border color change)
-                 pageNumInput.style.borderColor = 'red';
-                 setTimeout(() => { pageNumInput.style.borderColor = '#ccc'; }, 500);
-                 return; // Stop processing
-            }
-
-            // If the desired page is different from the current one, update and render
-            if (desiredPage !== currentPageNum) {
-                currentPageNum = desiredPage;
-                queueRenderPage(currentPageNum);
-            }
-        }
-
-
-        function onClearNotes() {
-            document.querySelector('.notes-textarea').value = '';
-            // Optionally add feedback like a toast notification
-            console.log("Notes cleared.");
-        }
-
-        function onSaveNotes() {
-            // In a real implementation, this would save notes to localStorage or a server
-            const notes = document.querySelector('.notes-textarea').value;
-            try {
-                localStorage.setItem(`notes_${pdfPath}`, notes); // Save notes associated with the specific PDF
-                console.log(`Notes saved for ${pdfPath}:`, notes);
-                alert('Notes saved locally for this chapter!'); // Simple feedback
-            } catch (e) {
-                console.error("Failed to save notes to localStorage:", e);
-                alert("Could not save notes. LocalStorage might be full or disabled.");
-            }
-        }
-
-        function loadNotes(pdfPath) {
-            try {
-                const savedNotes = localStorage.getItem(`notes_${pdfPath}`);
-                if (savedNotes !== null) {
-                    document.querySelector('.notes-textarea').value = savedNotes;
-                    console.log(`Notes loaded for ${pdfPath}`);
+                } else if (source instanceof Uint8Array) {
+                    updateStatus(`Loading PDF from data for file: ${filename}`);
+                    loadTask = pdfjsLib.getDocument({ data: source });
+                    inferredFilename = filename;
                 } else {
-                     document.querySelector('.notes-textarea').value = ''; // Ensure it's empty if no notes saved
+                    throw new Error("Invalid source type for loadPdf");
                 }
+
+                book.pdfDocument = await loadTask.promise;
+                book.totalPages = book.pdfDocument.numPages;
+                book.currentPage = 1;
+                user.readingProgress.furthestPage = 1;
+                book.title = inferredFilename.replace(/\.pdf$/i, ''); // Use inferred/provided filename
+                updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
+                document.title = `${book.title} - Heritage History™ Reader`;
+                updateSliderTotalPages();
+
+                showLoading("Processing metadata...");
+                try {
+                    book.outline = await book.pdfDocument.getOutline();
+                    populateTOC();
+                } catch (oe) {
+                    console.warn("Could not get PDF outline:", oe);
+                    book.outline = [];
+                    populateTOC(); // Still call to disable button etc.
+                }
+
+                // Set initial view based on window width
+                if (window.innerWidth < 1000) {
+                    setSinglePageView();
+                } else {
+                    setDoublePageView();
+                }
+
+                // Use requestAnimationFrame to ensure layout is stable before initial render
+                requestAnimationFrame(() => {
+                    updateStatus("Performing post-load display update via requestAnimationFrame.");
+                    updateDisplay(); // This performs the initial render
+                });
+
             } catch (e) {
-                console.error("Failed to load notes from localStorage:", e);
-                document.querySelector('.notes-textarea').value = ''; // Ensure empty on error
+                console.error("Error loading PDF:", e);
+                alert(`Failed to load PDF: ${e.message || e}`);
+                book.pdfDocument = null;
+                book.totalPages = 0;
+                book.currentPage = 1;
+                book.title = "No Document";
+                book.outline = [];
+                document.title = "Heritage History™ - Digital Book Reader";
+                updateSliderTotalPages();
+                updateSliderPosition();
+                populateTOC();
+                showUploadModal(); // Show upload as fallback on error
+            } finally {
+                hideLoading();
             }
         }
-
-        let pdfPath = null; // Make pdfPath globally accessible within the script scope
-
-        // --- Initialization ---
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get PDF filename from URL query parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            pdfPath = urlParams.get('pdf'); // Assign to global variable
-
-            if (!pdfPath) {
-                showError('No PDF specified in URL. Please go back to the course page and select a chapter.');
-                 if (chapterTitleElement) {
-                    const titleSpan = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
-                    if (titleSpan.nodeType === Node.TEXT_NODE) {
-                        titleSpan.textContent = ' Error Loading Chapter';
-                    }
-                 }
-                return;
-            }
-
-            // Dynamically set the chapter title based on the PDF filename
-            if (chapterTitleElement) {
-                 let baseTitle = 'Chapter Viewer'; // Default
-                 try {
-                     const filename = pdfPath.split('/').pop(); // Get 'chapter7.pdf'
-                     const chapterNumMatch = filename.match(/chapter(\d+)/i); // Extract number
-                     if (chapterNumMatch && chapterNumMatch[1]) {
-                         // Example: Map number to a more descriptive title if available
-                         const chapterTitles = {
-                             '1': 'Dawn of Civilization',
-                             '2': 'Ancient Sumer',
-                             '3': 'Babylonian Empire',
-                             '4': 'Ancient Egypt',
-                             '5': 'Indus Valley',
-                             '6': 'Ancient China',
-                             '7': 'Rise of Ancient Greece',
-                             // Add other titles here...
-                         };
-                         baseTitle = chapterTitles[chapterNumMatch[1]] ? `Chapter ${chapterNumMatch[1]}: ${chapterTitles[chapterNumMatch[1]]}` : `Chapter ${chapterNumMatch[1]}`;
-                     }
-                     // Find the text node to update, assuming it's the last child
-                     const titleTextNode = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
-                     if (titleTextNode && titleTextNode.nodeType === Node.TEXT_NODE) {
-                         titleTextNode.textContent = ' ' + baseTitle; // Add space after icon
-                     } else {
-                         // Fallback if structure changes
-                         chapterTitleElement.appendChild(document.createTextNode(' ' + baseTitle));
-                     }
-
-                 } catch (e) {
-                     console.warn("Could not parse chapter title from PDF path:", e);
-                     const titleTextNode = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
-                     if (titleTextNode && titleTextNode.nodeType === Node.TEXT_NODE) {
-                         titleTextNode.textContent = ' Chapter Viewer';
-                     } else {
-                         chapterTitleElement.appendChild(document.createTextNode(' Chapter Viewer'));
-                     }
-                 }
-             }
-
-
-            showLoading();
-
-            // Asynchronously download PDF
-            const loadingTask = pdfjsLib.getDocument(pdfPath);
-            loadingTask.promise.then(function(pdfDoc_) {
-                pdfDoc = pdfDoc_;
-                totalPagesSpan.textContent = pdfDoc.numPages;
-                pageNumInput.max = pdfDoc.numPages; // Set max for input validation
-                zoomLevelSpan.textContent = Math.round(currentScale * 100) + '%'; // Set initial zoom display
-
-                // Initial render of the first page
-                currentPageNum = 1; // Ensure we start at page 1
-                renderPage(currentPageNum);
-
-                // Load notes for this specific PDF after PDF is loaded
-                loadNotes(pdfPath);
-
-            }, function (reason) {
-                // PDF loading error
-                console.error('PDF Loading Error:', reason);
-                let detailedError = `Error loading PDF: ${pdfPath}.`;
-                 if (reason.name === 'MissingPDFException' || (reason.xhr && reason.xhr.status === 404)) {
-                    detailedError += ' File not found. Please check the file path.';
-                 } else if (reason.name === 'InvalidPDFException') {
-                     detailedError += ' Invalid or corrupted PDF file.';
-                 } else {
-                     detailedError += ' An unexpected error occurred.';
-                 }
-                showError(detailedError);
-                 if (chapterTitleElement) {
-                    const titleSpan = chapterTitleElement.childNodes[chapterTitleElement.childNodes.length - 1];
-                    if (titleSpan && titleSpan.nodeType === Node.TEXT_NODE) {
-                        titleSpan.textContent = ' Error Loading Chapter';
-                    }
-                 }
-            });
-
-            // --- Attach Event Listeners ---
-            prevPageButton.addEventListener('click', onPrevPage);
-            nextPageButton.addEventListener('click', onNextPage);
-            zoomInButton.addEventListener('click', onZoomIn);
-            zoomOutButton.addEventListener('click', onZoomOut);
-            pageNumInput.addEventListener('change', onPageNumberChange);
-            // Handle Enter key press in page number input
-            pageNumInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault(); // Prevent potential form submission
-                    onPageNumberChange();
-                    pageNumInput.blur(); // Remove focus from input
+        // --- END MODIFIED loadPdf function ---
+        function populateTOC(){const tl=document.getElementById('toc-list'),tb=document.getElementById('toc-btn');if(!tl||!tb)return;tl.innerHTML='';tb.setAttribute('disabled','disabled');if(!book.outline||book.outline.length===0){tl.innerHTML='<em>No table of contents found.</em>';updateStatus("TOC: Not found.");return}tb.removeAttribute('disabled');const createItem=(item,level=0)=>{const d=document.createElement('div');d.className=level===0?'toc-chapter':'toc-section';d.style.marginLeft=`${level*15}px`;const ts=document.createElement('span');ts.className=level===0?'toc-chapter-title':'';ts.textContent=item.title||'Untitled Section';ts.style.cursor='pointer';ts.onclick=async()=>{try{const dest=item.dest;let pi=-1;if(typeof dest==='string'){const nd=await book.pdfDocument.getDestination(dest);if(nd&&typeof nd[0]?.gen==='number'){pi=await book.pdfDocument.getPageIndex(nd[0])}else{throw new Error(`Named dest "${dest}" invalid`)}}else if(Array.isArray(dest)&&typeof dest[0]?.gen==='number'){pi=await book.pdfDocument.getPageIndex(dest[0])}else if(Array.isArray(dest)&&typeof dest[0]==='number'){console.warn("Using potentially deprecated page number dest format.");pi=dest[0]-1}else{console.warn("TOC dest format unrecognized, fallback:",dest);if(item.dest?.[0]?.num){try{pi=await book.pdfDocument.getPageIndex(item.dest[0])}catch{}}if(pi<0)throw new Error('Invalid dest format')}if(pi>=0){const pageNum=pi+1;updateStatus(`TOC Click: Jump to page ${pageNum} for "${item.title}"`);jumpToPage(pageNum);hideTableOfContents()}else{throw new Error('Failed to resolve page index')}}catch(e){console.error('Error handling TOC click:',e);alert(`Could not navigate: ${e.message}`)}};d.appendChild(ts);if(item.items&&item.items.length>0){const sl=document.createElement('div');if(level===0)sl.className='toc-sections';item.items.forEach(si=>{const se=createItem(si,level+1);if(se)sl.appendChild(se)});if(sl.hasChildNodes()){d.appendChild(sl)}}return d};book.outline.forEach(item=>{const ie=createItem(item);if(ie)tl.appendChild(ie)});if(!tl.hasChildNodes()){tl.innerHTML='<em>Error processing TOC.</em>';tb.setAttribute('disabled','disabled');updateStatus("TOC: Error processing items.")}else{updateStatus("TOC populated.")}}
+        function setupEvents(){updateStatus("Setting up events");const tbar=document.getElementById('new-toolbar');if(tbar){tbar.addEventListener('click',e=>{const btn=e.target.closest('.new-btn');if(!btn)return;if(btn.hasAttribute('disabled')){e.stopPropagation();return}const id=btn.id;updateStatus(`Toolbar button clicked: ${id}`);switch(id){case'upload-btn':showUploadModal();break;case'single-page-btn':setSinglePageView();break;case'double-page-btn':setDoublePageView();break;case'rotate-btn':setRotatedView();break;case'toc-btn':showTableOfContents();break}resetSliderHideTimer();manageToolbar(!0);toolbarHover=!1;manageToolbar(!1)})}else{console.error("ERROR: Toolbar 'new-toolbar' not found!")}document.getElementById('close-toc-btn')?.addEventListener('click',hideTableOfContents);document.getElementById('cancel-upload-btn')?.addEventListener('click',hideUploadModal);document.getElementById('submit-upload-btn')?.addEventListener('click',processUploadedFile);document.querySelectorAll('.page-edge-nav').forEach(el=>{el.addEventListener('click',e=>{const pp=e.target.closest('.book-page');if(!pp||pp.classList.contains('placeholder-page'))return;const ir=document.body.classList.contains('rotated-mode');const ilp=pp.classList.contains('left');const ice=e.target.classList.contains('page-edge-left');const ispv=!book.isDoublePageView;if(ir){if(ice)prevPage();else nextPage()}else if(ispv){if(ice)prevPage();else nextPage()}else{if(ice&&ilp)prevPage();else if(!ice&&!ilp)nextPage()}})});document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||document.querySelector('.upload-modal.visible')||document.querySelector('.toc-panel.visible'))return;if(e.ctrlKey||e.altKey||e.metaKey)return;let navAct=!1;switch(e.key){case'ArrowRight':case'PageDown':nextPage();navAct=!0;break;case'ArrowLeft':case'PageUp':prevPage();navAct=!0;break;case'Home':if(book.totalPages>0)jumpToPage(1);navAct=!0;break;case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=!0;break}if(navAct){e.preventDefault();showPageSlider();manageToolbar(!1)}});window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{updateStatus("Resize detected, updating layout.");if(document.body.classList.contains('rotated-mode')){setRotatedView()}else if(document.body.classList.contains('fullscreen-mode')){setSinglePageView()}else{setDoublePageView()}manageToolbar()},250)});document.querySelector('.main-container').addEventListener('dblclick',e=>{if(e.target===e.currentTarget){if(document.body.classList.contains('rotated-mode'))return;if(document.body.classList.contains('fullscreen-mode')){setDoublePageView()}else{setSinglePageView()}}});let tsX=0,tsY=0,tst=0;const SW_TH=50,SW_TL=500,SW_A=35;document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone'))return;if(e.touches.length===1){tsX=e.touches[0].screenX;tsY=e.touches[0].screenY;tst=Date.now()}else{tsX=0;tsY=0}},{passive:!0});document.body.addEventListener('touchend',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone'))return;if(tsX===0&&tsY===0)return;if(e.changedTouches.length===1){const teX=e.changedTouches[0].screenX;const teY=e.changedTouches[0].screenY;const et=Date.now()-tst;if(et<SW_TL){handleSwipe(tsX,tsY,teX,teY)}}tsX=0;tsY=0;tst=0});function handleSwipe(sx,sy,ex,ey){const dx=ex-sx,dy=ey-sy,adx=Math.abs(dx),ady=Math.abs(dy);if(adx<SW_TH&&ady<SW_TH)return;const angle=Math.atan2(ady,adx)*180/Math.PI;if(angle<=SW_A){if(dx>SW_TH){prevPage()}else if(dx<-SW_TH){nextPage()}showPageSlider();manageToolbar(!1)}}
+        const sliderTriggerZone = document.getElementById('page-slider-trigger-zone');const sliderContainer = document.getElementById('page-slider-container');
+        if (sliderTriggerZone && sliderContainer) {sliderTriggerZone.addEventListener('mouseenter', () => {if (book.pdfDocument && book.totalPages > 0) {updateStatus("Slider trigger zone hovered, showing slider.");showPageSlider();clearTimeout(sliderHideTimeout);}});sliderTriggerZone.addEventListener('mouseleave', (e) => {if (!sliderContainer.contains(e.relatedTarget)) {updateStatus("Slider trigger zone mouse left (not into slider), starting hide timer.");resetSliderHideTimer();} else {updateStatus("Slider trigger zone mouse left (into slider).");}});sliderContainer.addEventListener('mouseenter', () => {if (sliderContainer.classList.contains('visible')) {updateStatus("Slider container hovered, clearing hide timer.");clearTimeout(sliderHideTimeout);}});sliderContainer.addEventListener('mouseleave', (e) => {if (!sliderTriggerZone.contains(e.relatedTarget)) {updateStatus("Slider container mouse left (not into trigger), starting hide timer.");resetSliderHideTimer();} else {updateStatus("Slider container mouse left (into trigger).");}});} else {console.warn("Page slider trigger zone or container not found.");}
+        updateStatus("Events setup complete")}
+        // --- MODIFIED init function ---
+        async function init() {
+            updateStatus("Initializing app");
+            try {
+                try {
+                    PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15;
+                } catch (ce) {
+                    console.warn("Could not read --page-padding CSS, using 15px.", ce);
+                    PAGE_PADDING = 15;
                 }
-            });
-            document.getElementById('clear-notes').addEventListener('click', onClearNotes);
-            document.getElementById('save-notes').addEventListener('click', onSaveNotes);
+                updateStatus(`Page padding: ${PAGE_PADDING}px`);
+                setupEvents();
+                setupToolbarHover();
+                initPageSlider();
+                hideLoading(); // Hide loading initially
 
-        });
+                // Check for PDF specified in URL parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const pdfUrlParam = urlParams.get('pdf');
 
+                if (pdfUrlParam) {
+                    updateStatus(`Found PDF parameter in URL: ${pdfUrlParam}`);
+                    // Attempt to load the PDF from the URL parameter
+                    await loadPdf(pdfUrlParam); // loadPdf now handles showing/hiding loading indicator
+                } else {
+                    updateStatus("No PDF specified in URL, showing upload modal.");
+                     // Make sure view is reset if no PDF is loaded
+                    const lDiv=document.querySelector('.book-page.left'),rDiv=document.querySelector('.book-page.right');
+                    lDiv?.style.setProperty('visibility','hidden');
+                    rDiv?.classList.add('placeholder-page');
+                    rDiv?.style.setProperty('display', book.isDoublePageView ? 'flex' : 'none');
+                    showUploadModal();
+                }
+
+                window.addEventListener('beforeunload', () => {
+                    pageCache.clear();
+                    if (book.pdfDocument) {
+                        try {
+                            book.pdfDocument.destroy();
+                        } catch (e) {
+                            console.warn("Error destroying PDF on unload", e);
+                        }
+                    }
+                });
+                updateStatus("Init complete.");
+
+            } catch (e) {
+                console.error("Init failed:", e);
+                document.body.innerHTML = `<div style="padding:20px;color:#fdd;background:#300;font-family:sans-serif;"><h2>Init Error</h2><p>Could not start. Check console (F12).</p><pre>${e.stack || e}</pre></div>`;
+            }
+        }
+        // --- END MODIFIED init function ---
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
