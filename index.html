@@ -1,0 +1,2026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Login to Pyr - The Great Human Lab, an immersive educational platform exploring human history">
+  <meta property="og:title" content="Pyr - The Great Human Lab - Login">
+  <meta property="og:description" content="Continue your exploration of human history in this immersive educational platform">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0F172A">
+  <title>Pyr - The Great Human Lab - Login</title>
+
+  <!-- Resource Hints -->
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" as="style">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
+  <style>
+    /* --------------------------------
+       CSS Variables - Design System from Style Guide
+    -------------------------------- */
+    :root {
+      /* Color System */
+      --lab-blue: #0F172A;
+      --deep-blue: #1E293B;
+      --flame: #F97316;
+      --amber: #FBBF24;
+      --papyrus: #F8F5EF;
+      --parchment: #EFE6D5;
+      --scroll: #E0D5C0;
+      --success: #14B8A6;
+      --warning: #FBBF24;
+      --error: #F43F5E;
+      --info: #3B82F6;
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.5);
+      --text-dark: #1E293B;
+      --text-light-bg-primary: #1F2937;
+      --text-light-bg-secondary: #4b5563;
+      --heading-accent: #F3EDD6;
+
+      /* Gradients */
+      --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
+      --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
+      --gradient-tech: conic-gradient( at 50% 50%, var(--gradient-blue) 0%, var(--gradient-teal) 15%, var(--gradient-green) 30%, var(--gradient-amber) 45%, var(--gradient-pink) 60%, var(--gradient-purple) 75%, var(--gradient-periwinkle) 90%, var(--gradient-blue) 100% );
+      --gradient-blue: #0099F7; --gradient-teal: #00c2a8; --gradient-green: #9DEC3E; --gradient-pink: #FF3D7A; --gradient-purple: #C353EB; --gradient-periwinkle: #5586F4;
+
+      /* Spacing System (8px base) */
+      --space-xxs: 0.125rem; /* 2px */
+      --space-xs: 0.25rem;  /* 4px */
+      --space-sm: 0.5rem;   /* 8px */
+      --space-md: 1rem;     /* 16px */
+      --space-lg: 1.5rem;   /* 24px */
+      --space-xl: 2rem;     /* 32px */
+      --space-2xl: 3rem;    /* 48px */
+      --space-3xl: 4rem;    /* 64px */
+      --space-4xl: 6rem;    /* 96px */
+
+      /* Border Radius */
+      --radius-sm: 0.25rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 1rem;
+      --radius-xl: 1.5rem;
+      --radius-2xl: 2rem;
+      --radius-full: 9999px;
+
+      /* Shadow System */
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.15), 0 4px 6px -2px rgba(0,0,0,0.1);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+      --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+
+      /* Transitions & Animations */
+      --transition-fast: 0.1s ease-out;
+      --transition-medium: 0.15s cubic-bezier(0.2, 0, 0.1, 1);
+      --transition-slow: 0.5s ease-out;
+      --transition-bounce: 0.15s cubic-bezier(0.34, 1.3, 0.64, 1);
+      --transition-spring: 0.18s cubic-bezier(0.34, 1.3, 0.64, 1);
+
+      /* Focus */
+      --focus-ring-color: var(--flame);
+      --focus-ring-width: 3px;
+      --focus-ring-offset: 2px;
+      --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
+
+      /* Form Specifics */
+      --form-error-color: var(--error);
+      --form-success-color: var(--success);
+      --form-warning-color: var(--warning);
+      --form-disabled-opacity: 0.5;
+      --form-label-color: var(--text-secondary);
+      --form-label-light-bg-color: var(--text-light-bg-secondary);
+      --form-help-text-color: var(--text-muted);
+      --form-input-bg: rgba(255, 255, 255, 0.05);
+      --form-input-border: rgba(255, 255, 255, 0.1);
+      --form-input-light-bg: #FFFFFF;
+      --form-input-light-border: #D1D5DB;
+
+      /* Navbar specific (from dark-top-navbar) */
+      --navbar-base-left: #0F172A;
+      --navbar-base-right: #111529;
+    }
+
+    /* --------------------------------
+       CSS Reset & Global Styles
+    -------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--lab-blue); /* Base dark color */
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      padding-top: 100px; /* Added padding for fixed nav */
+    }
+
+    /* Background gradient effect (from lighter-dark-gradient-bg.html) */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2; /* Behind emojis and content */
+        background-image:
+            radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.18) 0%, transparent 45%),
+            radial-gradient(circle at 85% 85%, rgba(197, 83, 235, 0.18) 0%, transparent 45%),
+            radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+            radial-gradient(circle at 15% 85%, rgba(255, 202, 40, 0.12) 0%, transparent 40%);
+        animation: ambient-shift 30s ease infinite alternate;
+    }
+
+    /* Animation for subtle background movement (from lighter-dark-gradient-bg.html) */
+    @keyframes ambient-shift {
+        0% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
+        100% { background-position: 5% 10%, -5% -5%, 10% -5%, -10% 5%; }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -40px; /* Initially hidden */
+      left: 0;
+      background: var(--flame);
+      color: white;
+      padding: var(--space-sm) var(--space-md);
+      z-index: 1001; /* Above navbar */
+      transition: top 0.3s;
+    }
+
+    .skip-link:focus {
+      top: var(--space-md); /* Adjust focus position */
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--space-lg);
+    }
+
+    /* Accessibility Focus State */
+    *:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: var(--focus-ring-offset);
+      box-shadow: 0 0 0 var(--focus-ring-offset) var(--lab-blue), 0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+    }
+
+    *:focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    /* --------------------------------
+       Typography
+    -------------------------------- */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: var(--space-xl);
+      margin-bottom: var(--space-md);
+    }
+
+    p {
+      margin-bottom: var(--space-md);
+      max-width: 700px;
+    }
+
+    .highlight {
+      background: linear-gradient(to bottom, transparent 40%, rgba(249, 115, 22, 0.2) 40%, rgba(249, 115, 22, 0.2) 80%, transparent 80%);
+      padding: 0 0.2em;
+    }
+
+    .gradient-title {
+      background: var(--gradient-flame);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      position: relative;
+    }
+
+    /* --------------------------------
+       Top Navbar Styles (from dark-top-navbar.html)
+    -------------------------------- */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-lg) var(--space-2xl);
+        background-image: linear-gradient(to right, var(--navbar-base-left), var(--navbar-base-right));
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999; /* High z-index */
+        box-shadow: var(--shadow-lg);
+    }
+
+    .logo-section { display: flex; align-items: center; }
+    .top-navbar .logo { /* Specificity for navbar logo */
+        background: var(--gradient-flame); -webkit-background-clip: text; background-clip: text; color: transparent;
+        font-size: 2rem; font-weight: 800; line-height: 1.2; padding-bottom: 0.2rem; position: relative;
+        text-shadow: 0 0 15px rgba(249, 115, 22, 0.25); transition: transform var(--transition-spring); text-decoration: none;
+    }
+    .top-navbar .logo:hover { transform: scale(1.05); }
+    .divider { height: 24px; width: 1px; background: rgba(255, 255, 255, 0.15); margin: 0 var(--space-md); align-self: center; }
+    .brand-name { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
+    .top-navbar .nav-links { display: flex; align-items: center; gap: var(--space-xl); }
+    .top-navbar .nav-link {
+        color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
+        transition: color var(--transition-fast); position: relative; padding: var(--space-xs) 0; white-space: nowrap;
+    }
+    .top-navbar .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background: var(--gradient-flame); transition: width var(--transition-medium); }
+    .top-navbar .nav-link:hover { color: var(--text-primary); }
+    .top-navbar .nav-link:hover::after { width: 100%; }
+
+    .notification { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color var(--transition-fast); }
+    .notification:hover { color: var(--text-primary); }
+    .notification .icon { width: 24px; height: 24px; stroke: currentColor; }
+    .notification-badge {
+        position: absolute; top: -6px; right: -8px; background: var(--error); color: white;
+        border-radius: var(--radius-full); min-width: 18px; height: 18px; display: flex;
+        align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;
+        padding: 0 5px; border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); animation: pulse-badge 2s infinite;
+    }
+    @keyframes pulse-badge { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); } 70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
+    .avatar {
+        width: 40px; height: 40px; background: linear-gradient(135deg, #475569, #64748b); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white;
+        font-weight: 600; letter-spacing: -0.5px; border: 2px solid rgba(255, 255, 255, 0.1);
+        transition: all var(--transition-bounce); cursor: pointer;
+    }
+    .avatar:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.1) rotate(5deg); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
+
+    /* Navbar Button Styling */
+    .button.nav-button {
+      /* Inherits base .button styles like flex, border-radius, etc. */
+      padding: 0.5rem 1rem; /* Smaller padding for navbar */
+      font-size: 0.875rem; /* Match nav-link size */
+      width: auto; /* Override width: 100% from base button */
+      min-height: auto; /* Override min-height */
+      /* overflow: visible; */ /* Allow bubbles to escape if needed, but hidden is safer */
+    }
+
+    /* --- Trigger Emoji Bubbles on Nav Button Hover --- */
+    /* Reuse the floatEmojiContained animation */
+    .button.nav-button:hover .emoji-bubble {
+        animation: floatEmojiContained 1.5s ease-out forwards;
+    }
+    .button.nav-button:hover .emoji-bubble:nth-of-type(1) {
+        left: 20%;
+        animation-delay: 0s;
+    }
+    .button.nav-button:hover .emoji-bubble:nth-of-type(2) {
+        left: 40%;
+        animation-delay: 0.3s;
+    }
+    .button.nav-button:hover .emoji-bubble:nth-of-type(3) {
+        left: 60%;
+        animation-delay: 0.1s;
+    }
+    .button.nav-button:hover .emoji-bubble:nth-of-type(4) {
+        left: 80%;
+        animation-delay: 0.5s;
+    }
+    /* --- End Nav Button Emoji Styles --- */
+
+
+    /* --------------------------------
+       Responsive Adjustments for Navbar
+    -------------------------------- */
+     @media (max-width: 1024px) {
+        .top-navbar { padding-left: var(--space-xl); padding-right: var(--space-xl); }
+        .get-book-set::before { content: "Books"; font-size: 0.875rem; font-weight: 500; color: var(--text-secondary); transition: color var(--transition-fast); }
+        .get-book-set { font-size: 0; line-height: 0; }
+        .get-book-set:hover::before { color: var(--text-primary); }
+     }
+     @media (max-width: 768px) {
+        .top-navbar .nav-links { gap: var(--space-lg); }
+        .top-navbar .nav-link { display: none; } /* Hide standard links */
+        .button.nav-button { display: none; } /* Hide Start Learning button on mobile nav */
+        .notification { display: none; } /* Hide notification on smaller screens */
+        .avatar { display: none; } /* Hide avatar on smaller screens */
+        .mobile-menu-toggle { display: block; } /* Show mobile toggle */
+     }
+     @media (max-width: 480px) {
+         .top-navbar { padding-left: var(--space-lg); padding-right: var(--space-lg); }
+         .brand-name { display: none; }
+         .divider { display: none; }
+         .top-navbar .logo { font-size: 1.8rem; }
+         .top-navbar .nav-links { gap: var(--space-md); }
+     }
+
+    /* Mobile Menu */
+    .mobile-menu-toggle {
+      display: none; /* Hide by default, shown via media query */
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: var(--space-xs);
+      border-radius: var(--radius-md);
+      transition: background-color var(--transition-fast);
+    }
+
+    .mobile-menu-toggle:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 80%;
+      max-width: 300px;
+      background: var(--deep-blue);
+      box-shadow: var(--shadow-xl);
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform var(--transition-medium);
+      padding: var(--space-xl);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+      overflow-y: auto;
+    }
+
+    .mobile-menu.is-open {
+      transform: translateX(0);
+    }
+
+    .mobile-menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mobile-menu-header .logo {
+      background: var(--gradient-flame);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .mobile-menu-close {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      padding: var(--space-xs);
+      border-radius: var(--radius-md);
+      transition: background-color var(--transition-fast);
+    }
+
+    .mobile-menu-close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+
+    .mobile-menu-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: color var(--transition-fast);
+      padding: var(--space-sm) 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .mobile-menu-link:hover {
+      color: white;
+    }
+
+    .mobile-menu-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 999; /* Below menu, above content */
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-medium), visibility 0s linear var(--transition-medium);
+    }
+
+    .mobile-menu-backdrop.is-open {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity var(--transition-medium), visibility 0s;
+    }
+
+    /* --------------------------------
+       Layout & Main Content
+    -------------------------------- */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: var(--space-2xl) 0; /* Padding applied via container now */
+      position: relative; /* Ensure content is above background elements */
+      z-index: 1;
+    }
+
+    /* Default (stacked view) */
+    .two-columns {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2xl);
+    }
+
+    /* Apply order for the default stacked view */
+    .column-left {
+      order: 2; /* Show main content second */
+      width: 100%; /* Ensure full width in stacked view */
+    }
+
+    .column-right {
+      order: 1; /* Show login box first */
+      width: 100%; /* Ensure full width in stacked view */
+      margin-left: 0; /* Remove margin in stacked view */
+    }
+
+    /* Side-by-side layout on larger screens */
+    @media (min-width: 1024px) {
+      .two-columns {
+        flex-direction: row;
+        align-items: center;
+      }
+
+      /* Override order for side-by-side view */
+      .column-left {
+        width: 50%;
+        order: 1; /* Show main content first (left) */
+      }
+
+      .column-right {
+        width: 45%;
+        margin-left: 5%; /* Add space between columns */
+        order: 2; /* Show login box second (right) */
+      }
+    }
+
+
+    /* --------------------------------
+       Form Styles
+    -------------------------------- */
+    .auth-card {
+      background-color: var(--papyrus);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl);
+      box-shadow: var(--shadow-xl);
+      color: var(--text-light-bg-primary);
+      border: 1px solid var(--form-input-light-border);
+      margin-bottom: var(--space-xl);
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+
+    .form-title {
+      /* font-size: 1.5rem; Original */
+      /* Responsive font size adjustment */
+      font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+      color: var(--text-light-bg-primary);
+      margin-bottom: var(--space-sm);
+      line-height: 1.3; /* Adjust line height for potentially larger font */
+    }
+
+    .form-subtitle {
+      color: var(--text-light-bg-secondary);
+      font-size: 0.875rem;
+    }
+
+    .form-group {
+      margin-bottom: var(--space-lg);
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: var(--space-xs);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--form-label-light-bg-color);
+    }
+
+    .form-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-xs);
+    }
+
+    .form-link {
+      font-size: 0.875rem;
+      color: var(--flame);
+      text-decoration: none;
+      transition: color var(--transition-fast);
+    }
+
+    .form-link:hover {
+      color: var(--amber);
+      text-decoration: underline;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input {
+      background: var(--form-input-light-bg);
+      border: 1px solid var(--form-input-light-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      color: var(--text-light-bg-primary);
+      transition: all var(--transition-medium);
+      width: 100%;
+      font-family: inherit;
+      font-size: 1rem;
+      box-shadow: var(--shadow-inner);
+    }
+
+    .input:focus-visible {
+      border-color: var(--flame);
+      box-shadow: 0 0 0 var(--focus-ring-width) rgba(249, 115, 22, 0.2);
+      outline: none;
+    }
+
+    .input.is-valid {
+      border-color: var(--form-success-color);
+      padding-right: 2.5rem; /* Space for check icon */
+    }
+
+    .input.is-invalid {
+      border-color: var(--form-error-color);
+      padding-right: 2.5rem; /* Space for error icon */
+    }
+
+    .input-icon {
+      position: absolute;
+      right: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.25rem;
+      height: 1.25rem;
+      color: var(--form-label-light-bg-color);
+      cursor: pointer;
+      transition: color var(--transition-fast);
+    }
+
+    .input-icon:hover {
+      color: var(--text-light-bg-primary);
+    }
+
+    .input-validation-icon {
+      position: absolute;
+      right: var(--space-md);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1rem;
+      height: 1rem;
+    }
+
+    .input-validation-icon.success {
+      color: var(--form-success-color);
+    }
+
+    .input-validation-icon.error {
+      color: var(--form-error-color);
+    }
+
+    .form-feedback {
+      font-size: 0.75rem;
+      margin-top: var(--space-xs);
+      display: none;
+    }
+
+    .form-feedback.error {
+      color: var(--form-error-color);
+      display: block;
+    }
+
+    .form-feedback.success {
+      color: var(--form-success-color);
+      display: block;
+    }
+
+    .password-strength {
+      height: 4px;
+      background-color: #e2e8f0;
+      border-radius: var(--radius-full);
+      margin-top: var(--space-xs);
+      overflow: hidden;
+      display: none;
+    }
+
+    .password-strength.visible {
+      display: block;
+    }
+
+    .password-strength-meter {
+      height: 100%;
+      width: 0;
+      transition: width var(--transition-medium), background-color var(--transition-medium);
+    }
+
+    .password-strength-text {
+      font-size: 0.75rem;
+      margin-top: var(--space-xs);
+      display: none;
+    }
+
+    .password-strength-text.visible {
+      display: block;
+    }
+
+    /* --------------------------------
+       Button Styles (Base and Emoji)
+    -------------------------------- */
+    /* Base Button Style */
+    .button {
+      position: relative;
+      background: var(--gradient-flame);
+      color: white;
+      font-weight: 600;
+      font-family: sans-serif;
+      font-size: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-full);
+      transition: transform var(--transition-bounce), box-shadow var(--transition-bounce);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      overflow: hidden; /* Clip content */
+      z-index: 1;
+      min-height: 2.75rem;
+      width: 100%; /* Default to full width for forms */
+    }
+
+    /* Hover/Active States */
+    .button:hover:not(:disabled) {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: var(--shadow-md);
+    }
+    .button:active:not(:disabled) {
+        transform: translateY(2px);
+    }
+
+    .button:disabled {
+      opacity: var(--form-disabled-opacity);
+      cursor: not-allowed;
+      transform: none !important; /* Prevent hover effect when disabled */
+      box-shadow: none !important;
+    }
+
+    /* Icon Style within button */
+     .button .icon {
+        width: 16px;
+        height: 16px;
+        margin-left: var(--space-sm);
+    }
+
+    /* Span to wrap button content (Text/Icon + Spinner) */
+    .button-content {
+        position: relative;
+        z-index: 2; /* Above bubbles */
+        display: inline-flex;
+        align-items: center;
+        width: 100%; /* Make content fill button width */
+        justify-content: center; /* Center content */
+        gap: var(--space-sm); /* Add gap for spinner */
+    }
+
+    /* Keep original text span for JS toggle */
+    .button-text {
+       display: inline-flex; /* Keep flex for icon alignment */
+       align-items: center;
+       gap: var(--space-sm);
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Emoji Bubble Container (Common for all buttons with bubbles) */
+    .emoji-bubbles {
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 20px;
+        pointer-events: none;
+        z-index: 1; /* Behind button content */
+    }
+
+    /* Individual Emoji Bubble (Common) */
+    .emoji-bubble {
+        position: absolute;
+        bottom: 0;
+        left: 50%; /* Start centered */
+        opacity: 0;
+        font-size: 1.25rem;
+        transform: translateY(0) translateX(-50%); /* Initial state */
+    }
+
+    /* Emoji Animation Definition (Common) */
+    @keyframes floatEmojiContained {
+        0% {
+            transform: translateY(0) translateX(-50%);
+            opacity: 0;
+        }
+        25% {
+            opacity: 0.9;
+        }
+        100% {
+            transform: translateY(-45px) translateX(-50%) rotate(10deg);
+            opacity: 0;
+        }
+    }
+
+    /* --- Trigger Login Button Emoji Animation --- */
+    .button.button-emoji-contained:hover .emoji-bubble {
+        animation: floatEmojiContained 1.5s ease-out forwards;
+    }
+    .button.button-emoji-contained:hover .emoji-bubble:nth-of-type(1) {
+        left: 20%; animation-delay: 0s;
+    }
+    .button.button-emoji-contained:hover .emoji-bubble:nth-of-type(2) {
+        left: 40%; animation-delay: 0.3s;
+    }
+    .button.button-emoji-contained:hover .emoji-bubble:nth-of-type(3) {
+        left: 60%; animation-delay: 0.1s;
+    }
+    .button.button-emoji-contained:hover .emoji-bubble:nth-of-type(4) {
+        left: 80%; animation-delay: 0.5s;
+    }
+    /* --- End Login Button Emoji Styles --- */
+
+    /* Social Button Styling */
+    .button-social {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      margin-bottom: var(--space-md);
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 1rem;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .button-social .icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-right: var(--space-md);
+    }
+
+    .button-social.google {
+      background-color: white;
+      color: #444;
+      border: 1px solid #dadce0;
+      box-shadow: 0 1px 3px rgba(60,64,67,0.3), 0 1px 2px rgba(60,64,67,0.15);
+    }
+
+    .button-social.google:hover {
+      background-color: #f8f9fa;
+      box-shadow: 0 2px 6px rgba(60,64,67,0.3), 0 1px 3px rgba(60,64,67,0.15);
+      transform: translateY(-2px);
+    }
+
+    .button-social.apple {
+      background-color: black;
+      color: white;
+      border: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .button-social.apple:hover {
+      background-color: #333;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.16), 0 1px 3px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+
+    /* Button Dark (Not used in current structure, kept for reference) */
+    .button-dark {
+      background: linear-gradient(to bottom right, #1a202c, #2d3748);
+      color: white;
+      border: none;
+      transition: transform 0.2s, box-shadow 0.3s ease-in-out;
+      box-shadow: var(--shadow-sm);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    .button-dark:hover {
+      transform: translateY(-2px);
+      animation: sparkle 1.5s ease-in-out infinite;
+      background: var(--gradient-dark-button);
+      background-size: 300% 100%;
+      box-shadow: var(--shadow-md);
+    }
+
+    @keyframes sparkle {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+
+    /* --------------------------------
+       Feature List
+    -------------------------------- */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+
+    @media (min-width: 768px) {
+      .feature-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+    }
+
+    .feature-icon-container {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: rgba(249, 115, 22, 0.1);
+    }
+
+    .feature-icon-container .icon {
+      color: var(--flame);
+      width: 24px;
+      height: 24px;
+    }
+
+    .feature-text h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: var(--space-xs);
+      color: var(--text-primary);
+    }
+
+    .feature-text p {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0;
+      line-height: 1.5;
+    }
+
+    /* --------------------------------
+       Avatar Stack
+    -------------------------------- */
+    .user-proof {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+    }
+
+    .avatar-stack {
+      display: flex;
+    }
+
+    .avatar-stack > .avatar {
+      margin-left: -0.8rem;
+      border: 2px solid var(--lab-blue);
+    }
+
+    .avatar-stack > .avatar:first-child {
+      margin-left: 0;
+    }
+
+    .user-proof .avatar {
+        width: 40px;
+        height: 40px;
+        /* Keep using the general .avatar styles defined earlier */
+    }
+
+    .user-count {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .user-count-highlight {
+      color: var(--flame);
+      font-weight: 600;
+    }
+
+    /* --------------------------------
+       Footer Styles (from dark-footer.html)
+    -------------------------------- */
+     .footer {
+        margin-top: auto;
+        padding-top: var(--space-xl);
+        padding-bottom: var(--space-xl);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+        width: 100%;
+    }
+
+    .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 var(--space-lg);
+    }
+
+    .footer-logo {
+        background: var(--gradient-flame);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .footer-copyright {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-top: var(--space-xs);
+    }
+
+    .footer-links {
+        display: flex;
+        gap: var(--space-lg);
+    }
+
+    .footer-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: color var(--transition-fast);
+        position: relative;
+    }
+
+    .footer-link::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 1px;
+        bottom: -2px;
+        left: 0;
+        background: var(--gradient-flame);
+        transition: width var(--transition-medium);
+        border-radius: var(--radius-full);
+    }
+
+    .footer-link:hover {
+        color: var(--text-primary);
+    }
+
+    .footer-link:hover::after {
+        width: 100%;
+    }
+
+    /* Responsive adjustments for Footer */
+    @media (max-width: 768px) {
+         .footer-content {
+             flex-direction: column;
+             align-items: center;
+             text-align: center;
+        }
+         .footer-links {
+             justify-content: center;
+             margin-top: var(--space-md);
+        }
+    }
+
+
+    /* --------------------------------
+       Theme Toggle
+    -------------------------------- */
+    .theme-toggle {
+      position: fixed;
+      bottom: var(--space-lg);
+      right: var(--space-lg);
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      background: var(--deep-blue);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      transition: transform var(--transition-bounce), background-color var(--transition-medium);
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+
+    .theme-toggle .icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    /* --------------------------------
+       Floating Emojis Styles (from flying-emojis-bg-overlay.html)
+    -------------------------------- */
+    #emoji-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0; /* Behind content (1), above background (-2) */
+    }
+
+    .floating-emoji {
+        position: absolute;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+        user-select: none;
+        will-change: transform, opacity;
+        animation-name: float-across;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+        opacity: 0;
+    }
+
+    @keyframes float-across {
+        0% {
+            transform: translateX(-100px) translateY(0) rotate(0deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: var(--emoji-opacity, 0.2);
+            transform: translateX(calc(10vw - 50px)) translateY(calc(var(--emoji-drift) * 0.1)) rotate(calc(var(--emoji-rotation) * 0.1));
+        }
+        40% {
+             opacity: var(--emoji-opacity, 0.2);
+             transform: translateX(calc(40vw - 50px)) translateY(calc(var(--emoji-drift) * 0.4)) rotate(calc(var(--emoji-rotation) * 0.4));
+        }
+        50% {
+             opacity: calc(var(--emoji-opacity, 0.2) * 0.3);
+             transform: translateX(calc(50vw - 50px)) translateY(calc(var(--emoji-drift) * 0.5)) rotate(calc(var(--emoji-rotation) * 0.5));
+        }
+        60% {
+             opacity: var(--emoji-opacity, 0.2);
+             transform: translateX(calc(60vw - 50px)) translateY(calc(var(--emoji-drift) * 0.6)) rotate(calc(var(--emoji-rotation) * 0.6));
+        }
+        90% {
+            opacity: var(--emoji-opacity, 0.2);
+            transform: translateX(calc(90vw - 50px)) translateY(calc(var(--emoji-drift) * 0.9)) rotate(calc(var(--emoji-rotation) * 0.9));
+        }
+        95% {
+             opacity: 0;
+             transform: translateX(calc(100vw - 50px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
+        }
+        100% {
+            transform: translateX(calc(100vw + 100px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
+            opacity: 0;
+        }
+    }
+
+    /* --------------------------------
+       Toast Notification
+    -------------------------------- */
+    .toast-container {
+      position: fixed;
+      top: 100px; /* Below navbar */
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast {
+      background: var(--deep-blue);
+      color: var(--text-primary);
+      padding: var(--space-md) var(--space-lg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 90%;
+      width: auto;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-icon {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      color: var(--flame);
+    }
+
+    .toast-content {
+      flex-grow: 1;
+      font-size: 0.9rem;
+    }
+
+    /* --------------------------------
+       Reduced Motion Preferences
+    -------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+        /* Base */
+        html { scroll-behavior: auto !important; }
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+        /* Background */
+        body::before { animation: none !important; }
+        /* Navbar */
+        .top-navbar, .top-navbar .logo, .top-navbar .nav-link::after, .notification-badge, .avatar {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+        .avatar:hover { transform: none !important; }
+        .top-navbar .logo:hover { transform: none !important; }
+        .notification-badge { animation: none !important; }
+        /* Emoji Buttons (Login and Nav) */
+        .button.button-emoji-contained:hover .emoji-bubble,
+        .button.nav-button:hover .emoji-bubble {
+            animation: none !important;
+            opacity: 0 !important;
+         }
+         .button.button-emoji-contained,
+         .button.nav-button {
+             transition-duration: 0.01ms !important;
+         }
+         .button.button-emoji-contained:hover,
+         .button.button-emoji-contained:active,
+         .button.nav-button:hover,
+         .button.nav-button:active {
+            transform: none !important;
+        }
+        /* Floating Emojis */
+        .floating-emoji {
+            animation: none !important;
+            display: none !important; /* Hide emojis completely */
+        }
+        #emoji-container {
+            display: none; /* Hide container too */
+        }
+        /* Other Transitions */
+        .button:hover:not(:disabled), .button:active:not(:disabled) { transform: none !important; } /* General button hover */
+        .button-dark:hover { transform: none !important; animation: none !important; }
+        .button-social:hover { transform: none !important; }
+        .theme-toggle:hover { transform: none !important; }
+    }
+
+    /* --------------------------------
+       Responsive Adjustments (General - simplified as column order handles stacking)
+    -------------------------------- */
+    @media (max-width: 768px) {
+      /* Navbar handled above */
+      .main-content {
+        padding: var(--space-xl) 0;
+      }
+      h1 { font-size: 2rem; }
+      .feature-grid { gap: var(--space-md); }
+      .auth-card { padding: var(--space-lg); }
+      /* Footer handled above */
+    }
+
+  </style>
+</head>
+<body>
+  <!-- Emoji Container for Background Floating Emojis -->
+  <div id="emoji-container"></div>
+
+  <!-- Toast notification container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Skip to content link for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Navigation Bar -->
+  <nav class="top-navbar" id="navbar-component" aria-label="Main navigation">
+    <div class="logo-section">
+        <a href="#" class="logo" aria-label="Pyr Home">Pyr</a>
+        <div class="divider" aria-hidden="true"></div>
+        <div class="brand-name">The Great Human Lab</div>
+    </div>
+    <div class="nav-links">
+        <!-- Links from dark-top-navbar -->
+        <a href="#" class="nav-link">About</a>
+        <a href="#" class="nav-link">Contact</a>
+        <!-- Replaced "Get Book Set" with "Start Learning" Button -->
+        <a href="#" class="button nav-button"> <!-- Added nav-button class -->
+          Start Learning
+          <div class="emoji-bubbles"> <!-- Added emoji structure -->
+            <span class="emoji-bubble" aria-hidden="true">🔍</span>
+            <span class="emoji-bubble" aria-hidden="true">📚</span>
+            <span class="emoji-bubble" aria-hidden="true">🧪</span>
+            <span class="emoji-bubble" aria-hidden="true">🌍</span>
+          </div>
+        </a>
+        <a href="#" class="notification" aria-label="Notifications">
+            <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <div class="notification-badge">3</div>
+        </a>
+        <a href="#" class="avatar" aria-label="User Profile">PY</a>
+        <!-- Mobile toggle button -->
+        <button class="mobile-menu-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu-backdrop" id="mobile-menu-backdrop"></div>
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <div class="mobile-menu-header">
+      <div class="logo">Pyr</div>
+      <button class="mobile-menu-close" aria-label="Close menu">
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="#" class="mobile-menu-link">About</a>
+      <a href="#" class="mobile-menu-link">Contact</a>
+      <a href="#" class="mobile-menu-link">Start Learning</a> <!-- Now reflects button -->
+      <a href="#" class="mobile-menu-link">Notifications (3)</a>
+      <a href="#" class="mobile-menu-link">Profile (PY)</a>
+      <!-- <a href="#" class="mobile-menu-link">Login / Sign Up</a> --> <!-- Keep or remove based on context -->
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+    <div class="container">
+      <div class="two-columns">
+        <!-- Right Column - Login Form (Appears FIRST on narrow screens due to order: 1) -->
+        <div class="column-right">
+          <div class="auth-card">
+            <div class="form-header">
+              <h2 class="form-title">Welcome Back, <span class="gradient-title">Human Scientist!</span></h2>
+              <p class="form-subtitle">Continue your exploration of human history</p>
+            </div>
+
+            <form id="loginForm" aria-labelledby="login-heading" novalidate>
+              <div class="form-group">
+                <label class="form-label" for="email">Email Address</label>
+                <div class="input-wrapper">
+                  <input
+                    type="email"
+                    id="email"
+                    class="input"
+                    placeholder="your@email.com"
+                    autocomplete="username"
+                    required
+                    aria-describedby="email-feedback"
+                  />
+                  <svg class="input-validation-icon success" style="display:none;" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <svg class="input-validation-icon error" style="display:none;" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </div>
+                <div id="email-feedback" class="form-feedback error" style="display:none;">Please enter a valid email address</div>
+              </div>
+
+              <div class="form-group">
+                <div class="form-label-row">
+                  <label class="form-label" for="password">Password</label>
+                  <a href="#" class="form-link">Forgot password?</a>
+                </div>
+                <div class="input-wrapper">
+                  <input
+                    type="password"
+                    id="password"
+                    class="input"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                    required
+                    aria-describedby="password-strength-text password-feedback"
+                  />
+                  <button type="button" class="input-icon" id="password-toggle" aria-label="Show password" tabindex="-1">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                  </button>
+                </div>
+                <div class="password-strength">
+                  <div class="password-strength-meter" id="password-meter"></div>
+                </div>
+                <div id="password-strength-text" class="password-strength-text">Password strength: <span id="strength-label">weak</span></div>
+                <div id="password-feedback" class="form-feedback error" style="display:none;">Password is required</div>
+              </div>
+
+              <!-- Login Button with Emoji Effect -->
+              <button type="submit" class="button button-emoji-contained" id="login-button">
+                  <span class="button-content">
+                      <span class="button-text">
+                          Login to The Lab
+                          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                              <polyline points="9 18 15 12 9 6"></polyline>
+                          </svg>
+                      </span>
+                      <span class="spinner" style="display: none;" aria-hidden="true"></span>
+                  </span>
+                  <div class="emoji-bubbles" aria-hidden="true">
+                      <span class="emoji-bubble">🏛️</span>
+                      <span class="emoji-bubble">📜</span>
+                      <span class="emoji-bubble">⚔️</span>
+                      <span class="emoji-bubble">🧠</span>
+                  </div>
+              </button>
+
+
+              <div style="text-align: center; margin: var(--space-md) 0;">
+                <p style="color: var(--text-light-bg-secondary); font-size: 0.875rem; margin-bottom: 0;">
+                  New to Pyr? <a href="#" class="form-link">Create an account</a>
+                </p>
+              </div>
+            </form>
+
+            <div style="margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--form-input-light-border);">
+              <button class="button-social google">
+                <svg class="icon" viewBox="0 0 48 48" aria-hidden="true">
+                  <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                  <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                  <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                  <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                </svg>
+                Continue with Google
+              </button>
+              <button class="button-social apple">
+                <svg class="icon" viewBox="0 0 384 512" fill="currentColor" aria-hidden="true">
+                  <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
+                </svg>
+                Continue with Apple
+              </button>
+            </div>
+          </div>
+        </div>
+
+         <!-- Left Column - Content (Appears SECOND on narrow screens due to order: 2) -->
+        <div class="column-left">
+          <h1>
+            Explore the <span class="gradient-title">Epic Journey</span> of Human Civilization
+          </h1>
+          <p>
+            Dive into history as a laboratory of human experience. Learn from the triumphs and failures of our ancestors to better understand our world today.
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature-item">
+              <div class="feature-icon-container">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="10" r="2"></circle>
+                  <path d="M12 8v1"></path>
+                  <path d="M12 13v1"></path>
+                </svg>
+              </div>
+              <div class="feature-text">
+                <h4>AI Tutor</h4>
+                <p>Personalized guidance as you learn complex historical concepts</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon-container">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                </svg>
+              </div>
+              <div class="feature-text">
+                <h4>Full Immersion</h4>
+                <p>Experience ancient sites with immersive audio and video</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon-container">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </div>
+              <div class="feature-text">
+                <h4>Compelling Narratives</h4>
+                <p>Stories that make history come alive with heroes and villains</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon-container">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+                  <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+                  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+                  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+                </svg>
+              </div>
+              <div class="feature-text">
+                <h4>History for Human Flourishing</h4>
+                <p>Practical wisdom from the past, timeless principles</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-proof">
+            <div class="avatar-stack" aria-label="Current users">
+              <div class="avatar" style="background: #fecaca; color: #991b1b;" aria-label="User avatar">AB</div>
+              <div class="avatar" style="background: #bfdbfe; color: #1e40af;" aria-label="User avatar">CD</div>
+              <div class="avatar" style="background: #a7f3d0; color: #065f46;" aria-label="User avatar">EF</div>
+            </div>
+            <div class="user-count">
+              Join <span class="user-count-highlight">10,000+</span> students learning in the great lab of history
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
+  <!-- Footer -->
+   <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">Pyr</div>
+                    <div class="footer-copyright">© 2025 The Great Human Lab</div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Terms</a>
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Help</a>
+                    <a href="#" class="footer-link">Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+  <!-- JavaScript -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Form validation and interaction
+      const loginForm = document.getElementById('loginForm');
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      const passwordToggle = document.getElementById('password-toggle');
+      const loginButton = document.getElementById('login-button');
+      const buttonContent = loginButton.querySelector('.button-content');
+      const buttonText = buttonContent.querySelector('.button-text');
+      const spinner = buttonContent.querySelector('.spinner');
+      const passwordMeter = document.getElementById('password-meter');
+      const strengthLabel = document.getElementById('strength-label');
+      const strengthText = document.getElementById('password-strength-text');
+      const passwordStrength = document.querySelector('.password-strength');
+
+      // Mobile menu functionality
+      const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+      const themeToggle = document.querySelector('.theme-toggle');
+
+      // Toast notification functionality
+      function showToast(message) {
+        const toastContainer = document.getElementById('toast-container');
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+          <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <div class="toast-content">${message}</div>
+        `;
+        
+        // Add to container
+        toastContainer.appendChild(toast);
+        
+        // Show with animation
+        setTimeout(() => {
+          toast.classList.add('show');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+            toastContainer.removeChild(toast);
+          }, 300);
+        }, 3000);
+      }
+
+      // Add demo message to all links and buttons except login
+      const demoLinks = document.querySelectorAll('.nav-link, .notification, .avatar, .mobile-menu-link, .form-link, .button-social, .theme-toggle, .footer-link');
+      demoLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          showToast('Not available in demo');
+        });
+      });
+
+      // Toggle password visibility
+      if (passwordToggle && passwordInput) {
+        passwordToggle.addEventListener('click', function() {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+
+          if (type === 'text') {
+            this.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>`;
+            this.setAttribute('aria-label', 'Hide password');
+          } else {
+            this.innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>`;
+            this.setAttribute('aria-label', 'Show password');
+          }
+        });
+      }
+
+      // Email validation
+      function validateEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+      }
+
+      // Password strength meter
+      function checkPasswordStrength(password) {
+        if (!password) return { strength: 0, label: '', color: '#e2e8f0' };
+        let strength = 0;
+        if (password.length >= 8) strength += 25;
+        if (password.match(/[A-Z]/)) strength += 25;
+        if (password.match(/[0-9]/)) strength += 25;
+        if (password.match(/[^A-Za-z0-9]/)) strength += 25;
+
+        let label = 'weak'; let color = '#f43f5e'; // error
+        if (strength > 75) { label = 'very strong'; color = '#14b8a6'; } // success alt
+        else if (strength > 50) { label = 'strong'; color = '#22c55e'; } // success
+        else if (strength > 25) { label = 'medium'; color = '#fbbf24'; } // warning
+
+        return { strength, label, color };
+      }
+
+      // Input validation handlers
+      if (emailInput) {
+        emailInput.addEventListener('input', function() {
+          const emailValue = this.value.trim();
+          const feedbackEl = document.getElementById('email-feedback');
+          const wrapper = this.closest('.input-wrapper');
+          const successIcon = wrapper?.querySelector('.input-validation-icon.success');
+          const errorIcon = wrapper?.querySelector('.input-validation-icon.error');
+
+          if (!feedbackEl || !successIcon || !errorIcon) return;
+
+          if (emailValue) {
+            if (validateEmail(emailValue)) {
+              this.classList.remove('is-invalid');
+              this.classList.add('is-valid');
+              feedbackEl.style.display = 'none';
+              successIcon.style.display = 'block';
+              errorIcon.style.display = 'none';
+            } else {
+              this.classList.remove('is-valid');
+              this.classList.add('is-invalid');
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = 'Please enter a valid email address';
+              successIcon.style.display = 'none';
+              errorIcon.style.display = 'block';
+            }
+          } else {
+            this.classList.remove('is-valid', 'is-invalid');
+            feedbackEl.style.display = 'none';
+            successIcon.style.display = 'none';
+            errorIcon.style.display = 'none';
+          }
+        });
+      }
+
+      if (passwordInput && passwordStrength && strengthText && passwordMeter && strengthLabel) {
+        passwordInput.addEventListener('input', function() {
+          const passwordValue = this.value;
+          const feedbackEl = document.getElementById('password-feedback');
+
+          if (!feedbackEl) return;
+
+          if (passwordValue.length > 0) {
+            passwordStrength.classList.add('visible');
+            strengthText.classList.add('visible');
+
+            const { strength, label, color } = checkPasswordStrength(passwordValue);
+
+            passwordMeter.style.width = `${strength}%`;
+            passwordMeter.style.backgroundColor = color;
+            strengthLabel.textContent = label;
+
+            if (passwordValue.length < 8) {
+              this.classList.add('is-invalid');
+              feedbackEl.style.display = 'block';
+              feedbackEl.textContent = 'Password must be at least 8 characters';
+            } else {
+              this.classList.remove('is-invalid');
+              feedbackEl.style.display = 'none';
+            }
+          } else {
+            passwordStrength.classList.remove('visible');
+            strengthText.classList.remove('visible');
+            this.classList.remove('is-valid', 'is-invalid');
+            feedbackEl.style.display = 'none';
+          }
+        });
+      }
+
+      // Form submission
+      if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const email = emailInput.value.trim();
+          const password = passwordInput.value;
+          let isValid = true;
+
+          // Check for the specific demo credentials
+          const isDemoLogin = email.toLowerCase() === 'show me' && password === 'pyr';
+
+          // If using demo login, skip validation
+          if (!isDemoLogin) {
+            // Validate email
+            const emailFeedback = document.getElementById('email-feedback');
+            if (!email || !validateEmail(email)) {
+              emailInput.classList.add('is-invalid');
+              if(emailFeedback) {
+                emailFeedback.style.display = 'block';
+                emailFeedback.textContent = email ? 'Please enter a valid email address' : 'Email is required';
+              }
+              isValid = false;
+            } else {
+              emailInput.classList.remove('is-invalid');
+              if(emailFeedback) emailFeedback.style.display = 'none';
+            }
+
+            // Validate password
+            const passwordFeedback = document.getElementById('password-feedback');
+            if (!password) {
+              passwordInput.classList.add('is-invalid');
+              if(passwordFeedback) {
+                passwordFeedback.style.display = 'block';
+                passwordFeedback.textContent = 'Password is required';
+              }
+              isValid = false;
+            } else if (password.length < 8) {
+              // Also invalid if too short, even if strength meter showed it
+              passwordInput.classList.add('is-invalid');
+              if(passwordFeedback) {
+                passwordFeedback.style.display = 'block';
+                passwordFeedback.textContent = 'Password must be at least 8 characters';
+              }
+              isValid = false;
+            } else {
+              passwordInput.classList.remove('is-invalid');
+              if(passwordFeedback) passwordFeedback.style.display = 'none';
+            }
+          }
+
+          if (isValid || isDemoLogin) {
+            // Show loading state
+            loginButton.disabled = true;
+            if(buttonText) buttonText.style.display = 'none';
+            if(spinner) spinner.style.display = 'inline-block';
+
+            // Simulate API call
+            setTimeout(function() {
+              console.log('Login attempt with:', { email }); // Log email only, not password
+              
+              loginButton.disabled = false;
+              if(buttonText) buttonText.style.display = 'inline-flex';
+              if(spinner) spinner.style.display = 'none';
+
+              // If demo login or valid credentials, redirect to dashboard
+              if (isDemoLogin) {
+                // For demo: redirect to dashboard
+                window.location.href = 'dashboard.html';
+              } else {
+                // Show standard success notification (for non-demo login)
+                showToast('Login successful! Redirecting...');
+                
+                // For non-demo, we'd redirect after notification in real scenario
+                setTimeout(() => {
+                  // This would normally redirect to dashboard
+                  showToast('Demo mode: Only "show me" with password "pyr" is accepted');
+                }, 3000);
+              }
+            }, 1500);
+          }
+        });
+      }
+
+      // Mobile menu toggle
+       if (mobileMenuToggle && mobileMenuClose && mobileMenu && mobileMenuBackdrop) {
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileMenu.classList.add('is-open');
+                mobileMenuBackdrop.classList.add('is-open');
+                mobileMenu.setAttribute('aria-hidden', 'false');
+                this.setAttribute('aria-expanded', 'true');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling background
+            });
+
+            mobileMenuClose.addEventListener('click', closeMenu);
+            mobileMenuBackdrop.addEventListener('click', closeMenu);
+
+            // Close menu when a link is clicked (optional)
+            mobileMenu.querySelectorAll('.mobile-menu-link').forEach(link => {
+                link.addEventListener('click', closeMenu);
+            });
+       }
+
+      function closeMenu() {
+          if (mobileMenu && mobileMenuBackdrop && mobileMenuToggle) {
+            mobileMenu.classList.remove('is-open');
+            mobileMenuBackdrop.classList.remove('is-open');
+            mobileMenu.setAttribute('aria-hidden', 'true');
+            mobileMenuToggle.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = ''; // Restore scrolling
+          }
+      }
+
+      // Emoji floating background
+      const historyEmojis = [
+        "📜", "🏛️", "⚔️", "🛡️", "👑", "🏰", "🗿", "⚱️", "🔥", "🧠",
+        "🗣️", "📚", "🏺", "⚓", "🌍", "🧭", "🔍", "🔬", "🧪", "🎭",
+        "🏹", "🔱", "🪶", "⏳", "🕰️", "🌋", "🥇", "🧩", "🖋️", "🦉"
+      ];
+      const minTimeBetweenEmojis = 3000;
+      const maxEmojis = 15;
+      const defaultEmojiOpacity = 0.15;
+
+      const emojiContainer = document.getElementById('emoji-container');
+      let lastEmojiTime = 0;
+      let activeEmojis = 0;
+      const numVerticalSections = 10;
+      let sectionHeight = window.innerHeight / numVerticalSections;
+      const occupiedSections = new Set();
+      let animationFrameId = null; // To manage the animation loop
+
+      function createEmoji(initialX = -100) {
+        if (activeEmojis >= maxEmojis || !emojiContainer) return;
+
+        let attempts = 0;
+        let sectionIndex;
+        do {
+          sectionIndex = Math.floor(Math.random() * numVerticalSections);
+          attempts++;
+        } while (occupiedSections.has(sectionIndex) && attempts < numVerticalSections * 2);
+
+        if (occupiedSections.has(sectionIndex) && attempts >= numVerticalSections * 2) {
+          return; // Skip if couldn't find a free section
+        }
+
+        activeEmojis++;
+        occupiedSections.add(sectionIndex);
+
+        const emoji = document.createElement('div');
+        emoji.className = 'floating-emoji';
+        emoji.textContent = historyEmojis[Math.floor(Math.random() * historyEmojis.length)];
+        emoji.setAttribute('aria-hidden', 'true'); // Decorative
+
+        const size = Math.random() * 15 + 15;
+        emoji.style.fontSize = `${size}px`;
+
+        const topPadding = 0.1 * sectionHeight;
+        const bottomPadding = 0.1 * sectionHeight;
+        const availableHeightInSection = sectionHeight - topPadding - bottomPadding;
+        const verticalPosition = (sectionIndex * sectionHeight) + topPadding + (Math.random() * availableHeightInSection);
+        const clampedVerticalPosition = Math.max(10, Math.min(window.innerHeight - size - 10, verticalPosition));
+        emoji.style.top = `${clampedVerticalPosition}px`;
+
+        const duration = (30 - size) / 15 * 20 + 25;
+        emoji.style.animationDuration = `${duration}s`;
+
+        const baseOpacity = ((30 - size) / 15 * 0.1 + defaultEmojiOpacity).toFixed(2);
+        emoji.style.setProperty('--emoji-opacity', baseOpacity);
+
+        const drift = (Math.random() - 0.5) * 30;
+        emoji.style.setProperty('--emoji-drift', `${drift}px`);
+
+        const rotation = (Math.random() - 0.5) * 70;
+        emoji.style.setProperty('--emoji-rotation', `${rotation}deg`);
+
+        if (initialX > -100 && window.innerWidth > 0) {
+          const progress = initialX / window.innerWidth;
+          const clampedProgress = Math.max(0, Math.min(1, progress));
+          const animationDelay = -clampedProgress * duration;
+          emoji.style.animationDelay = `${animationDelay}s`;
+          emoji.style.opacity = baseOpacity; // Make visible immediately
+        }
+
+        emoji.addEventListener('animationend', () => {
+          if (emoji.parentNode === emojiContainer) emojiContainer.removeChild(emoji);
+          activeEmojis--;
+          occupiedSections.delete(sectionIndex);
+        }, { once: true });
+
+        emojiContainer.appendChild(emoji);
+      }
+
+      function populateInitialEmojis() {
+        if (!emojiContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const initialCount = Math.floor(maxEmojis * 0.6);
+        for (let i = 0; i < initialCount; i++) {
+          const initialX = Math.random() * window.innerWidth;
+           setTimeout(() => createEmoji(initialX), i * 50); // Stagger initial creation
+        }
+         lastEmojiTime = Date.now();
+      }
+
+      function manageEmojis() {
+         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+             if (animationFrameId) cancelAnimationFrame(animationFrameId); // Stop loop if motion reduced
+             // Optional: Clear existing emojis
+             // if (emojiContainer) {
+             //    while (emojiContainer.firstChild) emojiContainer.removeChild(emojiContainer.firstChild);
+             //    activeEmojis = 0;
+             //    occupiedSections.clear();
+             // }
+             return;
+         }
+
+        const now = Date.now();
+        if (now - lastEmojiTime >= minTimeBetweenEmojis && activeEmojis < maxEmojis) {
+          lastEmojiTime = now;
+          createEmoji();
+        }
+        animationFrameId = requestAnimationFrame(manageEmojis); // Continue the loop
+      }
+
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          sectionHeight = window.innerHeight / numVerticalSections;
+        }, 250);
+      });
+
+      // Initialize emojis
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setTimeout(() => { // Delay slightly for stable layout
+          populateInitialEmojis();
+          manageEmojis(); // Start the animation loop
+        }, 100);
+      }
+
+      // Listen for changes in reduced motion preference
+      window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+         if (e.matches) {
+             // Reduced motion is enabled
+             if (animationFrameId) cancelAnimationFrame(animationFrameId);
+             animationFrameId = null;
+             // Optionally hide existing emojis
+             if(emojiContainer) emojiContainer.style.display = 'none';
+         } else {
+             // Reduced motion is disabled
+             if(emojiContainer) emojiContainer.style.display = ''; // Show container
+             if (!animationFrameId) { // Restart loop if not already running
+                 populateInitialEmojis(); // Repopulate if desired
+                 manageEmojis();
+             }
+         }
+      });
