@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 1: Ancient History - Pyr Learning</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
+    <style>
+        /* --------------------------------
+           CSS Variables - Design System
+        -------------------------------- */
+        :root {
+            /* Color System */
+            --lab-blue: #0F172A;
+            --deep-blue: #1E293B;
+            --flame: #F97316;
+            --amber: #FBBF24;
+            --papyrus: #F8F5EF;
+            --parchment: #EFE6D5;
+            --scroll: #E0D5C0;
+            --success: #14B8A6;
+            --warning: #FBBF24;
+            --error: #F43F5E;
+            --info: #3B82F6;
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+            --text-dark: #1E293B;
+            --text-light-bg-primary: #1F2937;
+            --text-light-bg-secondary: #4b5563;
+            --text-light-bg-muted: #6b7280;
+            --heading-accent: #A0522D;
+
+            /* New variables for the navbar */
+            --navbar-base-left: #0F172A;
+            --navbar-base-right: #111529; /* Slightly different dark shade, less green/more subtle purple */
+
+            /* Gradients */
+            --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
+            --gradient-tech: conic-gradient(at 50% 50%, #0099F7 0%, #00c2a8 15%, #9DEC3E 30%, #FFC837 45%, #FF3D7A 60%, #C353EB 75%, #5586F4 90%, #0099F7 100%);
+            --gradient-dark-nav: linear-gradient(to bottom right, #1a202c, #2d3748);
+            --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
+            --gradient-time-capsule: linear-gradient(110deg,
+                rgba(249, 115, 22, 0.8) 0%,
+                rgba(245, 56, 160, 0.7) 20%,
+                rgba(195, 83, 235, 0.75) 40%,
+                rgba(85, 134, 244, 0.8) 60%,
+                rgba(20, 184, 166, 0.7) 80%,
+                rgba(251, 191, 36, 0.75) 100%);
+
+            /* Spacing */
+            --space-xxs: 0.125rem;
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+            --space-4xl: 6rem;
+
+            /* Border Radius */
+            --radius-sm: 0.25rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-2xl: 2rem;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
+            --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+
+            /* Transitions */
+            --transition-fast: 0.15s ease-out;
+            --transition-medium: 0.3s ease-out;
+            --transition-slow: 0.5s ease-out;
+            --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --transition-spring: 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+        }
+
+        /* --------------------------------
+           Reset & Global Styles
+        -------------------------------- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--papyrus);
+            color: var(--text-light-bg-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Background Textures */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            opacity: 0.5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231E293B' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+        }
+
+        /* --------------------------------
+           Typography
+        -------------------------------- */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: var(--space-md);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            padding-bottom: var(--space-sm);
+            margin-bottom: var(--space-lg);
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+        }
+
+        p {
+            margin-bottom: var(--space-md);
+        }
+
+        .highlight {
+            background: linear-gradient(to bottom, transparent 40%, rgba(249, 115, 22, 0.2) 40%, rgba(249, 115, 22, 0.2) 80%, transparent 80%);
+            padding: 0 0.2em;
+        }
+
+        .gradient-title {
+            background: var(--gradient-flame);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            position: relative;
+        }
+
+        /* --------------------------------
+           Toast Notification
+        -------------------------------- */
+        .toast-container {
+            position: fixed;
+            top: 100px; /* Below navbar */
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--deep-blue);
+            color: var(--text-primary);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 90%;
+            width: auto;
+            pointer-events: auto; /* Allow clicks on toast if needed, but default is none */
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            color: var(--flame);
+        }
+
+        .toast-content {
+            flex-grow: 1;
+            font-size: 0.9rem;
+        }
+
+        /* --------------------------------
+           Navigation - Top Navbar Styles
+        -------------------------------- */
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-lg) var(--space-2xl);
+            /* Use a subtle linear gradient */
+            background-image: linear-gradient(to right, var(--navbar-base-left), var(--navbar-base-right));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .logo-section { display: flex; align-items: center; }
+        .logo {
+            background: var(--gradient-flame); -webkit-background-clip: text; background-clip: text; color: transparent;
+            font-size: 2rem; font-weight: 800; line-height: 1.2; padding-bottom: 0.2rem; position: relative;
+            text-shadow: 0 0 15px rgba(249, 115, 22, 0.25); transition: transform var(--transition-spring); text-decoration: none;
+        }
+        .logo:hover { transform: scale(1.05); }
+        .divider { height: 24px; width: 1px; background: rgba(255, 255, 255, 0.15); margin: 0 var(--space-md); align-self: center; }
+        .brand-name { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
+        .nav-links { display: flex; align-items: center; gap: var(--space-xl); }
+        .nav-link {
+            color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
+            transition: color var(--transition-fast); position: relative; padding: var(--space-xs) 0; white-space: nowrap;
+        }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background: var(--gradient-flame); transition: width var(--transition-medium); }
+        .nav-link:hover { color: var(--text-primary); }
+        .nav-link:hover::after { width: 100%; }
+
+        .notification { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color var(--transition-fast); }
+        .notification:hover { color: var(--text-primary); }
+        .notification .icon { width: 24px; height: 24px; stroke: currentColor; }
+        .notification-badge {
+            position: absolute; top: -6px; right: -8px; background: var(--error); color: white;
+            border-radius: var(--radius-full); min-width: 18px; height: 18px; display: flex;
+            align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;
+            padding: 0 5px; border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle light border */
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); animation: pulse-badge 2s infinite;
+        }
+        @keyframes pulse-badge { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); } 70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
+        .avatar {
+            width: 40px; height: 40px; background: linear-gradient(135deg, #475569, #64748b); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white;
+            font-weight: 600; letter-spacing: -0.5px; border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all var(--transition-bounce); cursor: pointer;
+        }
+        .avatar:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.1) rotate(5deg); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
+
+        /* --------------------------------
+           Course Header
+        -------------------------------- */
+        .course-header {
+            background: var(--deep-blue);
+            background: linear-gradient(135deg, #0F172A, #1E293B, #141F31);
+            padding: var(--space-xl) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Emoji container for the header */
+        #header-emoji-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Individual emoji styles */
+        .floating-emoji {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            user-select: none;
+            animation-name: float-across;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            opacity: 0; /* Start invisible */
+            will-change: transform, opacity;
+            color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Animation for emojis floating across the screen */
+        @keyframes float-across {
+            0% {
+                transform: translateX(-50px) translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: var(--emoji-opacity, 0.25);
+                transform: translateX(calc(10vw - 50px)) translateY(calc(var(--emoji-drift) * 0.1)) rotate(calc(var(--emoji-rotation) * 0.1));
+            }
+            40% {
+                opacity: var(--emoji-opacity, 0.25);
+                transform: translateX(calc(40vw - 50px)) translateY(calc(var(--emoji-drift) * 0.4)) rotate(calc(var(--emoji-rotation) * 0.4));
+            }
+            50% {
+                opacity: calc(var(--emoji-opacity, 0.25) * 0.5);
+                transform: translateX(calc(50vw - 50px)) translateY(calc(var(--emoji-drift) * 0.5)) rotate(calc(var(--emoji-rotation) * 0.5));
+            }
+            60% {
+                opacity: var(--emoji-opacity, 0.25);
+                transform: translateX(calc(60vw - 50px)) translateY(calc(var(--emoji-drift) * 0.6)) rotate(calc(var(--emoji-rotation) * 0.6));
+            }
+            90% {
+                opacity: var(--emoji-opacity, 0.25);
+                transform: translateX(calc(90vw - 50px)) translateY(calc(var(--emoji-drift) * 0.9)) rotate(calc(var(--emoji-rotation) * 0.9));
+            }
+            95% {
+                opacity: 0;
+                transform: translateX(calc(100vw - 50px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
+            }
+            100% {
+                transform: translateX(calc(100vw + 50px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
+                opacity: 0;
+            }
+        }
+
+        .course-title {
+            font-size: 2.2rem;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            color: var(--text-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .course-title-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: var(--flame);
+            border-radius: var(--radius-lg);
+            color: white;
+            box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
+        }
+
+        .course-progress {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            flex-grow: 1;
+            max-width: 300px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-value {
+            height: 100%;
+            background: var(--gradient-flame);
+            width: 35%; /* Updated based on 6/17 completion ~35% */
+            border-radius: var(--radius-full);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-value::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* --------------------------------
+           Current Chapter Card
+        -------------------------------- */
+        .current-chapter {
+            margin-bottom: var(--space-2xl);
+            margin-top: var(--space-2xl);
+        }
+
+        .current-chapter-card {
+            background: var(--parchment);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            border: 1px solid var(--scroll);
+            box-shadow: var(--shadow-lg);
+            transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+            position: relative;
+        }
+
+        .current-chapter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .current-chapter-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--gradient-flame);
+        }
+
+        .current-chapter-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card-header {
+            padding: var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-xs) var(--space-md);
+            background: var(--flame);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+        }
+
+        .chapter-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-light-bg-secondary);
+        }
+
+        .card-body {
+            padding: 0 var(--space-lg) var(--space-lg);
+        }
+
+        .chapter-title {
+            font-size: 1.6rem;
+            margin-bottom: var(--space-sm);
+            color: var(--text-light-bg-primary);
+        }
+
+        .chapter-description {
+            color: var(--text-light-bg-secondary);
+            margin-bottom: var(--space-lg);
+        }
+
+        .card-footer {
+            padding: var(--space-lg);
+            border-top: 1px solid var(--scroll);
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Align items vertically in the footer */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            gap: var(--space-md); /* Add gap between items */
+            background-color: rgba(224, 213, 192, 0.3);
+        }
+
+        /* Ensure button group stays together */
+        .card-footer > div:last-child {
+            display: flex;
+            gap: var(--space-md);
+            align-items: center;
+        }
+
+
+        /* --------------------------------
+           Buttons
+        -------------------------------- */
+        .button {
+            position: relative;
+            background: var(--gradient-flame);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-full);
+            transition: all var(--transition-bounce);
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            overflow: hidden;
+            z-index: 1;
+            font-size: 0.875rem; /* Standardized button font size */
+        }
+
+        .button:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .button:active {
+            transform: translateY(2px);
+        }
+
+        .button-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem; /* Consistent small size */
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: var(--text-light-bg-secondary);
+            border: 1px solid var(--scroll);
+        }
+
+        .button-secondary:hover {
+            background: rgba(30, 41, 59, 0.05);
+            border-color: var(--flame);
+            color: var(--text-light-bg-primary);
+        }
+
+        /* Time Capsule Button */
+        .time-capsule-btn {
+            position: relative;
+            background: var(--scroll);
+            color: var(--text-light-bg-primary);
+            border: none;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .time-capsule-btn::before {
+            content: "";
+            position: absolute;
+            z-index: -1;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            background: var(--gradient-time-capsule);
+            background-size: 300% 300%;
+            border-radius: var(--radius-full);
+            filter: blur(3px);
+            opacity: 0.35;
+            transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+            animation: hazyGradientAnimation 6s linear infinite;
+        }
+
+        .time-capsule-btn:hover::before {
+            opacity: 0.8;
+            filter: blur(5px);
+        }
+
+        .time-capsule-btn:hover {
+            background: var(--scroll);
+            color: var(--text-dark);
+            border-color: transparent;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .time-capsule-btn .icon, .time-capsule-btn span {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes hazyGradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .button .icon {
+            width: 16px;
+            height: 16px;
+            margin-right: var(--space-sm);
+        }
+
+        /* Button Group Styling */
+        .button-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+
+        /* Circle Capsule Button */
+        .circle-capsule-btn {
+            position: relative;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--scroll);
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .circle-capsule-btn .icon {
+            width: 14px;
+            height: 14px;
+            color: var(--text-light-bg-primary);
+            position: relative;
+            z-index: 2;
+            margin: 0; /* Remove margin if icon has it */
+        }
+
+        .circle-capsule-btn::before {
+            content: "";
+            position: absolute;
+            z-index: 1;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: var(--gradient-time-capsule);
+            background-size: 300% 300%;
+            border-radius: 50%;
+            filter: blur(2px);
+            opacity: 0.35;
+            transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+            animation: hazyGradientAnimation 6s linear infinite;
+        }
+
+        .circle-capsule-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .circle-capsule-btn:hover::before {
+            opacity: 0.8;
+            filter: blur(3px);
+        }
+
+        /* --------------------------------
+           Chapter Journey Timeline
+        -------------------------------- */
+        .chapter-journey {
+            position: relative;
+            padding-bottom: var(--space-4xl);
+        }
+
+        .journey-header {
+            margin-bottom: var(--space-xl);
+        }
+
+        .journey-title {
+            display: inline-block;
+            position: relative;
+            color: var(--text-light-bg-primary);
+            border-bottom: 2px solid transparent;
+        }
+
+        .journey-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--gradient-flame);
+            border-radius: 1px;
+        }
+
+        .journey-track {
+            position: relative;
+            padding-left: 30px;
+            margin-top: var(--space-2xl);
+        }
+
+        .journey-track::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 4px;
+            background: var(--scroll);
+            border-radius: var(--radius-full);
+        }
+
+        .chapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-xl);
+        }
+
+        /* Base Chapter Card Style */
+        .chapter-card {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all var(--transition-medium);
+            position: relative;
+            height: 100%;
+            box-shadow: var(--shadow-sm);
+            display: flex; /* Ensure content flex */
+            flex-direction: column; /* Stack content vertically */
+        }
+
+
+        .chapter-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            z-index: 2;
+        }
+
+        /* Card States */
+        .chapter-card.completed {
+            background-color: var(--parchment);
+            border: 1px solid var(--scroll);
+            color: var(--text-light-bg-primary);
+        }
+
+        .chapter-card.current {
+            background: var(--papyrus);
+            border: 1px solid var(--scroll);
+            border-left: 3px solid var(--flame);
+            color: var(--text-light-bg-primary);
+        }
+
+        .chapter-card.locked {
+            background-color: var(--deep-blue);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            opacity: 0.9;
+        }
+
+        /* Completed Card Styles */
+        .completed .chapter-heading { color: var(--text-light-bg-primary); }
+        .completed .chapter-info { color: var(--text-light-bg-secondary); }
+        .completed .chapter-icon {
+            background: rgba(20, 184, 166, 0.15);
+            color: var(--success);
+            box-shadow: none;
+        }
+        .completed .status-icon { stroke: var(--success); }
+        .completed .chapter-duration { color: var(--text-light-bg-muted); }
+        .completed .button-secondary.review-button { /* Specific class for review */
+            background: transparent;
+            color: var(--text-light-bg-secondary);
+            border: 1px solid var(--scroll);
+        }
+        .completed .button-secondary.review-button:hover {
+            background: rgba(30, 41, 59, 0.05);
+            border-color: var(--flame);
+            color: var(--text-light-bg-primary);
+        }
+        .completed .chapter-footer { border-top-color: var(--scroll); }
+        .completed:hover { border-color: rgba(160, 82, 45, 0.4); }
+
+        /* Current Card Styles */
+        .current .chapter-heading { color: var(--text-light-bg-primary); }
+        .current .chapter-info { color: var(--text-light-bg-secondary); }
+        .current .chapter-icon {
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--flame);
+        }
+        .current .status-icon { stroke: var(--flame); }
+        .current .chapter-duration { color: var(--text-light-bg-muted); }
+        .current .button.continue-button { /* Specific class for continue */
+            background: var(--gradient-flame);
+            color: white;
+        }
+        .current .chapter-footer { border-top-color: var(--scroll); }
+        .current:hover { border-color: rgba(249, 115, 22, 0.4); }
+
+        /* Locked Card Styles */
+        .locked .chapter-heading { color: var(--text-primary); }
+        .locked .chapter-info { color: var(--text-secondary); }
+        .locked .chapter-icon {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            box-shadow: none;
+        }
+        .locked .status-icon { stroke: var(--text-muted); }
+        .locked .chapter-duration { color: var(--text-muted); }
+        .locked .duration-icon { opacity: 0.5; }
+        .locked .button-secondary[disabled] {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            border-color: transparent;
+            cursor: not-allowed;
+        }
+        .locked .chapter-footer { border-top-color: rgba(255, 255, 255, 0.1); }
+        .locked:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Card Content Styling */
+        .chapter-content {
+            padding: var(--space-lg);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; /* Allow content to grow */
+            height: 100%; /* Added for flex context */
+        }
+
+
+        /* Noise overlay for light cards */
+        .chapter-card.completed .chapter-content::after,
+        .chapter-card.current .chapter-content::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+            border-radius: inherit;
+        }
+
+        .chapter-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+            position: relative;
+            z-index: 1;
+        }
+
+        .chapter-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            margin-right: var(--space-sm);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chapter-heading {
+            font-size: 1.1rem;
+            margin-bottom: var(--space-sm);
+            position: relative;
+            z-index: 1;
+            flex-grow: 1; /* Allow heading to grow */
+            color: inherit; /* Inherit color from card state */
+        }
+
+        .chapter-info {
+            font-size: 0.9rem;
+            margin-bottom: var(--space-md);
+            position: relative;
+            z-index: 1;
+            flex-grow: 1; /* Allow info to grow and push footer down */
+            color: inherit; /* Inherit color from card state */
+        }
+
+        .chapter-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto; /* Push footer to bottom */
+            padding-top: var(--space-md);
+            border-top: 1px dashed;
+            position: relative;
+            z-index: 1;
+            border-top-color: inherit; /* Inherit border color */
+            flex-wrap: wrap; /* Allow wrapping */
+            gap: var(--space-sm); /* Add gap */
+        }
+
+
+        .chapter-duration {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: inherit; /* Inherit color */
+            opacity: 0.8; /* Slightly muted */
+        }
+
+        .duration-icon {
+            width: 14px;
+            height: 14px;
+            margin-right: var(--space-xs);
+            opacity: 0.7;
+        }
+
+        /* Ensure button group in footer stays together */
+        .chapter-footer .button-group {
+             margin-left: auto; /* Push button group to the right if space allows */
+        }
+
+
+        /* Journey connectors */
+        .journey-row-connector {
+            height: 4px;
+            background: var(--gradient-flame);
+            margin: var(--space-xl) 0;
+            position: relative;
+            border-radius: var(--radius-full);
+            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+        }
+
+        /* Track node connecting to the row connector */
+        .journey-track .journey-row-connector::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: var(--papyrus);
+            border: 3px solid var(--flame);
+            border-radius: 50%;
+            left: -38px; /* Adjust based on padding-left of journey-track */
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 0 3px var(--papyrus), 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        .journey-row-connector::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-100%);
+            animation: shimmer 2s infinite;
+            border-radius: inherit;
+        }
+
+        /* --------------------------------
+           Footer - New Light Footer Styles
+        -------------------------------- */
+        .footer-light {
+            background-color: var(--papyrus);
+            /* Texture from auth-card */
+            background-image:
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.2 0'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+                radial-gradient(circle at 25% 25%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
+                linear-gradient(to right, rgba(250, 240, 220, 0.1), rgba(226, 210, 175, 0.1), rgba(250, 240, 220, 0.1));
+            /* Default text color from login page footer */
+            color: var(--text-light-bg-secondary);
+            margin-top: auto; /* Push to bottom */
+            padding: var(--space-xl) 0;
+            /* Border from login page footer */
+            border-top: 1px solid var(--scroll);
+            position: relative; /* Needed for ::before */
+            overflow: hidden; /* Contain ::before */
+        }
+
+        /* Subtle edge darkening from auth-card */
+        .footer-light::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-shadow: inset 0 0 20px rgba(120, 100, 60, 0.15);
+            pointer-events: none;
+        }
+
+        .footer-light .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-lg);
+            padding: 0 var(--space-2xl);
+        }
+
+        /* Keep logo gradient */
+        .footer-light .footer-logo {
+            background: var(--gradient-flame);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        /* Copyright text color from login page footer */
+        .footer-light .footer-copyright {
+            color: var(--text-light-bg-secondary);
+            font-size: 0.8rem;
+            margin-top: var(--space-xs);
+        }
+
+        .footer-light .footer-links {
+            display: flex;
+            gap: var(--space-lg);
+        }
+
+        /* Link styles from login page footer */
+        .footer-light .footer-link {
+            color: var(--text-light-bg-secondary);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color var(--transition-fast);
+            position: relative;
+        }
+
+        .footer-light .footer-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background: var(--gradient-flame);
+            transition: width var(--transition-medium);
+            border-radius: var(--radius-full);
+        }
+
+        .footer-light .footer-link:hover {
+            color: var(--flame); /* Hover color from login page footer link */
+        }
+
+        .footer-light .footer-link:hover::after {
+            width: 100%;
+        }
+
+        /* --------------------------------
+           Responsive Design
+        -------------------------------- */
+        @media (max-width: 1024px) {
+            .top-navbar, .footer-content {
+                padding-left: var(--space-xl);
+                padding-right: var(--space-xl);
+            }
+
+            .chapter-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .top-navbar, .footer-content {
+                padding-left: var(--space-lg);
+                padding-right: var(--space-lg);
+            }
+
+            .course-title { font-size: 1.8rem; }
+
+            .nav-link { display: none; } /* Hide text links on mobile */
+
+             /* Adjust main card footer for smaller screens */
+            .card-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .card-footer > div:last-child {
+                 width: 100%; /* Make button group take full width */
+                 justify-content: flex-end; /* Align buttons to the right */
+            }
+
+             /* Adjust chapter grid card footer */
+            .chapter-footer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .chapter-footer .button-group {
+                width: 100%; /* Make button group take full width */
+                justify-content: flex-end; /* Align buttons to the right */
+                margin-left: 0; /* Reset margin */
+            }
+
+            .footer-light .footer-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-light .footer-links {
+                justify-content: center;
+                margin-top: var(--space-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-navbar {
+                padding-left: var(--space-lg);
+                padding-right: var(--space-lg);
+            }
+
+            .course-title {
+                font-size: 1.5rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-sm);
+            }
+
+            .logo-section {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .divider { display: none; }
+            .brand-name { margin-top: var(--space-xs); }
+
+            .chapter-grid { grid-template-columns: 1fr; }
+
+             /* Stack buttons vertically in chapter card footer on smallest screens */
+             .chapter-footer .button-group {
+                 flex-direction: column;
+                 align-items: stretch;
+             }
+             .chapter-footer .button { /* Make buttons full width */
+                 width: 100%;
+             }
+        }
+
+        /* Accessibility: Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+
+            .footer-light::after, .time-capsule-btn::before, .progress-value::after, .journey-row-connector::after, .floating-emoji {
+                animation: none !important;
+            }
+            #header-emoji-container {
+                display: none; /* Hide emojis completely */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast notification container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="top-navbar">
+        <div class="logo-section">
+            <a href="index.html" class="logo" aria-label="Pyr Home">Pyr</a>
+            <div class="divider" aria-hidden="true"></div>
+            <div class="brand-name">The Great Human Lab</div>
+        </div>
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="#" class="nav-link">Resources</a>
+            <a href="#" class="nav-link">Help</a>
+            <a href="#" class="notification" aria-label="Notifications">
+                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <div class="notification-badge">3</div>
+            </a>
+            <div class="avatar">PY</div>
+        </div>
+    </nav>
+
+    <!-- Course Header Section -->
+    <section class="course-header">
+        <!-- Emoji container for floating emojis -->
+        <div id="header-emoji-container"></div>
+
+        <div class="container">
+            <h1 class="course-title">
+                <span class="course-title-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                </span>
+                Year 1: Ancient History
+            </h1>
+
+            <div class="course-progress">
+                <div class="progress-bar">
+                    <div class="progress-value"></div>
+                </div>
+                <span class="progress-text">6 of 17 chapters completed (35%)</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <!-- Current Chapter Card -->
+            <section class="current-chapter">
+                <div class="current-chapter-card">
+                    <div class="card-header">
+                        <span class="current-badge">Currently Studying</span>
+                        <span class="chapter-number">Chapter 7 of 17</span>
+                    </div>
+                    <div class="card-body">
+                        <h2 class="chapter-title">Rise of Ancient Greece</h2>
+                        <p class="chapter-description">Explore the birth of democracy, philosophy, and the classical Greek city-states that shaped Western civilization. Learn about key figures like Socrates, Plato, and Aristotle.</p>
+                    </div>
+                    <div class="card-footer">
+                        <div>
+                            <span class="chapter-duration">
+                                <svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                45 mins remaining
+                            </span>
+                        </div>
+                        <div>
+                            <button class="button button-secondary button-small time-capsule-btn">
+                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                <span>Time Capsule</span>
+                            </button>
+                            <button class="button" onclick="openChapter('chapter7.pdf')"> <!-- MODIFIED -->
+                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Continue Learning
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chapter Journey Timeline -->
+            <section class="chapter-journey">
+                <div class="journey-header">
+                    <h2 class="journey-title">Full Course Journey</h2>
+                </div>
+
+                <div class="journey-track">
+                    <!-- First Row -->
+                    <div class="chapter-grid">
+                        <!-- Chapter 1 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">1</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Dawn of Civilization</h3>
+                                <p class="chapter-info">The earliest human settlements and the birth of agriculture in Mesopotamia.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter1.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 2 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">2</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Ancient Sumer</h3>
+                                <p class="chapter-info">The world's first urban civilization and the invention of writing.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter2.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 3 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">3</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Babylonian Empire</h3>
+                                <p class="chapter-info">Hammurabi's code of laws and the development of mathematics and astronomy.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter3.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="journey-row-connector"></div>
+
+                    <!-- Second Row -->
+                    <div class="chapter-grid">
+                        <!-- Chapter 4 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">4</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Ancient Egypt</h3>
+                                <p class="chapter-info">The pharaohs, pyramids, and the Nile River civilization.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3.5 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter4.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 5 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">5</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Indus Valley</h3>
+                                <p class="chapter-info">The forgotten civilization of Harappa and Mohenjo-daro.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter5.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 6 (Completed) -->
+                        <div class="chapter-card completed">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">6</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Ancient China</h3>
+                                <p class="chapter-info">Early dynasties, Confucianism, and technological innovations.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
+                                    <div class="button-group">
+                                        <button class="circle-capsule-btn">
+                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                        </button>
+                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter6.pdf')">Review</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="journey-row-connector"></div>
+
+                    <!-- Third Row -->
+                    <div class="chapter-grid">
+                        <!-- Chapter 7 (Current) -->
+                        <div class="chapter-card current">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">7</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </div>
+                                <h3 class="chapter-heading">Rise of Ancient Greece</h3>
+                                <p class="chapter-info">Birth of democracy, philosophy, and the classical Greek city-states.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper for consistency -->
+                                        <button class="button button-small continue-button" onclick="openChapter('chapter7.pdf')">Continue</button> <!-- MODIFIED -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 8 (Locked) -->
+                        <div class="chapter-card locked">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">8</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                </div>
+                                <h3 class="chapter-heading">Classical Athens</h3>
+                                <p class="chapter-info">Golden Age of Athens, Socrates, Plato, and Aristotle.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper -->
+                                        <button class="button button-secondary button-small" disabled>Locked</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 9 (Locked) -->
+                        <div class="chapter-card locked">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">9</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                </div>
+                                <h3 class="chapter-heading">Alexander the Great</h3>
+                                <p class="chapter-info">The conquest of the Persian Empire and spread of Hellenistic culture.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper -->
+                                        <button class="button button-secondary button-small" disabled>Locked</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="journey-row-connector"></div>
+
+                    <!-- Fourth Row -->
+                    <div class="chapter-grid">
+                        <!-- Chapter 10 (Locked) -->
+                        <div class="chapter-card locked">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">10</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                </div>
+                                <h3 class="chapter-heading">Early Rome</h3>
+                                <p class="chapter-info">From monarchy to republic and the Punic Wars.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper -->
+                                        <button class="button button-secondary button-small" disabled>Locked</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 11 (Locked) -->
+                        <div class="chapter-card locked">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">11</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                </div>
+                                <h3 class="chapter-heading">Roman Empire</h3>
+                                <p class="chapter-info">Augustus, Pax Romana, and engineering achievements.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3.5 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper -->
+                                        <button class="button button-secondary button-small" disabled>Locked</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Chapter 12 (Locked) -->
+                        <div class="chapter-card locked">
+                            <div class="chapter-content">
+                                <div class="chapter-meta">
+                                    <div class="chapter-icon">12</div>
+                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                </div>
+                                <h3 class="chapter-heading">Rise of Christianity</h3>
+                                <p class="chapter-info">From Jesus to Constantine and the early church.</p>
+                                <div class="chapter-footer">
+                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
+                                    <div class="button-group"> <!-- Added wrapper -->
+                                        <button class="button button-secondary button-small" disabled>Locked</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Add more locked chapters as needed -->
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-light">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <div class="footer-logo">Pyr</div>
+                    <div class="footer-copyright">© 2025 The Great Human Lab</div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Help Center</a>
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Terms</a>
+                    <a href="#" class="footer-link">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for emojis, interaction, and chapter opening -->
+    <script>
+        // Function to open the chapter viewer with the specified PDF
+        function openChapter(chapterFileName) {
+          // Construct the URL for the chapter viewer page
+          // Assumes chapter PDFs are in 'chapters/ancient-history/' relative to the viewer page
+          const viewerUrl = `chapter-viewer.html?pdf=chapters/ancient-history/${chapterFileName}`;
+          window.location.href = viewerUrl;
+        }
+
+        // Toast notification functionality
+        function showToast(message) {
+            const toastContainer = document.getElementById('toast-container');
+
+            // Remove existing toasts to prevent overlap
+            while (toastContainer.firstChild) {
+                toastContainer.removeChild(toastContainer.firstChild);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div class="toast-content">${message}</div>
+            `;
+
+            // Add to container
+            toastContainer.appendChild(toast);
+
+            // Show with animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                     // Check if toast is still in the DOM before removing
+                     if (toast.parentNode === toastContainer) {
+                        toastContainer.removeChild(toast);
+                     }
+                }, 300);
+            }, 3000);
+        }
+
+        // Add demo functionality to non-chapter-opening interactive elements
+        const demoElements = document.querySelectorAll('.nav-link, .notification, .avatar, .time-capsule-btn, .circle-capsule-btn, .footer-link');
+        demoElements.forEach(el => {
+            // Add listener only to elements meant for demo toast
+             if (el.classList.contains('time-capsule-btn') || el.classList.contains('circle-capsule-btn') || el.classList.contains('nav-link') || el.classList.contains('notification') || el.classList.contains('avatar') || el.classList.contains('footer-link')) {
+                el.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default link behavior
+                    showToast('This feature is not available in the demo.');
+                });
+            }
+        });
+
+        // --- Emoji Animation Script ---
+        const historyEmojis = [
+            "📜", "🏛️", "⚔️", "🛡️", "👑", "🏺", "🗿", "⚱️", "🔥", "🧠",
+            "🗣️", "📚", "⚓", "🌍", "🧭", "🔍", "🏹", "🔱", "🪶", "⏳",
+            "🕰️", "🖋️", "🦉", "🏆", "🎭", "🗡️", "🦅", "🐺", "🐂", "🏇"
+        ];
+        let activeEmojis = 0;
+        const maxEmojis = 15;
+        const minTimeBetweenEmojis = 2500;
+        let lastEmojiTime = 0;
+        let animationFrameId = null;
+        const emojiContainer = document.getElementById('header-emoji-container');
+        const numVerticalSections = 8;
+        let sectionHeight = emojiContainer ? emojiContainer.offsetHeight / numVerticalSections : 0;
+        const occupiedSections = new Set();
+
+        function createEmoji(initialX = -100) {
+            if (activeEmojis >= maxEmojis || !emojiContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            let attempts = 0;
+            let sectionIndex;
+            do {
+                sectionIndex = Math.floor(Math.random() * numVerticalSections);
+                attempts++;
+            } while (occupiedSections.has(sectionIndex) && attempts < numVerticalSections * 2);
+
+            if (occupiedSections.has(sectionIndex)) return;
+
+            activeEmojis++;
+            occupiedSections.add(sectionIndex);
+
+            const emoji = document.createElement('div');
+            emoji.className = 'floating-emoji';
+            emoji.textContent = historyEmojis[Math.floor(Math.random() * historyEmojis.length)];
+
+            const size = Math.random() * 12 + 14;
+            emoji.style.fontSize = `${size}px`;
+
+            const topPadding = 0.1 * sectionHeight;
+            const bottomPadding = 0.1 * sectionHeight;
+            const availableHeight = Math.max(0, sectionHeight - topPadding - bottomPadding); // Ensure non-negative
+            const verticalPosition = (sectionIndex * sectionHeight) + topPadding + (Math.random() * availableHeight);
+            emoji.style.top = `${verticalPosition}px`;
+
+            const duration = (26 - size) / 12 * 15 + 20;
+            emoji.style.animationDuration = `${duration}s`;
+
+            const baseOpacity = Math.max(0.1, ((26 - size) / 12 * 0.1 + 0.2)).toFixed(2); // Ensure minimum opacity
+            emoji.style.setProperty('--emoji-opacity', baseOpacity);
+
+            const drift = (Math.random() - 0.5) * 25;
+            emoji.style.setProperty('--emoji-drift', `${drift}px`);
+
+            const rotation = (Math.random() - 0.5) * 60;
+            emoji.style.setProperty('--emoji-rotation', `${rotation}deg`);
+
+            if (initialX > -100 && window.innerWidth > 0) { // Avoid division by zero
+                 const animationDelay = -(initialX / window.innerWidth) * duration;
+                 emoji.style.animationDelay = `${animationDelay}s`;
+                 // Set initial opacity slightly differently to avoid instant pop-in
+                 emoji.style.opacity = '0';
+                 // Force reflow to apply initial styles before animation starts
+                 void emoji.offsetWidth;
+                 // Add class to trigger fade-in if needed, or let animation handle it
+            }
+
+
+            emoji.addEventListener('animationend', () => {
+                 if (emoji.parentNode === emojiContainer) emojiContainer.removeChild(emoji);
+                 activeEmojis--;
+                 occupiedSections.delete(sectionIndex);
+            }, { once: true });
+
+             emojiContainer.appendChild(emoji);
+
+             // Trigger initial fade-in or visibility if not handled by delay
+             if (initialX <= -100) {
+                 setTimeout(() => { emoji.style.opacity = baseOpacity; }, 50); // Small delay for transition
+             }
+
+        }
+
+        function populateInitialEmojis() {
+            if (!emojiContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+             // Clear any existing emojis first
+            while (emojiContainer.firstChild) {
+                emojiContainer.removeChild(emojiContainer.firstChild);
+            }
+            activeEmojis = 0;
+            occupiedSections.clear();
+
+            const initialCount = Math.floor(maxEmojis * 0.6);
+            for (let i = 0; i < initialCount; i++) {
+                const initialX = Math.random() * window.innerWidth;
+                createEmoji(initialX);
+            }
+            lastEmojiTime = Date.now(); // Reset timer
+        }
+
+        function manageEmojis() {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                return;
+            }
+
+            const now = Date.now();
+            if (now - lastEmojiTime >= minTimeBetweenEmojis && activeEmojis < maxEmojis) {
+                lastEmojiTime = now;
+                createEmoji();
+            }
+            animationFrameId = requestAnimationFrame(manageEmojis);
+        }
+
+        function handleMotionChange(e) {
+             if (e.matches) {
+                 if (animationFrameId) {
+                     cancelAnimationFrame(animationFrameId);
+                     animationFrameId = null;
+                 }
+                 if(emojiContainer) {
+                    // Clear existing emojis immediately
+                    while (emojiContainer.firstChild) {
+                       emojiContainer.removeChild(emojiContainer.firstChild);
+                    }
+                    activeEmojis = 0;
+                    occupiedSections.clear();
+                    emojiContainer.style.display = 'none';
+                 }
+             } else {
+                 if(emojiContainer) {
+                    emojiContainer.style.display = '';
+                    if (!animationFrameId) {
+                        sectionHeight = emojiContainer.offsetHeight / numVerticalSections; // Recalculate height
+                        populateInitialEmojis(); // Repopulate
+                        manageEmojis();
+                    }
+                 }
+             }
+         }
+
+        // Initial setup and listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            if (emojiContainer) {
+                sectionHeight = emojiContainer.offsetHeight / numVerticalSections;
+                 const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+                 handleMotionChange(mediaQuery); // Initial check
+                 mediaQuery.addEventListener('change', handleMotionChange); // Listen for changes
+
+                 // Start animation loop only if motion is not reduced
+                 if (!mediaQuery.matches && !animationFrameId) {
+                     manageEmojis();
+                 }
+            }
+        });
+
+        window.addEventListener('resize', function() {
+             if (emojiContainer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                 sectionHeight = emojiContainer.offsetHeight / numVerticalSections;
+                 // Optional: Could clear and repopulate on resize for better distribution,
+                 // but might be visually jarring. Let's skip for now.
+             }
+        });
+
+
+    </script>
+</body>
+</html>
