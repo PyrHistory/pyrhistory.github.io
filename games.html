@@ -85,7 +85,7 @@
     }
 
     body {
-      position: relative;
+      position: relative; /* Needed for absolute positioning of back button */
       overflow-x: hidden;
     }
 
@@ -125,12 +125,47 @@
     }
 
     /* --------------------------------
+       Back to Dashboard Button (NEW)
+    -------------------------------- */
+    .back-button {
+      position: absolute;
+      top: var(--space-lg); /* Position from top */
+      left: var(--space-lg); /* Position from left */
+      z-index: 10; /* Ensure it's above other content if necessary */
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-xs) var(--space-sm);
+      background-color: rgba(30, 41, 59, 0.6); /* Use a subtle dark background */
+      color: var(--text-secondary); /* Use secondary text color for subtlety */
+      font-size: 0.875rem; /* Slightly smaller font */
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+      border: 1px solid transparent; /* Prepare for hover border */
+    }
+
+    .back-button svg {
+      width: 16px;
+      height: 16px;
+      margin-right: var(--space-xs);
+      stroke-width: 2; /* Ensure consistent stroke width */
+    }
+
+    .back-button:hover {
+      background-color: rgba(30, 41, 59, 0.9); /* Slightly darker background on hover */
+      color: var(--text-primary); /* Brighter text on hover */
+      border-color: rgba(255, 255, 255, 0.1); /* Subtle border on hover */
+      transform: translateY(-1px); /* Optional subtle lift */
+    }
+
+    /* --------------------------------
        Game Container & Typography
     -------------------------------- */
     #game-container {
       max-width: 1200px;
       margin: 0 auto;
       padding: var(--space-lg);
+      padding-top: var(--space-4xl); /* Add more top padding to avoid overlap with back button */
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -509,6 +544,7 @@
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
+      vertical-align: middle; /* Align icons better with text */
     }
 
     .icon-sm {
@@ -572,6 +608,16 @@
       .feature-grid {
         grid-template-columns: 1fr;
       }
+      
+      /* Adjust back button position on small screens */
+      .back-button {
+        top: var(--space-md);
+        left: var(--space-md);
+      }
+      
+      #game-container {
+        padding-top: var(--space-3xl); /* Adjust top padding on smaller screens */
+      }
     }
 
     /* --------------------------------
@@ -582,7 +628,8 @@
       .button:active:not(:disabled),
       .category-card:hover:not(.disabled),
       .answer-option:hover:not(.selected):not(.disabled),
-      .powerup-button:hover:not(:disabled) {
+      .powerup-button:hover:not(:disabled),
+      .back-button:hover {
         transform: none;
       }
       
@@ -597,8 +644,19 @@
   </style>
 </head>
 <body>
+
+  <!-- NEW: Back to Dashboard Button -->
+  <a href="dashboard.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm">
+      <line x1="19" y1="12" x2="5" y2="12"></line>
+      <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+    Back to Dashboard
+  </a>
+
   <div id="game-container">
-    <!-- Game content will be dynamically inserted here -->
+    <!-- Game content will be dynamically inserted here by JavaScript -->
+    <!-- Initial state will show the Intro Screen -->
   </div>
 
   <script>
@@ -855,6 +913,8 @@
           if (e.target.matches('#play-again-btn')) {
             this.resetGame();
           }
+          
+          // Back to Dashboard button is handled by the 'a' tag href directly
         });
       },
       
@@ -936,7 +996,7 @@
               </div>
               
               <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                Developed by The Great Human Lab &copy; 2025
+                Developed by The Great Human Lab © 2025
               </div>
             </div>
           </div>
@@ -1045,7 +1105,7 @@
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                <span>${gameState.timeLeft}</span>
+                <span id="timer-value">${gameState.timeLeft}</span>
               </div>
             </div>
             
@@ -1063,9 +1123,14 @@
           
           let optionClass = 'answer-option';
           if (isSelected) optionClass += ' selected';
-          if (isCorrect) optionClass += ' correct';
-          if (isIncorrect) optionClass += ' incorrect';
-          if (gameState.selectedAnswer !== null) optionClass += ' disabled';
+          if (gameState.selectedAnswer !== null) { // After an answer is selected
+              optionClass += ' disabled'; // Disable all options
+              if (index === gameState.currentQuestion.correctAnswer) {
+                  optionClass += ' correct'; // Highlight correct one
+              } else if (isSelected && index !== gameState.currentQuestion.correctAnswer) {
+                  optionClass += ' incorrect'; // Highlight selected incorrect one
+              }
+          }
           
           questionContent += `
             <div class="${optionClass}" data-index="${index}">
@@ -1137,11 +1202,19 @@
         
         const isCorrect = gameState.selectedAnswer === gameState.currentQuestion.correctAnswer;
         
+        // Check if game is over
+        const isGameOver = gameState.lives <= 0;
+        
+        // Check if there are any questions left in the game
+        const totalQuestions = Object.values(gameData.questions).flat().length;
+        const allQuestionsAnswered = gameState.completedQuestions.length >= totalQuestions;
+
         // Create feedback content
         let feedbackContent = `
           <div class="game-screen active" id="feedback-screen">
             <div class="feedback-container ${isCorrect ? 'correct' : 'incorrect'}">
               <h3>${isCorrect ? 'Correct!' : 'Incorrect!'}</h3>
+              ${isGameOver ? '<p style="color: var(--error); font-weight: 600;">You ran out of lives!</p>' : ''}
               <p>${gameState.currentQuestion.explanation}</p>
               
               <div style="margin-top: 1rem; display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-md); background-color: ${isCorrect ? 'rgba(20, 184, 166, 0.2)' : 'rgba(244, 63, 94, 0.2)'};">
@@ -1153,15 +1226,24 @@
             </div>
             
             <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
-              <button id="next-category-btn" class="button button-secondary">
-                Choose Another Category
-              </button>
-              
-              ${isCorrect && this.getUnplayedQuestionsForCategory(gameState.activeCategory).length > 0 ? `
-                <button id="next-question-btn" class="button">
-                  Next Question in This Category
+              ${isGameOver || allQuestionsAnswered ? `
+                <button id="view-scoreboard-btn" class="button">
+                  View Final Score
                 </button>
-              ` : ''}
+                <script>
+                  document.getElementById('view-scoreboard-btn').addEventListener('click', () => gameFunctions.renderScreen('scoreboard'));
+                </script>
+              ` : `
+                <button id="next-category-btn" class="button button-secondary">
+                  Choose Another Category
+                </button>
+                
+                ${this.getUnplayedQuestionsForCategory(gameState.activeCategory).length > 0 ? `
+                  <button id="next-question-btn" class="button">
+                    Next Question in This Category
+                  </button>
+                ` : ''}
+              `}
             </div>
           </div>
         `;
@@ -1171,6 +1253,9 @@
       
       // Generate HTML for scoreboard screen
       renderScoreboardScreen() {
+        const totalQuestionsAnswered = gameState.completedQuestions.length;
+        const avgPoints = totalQuestionsAnswered > 0 ? Math.floor(gameState.score / totalQuestionsAnswered) : 0;
+
         return `
           <div class="game-screen active" id="scoreboard-screen">
             <div class="score-container">
@@ -1183,12 +1268,12 @@
                 
                 <div class="score-stats">
                   <div class="score-stat">
-                    <div class="score-stat-value" style="color: var(--success);">${gameState.completedQuestions.length}</div>
+                    <div class="score-stat-value" style="color: var(--success);">${totalQuestionsAnswered}</div>
                     <div style="color: var(--text-secondary); font-size: 0.875rem;">Questions Answered</div>
                   </div>
                   <div class="score-stat">
                     <div class="score-stat-value" style="color: #a855f7;">
-                      ${Math.floor(gameState.score / Math.max(1, gameState.completedQuestions.length))}
+                      ${avgPoints}
                     </div>
                     <div style="color: var(--text-secondary); font-size: 0.875rem;">Avg. Points per Question</div>
                   </div>
@@ -1225,12 +1310,14 @@
           this.startQuestion(randomQuestion);
         } else {
           // All questions in this category have been played
-          this.renderScreen('category');
+          // Optionally add a message here, or just go back to category screen
+          this.renderScreen('category'); 
         }
       },
       
       // Get unplayed questions for a category
       getUnplayedQuestionsForCategory(categoryId) {
+        if (!gameData.questions[categoryId]) return [];
         const categoryQuestions = gameData.questions[categoryId];
         return categoryQuestions.filter(q => !gameState.completedQuestions.includes(q.id));
       },
@@ -1239,8 +1326,8 @@
       startQuestion(questionData) {
         gameState.currentQuestion = questionData;
         gameState.selectedAnswer = null;
-        gameState.timeLeft = 20;
-        this.renderScreen('question');
+        gameState.timeLeft = 20; // Reset timer for new question
+        this.renderScreen('question'); // This will also call startTimer()
       },
       
       // Handle answer selection
@@ -1248,35 +1335,38 @@
         // If already answered, ignore
         if (gameState.selectedAnswer !== null) return;
         
-        gameState.selectedAnswer = optionIndex;
+        gameState.selectedAnswer = optionIndex; // Mark selected answer (even if null/timeout)
         this.clearTimer();
         
-        // Update the question display to show correct/incorrect
-        this.renderScreen('question');
-        
-        // Update completed questions
+        // Update completed questions immediately
         if (gameState.currentQuestion) {
           gameState.completedQuestions.push(gameState.currentQuestion.id);
         }
+
+        let isCorrect = false;
+        if (optionIndex !== null && optionIndex === gameState.currentQuestion.correctAnswer) {
+          isCorrect = true;
+          gameState.score += gameState.currentQuestion.points;
+        } else if (optionIndex !== null) { // Incorrect answer selected by user
+          gameState.lives--;
+        } else { // Timeout (optionIndex is null)
+          gameState.lives--; 
+        }
+
+        // Update the question display to show feedback (correct/incorrect highlights)
+        // This needs to happen *before* the timeout to transition to feedback screen
+        this.renderScreen('question'); 
         
-        // Process the answer after a short delay
+        // Process the answer outcome after a short delay to show feedback on options
         setTimeout(() => {
-          if (optionIndex === gameState.currentQuestion.correctAnswer) {
-            // Correct answer
-            gameState.score += gameState.currentQuestion.points;
-            this.renderScreen('feedback');
+          if (gameState.lives <= 0) {
+              // Game over immediately goes to scoreboard (or via feedback screen first)
+              this.renderScreen('feedback'); // Show feedback first, then scoreboard button
           } else {
-            // Wrong answer
-            gameState.lives--;
-            
-            if (gameState.lives <= 0) {
-              // Game over
-              this.renderScreen('scoreboard');
-            } else {
+              // Proceed to feedback screen
               this.renderScreen('feedback');
-            }
           }
-        }, 1000);
+        }, 1200); // Increased delay slightly
       },
       
       // Use powerup
@@ -1286,25 +1376,20 @@
         if (powerup === 'fiftyFifty' && !gameState.usedPowerups.fiftyFifty) {
           gameState.usedPowerups.fiftyFifty = true;
           
-          // Implement 50/50 logic: hide two wrong answers
-          const correctAnswer = gameState.currentQuestion.correctAnswer;
-          const wrongAnswers = [0, 1, 2, 3].filter(i => i !== correctAnswer);
+          const correctAnswerIndex = gameState.currentQuestion.correctAnswer;
+          const options = Array.from(document.querySelectorAll('.answer-option'));
+          const wrongOptions = options.filter((_, index) => index !== correctAnswerIndex);
           
-          // Randomly select two wrong answers to hide
-          wrongAnswers.sort(() => Math.random() - 0.5);
-          const answersToHide = wrongAnswers.slice(0, 2);
+          // Randomly select two wrong options to disable
+          wrongOptions.sort(() => Math.random() - 0.5);
           
-          // Hide the selected wrong answers
-          const answerOptions = document.querySelectorAll('.answer-option');
-          answersToHide.forEach(index => {
-            const option = answerOptions[index];
-            if (option) {
-              option.classList.add('disabled');
-              option.style.opacity = '0.3';
-            }
-          });
+          // Disable the first two randomly sorted wrong options
+          wrongOptions[0].classList.add('disabled');
+          wrongOptions[0].style.opacity = '0.3';
+          wrongOptions[1].classList.add('disabled');
+          wrongOptions[1].style.opacity = '0.3';
           
-          // Update the powerup button
+          // Disable the powerup button
           const button = document.querySelector('.powerup-button[data-powerup="fiftyFifty"]');
           if (button) button.disabled = true;
           
@@ -1312,11 +1397,21 @@
           gameState.usedPowerups.timeFreeze = true;
           gameState.timeLeft += 20; // Add 20 more seconds
           
-          // Update the timer display
-          const timerEl = document.querySelector('.timer span');
+          // Update the timer display immediately
+          const timerEl = document.getElementById('timer-value');
           if (timerEl) timerEl.textContent = gameState.timeLeft;
+          // Update styling based on new time (remove warning/danger if applicable)
+          const timerContainer = timerEl.closest('.timer');
+           if (timerContainer) {
+              timerContainer.classList.remove('warning', 'danger');
+              if (gameState.timeLeft < 5) {
+                timerContainer.classList.add('danger');
+              } else if (gameState.timeLeft < 10) {
+                timerContainer.classList.add('warning');
+              }
+            }
           
-          // Update the powerup button
+          // Disable the powerup button
           const button = document.querySelector('.powerup-button[data-powerup="timeFreeze"]');
           if (button) button.disabled = true;
           
@@ -1324,11 +1419,11 @@
           gameState.usedPowerups.extraLife = true;
           gameState.lives++;
           
-          // Update the lives display
+          // Update the lives display (needs re-rendering or direct DOM manipulation)
           const livesEl = document.querySelector('.game-stats .stat-badge:nth-child(2) span');
           if (livesEl) livesEl.textContent = gameState.lives;
           
-          // Update the powerup button
+          // Disable the powerup button
           const button = document.querySelector('.powerup-button[data-powerup="extraLife"]');
           if (button) button.disabled = true;
         }
@@ -1342,7 +1437,7 @@
           gameState.timeLeft--;
           
           // Update the timer display
-          const timerEl = document.querySelector('.timer span');
+          const timerEl = document.getElementById('timer-value'); // Use ID for direct access
           if (timerEl) {
             timerEl.textContent = gameState.timeLeft;
             
@@ -1361,7 +1456,7 @@
           // Time's up
           if (gameState.timeLeft <= 0) {
             this.clearTimer();
-            this.handleAnswerSelection(null); // null means no answer was selected
+            this.handleAnswerSelection(null); // null indicates time ran out
           }
         }, 1000);
       },
