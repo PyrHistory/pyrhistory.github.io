@@ -255,14 +255,14 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
     </script>
     <script>
-        // --- START: Added for Dictionary Lookup ---
+        // --- START: Dictionary Lookup Setup ---
         const DICTIONARY_API_KEY = "d32d5d04-e97d-45b9-b5d8-e32979723097"; // <-- Your Intermediate Dictionary Key
         const definitionPopup = document.getElementById('definition-popup');
         const popupWord = document.getElementById('popup-word');
         const popupDefinition = document.getElementById('popup-definition');
         const closePopupBtn = document.getElementById('close-popup-btn');
         let currentViewports = {}; // Store viewports used for rendering
-        // --- END: Added for Dictionary Lookup ---
+        // --- END: Dictionary Lookup Setup ---
 
         pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
         const book={title:"No Document",author:"Unknown",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]}; // Default to true, will be set based on width
@@ -302,10 +302,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         updateSliderPosition();preloadAdjacentPages(book.currentPage);updateStatus("Display update complete.")}
         function nextPage(){const i=book.isDoublePageView?2:1;const np=book.currentPage+i;if(np<=book.totalPages){jumpToPage(np);showPageSlider();manageToolbar(!1)}}
         function prevPage(){const d=book.isDoublePageView?2:1;const pp=book.currentPage-d;if(pp>=1){jumpToPage(pp);showPageSlider();manageToolbar(!1)}}
-        function jumpToPage(pn){if(!book.pdfDocument||pn<1||pn>book.totalPages){updateStatus(`Jump to ${pn} ignored (invalid)`);return}let tp=pn;if(book.isDoublePageView&&tp>1&&tp%2!==1){tp--}if(tp<1) tp=1;if(tp===book.currentPage){updateStatus(`Jump to ${pn} ignored (already on ${tp})`);showPageSlider();return}book.currentPage=tp;updateStatus(`Jumping to page ${tp}`);if(tp>user.readingProgress.furthestPage){user.readingProgress.furthestPage=tp}updateDisplay();showPageSlider()}
-        function setSinglePageView(){if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting single page view");book.isDoublePageView=!1;document.body.classList.remove('rotated-mode');document.body.classList.add('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
-        function setDoublePageView(){if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting double page view");book.isDoublePageView=!0;document.body.classList.remove('rotated-mode');document.body.classList.remove('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';if(book.currentPage>1&&book.currentPage%2===0){book.currentPage--}updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
-        function setRotatedView(){updateStatus("Setting rotated view");book.isDoublePageView=!1;document.body.classList.remove('fullscreen-mode');document.body.classList.add('rotated-mode');const vpW=window.innerWidth;const vpH=window.innerHeight;const opW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'))||650;const opH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'))||842;const sX=vpW/opH;const sY=vpH/opW;const s=Math.min(sX,sY)*.95;const sp=document.querySelector('.book-spread');sp.style.transformOrigin='center center';sp.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${s})`;updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function jumpToPage(pn){if(!book.pdfDocument||pn<1||pn>book.totalPages){updateStatus(`Jump to ${pn} ignored (invalid)`);return}let tp=pn;if(book.isDoublePageView&&tp>1&&tp%2!==1){tp--}if(tp<1) tp=1;if(tp===book.currentPage){updateStatus(`Jump to ${pn} ignored (already on ${tp})`);showPageSlider();return}book.currentPage=tp;updateStatus(`Jumping to page ${tp}`);if(tp>user.readingProgress.furthestPage){user.readingProgress.furthestPage=tp}hideDefinitionPopup(); updateDisplay();showPageSlider();} // Hide popup on page jump
+        function setSinglePageView(){if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting single page view");book.isDoublePageView=!1;document.body.classList.remove('rotated-mode');document.body.classList.add('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';hideDefinitionPopup(); updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function setDoublePageView(){if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Setting double page view");book.isDoublePageView=!0;document.body.classList.remove('rotated-mode');document.body.classList.remove('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%) rotate(0deg) scale(1)';if(book.currentPage>1&&book.currentPage%2===0){book.currentPage--}hideDefinitionPopup(); updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
+        function setRotatedView(){updateStatus("Setting rotated view");book.isDoublePageView=!1;document.body.classList.remove('fullscreen-mode');document.body.classList.add('rotated-mode');const vpW=window.innerWidth;const vpH=window.innerHeight;const opW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'))||650;const opH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'))||842;const sX=vpW/opH;const sY=vpH/opW;const s=Math.min(sX,sY)*.95;const sp=document.querySelector('.book-spread');sp.style.transformOrigin='center center';sp.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${s})`;hideDefinitionPopup(); updateDisplay();manageToolbar();updateSliderTotalPages(); updateSliderPosition();}
         function toggleElement(id,show){const el=document.getElementById(id);if(el){el.classList.toggle('visible',show);updateStatus(`${id} visibility set to ${show}`)}else{console.warn(`Element ${id} not found`)}}
         function showUploadModal(){toggleElement('upload-modal',!0);manageToolbar(!1)}
         function hideUploadModal(){toggleElement('upload-modal',!1)}
@@ -400,25 +400,25 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         }
         function populateTOC(){const tl=document.getElementById('toc-list'),tb=document.getElementById('toc-btn');if(!tl||!tb)return;tl.innerHTML='';tb.setAttribute('disabled','disabled');if(!book.outline||book.outline.length===0){tl.innerHTML='<em>No table of contents found.</em>';updateStatus("TOC: Not found.");return}tb.removeAttribute('disabled');const createItem=(item,level=0)=>{const d=document.createElement('div');d.className=level===0?'toc-chapter':'toc-section';d.style.marginLeft=`${level*15}px`;const ts=document.createElement('span');ts.className=level===0?'toc-chapter-title':'';ts.textContent=item.title||'Untitled Section';ts.style.cursor='pointer';ts.onclick=async()=>{try{const dest=item.dest;let pi=-1;if(typeof dest==='string'){const nd=await book.pdfDocument.getDestination(dest);if(nd&&typeof nd[0]?.gen==='number'){pi=await book.pdfDocument.getPageIndex(nd[0])}else{throw new Error(`Named dest "${dest}" invalid`)}}else if(Array.isArray(dest)&&typeof dest[0]?.gen==='number'){pi=await book.pdfDocument.getPageIndex(dest[0])}else if(Array.isArray(dest)&&typeof dest[0]==='number'){console.warn("Using potentially deprecated page number dest format.");pi=dest[0]-1}else{console.warn("TOC dest format unrecognized, fallback:",dest);if(item.dest?.[0]?.num){try{pi=await book.pdfDocument.getPageIndex(item.dest[0])}catch{}}if(pi<0)throw new Error('Invalid dest format')}if(pi>=0){const pageNum=pi+1;updateStatus(`TOC Click: Jump to page ${pageNum} for "${item.title}"`);jumpToPage(pageNum);hideTableOfContents()}else{throw new Error('Failed to resolve page index')}}catch(e){console.error('Error handling TOC click:',e);alert(`Could not navigate: ${e.message}`)}};d.appendChild(ts);if(item.items&&item.items.length>0){const sl=document.createElement('div');if(level===0)sl.className='toc-sections';item.items.forEach(si=>{const se=createItem(si,level+1);if(se)sl.appendChild(se)});if(sl.hasChildNodes()){d.appendChild(sl)}}return d};book.outline.forEach(item=>{const ie=createItem(item);if(ie)tl.appendChild(ie)});if(!tl.hasChildNodes()){tl.innerHTML='<em>Error processing TOC.</em>';tb.setAttribute('disabled','disabled');updateStatus("TOC: Error processing items.")}else{updateStatus("TOC populated.")}}
         function setupEvents(){updateStatus("Setting up events");const tbar=document.getElementById('new-toolbar');if(tbar){tbar.addEventListener('click',e=>{const btn=e.target.closest('.new-btn');if(!btn)return;if(btn.hasAttribute('disabled')){e.stopPropagation();return}const id=btn.id;updateStatus(`Toolbar button clicked: ${id}`);switch(id){case'upload-btn':showUploadModal();break;case'single-page-btn':setSinglePageView();break;case'double-page-btn':setDoublePageView();break;case'rotate-btn':setRotatedView();break;case'toc-btn':showTableOfContents();break}resetSliderHideTimer();manageToolbar(!0);toolbarHover=!1;manageToolbar(!1)})}else{console.error("ERROR: Toolbar 'new-toolbar' not found!")}document.getElementById('close-toc-btn')?.addEventListener('click',hideTableOfContents);document.getElementById('cancel-upload-btn')?.addEventListener('click',hideUploadModal);document.getElementById('submit-upload-btn')?.addEventListener('click',processUploadedFile);document.querySelectorAll('.page-edge-nav').forEach(el=>{el.addEventListener('click',e=>{const pp=e.target.closest('.book-page');if(!pp||pp.classList.contains('placeholder-page'))return;const ir=document.body.classList.contains('rotated-mode');const ilp=pp.classList.contains('left');const ice=e.target.classList.contains('page-edge-left');const ispv=!book.isDoublePageView;if(ir){if(ice)prevPage();else nextPage()}else if(ispv){if(ice)prevPage();else nextPage()}else{if(ice&&ilp)prevPage();else if(!ice&&!ilp)nextPage()}})});document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||document.querySelector('.upload-modal.visible')||document.querySelector('.toc-panel.visible') || definitionPopup.classList.contains('visible'))return; // Ignore keydown if popup is visible
-        if(e.ctrlKey||e.altKey||e.metaKey)return;let navAct=!1;switch(e.key){case'ArrowRight':case'PageDown':nextPage();navAct=!0;break;case'ArrowLeft':case'PageUp':prevPage();navAct=!0;break;case'Home':if(book.totalPages>0)jumpToPage(1);navAct=!0;break;case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=!0;break; case 'Escape': hideDefinitionPopup(); break; }if(navAct){e.preventDefault();showPageSlider();manageToolbar(!1)}});window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{updateStatus("Resize detected, updating layout.");if(document.body.classList.contains('rotated-mode')){setRotatedView()}else if(document.body.classList.contains('fullscreen-mode')){setSinglePageView()}else{setDoublePageView()}manageToolbar()},250)});document.querySelector('.main-container').addEventListener('dblclick',e=>{if(e.target===e.currentTarget){if(document.body.classList.contains('rotated-mode'))return;if(document.body.classList.contains('fullscreen-mode')){setDoublePageView()}else{setSinglePageView()}}});let tsX=0,tsY=0,tst=0;const SW_TH=50,SW_TL=500,SW_A=35;document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, #definition-popup'))return; // Ignore touch on popup too
+        if(e.ctrlKey||e.altKey||e.metaKey)return;let navAct=!1;switch(e.key){case'ArrowRight':case'PageDown':nextPage();navAct=!0;break;case'ArrowLeft':case'PageUp':prevPage();navAct=!0;break;case'Home':if(book.totalPages>0)jumpToPage(1);navAct=!0;break;case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=!0;break; case 'Escape': hideDefinitionPopup(); break; }if(navAct){e.preventDefault();showPageSlider();manageToolbar(!1)}});window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{updateStatus("Resize detected, updating layout.");hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode')){setRotatedView()}else if(document.body.classList.contains('fullscreen-mode')){setSinglePageView()}else{setDoublePageView()}manageToolbar()},250)});document.querySelector('.main-container').addEventListener('dblclick',e=>{if(e.target===e.currentTarget){if(document.body.classList.contains('rotated-mode'))return;if(document.body.classList.contains('fullscreen-mode')){setDoublePageView()}else{setSinglePageView()}}});let tsX=0,tsY=0,tst=0;const SW_TH=50,SW_TL=500,SW_A=35;document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, #definition-popup'))return; // Ignore touch on popup too
         if(e.touches.length===1){tsX=e.touches[0].screenX;tsY=e.touches[0].screenY;tst=Date.now()}else{tsX=0;tsY=0}},{passive:!0});document.body.addEventListener('touchend',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, #definition-popup'))return; // Ignore touch on popup
         if(tsX===0&&tsY===0)return;if(e.changedTouches.length===1){const teX=e.changedTouches[0].screenX;const teY=e.changedTouches[0].screenY;const et=Date.now()-tst;if(et<SW_TL){handleSwipe(tsX,tsY,teX,teY)}}tsX=0;tsY=0;tst=0});function handleSwipe(sx,sy,ex,ey){const dx=ex-sx,dy=ey-sy,adx=Math.abs(dx),ady=Math.abs(dy);if(adx<SW_TH&&ady<SW_TH)return;const angle=Math.atan2(ady,adx)*180/Math.PI;if(angle<=SW_A){if(dx>SW_TH){prevPage()}else if(dx<-SW_TH){nextPage()}showPageSlider();manageToolbar(!1)}}
         const sliderTriggerZone = document.getElementById('page-slider-trigger-zone');const sliderContainer = document.getElementById('page-slider-container');
         if (sliderTriggerZone && sliderContainer) {sliderTriggerZone.addEventListener('mouseenter', () => {if (book.pdfDocument && book.totalPages > 0) {updateStatus("Slider trigger zone hovered, showing slider.");showPageSlider();clearTimeout(sliderHideTimeout);}});sliderTriggerZone.addEventListener('mouseleave', (e) => {if (!sliderContainer.contains(e.relatedTarget)) {updateStatus("Slider trigger zone mouse left (not into slider), starting hide timer.");resetSliderHideTimer();} else {updateStatus("Slider trigger zone mouse left (into slider).");}});sliderContainer.addEventListener('mouseenter', () => {if (sliderContainer.classList.contains('visible')) {updateStatus("Slider container hovered, clearing hide timer.");clearTimeout(sliderHideTimeout);}});sliderContainer.addEventListener('mouseleave', (e) => {if (!sliderTriggerZone.contains(e.relatedTarget)) {updateStatus("Slider container mouse left (not into trigger), starting hide timer.");resetSliderHideTimer();} else {updateStatus("Slider container mouse left (into trigger).");}});} else {console.warn("Page slider trigger zone or container not found.");}
 
-        // --- START: Dictionary Click Listener Setup ---
-        document.querySelector('.main-container').addEventListener('click', handlePdfClick);
+        // --- Dictionary Click Listener Setup ---
+        document.querySelector('.main-container').addEventListener('click', handlePdfClick); // Use the instrumented version
         closePopupBtn.addEventListener('click', hideDefinitionPopup);
         document.addEventListener('click', (event) => { // Close popup if clicking outside
             if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(event.target) && !event.target.closest('.book-page')) {
                  hideDefinitionPopup();
             }
         });
-        // --- END: Dictionary Click Listener Setup ---
+        // --- END Dictionary Click Listener Setup ---
 
         updateStatus("Events setup complete")}
 
-        // --- START: Dictionary Lookup Functions ---
+        // --- START: Dictionary Lookup Functions (with combined debugging/error handling) ---
 
         function hideDefinitionPopup() {
             if (definitionPopup) {
@@ -430,76 +430,85 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             }
         }
 
+        // Updated getDefinition with better error checking
         async function getDefinition(word) {
-            if (!DICTIONARY_API_KEY) { // Removed check for specific placeholder string
+            if (!DICTIONARY_API_KEY) {
                 console.error("Dictionary API Key not set.");
                 return { error: "API key not configured." };
             }
             if (!word) {
                 return { error: "No word provided." };
             }
-
-            // Basic cleaning - allow letters and hyphens, remove leading/trailing non-letters/hyphens
             const cleanedWord = word.toLowerCase().replace(/^[^a-z-]+|[^a-z-]+$/g, '').trim();
             if (!cleanedWord) {
                  return { error: "Invalid word characters." };
             }
-
-            // Use sd2 (Intermediate) reference
             const url = `https://www.dictionaryapi.com/api/v3/references/sd2/json/${encodeURIComponent(cleanedWord)}?key=${DICTIONARY_API_KEY}`;
 
             try {
-                updateStatus(`Fetching definition for: ${cleanedWord}`);
+                console.log(`Fetching definition for: ${cleanedWord} from ${url}`); // Log URL
                 const response = await fetch(url);
+                console.log(`API Response Status: ${response.status}`); // Log status
+
                 if (!response.ok) {
-                    // Try to get error message from response if possible
-                    let errorData = null;
-                    try { errorData = await response.json(); } catch (e) {}
-                    throw new Error(`API request failed: ${response.status} ${response.statusText}. ${errorData ? JSON.stringify(errorData) : ''}`);
+                    let errorBody = '';
+                    try {
+                        errorBody = await response.text(); // Read error as text
+                        console.log(`API Error Response Body: ${errorBody}`);
+                    } catch (textError) {
+                        console.warn("Could not read error response body as text:", textError);
+                        errorBody = response.statusText;
+                    }
+                    // Check specifically for "Invalid API key" text if possible
+                    if (errorBody.toLowerCase().includes("invalid api key")) {
+                         throw new Error(`API request failed: Invalid API Key.`);
+                    } else {
+                         throw new Error(`API request failed: ${response.status} ${response.statusText}. ${errorBody ? `Details: ${errorBody}` : '(No details)'}`);
+                    }
                 }
+
+                // Only parse JSON if response is ok
                 const data = await response.json();
-                updateStatus(`API response received for ${cleanedWord}`);
+                console.log(`API response received and parsed for ${cleanedWord}:`, data); // Log parsed data
 
                 if (!Array.isArray(data) || data.length === 0) {
                     return { definition: "Word not found.", suggestions: [] };
                 }
-
-                // Check if the first result is an object with 'shortdef' (expected)
-                // or if the array contains just strings (suggestions for misspelling)
                 if (typeof data[0] === 'string') {
                      return { definition: `Word not found. Did you mean: ${data.slice(0, 3).join(', ')}?`, suggestions: data };
                 }
-
                 if (typeof data[0] === 'object' && data[0] !== null && Array.isArray(data[0].shortdef) && data[0].shortdef.length > 0) {
-                    // Format shortdef array into a numbered list
                     const definitions = data[0].shortdef.map((def, index) => `${index + 1}. ${def}`).join('<br>');
                     return { definition: definitions, suggestions: [] };
                 } else {
-                    // Handle cases where structure is different or shortdef is missing/empty
-                    console.warn("Unexpected API response structure or empty shortdef:", data[0]);
-                    // Attempt to find definitions elsewhere if needed, or return not found
-                    let fallbackDef = "Definition not found in expected format.";
-                    // Example: Try extracting from the more complex 'def' field if available
-                    if(data[0]?.def?.[0]?.sseq?.[0]?.[0]?.[1]?.dt?.[0]?.[1]) {
-                        try {
-                           const firstSense = data[0].def[0].sseq[0][0][1].dt[0][1];
-                           if(firstSense && typeof firstSense === 'string') {
-                                fallbackDef = "1. " + firstSense.replace(/{bc}|{it}|{\/it}|{sx\|[^\|]*\|\|}/g, '').replace(/{[^}]*}/g, '').trim(); // Basic cleanup of MW markup
-                           }
-                        } catch (parseErr) { console.warn("Failed parsing fallback def:", parseErr)}
-                    }
-                    return { definition: fallbackDef, suggestions: [] };
-                }
+                     console.warn("Unexpected API response structure or empty shortdef:", data[0]);
+                     let fallbackDef = "Definition not found in expected format.";
+                     if(data[0]?.def?.[0]?.sseq?.[0]?.[0]?.[1]?.dt?.[0]?.[1]) {
+                         try {
+                            const firstSense = data[0].def[0].sseq[0][0][1].dt[0][1];
+                            if(firstSense && typeof firstSense === 'string') {
+                                 fallbackDef = "1. " + firstSense.replace(/{bc}|{it}|{\/it}|{sx\|[^\|]*\|\|}/g, '').replace(/{[^}]*}/g, '').trim();
+                            }
+                         } catch (parseErr) { console.warn("Failed parsing fallback def:", parseErr)}
+                     }
+                     return { definition: fallbackDef, suggestions: [] };
+                 }
 
-            } catch (error) {
-                console.error("Error fetching definition:", error);
-                return { error: `Could not fetch definition. ${error.message}.` };
+            } catch (error) { // Catches network errors and the 'throw new Error' above
+                console.error("Error in getDefinition:", error);
+                // Provide more context in the error object
+                return { error: `Could not fetch definition. ${ (error.message.includes('API request failed') || error.message.includes('Invalid API Key')) ? 'Please check API configuration.' : 'Network error or invalid response.'} Details: ${error.message}` };
             }
         }
 
+
+        // Updated handlePdfClick with detailed logging
         async function handlePdfClick(event) {
+            console.log("handlePdfClick triggered."); // Log entry
+
             // Don't trigger on interactive elements or the popup itself
             if (event.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .upload-modal, .toc-panel, .page-edge-nav, #definition-popup, button, input, a')) {
+                console.log("Click ignored: Target is interactive element or popup.");
                 return;
             }
 
@@ -510,26 +519,31 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             if (clickedElement.id === 'left-page-canvas') {
                 canvasId = 'left-page-canvas';
                 pageNum = book.currentPage;
+                console.log(`Click target: ${canvasId}, Page: ${pageNum}`);
             } else if (clickedElement.id === 'right-page-canvas' && book.isDoublePageView && book.currentPage + 1 <= book.totalPages) {
                 canvasId = 'right-page-canvas';
                 pageNum = book.currentPage + 1;
+                 console.log(`Click target: ${canvasId}, Page: ${pageNum}`);
             } else {
+                 console.log("Click ignored: Target not a valid page canvas or page invalid.");
                  hideDefinitionPopup(); // Hide if click isn't on a valid canvas
                  return;
             }
 
              if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages) {
+                 console.log(`Click ignored: Invalid book state (PDF: ${!!book.pdfDocument}, PageNum: ${pageNum}, Total: ${book.totalPages})`);
                  hideDefinitionPopup();
                  return;
              }
 
             const canvas = document.getElementById(canvasId);
-            if (!canvas) { hideDefinitionPopup(); return; }
+            if (!canvas) { console.log("Click ignored: Canvas element not found."); hideDefinitionPopup(); return; }
             const rect = canvas.getBoundingClientRect();
 
             // Calculate click coordinates relative to the canvas element
             const clickX = event.clientX - rect.left;
             const clickY = event.clientY - rect.top;
+            console.log(`Canvas Click Coords (element relative): [${clickX.toFixed(2)}, ${clickY.toFixed(2)}]`);
 
             // Get viewport used for rendering this canvas
             const viewport = currentViewports[canvasId];
@@ -538,19 +552,30 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 hideDefinitionPopup();
                 return;
             }
+            console.log(`Viewport retrieved for ${canvasId}:`, viewport);
 
             // Convert click coordinates from canvas element space to PDF page space
             const pdfPoint = viewport.convertToPdfPoint(clickX, clickY);
-            updateStatus(`Click detected on page ${pageNum} (${canvasId}) at PDF coords [${pdfPoint[0].toFixed(2)}, ${pdfPoint[1].toFixed(2)}]`);
+            console.log(`PDF Point Coords: [${pdfPoint[0].toFixed(2)}, ${pdfPoint[1].toFixed(2)}]`);
 
             try {
+                console.log(`Getting page ${pageNum} object...`);
                 const page = await book.pdfDocument.getPage(pageNum);
+                console.log(`Getting text content for page ${pageNum}...`);
                 const textContent = await page.getTextContent({ normalizeWhitespace: true }); // Normalize whitespace
+                 console.log("Text content received:", textContent);
+                 if (!textContent || !textContent.items || textContent.items.length === 0) {
+                      console.warn("Text content is empty or invalid.");
+                      hideDefinitionPopup();
+                      return;
+                 }
 
+                console.log("Calling findWordAtPdfPoint...");
                 const foundWordInfo = findWordAtPdfPoint(textContent, pdfPoint, viewport);
+                console.log("findWordAtPdfPoint result:", foundWordInfo); // Log the result
 
                 if (foundWordInfo && foundWordInfo.word) {
-                    updateStatus(`Word found: "${foundWordInfo.word}"`);
+                    console.log(`Word found: "${foundWordInfo.word}". Preparing popup.`); // Changed from updateStatus
                     const popupX = event.pageX; // Use pageX/pageY for positioning relative to document
                     const popupY = event.pageY;
 
@@ -568,7 +593,6 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                         definitionPopup.style.transform = 'scale(0.95)';
 
                         // Adjust position if it goes off-screen
-                        // Use setTimeout to allow the browser to render and calculate rect correctly
                         setTimeout(() => {
                             const popupRect = definitionPopup.getBoundingClientRect();
                             let finalLeft = popupX + 15;
@@ -595,8 +619,11 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
 
                         // Fetch and display definition
+                        console.log(`Calling getDefinition for "${foundWordInfo.word}"...`); // Log before API call
                         const result = await getDefinition(foundWordInfo.word);
+                         console.log("getDefinition result:", result); // Log API result
                         if (result.error) {
+                             console.error("Error received from getDefinition:", result.error); // Log the specific error
                             popupDefinition.innerHTML = `<span class="error-message">Error: ${result.error}</span><br><a href="https://www.google.com/search?q=${encodeURIComponent(foundWordInfo.word)}+definition" target="_blank" rel="noopener noreferrer">Search Google for "${foundWordInfo.word}"?</a>`;
                         } else {
                             popupDefinition.innerHTML = result.definition;
@@ -604,18 +631,22 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                                  popupDefinition.innerHTML += `<br><a href="https://www.google.com/search?q=${encodeURIComponent(foundWordInfo.word)}+definition" target="_blank" rel="noopener noreferrer">Search Google for "${foundWordInfo.word}"?</a>`;
                              }
                         }
+                    } else {
+                         console.error("Popup elements not found!");
                     }
                 } else {
-                    updateStatus("No word found at click location.");
+                    console.log("No word found at click location by findWordAtPdfPoint.");
                     hideDefinitionPopup();
                 }
             } catch (error) {
-                console.error("Error handling PDF click:", error);
+                console.error("Error during PDF click processing:", error);
                 hideDefinitionPopup();
             }
         }
 
+
         function findWordAtPdfPoint(textContent, pdfPoint, viewport) {
+             // ...(findWordAtPdfPoint logic remains the same as the previous version)...
              let clickedItem = null;
              const clickX = pdfPoint[0];
              const clickY = pdfPoint[1];
@@ -654,69 +685,97 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
              }
 
              if (!clickedItem) {
+                 console.log("findWordAtPdfPoint: No text item found at PDF point."); // Debug log
                  return null;
              }
+              console.log("findWordAtPdfPoint: Found initial text item:", clickedItem); // Debug log
 
              // Reconstruct word (similar logic as before, but using PDF coordinates)
              const lineTolerance = clickedItem.height * 0.5; // Tolerance for items on the same line
              const clickedItemOriginY = clickedItem.transform[5]; // Y-translation (origin)
 
              let lineItems = textContent.items.filter(itm => {
-                  return Math.abs(itm.transform[5] - clickedItemOriginY) < lineTolerance;
+                  // Ensure item has transform and height before comparing
+                  return itm.transform && typeof itm.height === 'number' && Math.abs(itm.transform[5] - clickedItemOriginY) < lineTolerance;
               }).sort((a, b) => {
-                  return a.transform[4] - b.transform[4]; // Sort by X-translation (origin)
+                  // Ensure items have transform before sorting
+                   return (a.transform ? a.transform[4] : 0) - (b.transform ? b.transform[4] : 0); // Sort by X-translation (origin)
               });
+             console.log(`findWordAtPdfPoint: Found ${lineItems.length} items potentially on the same line.`); // Debug log
 
              let word = "";
              let startIndex = -1, endIndex = -1;
              const clickedItemIndex = lineItems.findIndex(itm => itm === clickedItem);
 
-             if (clickedItemIndex === -1) return null;
+             if (clickedItemIndex === -1) {
+                 console.warn("findWordAtPdfPoint: Clicked item not found in sorted line items."); // Debug log
+                 return null;
+             }
 
              // Find word start (go left)
              for (let i = clickedItemIndex; i >= 0; i--) {
-                  const currentStr = lineItems[i].str;
+                  const currentItem = lineItems[i];
+                  const currentStr = currentItem.str;
+                  if (!currentStr) continue; // Skip if string is empty
+
                   // Check gap to previous item
                   let isSpaceBefore = false;
                   if (i > 0) {
                       const prevItem = lineItems[i-1];
-                      const prevRight = prevItem.transform[4] + prevItem.width;
-                      const currentLeft = lineItems[i].transform[4];
-                      // Heuristic: Gap larger than ~1/3 average char width suggests space
-                      const avgCharWidth = clickedItem.width / (clickedItem.str.length || 1);
-                      if (currentLeft - prevRight > avgCharWidth * 0.3) {
-                          isSpaceBefore = true;
-                      }
+                       // Ensure items have necessary properties
+                       if (prevItem.transform && typeof prevItem.width === 'number' && currentItem.transform) {
+                           const prevRight = prevItem.transform[4] + prevItem.width;
+                           const currentLeft = currentItem.transform[4];
+                           // Heuristic: Gap larger than ~1/3 average char width suggests space
+                           const avgCharWidth = (clickedItem.width / (clickedItem.str?.length || 1)) || 5; // Provide default if length is 0
+                           if (currentLeft - prevRight > avgCharWidth * 0.3) {
+                               isSpaceBefore = true;
+                           }
+                       }
                   }
+
+                   // Check for explicit space at start or inferred space before
                   if (currentStr.startsWith(' ') || currentStr.startsWith('\t') || currentStr.startsWith('\n') || isSpaceBefore) {
-                      startIndex = i;
+                      startIndex = i + 1; // Word starts *after* the space or the item with space before it
                       break;
                   }
-                  startIndex = i; // Include this item
+
+                  startIndex = i; // Include this item as potential start
+
+                  // If the item itself contains a space, the word likely started within it or just after the space
                   if (currentStr.includes(' ') || currentStr.includes('\t') || currentStr.includes('\n')) {
-                     // If the item itself contains a space, the word likely started within it or just after the space
-                     const parts = currentStr.split(/(\s+)/);
-                     if (parts[parts.length-1]) { // If non-space part is at the end
-                        // Word starts here
-                     } else { // Space is at the end
-                         startIndex = i+1; // Word starts after this item
-                     }
-                     break;
+                      const parts = currentStr.split(/(\s+)/);
+                      if (parts.length > 1 && parts[parts.length-1] && !/^\s+$/.test(parts[parts.length-1])) {
+                          // If non-space part is at the end, this item is the start
+                      } else {
+                          // Space is at the end, or only space
+                          startIndex = i+1; // Word starts after this item
+                      }
+                      break; // Found boundary
                   }
              }
               if (startIndex < 0) startIndex = 0;
+              console.log(`findWordAtPdfPoint: Determined start index: ${startIndex}`); // Debug log
+
 
              // Find word end (go right)
              for (let i = clickedItemIndex; i < lineItems.length; i++) {
-                 const currentStr = lineItems[i].str;
+                 const currentItem = lineItems[i];
+                 const currentStr = currentItem.str;
+                 if (!currentStr) continue; // Skip if string is empty
+
                  let isSpaceAfter = currentStr.endsWith(' ') || currentStr.endsWith('\t') || currentStr.endsWith('\n');
                   if (!isSpaceAfter && i + 1 < lineItems.length) {
-                      const currentRight = lineItems[i].transform[4] + lineItems[i].width;
-                      const nextLeft = lineItems[i+1].transform[4];
-                      const avgCharWidth = clickedItem.width / (clickedItem.str.length || 1);
-                      if (nextLeft - currentRight > avgCharWidth * 0.3) {
-                          isSpaceAfter = true;
-                      }
+                      const nextItem = lineItems[i+1];
+                       // Ensure items have necessary properties
+                       if(currentItem.transform && typeof currentItem.width === 'number' && nextItem.transform) {
+                           const currentRight = currentItem.transform[4] + currentItem.width;
+                           const nextLeft = nextItem.transform[4];
+                           const avgCharWidth = (clickedItem.width / (clickedItem.str?.length || 1)) || 5;
+                           if (nextLeft - currentRight > avgCharWidth * 0.3) {
+                               isSpaceAfter = true;
+                           }
+                       }
                   }
                   endIndex = i; // Include this item
                   if (isSpaceAfter) {
@@ -724,19 +783,30 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                   }
              }
               if (endIndex < 0) endIndex = lineItems.length - 1;
+              console.log(`findWordAtPdfPoint: Determined end index: ${endIndex}`); // Debug log
+
 
              // Assemble the word
              for (let i = startIndex; i <= endIndex; i++) {
-                  word += lineItems[i].str;
+                  if (lineItems[i] && lineItems[i].str) { // Check item exists
+                      word += lineItems[i].str;
+                  }
              }
+              console.log(`findWordAtPdfPoint: Assembled word before cleaning: "${word}"`); // Debug log
+
 
              // Final cleaning
              const cleanedWord = word
                  .replace(/\s+/g, '') // Remove internal spaces from reconstruction glitches
                  .replace(/^[^\p{L}\p{N}-]+|[^\p{L}\p{N}-]+$/gu, '') // Remove leading/trailing punctuation/symbols (keep internal hyphens)
                  .trim();
+             console.log(`findWordAtPdfPoint: Cleaned word: "${cleanedWord}"`); // Debug log
 
-             if (!cleanedWord || cleanedWord.length < 2) return null; // Ignore single chars or empty strings
+
+             if (!cleanedWord || cleanedWord.length < 2) {
+                 console.log("findWordAtPdfPoint: Cleaned word too short or empty."); // Debug log
+                 return null; // Ignore single chars or empty strings
+             }
 
              return { word: cleanedWord };
         }
