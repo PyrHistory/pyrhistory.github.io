@@ -1,1158 +1,536 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TimeQuest - The Great Human Lab</title>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
-  <style>
-    /* --------------------------------
-       CSS Variables - Design System (from Pyr style guide)
-    -------------------------------- */
-    :root {
-      /* Color System */
-      --lab-blue: #0F172A;
-      --deep-blue: #1E293B;
-      --flame: #F97316;
-      --amber: #FBBF24;
-      --papyrus: #F8F5EF;
-      --parchment: #EFE6D5;
-      --scroll: #E0D5C0;
-      --success: #14B8A6;
-      --warning: #FBBF24;
-      --error: #F43F5E;
-      --info: #3B82F6;
-      --text-primary: rgba(255, 255, 255, 0.95);
-      --text-secondary: rgba(255, 255, 255, 0.7);
-      --text-muted: rgba(255, 255, 255, 0.5);
-      --text-dark: #1E293B;
-      --text-light-bg-primary: #1F2937;
-      --text-light-bg-secondary: #4b5563;
-      --heading-accent: #F3EDD6;
-
-      /* Gradients */
-      --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
-      --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
-
-      /* Spacing System */
-      --space-xxs: 0.125rem; /* 2px */
-      --space-xs: 0.25rem;  /* 4px */
-      --space-sm: 0.5rem;   /* 8px */
-      --space-md: 1rem;     /* 16px */
-      --space-lg: 1.5rem;   /* 24px */
-      --space-xl: 2rem;     /* 32px */
-      --space-2xl: 3rem;    /* 48px */
-      --space-3xl: 4rem;    /* 64px */
-      --space-4xl: 6rem;    /* 96px */
-
-      /* Border Radius */
-      --radius-sm: 0.25rem;
-      --radius-md: 0.5rem;
-      --radius-lg: 1rem;
-      --radius-xl: 1.5rem;
-      --radius-2xl: 2rem;
-      --radius-full: 9999px;
-
-      /* Shadow System */
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
-
-      /* Transitions */
-      --transition-fast: 0.15s ease-out;
-      --transition-medium: 0.3s ease-out;
-      --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      --transition-spring: 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-    }
-
-    /* --------------------------------
-       Reset & Base Styles
-    -------------------------------- */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--lab-blue);
-      color: var(--text-primary);
-      line-height: 1.6;
-    }
-
-    body {
-      position: relative; /* Needed for absolute positioning of back button */
-      overflow-x: hidden;
-    }
-
-    /* Background gradient effect */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -2;
-      background-image:
-          radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.18) 0%, transparent 45%),
-          radial-gradient(circle at 85% 85%, rgba(197, 83, 235, 0.18) 0%, transparent 45%),
-          radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
-          radial-gradient(circle at 15% 85%, rgba(255, 202, 40, 0.12) 0%, transparent 40%);
-      animation: ambient-shift 30s ease infinite alternate;
-    }
-
-    @keyframes ambient-shift {
-      0% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
-      100% { background-position: 5% 10%, -5% -5%, 10% -5%, -10% 5%; }
-    }
-
-    /* Subtle texture overlay */
-    body::after {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      opacity: 0.03;
-      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    }
-
-    /* --------------------------------
-       Back to Dashboard Button
-    -------------------------------- */
-    .back-button {
-      position: absolute;
-      top: var(--space-lg);
-      left: var(--space-lg);
-      z-index: 10;
-      display: inline-flex;
-      align-items: center;
-      padding: var(--space-xs) var(--space-sm);
-      background-color: rgba(30, 41, 59, 0.6);
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-      text-decoration: none;
-      border-radius: var(--radius-md);
-      transition: all var(--transition-fast);
-      border: 1px solid transparent;
-    }
-
-    .back-button svg {
-      width: 16px;
-      height: 16px;
-      margin-right: var(--space-xs);
-      stroke-width: 2;
-    }
-
-    .back-button:hover {
-      background-color: rgba(30, 41, 59, 0.9);
-      color: var(--text-primary);
-      border-color: rgba(255, 255, 255, 0.1);
-      transform: translateY(-1px);
-    }
-
-    /* --------------------------------
-       Game Container & Typography
-    -------------------------------- */
-    #game-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-lg);
-      padding-top: var(--space-4xl);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: var(--space-md);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    h2 {
-      font-size: 2rem;
-      letter-spacing: -0.01em;
-    }
-
-    h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-    }
-
-    p {
-      margin-bottom: var(--space-md);
-    }
-
-    .gradient-text {
-      background: var(--gradient-flame);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    /* --------------------------------
-       Buttons
-    -------------------------------- */
-    .button {
-      position: relative;
-      background: var(--gradient-flame);
-      color: white;
-      font-weight: 600;
-      padding: 0.75rem 1.25rem;
-      border-radius: var(--radius-full);
-      transition: all var(--transition-bounce);
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      overflow: hidden;
-      z-index: 1;
-    }
-
-    .button:hover:not(:disabled) {
-      transform: translateY(-4px) scale(1.05);
-      box-shadow: var(--shadow-md);
-    }
-
-    .button:active:not(:disabled) {
-      transform: translateY(2px);
-    }
-
-    .button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    .button-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-primary);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .button-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
-    }
-
-    /* --------------------------------
-       Game Screen Styles
-    -------------------------------- */
-    .game-screen {
-      width: 100%;
-      max-width: 800px;
-      display: none; /* Hide all screens by default */
-    }
-
-    .game-screen.active {
-      display: block; /* Show active screen */
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* --------------------------------
-       Game Header
-    -------------------------------- */
-    .game-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--space-xl);
-      width: 100%;
-    }
-
-    .game-logo {
-      display: flex;
-      align-items: center;
-    }
-
-    .game-stats {
-      display: flex;
-      gap: var(--space-md);
-    }
-
-    .stat-badge {
-      background-color: rgba(30, 41, 59, 0.7);
-      padding: var(--space-xs) var(--space-md);
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-    }
-
-    /* --------------------------------
-       Category Grid
-    -------------------------------- */
-    .category-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: var(--space-md);
-      width: 100%;
-    }
-
-    .category-card {
-      background-color: var(--deep-blue);
-      border-radius: var(--radius-lg);
-      padding: var(--space-lg);
-      text-align: center;
-      cursor: pointer;
-      transition: all var(--transition-medium);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .category-card:hover:not(.disabled) {
-      transform: translateY(-5px);
-      box-shadow: var(--shadow-lg);
-      border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .category-card.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .category-icon {
-      font-size: 2.5rem;
-      margin-bottom: var(--space-sm);
-    }
-
-    /* --------------------------------
-       Question UI
-    -------------------------------- */
-    .question-container {
-      background-color: var(--deep-blue);
-      border-radius: var(--radius-lg);
-      padding: var(--space-lg);
-      margin-bottom: var(--space-lg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .question-text {
-      font-size: 1.25rem;
-      margin-bottom: var(--space-lg);
-    }
-
-    .answer-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: var(--space-md);
-    }
-
-    @media (min-width: 640px) {
-      .answer-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .answer-option {
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: var(--radius-md);
-      padding: var(--space-md);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      display: flex;
-      align-items: center;
-    }
-
-    .answer-option:hover:not(.selected):not(.disabled) {
-      background-color: rgba(255, 255, 255, 0.15);
-    }
-
-    .answer-option.selected { /* Style for the brief moment it's selected before feedback */
-      background-color: var(--flame);
-    }
-
-    .answer-option.correct { /* Style for correct answer AFTER selection */
-      background-color: var(--success);
-       border-color: rgba(255,255,255, 0.3);
-    }
-
-    .answer-option.incorrect { /* Style for incorrect selection AFTER selection */
-      background-color: var(--error);
-       border-color: rgba(255,255,255, 0.3);
-    }
-
-    .answer-option.disabled { /* Applied to all options AFTER selection */
-      opacity: 0.6; /* Slightly dim non-relevant options */
-      cursor: not-allowed;
-    }
-     .answer-option.correct.disabled,
-     .answer-option.incorrect.disabled {
-         opacity: 1; /* Ensure correct/incorrect answers remain fully visible */
-     }
-
-     /* Visual only for 50:50 */
-     .answer-option.fifty-fifty-hidden {
-         opacity: 0.3 !important;
-         pointer-events: none;
-     }
-
-
-    .answer-prefix {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background-color: rgba(0, 0, 0, 0.3);
-      margin-right: var(--space-md);
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
-    /* --------------------------------
-       Timer and Question Info
-    -------------------------------- */
-    .question-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center; /* Vertically align items */
-      margin-bottom: var(--space-md);
-    }
-
-    .timer {
-      display: flex;
-      align-items: center;
-      background-color: rgba(30, 41, 59, 0.8);
-      padding: var(--space-xs) var(--space-md);
-      border-radius: var(--radius-md);
-    }
-
-    .timer.warning {
-      color: var(--warning);
-    }
-
-    .timer.danger {
-      color: var(--error);
-    }
-
-    /* --------------------------------
-       Powerups
-    -------------------------------- */
-    .powerups {
-      display: flex;
-      justify-content: center;
-      gap: var(--space-md);
-      margin-top: var(--space-lg);
-    }
-
-    .powerup-button {
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: var(--text-primary);
-      border-radius: var(--radius-md);
-      padding: var(--space-sm) var(--space-md);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      display: flex;
-      align-items: center;
-      gap: var(--space-xs);
-    }
-
-    .powerup-button:hover:not(:disabled) {
-      background-color: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .powerup-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* --------------------------------
-       Feedback Screen
-    -------------------------------- */
-    .feedback-container {
-      background-color: var(--deep-blue);
-      border-radius: var(--radius-lg);
-      padding: var(--space-lg);
-      margin-bottom: var(--space-lg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .feedback-container.correct {
-      background-color: rgba(20, 184, 166, 0.2);
-      border-color: rgba(20, 184, 166, 0.4);
-    }
-
-    .feedback-container.incorrect {
-      background-color: rgba(244, 63, 94, 0.2);
-      border-color: rgba(244, 63, 94, 0.4);
-    }
-
-    /* --------------------------------
-       Scoreboard
-    -------------------------------- */
-    .score-container {
-      background-color: var(--deep-blue);
-      border-radius: var(--radius-lg);
-      padding: var(--space-xl);
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      max-width: 500px;
-      margin: 0 auto;
-      box-shadow: var(--shadow-xl);
-    }
-
-    .score-value {
-      font-size: 3rem;
-      font-weight: 800;
-      color: var(--amber);
-      margin: var(--space-md) 0;
-    }
-
-    .score-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-md);
-      margin: var(--space-lg) 0;
-    }
-
-    .score-stat {
-      background-color: rgba(255, 255, 255, 0.05);
-      padding: var(--space-md);
-      border-radius: var(--radius-md);
-    }
-
-    .score-stat-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: var(--space-xs);
-    }
-
-    /* --------------------------------
-       Icons
-    -------------------------------- */
-    .icon {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      stroke: currentColor;
-      stroke-width: 2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      vertical-align: middle;
-    }
-
-    .icon-sm {
-      width: 16px;
-      height: 16px;
-    }
-
-    .icon-lg {
-      width: 24px;
-      height: 24px;
-    }
-
-    /* --------------------------------
-       Intro Screen Features
-    -------------------------------- */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-md);
-      margin-bottom: var(--space-lg);
-    }
-
-    .feature-item {
-      display: flex;
-      align-items: center;
-      padding: var(--space-sm);
-    }
-
-    .feature-icon {
-      margin-right: var(--space-sm);
-      color: var(--flame);
-    }
-
-    /* --------------------------------
-       Responsive Adjustments
-    -------------------------------- */
-    @media (max-width: 640px) {
-      h1 {
-        font-size: 2rem;
-      }
-
-      h2 {
-        font-size: 1.5rem;
-      }
-
-      .game-header {
-        flex-direction: column;
-        gap: var(--space-md);
-        text-align: center;
-      }
-
-      .score-stats {
-        grid-template-columns: 1fr;
-      }
-
-      .powerups {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .feature-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .back-button {
-        top: var(--space-md);
-        left: var(--space-md);
-      }
-
-      #game-container {
-        padding-top: var(--space-3xl);
-      }
-    }
-
-    /* --------------------------------
-       Reduced Motion
-    -------------------------------- */
-    @media (prefers-reduced-motion: reduce) {
-      .button:hover:not(:disabled),
-      .button:active:not(:disabled),
-      .category-card:hover:not(.disabled),
-      .answer-option:hover:not(.selected):not(.disabled),
-      .powerup-button:hover:not(:disabled),
-      .back-button:hover {
-        transform: none;
-      }
-
-      body::before {
-        animation: none;
-      }
-
-      .game-screen.active {
-        animation: none;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Back to Dashboard Button -->
-  <a href="dashboard.html" class="back-button">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm">
-      <line x1="19" y1="12" x2="5" y2="12"></line>
-      <polyline points="12 19 5 12 12 5"></polyline>
-    </svg>
-    Back to Dashboard
-  </a>
-
-  <div id="game-container">
-    <!-- Game content will be dynamically inserted here by JavaScript -->
-    <!-- Initial state should show the Intro Screen if JS runs correctly -->
-  </div>
-
-  <script>
-    // --------------------------------
-    // Game State
-    // --------------------------------
-    const gameState = {
-      currentScreen: 'intro', // intro, category, question, feedback, scoreboard
-      score: 0,
-      lives: 3,
-      currentQuestion: null,
-      selectedAnswer: null, // null: unanswered, number: index of selected answer
-      timeLeft: 20,
-      activeCategory: null,
-      usedPowerups: {
-        fiftyFifty: false,
-        timeFreeze: false,
-        extraLife: false
+import React, { useState, useEffect } from 'react';
+import { Clock, Award, Heart, Zap, HelpCircle, RefreshCw, Gift } from 'lucide-react';
+
+const TimeQuestGame = () => {
+  const [gameState, setGameState] = useState('intro'); // intro, category, question, feedback, scoreboard
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [usedPowerups, setUsedPowerups] = useState({
+    fiftyFifty: false,
+    timeFreeze: false,
+    extraLife: false
+  });
+  const [completedQuestions, setCompletedQuestions] = useState([]);
+  
+  // Dummy data for categories and questions
+  const categories = [
+    { id: 1, name: "Early Humans", icon: "🦍", color: "bg-purple-600", difficulty: 1 },
+    { id: 2, name: "Ancient Egypt", icon: "🏺", color: "bg-yellow-600", difficulty: 2 },
+    { id: 3, name: "Mesopotamia", icon: "🏙️", color: "bg-blue-600", difficulty: 3 },
+    { id: 4, name: "Farming & Cities", icon: "🌾", color: "bg-green-600", difficulty: 2 },
+    { id: 5, name: "Writing & Laws", icon: "📜", color: "bg-red-600", difficulty: 4 },
+    { id: 6, name: "Famous Leaders", icon: "👑", color: "bg-pink-600", difficulty: 3 }
+  ];
+  
+  const questions = {
+    1: [
+      {
+        id: 101,
+        question: "About how many years ago did humans first use stone tools?",
+        options: ["5,000 years ago", "50,000 years ago", "500,000 years ago", "2.6 million years ago"],
+        correctAnswer: 3,
+        points: 200,
+        explanation: "The first stone tools date back to around 2.6 million years ago, made by early human ancestors (Homo habilis)."
       },
-      completedQuestions: [], // Stores IDs of completed questions
-      timerInterval: null,
-      optionsToHideFiftyFifty: [], // Store indices to hide for 50:50 rendering
-    };
-
-    // --------------------------------
-    // Game Data (Sample - ensure your actual data is complete)
-    // --------------------------------
-    const gameData = {
-       categories: [
-        { id: 1, name: "Early Humans", icon: "🦍", color: "#9333ea", difficulty: 1 },
-        { id: 2, name: "Ancient Egypt", icon: "🏺", color: "#ca8a04", difficulty: 2 },
-        { id: 3, name: "Mesopotamia", icon: "🏙️", color: "#2563eb", difficulty: 3 },
-        { id: 4, name: "Farming & Cities", icon: "🌾", color: "#16a34a", difficulty: 2 },
-        { id: 5, name: "Writing & Laws", icon: "📜", color: "#dc2626", difficulty: 4 },
-        { id: 6, name: "Famous Leaders", icon: "👑", color: "#db2777", difficulty: 3 }
-      ],
-      questions: {
-        1: [ { id: 101, question: "About how many years ago did humans first use stone tools?", options: ["5,000 years ago", "50,000 years ago", "500,000 years ago", "2.6 million years ago"], correctAnswer: 3, points: 200, explanation: "The first stone tools date back to around 2.6 million years ago, made by early human ancestors (Homo habilis)." }, { id: 102, question: "Which early human species was the first to control fire?", options: ["Homo sapiens", "Homo habilis", "Homo erectus", "Australopithecus"], correctAnswer: 2, points: 300, explanation: "Homo erectus mastered fire around 1 million years ago, which transformed human diet, protection, and even our physical evolution." }, { id: 103, question: "What major innovation happened during the 'Cognitive Revolution' 70,000-100,000 years ago?", options: ["Agriculture", "Writing", "Complex language", "Metallurgy"], correctAnswer: 2, points: 400, explanation: "The Cognitive Revolution marked the development of complex language and abstract thinking, allowing humans to coordinate in larger groups." } ],
-        2: [ { id: 201, question: "The ancient Egyptian writing system is called:", options: ["Cuneiform", "Hieroglyphics", "Sanskrit", "Runes"], correctAnswer: 1, points: 200, explanation: "Hieroglyphics combined picture symbols, sound symbols, and determinatives in a complex, sacred writing system." }, { id: 202, question: "What was the main purpose of Egyptian pyramids?", options: ["Astronomical observatories", "Government buildings", "Tombs for pharaohs", "Granaries for food storage"], correctAnswer: 2, points: 300, explanation: "Pyramids were royal tombs designed as 'resurrection machines' to transform the dead pharaoh into a god who would live forever among the stars." }, { id: 203, question: "What concept was central to Egyptian religious belief and social order?", options: ["Ma'at (cosmic order)", "Karma", "Olympus", "Ragnarok"], correctAnswer: 0, points: 400, explanation: "Ma'at represented cosmic order and balance that the pharaoh was responsible for maintaining throughout Egypt." } ],
-        3: [ { id: 301, question: "Which of these was NOT a major innovation from Mesopotamia?", options: ["The wheel", "Cuneiform writing", "Bronze metallurgy", "Paper making"], correctAnswer: 3, points: 200, explanation: "Paper making was developed in ancient China, not Mesopotamia. The other innovations were all Mesopotamian developments." }, { id: 302, question: "Who created the first known written law code?", options: ["Sargon", "Hammurabi", "Gilgamesh", "Narmer"], correctAnswer: 1, points: 300, explanation: "Hammurabi created a famous code of 282 laws around 1750 BCE, carved on a stone stele for public display." }, { id: 303, question: "The temple-towers of Mesopotamian cities were called:", options: ["Obelisks", "Pyramids", "Ziggurats", "Stupas"], correctAnswer: 2, points: 400, explanation: "Ziggurats were massive stepped platforms with temples at the top, believed to connect heaven and earth." } ],
-        4: [ { id: 401, question: "Around when did humans first develop agriculture?", options: ["30,000 BCE", "10,000 BCE", "3,000 BCE", "1,000 BCE"], correctAnswer: 1, points: 200, explanation: "Agriculture began developing around 10,000 BCE in the Fertile Crescent, marking the Neolithic Revolution." }, { id: 402, question: "What was the first animal to be domesticated by humans?", options: ["Cow", "Sheep", "Dog", "Pig"], correctAnswer: 2, points: 300, explanation: "Dogs were domesticated from wolves 20,000-40,000 years ago, long before farming began." }, { id: 403, question: "Which was likely NOT a major consequence of early farming?", options: ["Larger human populations", "More diverse human diet", "Permanent settlements", "Development of specialized jobs"], correctAnswer: 1, points: 400, explanation: "Early farmers actually had less dietary diversity than hunter-gatherers and often suffered from nutritional deficiencies." } ],
-        5: [ { id: 501, question: "What was the primary reason writing was invented?", options: ["To write poetry", "To record religious rituals", "To keep administrative records", "To communicate with other cities"], correctAnswer: 2, points: 200, explanation: "Writing was first developed to track economic transactions and administrative records in growing cities." }, { id: 502, question: "Around what year was cuneiform writing developed?", options: ["10,000 BCE", "5,000 BCE", "3,200 BCE", "1,500 BCE"], correctAnswer: 2, points: 300, explanation: "Cuneiform writing appeared around 3200 BCE in Mesopotamia, evolving from simple pictographs to a complex writing system." }, { id: 503, question: "What made Hammurabi's law code revolutionary at the time?", options: ["It was the first to abolish slavery", "It was displayed publicly", "It treated all citizens equally", "It was the first to ban capital punishment"], correctAnswer: 1, points: 400, explanation: "Hammurabi's public display of laws was revolutionary - previously, laws were secret knowledge of rulers or priests." } ],
-        6: [ { id: 601, question: "Which leader united Upper and Lower Egypt around 3100 BCE?", options: ["Ramses II", "Khufu", "Narmer", "Mentuhotep II"], correctAnswer: 2, points: 200, explanation: "Narmer (also called Menes) unified Upper and Lower Egypt, creating the double crown symbolizing rule over a unified land." }, { id: 602, question: "Sargon of Akkad is known for creating the world's first:", options: ["Democracy", "Empire", "Alphabet", "University"], correctAnswer: 1, points: 300, explanation: "Around 2334 BCE, Sargon created the first empire, controlling territory from the Persian Gulf to the Mediterranean Sea." }, { id: 603, question: "Which Mesopotamian king is associated with the oldest known written story?", options: ["Hammurabi", "Gilgamesh", "Nebuchadnezzar", "Cyrus the Great"], correctAnswer: 1, points: 400, explanation: "The Epic of Gilgamesh, composed around 2100 BCE, is the world's oldest recorded story, telling of Gilgamesh's quest for immortality." } ]
+      {
+        id: 102,
+        question: "Which early human species was the first to control fire?",
+        options: ["Homo sapiens", "Homo habilis", "Homo erectus", "Australopithecus"],
+        correctAnswer: 2,
+        points: 300,
+        explanation: "Homo erectus mastered fire around 1 million years ago, which transformed human diet, protection, and even our physical evolution."
+      },
+      {
+        id: 103,
+        question: "What major innovation happened during the 'Cognitive Revolution' 70,000-100,000 years ago?",
+        options: ["Agriculture", "Writing", "Complex language", "Metallurgy"],
+        correctAnswer: 2,
+        points: 400,
+        explanation: "The Cognitive Revolution marked the development of complex language and abstract thinking, allowing humans to coordinate in larger groups."
       }
-    };
-
-    // --------------------------------
-    // Game Functions
-    // --------------------------------
-    const gameFunctions = {
-      init() {
-        console.log("Initializing game...");
-        this.renderScreen('intro');
-        this.addEventListeners();
+    ],
+    2: [
+      {
+        id: 201,
+        question: "The ancient Egyptian writing system is called:",
+        options: ["Cuneiform", "Hieroglyphics", "Sanskrit", "Runes"],
+        correctAnswer: 1,
+        points: 200,
+        explanation: "Hieroglyphics combined picture symbols, sound symbols, and determinatives in a complex, sacred writing system."
       },
-
-      addEventListeners() {
-        const container = document.getElementById('game-container');
-
-        // Use event delegation on the container
-        container.addEventListener('click', (e) => {
-          const target = e.target;
-
-          // Start game
-          if (target.matches('#start-game-btn')) {
-            this.renderScreen('category');
-          }
-          // Select category
-          else if (target.closest('.category-card:not(.disabled)')) {
-            const card = target.closest('.category-card');
-            const categoryId = parseInt(card.dataset.id);
-            this.handleCategorySelect(categoryId);
-          }
-          // Select answer
-          else if (target.closest('.answer-option:not(.disabled):not(.fifty-fifty-hidden)')) {
-              // Check if an answer has already been processed for this question
-              if (gameState.selectedAnswer === null) {
-                  const option = target.closest('.answer-option');
-                  const answerIndex = parseInt(option.dataset.index);
-                  this.handleAnswerSelection(answerIndex);
-              }
-          }
-          // Use powerup
-          else if (target.closest('.powerup-button:not(:disabled)')) {
-            const button = target.closest('.powerup-button');
-            const powerup = button.dataset.powerup;
-            this.usePowerup(powerup);
-          }
-          // Continue after feedback: Next Category
-          else if (target.matches('#next-category-btn')) {
-            this.renderScreen('category');
-          }
-          // Continue after feedback: Next Question in Category
-          else if (target.matches('#next-question-btn')) {
-            this.handleCategorySelect(gameState.activeCategory);
-          }
-           // View Scoreboard button (from feedback screen) - FIXED
-          else if (target.matches('#view-scoreboard-btn')) {
-              this.renderScreen('scoreboard');
-          }
-          // Play again
-          else if (target.matches('#play-again-btn')) {
-            this.resetGame();
-          }
-        });
+      {
+        id: 202,
+        question: "What was the main purpose of Egyptian pyramids?",
+        options: ["Astronomical observatories", "Government buildings", "Tombs for pharaohs", "Granaries for food storage"],
+        correctAnswer: 2,
+        points: 300,
+        explanation: "Pyramids were royal tombs designed as 'resurrection machines' to transform the dead pharaoh into a god who would live forever among the stars."
       },
-
-      renderScreen(screen) {
-        gameState.currentScreen = screen;
-        const container = document.getElementById('game-container');
-        if (!container) {
-            console.error("Game container not found!");
-            return;
-        }
-
-        // Clear previous content
-        container.innerHTML = '';
-
-        let screenHtml = '';
-        switch (screen) {
-          case 'intro':       screenHtml = this.renderIntroScreen(); break;
-          case 'category':    screenHtml = this.renderCategoryScreen(); break;
-          case 'question':    screenHtml = this.renderQuestionScreen(); break;
-          case 'feedback':    screenHtml = this.renderFeedbackScreen(); break;
-          case 'scoreboard':  screenHtml = this.renderScoreboardScreen(); break;
-          default:            screenHtml = '<p>Error: Unknown screen.</p>';
-        }
-
-        container.innerHTML = screenHtml;
-
-        // Start timer only if rendering the question screen AND no answer selected yet
-        if (screen === 'question' && gameState.selectedAnswer === null) {
-          this.startTimer();
-        }
+      {
+        id: 203,
+        question: "What concept was central to Egyptian religious belief and social order?",
+        options: ["Ma'at (cosmic order)", "Karma", "Olympus", "Ragnarok"],
+        correctAnswer: 0,
+        points: 400,
+        explanation: "Ma'at represented cosmic order and balance that the pharaoh was responsible for maintaining throughout Egypt."
+      }
+    ],
+    3: [
+      {
+        id: 301,
+        question: "Which of these was NOT a major innovation from Mesopotamia?",
+        options: ["The wheel", "Cuneiform writing", "Bronze metallurgy", "Paper making"],
+        correctAnswer: 3,
+        points: 200,
+        explanation: "Paper making was developed in ancient China, not Mesopotamia. The other innovations were all Mesopotamian developments."
       },
-
-      renderIntroScreen() {
-        // (HTML is unchanged from previous version - assumed correct)
-         return `
-          <div class="game-screen active" id="intro-screen">
-            <div class="text-center" style="max-width: 800px; text-align: center;">
-              <h1 class="gradient-text" style="font-size: 4rem; margin-bottom: 1rem;">TimeQuest</h1>
-              <p style="font-size: 1.25rem; margin-bottom: 2rem;">The Ultimate Journey Through Human History</p>
-              <div style="background-color: var(--deep-blue); padding: 2rem; border-radius: var(--radius-xl); margin-bottom: 2rem; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: var(--shadow-xl);">
-                <p style="margin-bottom: 1.5rem;">Test your knowledge about the epic story of human civilization! From early humans to ancient empires, challenge yourself with questions across the fascinating timeline of history.</p>
-                <div class="feature-grid">
-                  <div class="feature-item"><svg class="icon feature-icon" style="color: #FBBF24;" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>Earn points for correct answers</span></div>
-                  <div class="feature-item"><svg class="icon feature-icon" style="color: #3B82F6;" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg><span>Use power-ups when you're stuck</span></div>
-                  <div class="feature-item"><svg class="icon feature-icon" style="color: #A855F7;" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg><span>Unlock badges and achievements</span></div>
-                  <div class="feature-item"><svg class="icon feature-icon" style="color: #10B981;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>Race against the clock</span></div>
-                </div>
-                <button id="start-game-btn" class="button" style="margin-top: 1.5rem;">Start Your Journey!</button>
-              </div>
-              <div style="font-size: 0.875rem; color: var(--text-secondary);">Developed by The Great Human Lab © 2025</div>
-            </div>
-          </div>`;
+      {
+        id: 302,
+        question: "Who created the first known written law code?",
+        options: ["Sargon", "Hammurabi", "Gilgamesh", "Narmer"],
+        correctAnswer: 1,
+        points: 300,
+        explanation: "Hammurabi created a famous code of 282 laws around 1750 BCE, carved on a stone stele for public display."
       },
-
-      renderCategoryScreen() {
-         const header = `
-          <div class="game-header">
-            <div class="game-logo"><h2 class="gradient-text">TimeQuest</h2><span style="margin-left: 0.5rem; color: var(--text-secondary);">The Great Human Lab</span></div>
-            <div class="game-stats">
-              <div class="stat-badge"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>${gameState.score}</span></div>
-              <div class="stat-badge"><svg class="icon icon-sm" style="color: #f43f5e;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg><span>${gameState.lives}</span></div>
-            </div>
-          </div>`;
-        let categoryGrid = `<div class="game-screen active" id="category-screen"><h3 style="text-align: center; margin-bottom: 1.5rem;">Choose a Time Period</h3><div class="category-grid">`;
-        gameData.categories.forEach(category => {
-          const categoryQuestions = gameData.questions[category.id] || [];
-          const remainingQuestions = categoryQuestions.filter(q => !gameState.completedQuestions.includes(q.id)).length;
-          const isDisabled = remainingQuestions === 0;
-          const difficultyStars = Array(category.difficulty).fill('★').join('') + Array(Math.max(0, 5 - category.difficulty)).fill('☆').join(''); // Ensure 5 stars total
-          categoryGrid += `
-            <div class="category-card ${isDisabled ? 'disabled' : ''}" data-id="${category.id}" style="background-color: ${category.color}20; border-color: ${category.color}40;">
-              <div class="category-icon">${category.icon}</div>
-              <div style="font-weight: 600; margin-bottom: 0.25rem;">${category.name}</div>
-              <div style="font-size: 0.875rem; opacity: 0.8;">${difficultyStars}</div>
-              <div style="margin-top: 0.75rem; font-size: 0.75rem; opacity: 0.7;">
-                ${isDisabled ? 'Completed' : `${remainingQuestions} question${remainingQuestions !== 1 ? 's' : ''} left`}
-              </div>
-            </div>`;
-        });
-        categoryGrid += `</div></div>`;
-        return header + categoryGrid;
+      {
+        id: 303,
+        question: "The temple-towers of Mesopotamian cities were called:",
+        options: ["Obelisks", "Pyramids", "Ziggurats", "Stupas"],
+        correctAnswer: 2,
+        points: 400,
+        explanation: "Ziggurats were massive stepped platforms with temples at the top, believed to connect heaven and earth."
+      }
+    ],
+    4: [
+      {
+        id: 401,
+        question: "Around when did humans first develop agriculture?",
+        options: ["30,000 BCE", "10,000 BCE", "3,000 BCE", "1,000 BCE"],
+        correctAnswer: 1,
+        points: 200,
+        explanation: "Agriculture began developing around 10,000 BCE in the Fertile Crescent, marking the Neolithic Revolution."
       },
-
-      renderQuestionScreen() {
-        if (!gameState.currentQuestion) return '<p>Error: No question loaded.</p>';
-         const header = `
-          <div class="game-header">
-             <div class="game-logo"><h2 class="gradient-text">TimeQuest</h2><span style="margin-left: 0.5rem; color: var(--text-secondary);">The Great Human Lab</span></div>
-             <div class="game-stats">
-               <div class="stat-badge"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>${gameState.score}</span></div>
-               <div class="stat-badge"><svg class="icon icon-sm" style="color: #f43f5e;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg><span>${gameState.lives}</span></div>
-             </div>
-           </div>`;
-        let timerClass = '';
-        if (gameState.timeLeft < 5) timerClass = 'danger'; else if (gameState.timeLeft < 10) timerClass = 'warning';
-
-        let questionContent = `
-          <div class="game-screen active" id="question-screen">
-            <div class="question-meta">
-              <div class="stat-badge"><span>Question worth:</span><span style="color: var(--amber); font-weight: 600; margin-left: 0.25rem;">${gameState.currentQuestion.points} pts</span></div>
-              <div class="timer ${timerClass}"><svg class="icon icon-sm" style="margin-right: 0.25rem;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span id="timer-value">${gameState.timeLeft}</span></div>
-            </div>
-            <div class="question-container">
-              <div class="question-text">${gameState.currentQuestion.question}</div>
-              <div class="answer-grid">`;
-
-        gameState.currentQuestion.options.forEach((option, index) => {
-          const isSelected = gameState.selectedAnswer === index;
-          const isCorrectAnswer = index === gameState.currentQuestion.correctAnswer;
-          const isHiddenByFiftyFifty = gameState.optionsToHideFiftyFifty.includes(index);
-
-          let optionClass = 'answer-option';
-          if (gameState.selectedAnswer !== null) { // Answer has been given/processed
-              optionClass += ' disabled';
-              if (isCorrectAnswer) optionClass += ' correct';
-              else if (isSelected) optionClass += ' incorrect';
-          } else if (isHiddenByFiftyFifty) { // 50:50 used, but no answer selected yet
-              optionClass += ' fifty-fifty-hidden disabled'; // Add visual + disabled class
-          }
-
-          questionContent += `
-            <div class="${optionClass}" data-index="${index}">
-              <div class="answer-prefix">${String.fromCharCode(65 + index)}</div>
-              <div>${option}</div>
-            </div>`;
-        });
-
-        questionContent += `</div></div><div class="powerups">
-              <button class="powerup-button" data-powerup="fiftyFifty" ${gameState.usedPowerups.fiftyFifty || gameState.selectedAnswer !== null ? 'disabled' : ''}><span>50:50</span><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM8 12h8"/></svg></button>
-              <button class="powerup-button" data-powerup="timeFreeze" ${gameState.usedPowerups.timeFreeze || gameState.selectedAnswer !== null ? 'disabled' : ''}><span>+20s</span><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6v6l4 2"/></svg></button>
-              <button class="powerup-button" data-powerup="extraLife" ${gameState.usedPowerups.extraLife || gameState.selectedAnswer !== null ? 'disabled' : ''}><span>Extra Life</span><svg class="icon icon-sm" viewBox="0 0 24 24" style="color: #f43f5e;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-            </div></div>`;
-
-        return header + questionContent;
+      {
+        id: 402,
+        question: "What was the first animal to be domesticated by humans?",
+        options: ["Cow", "Sheep", "Dog", "Pig"],
+        correctAnswer: 2,
+        points: 300,
+        explanation: "Dogs were domesticated from wolves 20,000-40,000 years ago, long before farming began."
       },
+      {
+        id: 403,
+        question: "Which was likely NOT a major consequence of early farming?",
+        options: ["Larger human populations", "More diverse human diet", "Permanent settlements", "Development of specialized jobs"],
+        correctAnswer: 1,
+        points: 400,
+        explanation: "Early farmers actually had less dietary diversity than hunter-gatherers and often suffered from nutritional deficiencies."
+      }
+    ],
+    5: [
+      {
+        id: 501,
+        question: "What was the primary reason writing was invented?",
+        options: ["To write poetry", "To record religious rituals", "To keep administrative records", "To communicate with other cities"],
+        correctAnswer: 2,
+        points: 200,
+        explanation: "Writing was first developed to track economic transactions and administrative records in growing cities."
+      },
+      {
+        id: 502,
+        question: "Around what year was cuneiform writing developed?",
+        options: ["10,000 BCE", "5,000 BCE", "3,200 BCE", "1,500 BCE"],
+        correctAnswer: 2,
+        points: 300,
+        explanation: "Cuneiform writing appeared around 3200 BCE in Mesopotamia, evolving from simple pictographs to a complex writing system."
+      },
+      {
+        id: 503,
+        question: "What made Hammurabi's law code revolutionary at the time?",
+        options: ["It was the first to abolish slavery", "It was displayed publicly", "It treated all citizens equally", "It was the first to ban capital punishment"],
+        correctAnswer: 1,
+        points: 400,
+        explanation: "Hammurabi's public display of laws was revolutionary - previously, laws were secret knowledge of rulers or priests."
+      }
+    ],
+    6: [
+      {
+        id: 601,
+        question: "Which leader united Upper and Lower Egypt around 3100 BCE?",
+        options: ["Ramses II", "Khufu", "Narmer", "Mentuhotep II"],
+        correctAnswer: 2,
+        points: 200,
+        explanation: "Narmer (also called Menes) unified Upper and Lower Egypt, creating the double crown symbolizing rule over a unified land."
+      },
+      {
+        id: 602,
+        question: "Sargon of Akkad is known for creating the world's first:",
+        options: ["Democracy", "Empire", "Alphabet", "University"],
+        correctAnswer: 1,
+        points: 300,
+        explanation: "Around 2334 BCE, Sargon created the first empire, controlling territory from the Persian Gulf to the Mediterranean Sea."
+      },
+      {
+        id: 603,
+        question: "Which Mesopotamian king is associated with the oldest known written story?",
+        options: ["Hammurabi", "Gilgamesh", "Nebuchadnezzar", "Cyrus the Great"],
+        correctAnswer: 1,
+        points: 400,
+        explanation: "The Epic of Gilgamesh, composed around 2100 BCE, is the world's oldest recorded story, telling of Gilgamesh's quest for immortality."
+      }
+    ]
+  };
 
-      renderFeedbackScreen() {
-         if (!gameState.currentQuestion) return '<p>Error: No question data for feedback.</p>';
-         const header = `
-          <div class="game-header">
-             <div class="game-logo"><h2 class="gradient-text">TimeQuest</h2><span style="margin-left: 0.5rem; color: var(--text-secondary);">The Great Human Lab</span></div>
-             <div class="game-stats">
-               <div class="stat-badge"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></path></svg><span>${gameState.score}</span></div>
-               <div class="stat-badge"><svg class="icon icon-sm" style="color: #f43f5e;" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></path></svg><span>${gameState.lives}</span></div>
-             </div>
-           </div>`;
-        const isCorrect = gameState.selectedAnswer === gameState.currentQuestion.correctAnswer;
-        const isGameOver = gameState.lives <= 0;
-        const totalQuestionsInGame = Object.values(gameData.questions).flat().length;
-        const allQuestionsAnswered = gameState.completedQuestions.length >= totalQuestionsInGame;
-        const canContinue = !isGameOver && !allQuestionsAnswered;
-        const hasMoreInCategory = canContinue && this.getUnplayedQuestionsForCategory(gameState.activeCategory).length > 0;
+  // Timer logic
+  useEffect(() => {
+    let timer;
+    if (gameState === 'question' && timeLeft > 0) {
+      timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    } else if (timeLeft === 0 && gameState === 'question') {
+      handleAnswerSelection(null);
+    }
+    return () => clearTimeout(timer);
+  }, [timeLeft, gameState]);
 
-        let feedbackContent = `
-          <div class="game-screen active" id="feedback-screen">
-            <div class="feedback-container ${isCorrect ? 'correct' : 'incorrect'}">
-              <h3>${isCorrect ? 'Correct!' : (gameState.selectedAnswer === null ? 'Time\'s Up!' : 'Incorrect!')}</h3>
-              ${isGameOver ? '<p style="color: var(--error); font-weight: 600;">You ran out of lives!</p>' : ''}
-              ${allQuestionsAnswered && !isGameOver ? '<p style="color: var(--success); font-weight: 600;">You answered all questions!</p>' : ''}
-              <p>${gameState.currentQuestion.explanation}</p>
-              <div style="margin-top: 1rem; display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius-md); background-color: rgba(0,0,0,0.2);">
-                ${isCorrect ? `<span style="color: var(--amber); font-weight: 600;">+${gameState.currentQuestion.points} points</span>` : (gameState.selectedAnswer !== null ? `<span style="color: #f43f5e; font-weight: 600;">-1 life</span>` : `<span style="color: #f43f5e; font-weight: 600;">Time penalty: -1 life</span>`)}
-              </div>
-            </div>
-            <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">`; // Added flex-wrap
+  // Start a new question
+  const startQuestion = (questionData) => {
+    setCurrentQuestion(questionData);
+    setSelectedAnswer(null);
+    setTimeLeft(20);
+    setGameState('question');
+  };
 
-        if (!canContinue) {
-            // Game over or all questions answered - show only scoreboard button
-            feedbackContent += `<button id="view-scoreboard-btn" class="button">View Final Score</button>`;
+  // Handle category selection
+  const handleCategorySelect = (categoryId) => {
+    setActiveCategory(categoryId);
+    
+    // Find an unplayed question from this category
+    const categoryQuestions = questions[categoryId];
+    const unplayedQuestions = categoryQuestions.filter(q => !completedQuestions.includes(q.id));
+    
+    if (unplayedQuestions.length > 0) {
+      // Pick a random unplayed question
+      const randomQuestion = unplayedQuestions[Math.floor(Math.random() * unplayedQuestions.length)];
+      startQuestion(randomQuestion);
+    } else {
+      // All questions in this category have been played
+      setGameState('category'); // Return to category selection
+    }
+  };
+
+  // Handle answer selection
+  const handleAnswerSelection = (optionIndex) => {
+    setSelectedAnswer(optionIndex);
+    
+    // Update completed questions
+    if (currentQuestion) {
+      setCompletedQuestions([...completedQuestions, currentQuestion.id]);
+    }
+    
+    if (optionIndex === currentQuestion.correctAnswer) {
+      // Correct answer
+      setScore(score + currentQuestion.points);
+      setTimeout(() => {
+        setGameState('feedback');
+      }, 1000);
+    } else {
+      // Wrong answer
+      setLives(lives - 1);
+      setTimeout(() => {
+        if (lives - 1 <= 0) {
+          // Game over
+          setGameState('scoreboard');
         } else {
-            // Game continues - show category button and maybe next question button
-            feedbackContent += `<button id="next-category-btn" class="button button-secondary">Choose Another Category</button>`;
-            if (hasMoreInCategory) {
-                feedbackContent += `<button id="next-question-btn" class="button">Next Question in Category</button>`;
-            }
+          setGameState('feedback');
         }
-        feedbackContent += `</div></div>`; // Close button container and screen div
+      }, 1000);
+    }
+  };
 
-        // *** REMOVED THE INLINE SCRIPT TAG ***
+  // Use powerup
+  const usePowerup = (powerup) => {
+    if (powerup === 'fiftyFifty' && !usedPowerups.fiftyFifty) {
+      setUsedPowerups({...usedPowerups, fiftyFifty: true});
+      // Implement 50/50 logic
+    } else if (powerup === 'timeFreeze' && !usedPowerups.timeFreeze) {
+      setUsedPowerups({...usedPowerups, timeFreeze: true});
+      setTimeLeft(timeLeft + 20); // Add 20 more seconds
+    } else if (powerup === 'extraLife' && !usedPowerups.extraLife) {
+      setUsedPowerups({...usedPowerups, extraLife: true});
+      setLives(lives + 1);
+    }
+  };
 
-        return header + feedbackContent;
-      },
+  // Reset game
+  const resetGame = () => {
+    setScore(0);
+    setLives(3);
+    setCompletedQuestions([]);
+    setGameState('intro');
+    setUsedPowerups({
+      fiftyFifty: false,
+      timeFreeze: false,
+      extraLife: false
+    });
+  };
 
-      renderScoreboardScreen() {
-        // Ensure calculations are done *before* the template literal
-        const totalQuestionsAnswered = gameState.completedQuestions.length;
-        const avgPoints = totalQuestionsAnswered > 0 ? Math.floor(gameState.score / totalQuestionsAnswered) : 0;
-
-        // Use template literals correctly with backticks ` `
-        return `
-          <div class="game-screen active" id="scoreboard-screen">
-            <div class="score-container">
-              <h2 style="font-size: 2rem;">Game Over!</h2>
-              <p style="margin-bottom: 2rem; color: var(--text-secondary);">Your journey through time has ended</p>
-              <div style="background-color: rgba(0, 0, 0, 0.2); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem;">
-                <div class="score-value">${gameState.score}</div> {/* Correct use */}
-                <div style="color: var(--text-secondary);">Total Points</div>
-                <div class="score-stats">
-                  <div class="score-stat">
-                    <div class="score-stat-value" style="color: var(--success);">${totalQuestionsAnswered}</div> {/* Correct use */}
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Questions Answered</div>
-                  </div>
-                  <div class="score-stat">
-                    <div class="score-stat-value" style="color: #a855f7;">${avgPoints}</div> {/* Correct use */}
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Avg. Points per Question</div>
-                  </div>
-                </div>
-              </div>
-              <button id="play-again-btn" class="button" style="margin-bottom: 1rem;">
-                <svg class="icon icon-sm" style="margin-right: 0.5rem;" viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                Play Again
-              </button>
+  return (
+    <div className="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen text-white flex flex-col items-center p-4">
+      {/* Game Header */}
+      {gameState !== 'intro' && (
+        <div className="w-full max-w-4xl flex justify-between items-center mb-6">
+          <div className="flex items-center">
+            <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-yellow-400 text-transparent bg-clip-text mr-2">
+              TimeQuest
             </div>
-            <div style="text-align: center; margin-top: 2rem; color: var(--text-secondary); font-size: 0.875rem;">
-              Challenge your friends to beat your score!
+            <div className="text-sm text-gray-400">The Great Human Lab</div>
+          </div>
+          <div className="flex gap-4">
+            <div className="bg-gray-800 px-3 py-1 rounded-lg flex items-center">
+              <Award className="w-4 h-4 text-yellow-400 mr-1" />
+              <span className="font-bold">{score}</span>
+            </div>
+            <div className="bg-gray-800 px-3 py-1 rounded-lg flex items-center">
+              <Heart className="w-4 h-4 text-red-500 mr-1" />
+              <span className="font-bold">{lives}</span>
             </div>
           </div>
-        `;
-      },
+        </div>
+      )}
 
+      {/* Intro Screen */}
+      {gameState === 'intro' && (
+        <div className="flex flex-col items-center justify-center max-w-2xl text-center animate-fadeIn my-8">
+          <div className="text-6xl font-black mb-4 bg-gradient-to-r from-orange-500 to-yellow-400 text-transparent bg-clip-text">
+            TimeQuest
+          </div>
+          <div className="text-xl mb-8">The Ultimate Journey Through Human History</div>
+          <div className="bg-gray-800 p-8 rounded-xl mb-8 shadow-2xl border border-gray-700">
+            <p className="mb-6">Test your knowledge about the epic story of human civilization! From early humans to ancient empires, challenge yourself with questions across the fascinating timeline of history.</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="flex items-center">
+                <Award className="text-yellow-400 mr-2 h-5 w-5" />
+                <span>Earn points for correct answers</span>
+              </div>
+              <div className="flex items-center">
+                <Zap className="text-blue-400 mr-2 h-5 w-5" />
+                <span>Use power-ups when you're stuck</span>
+              </div>
+              <div className="flex items-center">
+                <Gift className="text-purple-400 mr-2 h-5 w-5" />
+                <span>Unlock badges and achievements</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="text-green-400 mr-2 h-5 w-5" />
+                <span>Race against the clock</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setGameState('category')}
+              className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Start Your Journey!
+            </button>
+          </div>
+          
+          <div className="text-gray-400 text-sm">
+            Developed by The Great Human Lab &copy; 2025
+          </div>
+        </div>
+      )}
 
-      handleCategorySelect(categoryId) {
-        gameState.activeCategory = categoryId;
-        const unplayedQuestions = this.getUnplayedQuestionsForCategory(categoryId);
+      {/* Category Selection */}
+      {gameState === 'category' && (
+        <div className="w-full max-w-4xl animate-fadeIn">
+          <h2 className="text-2xl font-bold mb-6 text-center">Choose a Time Period</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map(category => (
+              <button
+                key={category.id}
+                onClick={() => handleCategorySelect(category.id)}
+                disabled={questions[category.id].every(q => completedQuestions.includes(q.id))}
+                className={`${category.color} hover:opacity-90 p-6 rounded-lg text-center transition-all transform hover:-translate-y-1 border border-gray-700 ${
+                  questions[category.id].every(q => completedQuestions.includes(q.id)) 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'cursor-pointer'
+                }`}
+              >
+                <div className="text-4xl mb-2">{category.icon}</div>
+                <div className="font-bold text-lg mb-1">{category.name}</div>
+                <div className="text-sm opacity-80">
+                  {Array(category.difficulty).fill('★').join('')}
+                </div>
+                <div className="mt-3 text-xs opacity-75">
+                  {questions[category.id].filter(q => !completedQuestions.includes(q.id)).length} questions left
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-        if (unplayedQuestions.length > 0) {
-          const randomIndex = Math.floor(Math.random() * unplayedQuestions.length);
-          this.startQuestion(unplayedQuestions[randomIndex]);
-        } else {
-          console.log(`No more questions in category ${categoryId}`);
-          // Maybe show a small message? For now, just re-render category select
-          this.renderScreen('category');
-        }
-      },
+      {/* Question Screen */}
+      {gameState === 'question' && currentQuestion && (
+        <div className="w-full max-w-3xl animate-fadeIn">
+          <div className="flex justify-between items-center mb-4">
+            <div className="bg-gray-800 px-3 py-1 rounded-lg text-sm">
+              <span className="text-gray-400">Question worth: </span>
+              <span className="text-yellow-400 font-bold">{currentQuestion.points} pts</span>
+            </div>
+            <div className="flex bg-gray-800 px-3 py-1 rounded-lg items-center">
+              <Clock className="w-4 h-4 text-blue-400 mr-1" />
+              <span className={`font-bold ${timeLeft < 5 ? 'text-red-500' : ''}`}>{timeLeft}</span>
+            </div>
+          </div>
+          
+          <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
+            <h3 className="text-xl font-bold mb-6">{currentQuestion.question}</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {currentQuestion.options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswerSelection(index)}
+                  disabled={selectedAnswer !== null}
+                  className={`p-4 rounded-lg text-left transition-all ${
+                    selectedAnswer === null 
+                      ? 'bg-gray-700 hover:bg-gray-600' 
+                      : selectedAnswer === index 
+                        ? index === currentQuestion.correctAnswer 
+                          ? 'bg-green-700' 
+                          : 'bg-red-700'
+                        : index === currentQuestion.correctAnswer && selectedAnswer !== null
+                          ? 'bg-green-700'
+                          : 'bg-gray-700'
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <span className="bg-gray-900 text-gray-400 h-6 w-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <span>{option}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex justify-center gap-3">
+            <button 
+              onClick={() => usePowerup('fiftyFifty')}
+              disabled={usedPowerups.fiftyFifty || selectedAnswer !== null}
+              className={`bg-purple-700 hover:bg-purple-600 px-3 py-2 rounded-lg flex items-center ${usedPowerups.fiftyFifty ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span className="mr-1">50:50</span>
+              <HelpCircle className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => usePowerup('timeFreeze')}
+              disabled={usedPowerups.timeFreeze || selectedAnswer !== null}
+              className={`bg-blue-700 hover:bg-blue-600 px-3 py-2 rounded-lg flex items-center ${usedPowerups.timeFreeze ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span className="mr-1">+20s</span>
+              <Clock className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => usePowerup('extraLife')}
+              disabled={usedPowerups.extraLife || selectedAnswer !== null}
+              className={`bg-red-700 hover:bg-red-600 px-3 py-2 rounded-lg flex items-center ${usedPowerups.extraLife ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span className="mr-1">Extra Life</span>
+              <Heart className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
-      getUnplayedQuestionsForCategory(categoryId) {
-        const categoryQuestions = gameData.questions[categoryId] || [];
-        return categoryQuestions.filter(q => !gameState.completedQuestions.includes(q.id));
-      },
+      {/* Feedback Screen */}
+      {gameState === 'feedback' && currentQuestion && (
+        <div className="w-full max-w-3xl animate-fadeIn">
+          <div className={`p-6 rounded-lg mb-6 ${selectedAnswer === currentQuestion.correctAnswer ? 'bg-green-800 border border-green-700' : 'bg-red-800 border border-red-700'}`}>
+            <h3 className="text-xl font-bold mb-2">
+              {selectedAnswer === currentQuestion.correctAnswer ? 'Correct!' : 'Incorrect!'}
+            </h3>
+            <p className="mb-4">{currentQuestion.explanation}</p>
+            
+            {selectedAnswer === currentQuestion.correctAnswer && (
+              <div className="bg-yellow-900 p-3 rounded-lg inline-block">
+                <span className="text-yellow-400 font-bold">+{currentQuestion.points} points</span>
+              </div>
+            )}
+            
+            {selectedAnswer !== currentQuestion.correctAnswer && (
+              <div className="bg-red-900 p-3 rounded-lg inline-block">
+                <span className="text-red-400 font-bold">-1 life</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex justify-center gap-4">
+            <button 
+              onClick={() => setGameState('category')}
+              className="bg-gray-700 hover:bg-gray-600 py-3 px-6 rounded-lg flex items-center"
+            >
+              Choose Another Category
+            </button>
+            
+            {selectedAnswer === currentQuestion.correctAnswer && (
+              <button 
+                onClick={() => handleCategorySelect(activeCategory)}
+                className="bg-blue-700 hover:bg-blue-600 py-3 px-6 rounded-lg flex items-center"
+              >
+                Next Question in This Category
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
-      startQuestion(questionData) {
-        gameState.currentQuestion = questionData;
-        gameState.selectedAnswer = null;
-        gameState.timeLeft = 20;
-        gameState.optionsToHideFiftyFifty = []; // Reset 50:50 visual state for new question
-        this.clearTimer(); // Ensure previous timer is cleared before starting new screen/timer
-        this.renderScreen('question');
-      },
+      {/* Scoreboard / Game Over */}
+      {gameState === 'scoreboard' && (
+        <div className="w-full max-w-2xl animate-fadeIn text-center">
+          <div className="bg-gray-800 p-8 rounded-xl mb-8 border border-gray-700">
+            <h2 className="text-3xl font-bold mb-2">Game Over!</h2>
+            <p className="mb-6 text-gray-400">Your journey through time has ended</p>
+            
+            <div className="bg-gray-900 p-6 rounded-lg mb-6">
+              <div className="text-4xl font-bold text-yellow-400 mb-2">{score}</div>
+              <div className="text-gray-400">Total Points</div>
+              
+              <div className="mt-6 grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-green-400">{completedQuestions.length}</div>
+                  <div className="text-gray-400 text-sm">Questions Answered</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-400">
+                    {Math.floor(score / Math.max(1, completedQuestions.length))}
+                  </div>
+                  <div className="text-gray-400 text-sm">Avg. Points per Question</div>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={resetGame}
+              className="bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center mx-auto"
+            >
+              <RefreshCw className="w-5 h-5 mr-2" />
+              Play Again
+            </button>
+          </div>
+          
+          <div className="text-gray-500 text-sm">
+            Share your score with friends and challenge them to beat it!
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
-      handleAnswerSelection(optionIndex) {
-        if (gameState.selectedAnswer !== null) return; // Already handled
-
-        this.clearTimer();
-        gameState.selectedAnswer = optionIndex;
-
-        // Add to completed list only if not already there (safety check)
-         if (gameState.currentQuestion && !gameState.completedQuestions.includes(gameState.currentQuestion.id)) {
-            gameState.completedQuestions.push(gameState.currentQuestion.id);
-        }
-
-        const isCorrect = optionIndex === gameState.currentQuestion.correctAnswer;
-        if (isCorrect) {
-          gameState.score += gameState.currentQuestion.points;
-        } else {
-          // Lose life for incorrect or timeout (optionIndex null)
-          gameState.lives--;
-        }
-
-        // Re-render question screen to show immediate visual feedback on options
-        this.renderScreen('question');
-
-        // Wait a moment, then show the feedback screen
-        setTimeout(() => {
-          this.renderScreen('feedback');
-        }, 1200); // Delay allows user to see correct/incorrect option highlight
-      },
-
-      usePowerup(powerup) {
-         if (gameState.selectedAnswer !== null) return; // Cannot use after answering
-
-         const powerupButton = document.querySelector(`.powerup-button[data-powerup="${powerup}"]`);
-         if (!powerupButton || powerupButton.disabled) return; // Already used or button not found
-
-         if (powerup === 'fiftyFifty' && !gameState.usedPowerups.fiftyFifty) {
-            gameState.usedPowerups.fiftyFifty = true;
-            powerupButton.disabled = true;
-
-            const correctAnswerIndex = gameState.currentQuestion.correctAnswer;
-            const allIndices = [0, 1, 2, 3]; // Assuming 4 options always
-            const wrongIndices = allIndices.filter(index => index !== correctAnswerIndex);
-            wrongIndices.sort(() => Math.random() - 0.5); // Shuffle wrong answers
-
-            // Store the indices to hide and re-render to apply visual class
-            gameState.optionsToHideFiftyFifty = wrongIndices.slice(0, 2);
-            this.renderScreen('question'); // Re-render to apply .fifty-fifty-hidden
-
-         } else if (powerup === 'timeFreeze' && !gameState.usedPowerups.timeFreeze) {
-            gameState.usedPowerups.timeFreeze = true;
-            powerupButton.disabled = true;
-            gameState.timeLeft += 20;
-
-            // Update timer display immediately (no need to re-render whole screen)
-            const timerEl = document.getElementById('timer-value');
-            if (timerEl) timerEl.textContent = gameState.timeLeft;
-            const timerContainer = timerEl ? timerEl.closest('.timer') : null;
-            if (timerContainer) {
-                timerContainer.classList.remove('warning', 'danger');
-                if (gameState.timeLeft < 5) timerContainer.classList.add('danger');
-                else if (gameState.timeLeft < 10) timerContainer.classList.add('warning');
-            }
-
-
-         } else if (powerup === 'extraLife' && !gameState.usedPowerups.extraLife) {
-            gameState.usedPowerups.extraLife = true;
-            powerupButton.disabled = true;
-            gameState.lives++;
-
-            // Update lives display (no need to re-render whole screen)
-            const livesEl = document.querySelector('.game-stats .stat-badge:nth-child(2) span');
-            if (livesEl) livesEl.textContent = gameState.lives;
-         }
-      },
-
-      startTimer() {
-        this.clearTimer(); // Prevent multiple timers
-
-        const timerEl = document.getElementById('timer-value');
-        if (timerEl) timerEl.textContent = gameState.timeLeft; // Show initial time
-
-        gameState.timerInterval = setInterval(() => {
-          gameState.timeLeft--;
-
-          if (timerEl) timerEl.textContent = gameState.timeLeft; // Update display
-
-          const timerContainer = timerEl ? timerEl.closest('.timer') : null;
-          if (timerContainer) { // Update color indicator
-             timerContainer.classList.remove('warning', 'danger');
-             if (gameState.timeLeft < 5) timerContainer.classList.add('danger');
-             else if (gameState.timeLeft < 10) timerContainer.classList.add('warning');
-          }
-
-
-          if (gameState.timeLeft <= 0) {
-            this.handleAnswerSelection(null); // Timeout counts as incorrect, handles state + screen change
-          }
-        }, 1000);
-      },
-
-      clearTimer() {
-        if (gameState.timerInterval) {
-          clearInterval(gameState.timerInterval);
-          gameState.timerInterval = null;
-        }
-      },
-
-      resetGame() {
-        this.clearTimer();
-        // Reset state
-        gameState.score = 0;
-        gameState.lives = 3;
-        gameState.currentQuestion = null;
-        gameState.selectedAnswer = null;
-        gameState.timeLeft = 20;
-        gameState.activeCategory = null;
-        gameState.completedQuestions = [];
-        gameState.usedPowerups = { fiftyFifty: false, timeFreeze: false, extraLife: false };
-         gameState.optionsToHideFiftyFifty = [];
-
-        this.renderScreen('intro');
-      }
-    };
-
-    // Start the game when DOM is loaded
-    document.addEventListener('DOMContentLoaded', function() {
-      // Add a small delay just in case of any race conditions, though usually not needed
-     // setTimeout(() => {
-          gameFunctions.init();
-     // }, 0);
-    });
-  </script>
-</body>
-</html>
+export default TimeQuestGame;
