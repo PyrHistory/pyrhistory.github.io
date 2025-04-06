@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Heritage History™ - Digital Book Reader</title>
-    {/* Core PDFJS library */}
+  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    {/* Full PDF Viewer library (includes TextLayer, AnnotationLayer builders) */}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.js"></script>
-    {/* CSS for PDF Viewer components (like annotation layer styling) */}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.css">
     <style>
 :root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
@@ -378,10 +376,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                       enhanceTextSelection: true,
                   });
 
-                 // --- FIX APPLIED HERE ---
-                 // Use setTextContentItems for PDF.js v3+
-                 textLayerBuilder.setTextContentItems(textContent.items);
-                 // --- END FIX ---
+                 // --- FIX REVERTED HERE (for troubleshooting) ---
+                 // Using the potentially older method
+                 textLayerBuilder.setTextContent(textContent);
+                 // --- END REVERT ---
 
                  textLayerBuilder.render(); // This renders the spans into the container
 
@@ -546,7 +544,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 // Wait for overlay fetch attempt to finish
                  const overlayResult = await overlayPromise;
                  if (overlayResult === null) { // Show warning if overlay failed
-                    alert(`Warning: Overlay file (${overlayUrl}) could not be loaded or parsed. Definitions/Highlighting will not work.`);
+                    // Don't use alert, just log it, as it might be annoying
+                    console.warn(`Warning: Overlay file (${overlayUrl}) could not be loaded or parsed. Definitions/Highlighting will not work.`);
+                    // alert(`Warning: Overlay file (${overlayUrl}) could not be loaded or parsed. Definitions/Highlighting will not work.`);
                  }
 
                 try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); }
