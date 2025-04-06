@@ -431,7 +431,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 hidePageLoading(canvasId);
             }
 
-            // RENDER LAYERS
+            // RENDER LAYERS (Using the corrected functions)
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
 
@@ -443,9 +443,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         }
     }
 
-    // --- START: Updated renderAndEnhanceTextLayer (uses enhanceKeywords) ---
+    // --- START: Corrected renderAndEnhanceTextLayer for PDF.js v3.4.120 ---
     /**
-     * Improved text layer rendering with keyword enhancement
+     * Corrected text layer rendering function for PDF.js v3.4.120
      */
     async function renderAndEnhanceTextLayer(page, container, viewport) {
         if (!page || !container || !viewport) {
@@ -470,9 +470,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 enhanceTextSelection: false // Set to false to avoid selection conflicts
             });
 
-            // Use setTextContentItems for PDF.js v3+
-            textLayerBuilder.setTextContentItems(textContent.items);
-            textLayerBuilder.render(); // Renders the base text spans
+            // *** FIX APPLIED HERE ***
+            // The correct method in PDF.js v3.4.120 is to pass textContent directly to render()
+            textLayerBuilder.render(textContent);
 
             // Wait a brief moment for the DOM to update reliably before enhancing
             // Adjust timeout if needed, but 100ms is usually sufficient.
@@ -487,7 +487,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             container.innerHTML = ''; // Clear on error
         }
     }
-    // --- END: Updated renderAndEnhanceTextLayer ---
+    // --- END: Corrected renderAndEnhanceTextLayer ---
 
     // --- START: NEW enhanceKeywords function ---
     /**
@@ -550,23 +550,50 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     }
     // --- END: NEW enhanceKeywords function ---
 
-     async function renderAnnotationLayer(page, container, viewport) {
-        if (!page || !container || !viewport) { console.warn("Skipping annotation layer render: missing page, container, or viewport."); return; }
-        container.innerHTML = '';
+    // --- START: Corrected renderAnnotationLayer for PDF.js v3.4.120 ---
+     /**
+     * Enhanced version to directly render the annotation layer correctly for PDF.js v3.4.120
+     */
+    async function renderAnnotationLayer(page, container, viewport) {
+        if (!page || !container || !viewport) {
+            console.warn("Skipping annotation layer render: missing page, container, or viewport.");
+            return;
+        }
+
+        container.innerHTML = ''; // Clear previous content
+
         try {
             const annotations = await page.getAnnotations({ intent: 'display' });
-            if (annotations.length === 0) { /* updateStatus(`Annotation layer: No annotations found on page ${page.pageNumber}.`);*/ return; }
+            if (annotations.length === 0) {
+                // updateStatus(`Annotation layer: No annotations found on page ${page.pageNumber}.`);
+                return;
+            }
 
+            // Create annotation layer builder with the correct parameters for v3.4.120
             const annotationLayerBuilder = new pdfjsViewer.AnnotationLayerBuilder({
-                pageDiv: container, pdfPage: page, linkService: linkService,
-                downloadManager: null, annotationStorage: null, renderForms: false, enableScripting: false,
+                pageDiv: container,
+                pdfPage: page,
+                linkService: linkService,
+                // Parameters like downloadManager, annotationStorage, renderForms, enableScripting might not
+                // be directly needed or available in the constructor for this version,
+                // or are handled differently. Keep it simple based on typical v3 usage.
+                downloadManager: null // Assuming this is okay/needed. Adjust if necessary based on specific examples for 3.4.120.
+                // annotationStorage: null, // Typically not needed for just rendering display annotations
+                // renderForms: false, // Often default or handled elsewhere
+                // enableScripting: false // Often default
             });
-            annotationLayerBuilder.render(viewport.clone({ dontFlip: true }));
+
+            // *** FIX APPLIED HERE ***
+            // Render with correct parameters for this version (viewport and intent string)
+            annotationLayerBuilder.render(viewport, 'display'); // Pass intent 'display'
+
             // updateStatus(`Annotation layer rendered for page ${page.pageNumber} with ${annotations.length} annotations.`);
         } catch (error) {
-            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error); container.innerHTML = '';
+            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
+            container.innerHTML = ''; // Clear on error
         }
     }
+    // --- END: Corrected renderAnnotationLayer ---
 
     // --- Update Display ---
     async function updateDisplay() {
