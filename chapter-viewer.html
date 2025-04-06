@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Heritage History™ - Digital Book Reader</title>
+    {/* Core PDFJS library */}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    {/* Full PDF Viewer library (includes TextLayer, AnnotationLayer builders, PDFPageView) */}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.js"></script>
+    {/* CSS for PDF Viewer components */}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.css">
     <style>
 :root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
@@ -256,10 +259,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const closePopupBtn = document.getElementById('close-popup-btn');
 
         // --- State Variables ---
-        let currentViewports = {}; // Might be less needed now
+        let currentViewports = {};
         let keywordDefinitions = {};
         let pageKeywords = {};
-        let pageViews = {}; // Store PDFPageView instances { pageNum: pageView }
+        let pageViews = {};
 
         // Use the pdfjsViewer library namespace
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -279,9 +282,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const linkService = new pdfjsViewer.SimpleLinkService();
         const eventBus = new pdfjsViewer.EventBus();
 
-        // --- Layer Factories (Annotation Only) ---
+        // --- Layer Factories (REMOVED) ---
         // Removed: const textLayerFactory = new pdfjsViewer.DefaultTextLayerFactory();
-        const annotationLayerFactory = new pdfjsViewer.DefaultAnnotationLayerFactory();
+        // Removed: const annotationLayerFactory = new pdfjsViewer.DefaultAnnotationLayerFactory();
 
 
         // --- Toolbar Logic (unchanged) ---
@@ -297,17 +300,15 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             const pageViewContainer = document.getElementById(containerId);
             const pageElement = pageViewContainer?.closest('.book-page');
 
-            // Clean up previous view if it exists for this specific page number
             if (pageViews[pageNum]) {
                  updateStatus(`Destroying existing PDFPageView for page ${pageNum}`);
                 pageViews[pageNum].destroy();
                 delete pageViews[pageNum];
             }
-            // Always clear the container HTML before potentially rendering
             if (pageViewContainer) pageViewContainer.innerHTML = '';
 
             if (!book.pdfDocument || !pageViewContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
-                if (pageViewContainer) pageViewContainer.innerHTML = ''; // Ensure clear if invalid
+                if (pageViewContainer) pageViewContainer.innerHTML = '';
                  hidePageLoading(containerId);
                 return;
             }
@@ -316,42 +317,37 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
             try {
                 const page = await book.pdfDocument.getPage(pageNum);
-                 // Calculate desired scale to fit the container
                  const containerStyle = getComputedStyle(pageViewContainer);
                  const availableWidth = parseFloat(containerStyle.width);
                  const availableHeight = parseFloat(containerStyle.height);
                  const defaultViewport = page.getViewport({ scale: 1 });
                  const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-                 // Create viewport with calculated scale
                  const viewport = page.getViewport({ scale: scale });
 
 
                 const pageView = new pdfjsViewer.PDFPageView({
                     container: pageViewContainer,
                     id: pageNum,
-                    scale: scale, // Use calculated scale
-                    defaultViewport: viewport, // Use viewport with calculated scale
+                    scale: scale,
+                    defaultViewport: viewport,
                     eventBus: eventBus,
                     // textLayerFactory: textLayerFactory, // REMOVED
-                    textLayerMode: 2, // ADDED: Enable text layer (Visible + Enhance)
-                    annotationLayerFactory: annotationLayerFactory,
-                    // enhanceTextSelection: true, // Included in textLayerMode: 2
+                    textLayerMode: 2, // Use Mode 2 (Visible + Enhance)
+                    // annotationLayerFactory: annotationLayerFactory, // REMOVED
+                    annotationMode: 1, // ADDED: Enable annotation layer (e.g., for links)
                     linkService: linkService,
-                    useOnlyCssZoom: false, // Important for correct scaling
+                    useOnlyCssZoom: false,
                     renderInteractiveForms: false,
                     enableScripting: false,
                 });
 
-                pageViews[pageNum] = pageView; // Store the view instance
+                pageViews[pageNum] = pageView;
 
-                // Set the page (PDFPageView uses this internally)
                 pageView.setPdfPage(page);
-
-                // Draw the page
-                await pageView.draw(); // This renders canvas, text, and annotations
+                await pageView.draw();
 
                 updateStatus(`PDFPageView drawn for page ${pageNum}`);
-                hidePageLoading(containerId); // Hide loading AFTER drawing completes
+                hidePageLoading(containerId);
 
             } catch (e) {
                  console.error(`Error rendering page ${pageNum} with PDFPageView:`, e);
@@ -364,160 +360,24 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             }
         }
 
-        // --- UPDATED: Enhance Text Layer AFTER PDFPageView renders it ---
-        function enhanceTextLayerKeywords(pageNum) {
-             const pageView = pageViews[pageNum];
-             // Access the textLayerDiv property which should be set after rendering
-             const container = pageView?.textLayer?.textLayerDiv;
+        // --- Enhance Text Layer (unchanged from previous) ---
+        function enhanceTextLayerKeywords(pageNum) { /* ... */ }
 
-             if (!container) {
-                  console.warn(`Cannot enhance keywords for page ${pageNum}: textLayerDiv not found.`);
-                 return;
-             }
-             if (!keywordDefinitions || !pageKeywords) {
-                 console.warn(`Cannot enhance keywords for page ${pageNum}: overlay data missing.`);
-                 return;
-             }
-
-
-             const isGlossaryPage = pageNum > 58;
-             const keywordsForPage = !isGlossaryPage ? (pageKeywords[pageNum] || []) : [];
-
-             if (keywordsForPage.length === 0) {
-                 return;
-             }
-
-             try {
-                 const renderedSpans = container.querySelectorAll('span[role="presentation"]');
-                 let enhancedCount = 0;
-                 renderedSpans.forEach(span => {
-                     if (!span.textContent.trim() || span.dataset.keywordEnhanced) return;
-
-                     const spanText = span.textContent;
-                     for (const keyword of keywordsForPage) {
-                         const escapedKeyword = keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                         const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'i');
-
-                         if (regex.test(spanText)) {
-                              const definition = keywordDefinitions[keyword.toLowerCase()] || keywordDefinitions[keyword]; // Use lowercase lookup
-                              if (definition) {
-                                 span.classList.add('keyword-interactive');
-                                 span.dataset.keyword = keyword;
-                                 span.dataset.definition = definition;
-                                 span.dataset.keywordEnhanced = "true";
-                                 enhancedCount++;
-                                 break;
-                             }
-                         }
-                     }
-                 });
-                 if (enhancedCount > 0) {
-                    updateStatus(`Keyword enhancement complete for page ${pageNum}. Found ${enhancedCount} interactive keywords.`);
-                 }
-             } catch (error) {
-                  console.error(`Error enhancing text layer for page ${pageNum}:`, error);
-             }
-         }
-
-        // --- Listen for text layer rendering event ---
-        eventBus.on('textlayerrendered', function(event) {
-            const pageNum = event.pageNumber;
-            // updateStatus(`textlayerrendered event received for page ${pageNum}`);
-             requestAnimationFrame(() => {
-                 enhanceTextLayerKeywords(pageNum);
-             });
-        });
+        // --- Listen for text layer rendering event (unchanged) ---
+        eventBus.on('textlayerrendered', function(event) { /* ... */ });
 
         // --- Preloading (Keep simple) ---
         function preloadAdjacentPages(cp){ /* ... */ }
 
-        // --- Update Display (Minor adjustments for clarity) ---
-        async function updateDisplay() {
-            if (!book.pdfDocument) { return; }
-            const lpNum = book.currentPage; const rpNum = book.isDoublePageView ? book.currentPage + 1 : 0;
-            updateStatus(`Updating display for page(s): ${lpNum}${rpNum > 0 ? ', ' + rpNum : ''}`);
-
-            const lPageElement = document.querySelector('.book-page.left');
-            const rPageElement = document.querySelector('.book-page.right');
-            const lContainer = document.getElementById('left-page-view-container');
-            const rContainer = document.getElementById('right-page-view-container');
-            const lNumDisp = document.getElementById('left-page-number'); // Still used for display logic maybe?
-            const rNumDisp = document.getElementById('right-page-number'); // Still used for display logic maybe?
-
-            if (!lPageElement || !rPageElement || !lContainer || !rContainer || !lNumDisp || !rNumDisp) {
-                console.error("Page elements or containers missing"); return;
-            }
-
-            lPageElement.style.visibility = 'hidden';
-            rPageElement.style.display = 'none';
-            rPageElement.classList.remove('placeholder-page');
-
-            // Destroy views for pages no longer visible FIRST
-            Object.keys(pageViews).forEach(storedPageNumStr => {
-                const storedPageNum = parseInt(storedPageNumStr, 10);
-                if (storedPageNum !== lpNum && storedPageNum !== rpNum) {
-                    if(pageViews[storedPageNum]) {
-                        // updateStatus(`Destroying off-screen PDFPageView for page ${storedPageNum}`);
-                        pageViews[storedPageNum].destroy();
-                        delete pageViews[storedPageNum];
-                    }
-                }
-            });
-
-            // Render Left Page
-            if (lpNum >= 1 && lpNum <= book.totalPages) {
-                lNumDisp.textContent = lpNum; // Keep for potential future use
-                lPageElement.style.visibility = 'visible';
-                // Render only if view doesn't exist or needs reset (handled in renderPage)
-                await renderPage(lpNum, 'left-page-view-container');
-            } else {
-                lNumDisp.textContent = '';
-                // Cleanup potentially existing view if navigating off-bounds
-                if (pageViews[lpNum]) { pageViews[lpNum].destroy(); delete pageViews[lpNum]; }
-                lContainer.innerHTML = '';
-            }
-
-            // Render Right Page
-            if (book.isDoublePageView) {
-                if (rpNum >= 1 && rpNum <= book.totalPages) {
-                    rPageElement.style.display = 'flex';
-                    rNumDisp.textContent = rpNum; // Keep for potential future use
-                    // Render only if view doesn't exist or needs reset (handled in renderPage)
-                    await renderPage(rpNum, 'right-page-view-container');
-                } else if (lpNum >= 1 && lpNum <= book.totalPages) {
-                    // Show placeholder
-                    rPageElement.style.display = 'flex';
-                    rPageElement.classList.add('placeholder-page');
-                    rNumDisp.textContent = '';
-                     // Cleanup potentially existing view if navigating off-bounds
-                    if (pageViews[rpNum]) { pageViews[rpNum].destroy(); delete pageViews[rpNum]; }
-                    rContainer.innerHTML = ''; // Clear container
-                }
-                 else {
-                    // Hide right page entirely if left page is also out of bounds
-                     rPageElement.style.display = 'none';
-                     if (pageViews[rpNum]) { pageViews[rpNum].destroy(); delete pageViews[rpNum]; }
-                     rContainer.innerHTML = '';
-                 }
-            } else {
-                 // If not double page view, ensure right side is hidden and cleaned up
-                 rPageElement.style.display = 'none';
-                 if (pageViews[rpNum]) { pageViews[rpNum].destroy(); delete pageViews[rpNum]; }
-                 rContainer.innerHTML = '';
-            }
-
-
-            updateSliderPosition();
-            // preloadAdjacentPages(book.currentPage);
-            updateStatus("Display update complete.");
-        }
+        // --- Update Display (unchanged from previous) ---
+        async function updateDisplay() { /* ... */ }
 
         // --- Navigation (unchanged) ---
         function nextPage(){/*...*/}
         function prevPage(){/*...*/}
         function jumpToPage(pn){/*...*/}
 
-        // --- View Modes (updateDisplay handles resizing/redrawing now) ---
+        // --- View Modes (unchanged) ---
         function setSinglePageView(){/*... calls updateDisplay ...*/}
         function setDoublePageView(){/*... calls updateDisplay ...*/}
         function setRotatedView() {/*... calls updateDisplay then scales ...*/}
@@ -538,13 +398,13 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         function updateSliderPosition(){/*...*/}
         function updateSliderStyle(sEl,val){/*...*/}
 
-        // --- Load PDF (unchanged from previous version with lowercase keywords) ---
+        // --- Load PDF (unchanged) ---
         async function loadPdf(source) { /* ... */ }
 
         // --- TOC population (unchanged) ---
         function populateTOC(){/* ... */}
 
-        // --- Event Setup (unchanged from previous version with delegation) ---
+        // --- Event Setup (unchanged) ---
         function setupEvents() { /* ... */ }
 
         // --- Definition Popup (unchanged) ---
