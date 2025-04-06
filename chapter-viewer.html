@@ -4,16 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Heritage History™ - Digital Book Reader</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf_viewer.css">
+    <!-- Make sure you are using a version that includes pdf_viewer.js (like v3.x or later) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.mjs" type="module"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.mjs" type="module"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css">
     <style>
-        :root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Georgia',serif;background-color:var(--lab-blue);color:var(--text-on-dark);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;position:fixed;line-height:1.6}
-        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
-        @keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
-        @media (prefers-reduced-motion:reduce){body::before{animation:none!important}}
+        :root {
+            --primary: #4a90e2;
+            --secondary: #50e3c2;
+            --accent: #f5a623; /* Orange for highlights/slider */
+            --lab-blue: #080e1c;
+            --page: #fff;
+            --text-on-dark: rgba(255, 255, 255, .9);
+            --text-on-page: #333;
+            --header-h: 60px;
+            --page-w: 650px;
+            --page-h: 842px;
+            --page-padding: 15px; /* Crucial for positioning */
+             /* Keyword Highlight Style Variables */
+            --keyword-hover-bg-start: rgba(255, 165, 0, 0.15); /* Lighter orange */
+            --keyword-hover-bg-end: rgba(255, 100, 0, 0.15); /* Darker orange */
+            --keyword-hover-border: var(--accent);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Georgia', serif; background-color: var(--lab-blue); color: var(--text-on-dark); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; position: fixed; line-height: 1.6; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-image: radial-gradient(circle at 15% 15%, rgba(249, 115, 22, .12) 0, transparent 45%), radial-gradient(circle at 85% 85%, rgba(197, 83, 235, .12) 0, transparent 45%), radial-gradient(circle at 85% 15%, rgba(56, 189, 248, .05) 0, transparent 40%), radial-gradient(circle at 15% 85%, rgba(251, 191, 36, .08) 0, transparent 40%); animation: ambient-shift 30s ease infinite alternate; }
+        @keyframes ambient-shift { 0% { background-position: 0 0, 0 0, 0 0, 0 0 } 100% { background-position: 5% 10%, -5% -5%, 10% -5%, -10% 5% } }
+        @media (prefers-reduced-motion: reduce) { body::before { animation: none !important; } }
+
+        /* --- Toolbar, Slider, TOC, Loading Styles (Keep As Is) --- */
         #new-toolbar{position:fixed!important;top:15px!important;right:-60px!important;z-index:9999!important;display:flex!important;flex-direction:column!important;gap:10px!important;transition:right .3s ease,bottom .3s ease,transform .3s ease!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:5px!important;border-radius:8px 0 0 8px!important;box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;width:58px;border:1px solid rgba(255,255,255,.1)}
         #new-toolbar::before{content:"≡";position:absolute;left:-25px;top:50%;transform:translateY(-50%);background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);width:25px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:4px 0 0 4px;color:var(--text-on-dark);font-size:20px;box-shadow:-2px 2px 5px rgba(0,0,0,.3);transition:all .3s ease;border:1px solid rgba(255,255,255,.1);border-right:none;cursor:pointer}
         .toolbar-trigger-area{position:fixed;top:0;right:0;width:30px;height:100%;z-index:9998;transition:all .3s ease}
@@ -35,17 +55,27 @@
         .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
         .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
         .fullscreen-mode:not(.rotated-mode) .book-page.left{border-right:1px solid rgba(255,255,255,.08)!important}
+
+        /* Canvas Container holds ALL layers for a page */
         .canvas-container {
-            position: relative; /* Important for positioning layers */
+            position: relative; /* Essential for absolute positioning of layers */
             width: calc(100% - 2 * var(--page-padding));
             height: calc(100% - 2 * var(--page-padding));
             margin: var(--page-padding);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* Clip layers */
+            display: flex; /* Optional: helps center canvas if needed */
+            justify-content: center; /* Optional */
+            align-items: center; /* Optional */
+            overflow: hidden; /* Clip layers to container bounds */
         }
-        .pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; position: absolute; top: 0; left: 0; z-index: 1; } /* Canvas layer */
+        .pdf-canvas{
+            position: absolute; /* Positioned within canvas-container */
+            top: 0;
+            left: 0;
+            /* width/height set by JS based on viewport */
+            display: block;
+            z-index: 1; /* Layer 1: The rendered PDF image */
+        }
+
         .page-number{display:none}
         .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
         .page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
@@ -57,10 +87,12 @@
         .page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
         .page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
         .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
+
+        /* --- View Mode Styles (Keep As Is) --- */
         .fullscreen-mode .book-page.right{display:none!important}
         .fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:0;}
         .fullscreen-mode .canvas-container { margin: var(--page-padding); }
-        .fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain; position:relative; /* Reset position */ }
+        .fullscreen-mode .pdf-canvas{ position:relative; max-width:100%; max-height:100%; object-fit:contain; } /* Reset position in fullscreen */
         .rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
         .rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
         .rotated-mode .book-page.right{display:none!important}
@@ -76,6 +108,9 @@
         body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
         body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
         body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
+        /* --- End View Mode Styles --- */
+
+        /* --- TOC/Loading Styles (Keep As Is) --- */
         .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden}
         .toc-panel.visible,.loading-overlay.visible{display:flex!important}
         .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -90,6 +125,9 @@
         .loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
         .loading-message{font-size:16px;color:var(--text-on-dark)}
         #status-indicator{display:none}
+        /* --- End TOC/Loading Styles --- */
+
+        /* --- Slider Styles (Keep As Is) --- */
         .page-slider-container{position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);width:90%;max-width:700px;padding:14px 20px;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-bottom:none;box-shadow:0 -4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;z-index:9998;transition:bottom .35s cubic-bezier(.2,.9,.3,1),transform .35s cubic-bezier(.2,.9,.3,1), left .35s cubic-bezier(.2,.9,.3,1);border-radius:16px 16px 0 0}
         .page-slider-container.visible{bottom:0}
         .page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
@@ -116,8 +154,10 @@
         .rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
         #page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
         .rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 60px;height: 50%}
+        /* --- End Slider Styles --- */
 
-        /* --- START: BASIC Text Layer (Optional, for accessibility/selection ONLY) --- */
+
+        /* --- START: PDF.js Layers (Text & Annotation) --- */
         .textLayer {
             position: absolute;
             left: 0;
@@ -125,24 +165,30 @@
             right: 0;
             bottom: 0;
             overflow: hidden;
-            opacity: 0.2; /* Make less prominent */
+            opacity: 0; /* Make completely invisible */
             line-height: 1.0;
-            color: transparent; /* Base text invisible */
-            user-select: text; /* Allow selection */
+            /* color: transparent; */ /* Not needed if opacity is 0 */
+            user-select: text; /* Still allow selection */
             -webkit-user-select: text;
             pointer-events: none; /* Layer doesn't capture clicks */
-            z-index: 2; /* Above canvas, below annotation */
+            z-index: 2; /* Layer 2: Above canvas, below annotations */
         }
         .textLayer > span {
             position: absolute;
             white-space: pre;
             cursor: text;
             transform-origin: 0% 0%;
-            pointer-events: none; /* Individual spans off */
+            /* color: transparent; */ /* Not needed if opacity is 0 */
+            /* pointer-events: auto; If needed for more specific selection */
         }
-        /* --- END: BASIC Text Layer Styles --- */
+        /* Selection highlight style (browser default or customize here) */
+        ::selection {
+             background: rgba(0, 100, 255, 0.3); /* Example blue selection */
+        }
+        ::-moz-selection {
+             background: rgba(0, 100, 255, 0.3);
+        }
 
-        /* --- START: Annotation Layer Styles (for Links) --- */
         .annotationLayer {
             position: absolute;
             left: 0;
@@ -151,90 +197,96 @@
             bottom: 0;
             overflow: hidden;
             pointer-events: none; /* Layer itself doesn't capture */
-            z-index: 3; /* Above text layer, below keyword overlay */
+            z-index: 3; /* Layer 3: Above text layer, below keyword overlay */
         }
-        .annotationLayer section { /* Styles from pdf_viewer.css */
+        .annotationLayer section { /* Styles typically from pdf_viewer.css */
             position: absolute;
             pointer-events: auto; /* Annotations ARE interactive */
         }
-        .annotationLayer .linkAnnotation > a { /* Styles from pdf_viewer.css, slightly adapted */
+        .annotationLayer .linkAnnotation > a { /* Styles from pdf_viewer.css, ensure they apply */
             position: absolute;
             font-size: 1em;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            border: 1px solid transparent;
-            transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+            border: 1px solid transparent; /* Optional: invisible border */
+            transition: background-color 0.2s ease-in-out;
+             /* background-color: rgba(255, 255, 0, 0.1); */ /* Optional: faint yellow bg always */
         }
         .annotationLayer .linkAnnotation > a:hover {
             cursor: pointer;
-            background-color: rgba(255, 255, 0, 0.2); /* Standard yellow highlight */
-            border: 1px solid rgba(255, 255, 0, 0.5);
-            box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5);
+            background-color: rgba(255, 255, 0, 0.25); /* Standard yellow hover */
+            /* border: 1px solid rgba(255, 255, 0, 0.5); */
+            /* box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); */
         }
-        /* --- END: Annotation Layer Styles --- */
+        /* --- END: PDF.js Layers --- */
+
 
         /* --- START: Custom Keyword Overlay & Definition Popup Styles --- */
         .keyword-overlay-container {
           position: absolute;
+          /* Positioned relative to .canvas-container */
           top: 0;
           left: 0;
-          right: 0;
+          right: 0; /* Use right/bottom or width/height */
           bottom: 0;
-          pointer-events: none; /* Container doesn't block */
-          z-index: 4; /* Above annotation layer */
-          margin: var(--page-padding); /* Match canvas container margin */
-          width: calc(100% - 2 * var(--page-padding)); /* Match canvas container */
-          height: calc(100% - 2 * var(--page-padding)); /* Match canvas container */
-          overflow: hidden; /* Clip highlights */
+          /* width: 100%; */ /* Alternatively use width/height */
+          /* height: 100%; */
+          pointer-events: none; /* Container doesn't block clicks to layers below */
+          z-index: 4; /* Layer 4: Above annotations */
+          overflow: hidden; /* Clip highlights that might overflow */
+          /* DO NOT set margin here; it should fill the canvas-container */
         }
 
         .keyword-highlight {
           position: absolute;
-          background: transparent;
-          border-bottom: 2px solid transparent;
-          transition: all 0.2s ease-out;
+          background: transparent; /* No background initially */
+           /* Underline effect on hover, more subtle */
+           border-bottom: 2px solid transparent;
+           transition: border-color 0.2s ease-out, background-color 0.2s ease-out;
           pointer-events: auto; /* Highlights ARE interactive */
           cursor: pointer;
-          z-index: 5; /* Above overlay container */
+          z-index: 5; /* Layer 5: Above overlay container, but below popup */
+          /* box-sizing: border-box; */ /* If padding/border are added */
         }
 
         .keyword-highlight:hover {
-          background: linear-gradient(to right, rgba(255, 165, 0, 0.15), rgba(255, 100, 0, 0.15));
-          border-bottom: 2px solid var(--accent);
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            /* Subtle background gradient on hover */
+            background: linear-gradient(to right, var(--keyword-hover-bg-start), var(--keyword-hover-bg-end));
+            border-bottom-color: var(--keyword-hover-border);
+            /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); */ /* Optional subtle shadow */
         }
 
         .definition-popup {
-          position: fixed; /* Use fixed positioning for viewport relative */
+          position: fixed; /* Relative to viewport */
           background: white;
           border-radius: 6px;
-          box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
           padding: 12px 16px;
-          max-width: 300px;
+          max-width: 320px;
           min-width: 180px;
           font-family: 'Georgia', serif;
           color: #333;
-          z-index: 10002; /* Highest */
-          transform-origin: top center;
-          transform: translateY(8px) scale(0.98);
+          z-index: 10002; /* Highest layer */
+          transform-origin: top center; /* Animation origin */
+          transform: translateY(8px) scale(0.98); /* Initial state for animation */
           opacity: 0;
           visibility: hidden;
           transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
                       opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                      visibility 0s linear 0.25s;
-          pointer-events: none;
+                      visibility 0s linear 0.25s; /* Delay visibility change */
+          pointer-events: none; /* Non-visible popup doesn't block */
         }
 
         .definition-popup.visible {
-          transform: translateY(0) scale(1);
+          transform: translateY(0) scale(1); /* Final state for animation */
           opacity: 1;
           visibility: visible;
           transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
                       opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                      visibility 0s linear 0s;
-          pointer-events: auto;
+                      visibility 0s linear 0s; /* Show immediately */
+          pointer-events: auto; /* Visible popup is interactive */
         }
 
         .definition-popup-title {
@@ -249,7 +301,7 @@
         .definition-popup-content {
           font-size: 15px;
           line-height: 1.5;
-          max-height: 180px;
+          max-height: 200px; /* Increased max height */
           overflow-y: auto;
           /* Simple scrollbar styling */
           scrollbar-width: thin;
@@ -262,60 +314,66 @@
 
         .definition-popup-close {
           position: absolute;
-          top: 8px;
-          right: 8px;
+          top: 5px;  /* Adjust position slightly */
+          right: 5px; /* Adjust position slightly */
           cursor: pointer;
-          font-size: 18px;
-          color: #999;
-          transition: color 0.2s;
+          font-size: 20px; /* Slightly smaller */
+          color: #aaa;    /* Lighter grey */
+          transition: color 0.2s, background-color 0.2s;
           background: none;
           border: none;
           padding: 0;
-          width: 24px;
-          height: 24px;
+          width: 28px;  /* Slightly larger hit area */
+          height: 28px; /* Slightly larger hit area */
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 12px;
+          border-radius: 50%; /* Circular */
           line-height: 1;
         }
 
         .definition-popup-close:hover {
           color: #333;
-          background-color: #f5f5f5;
+          background-color: #f0f0f0; /* Light grey background on hover */
         }
         /* --- END: Custom Keyword Overlay & Definition Popup Styles --- */
 
     </style>
 </head>
 <body>
+    <!-- Toolbar, Main Container, Book Spread, TOC, Loading, Slider -->
     <div id="new-toolbar"></div>
     <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
     <div id="status-indicator">Status: Initializing...</div>
+
     <div class="main-container">
         <div class="book-spread">
+            <!-- Left Page -->
             <div class="book-page left">
                 <div class="canvas-container">
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
-                    <!-- Basic text layer (optional, for selection/accessibility) -->
+                    <!-- Layer 2: Basic text layer (for selection/accessibility) -->
                     <div class="textLayer" id="left-text-layer"></div>
-                    <!-- Annotation layer (for links) -->
+                    <!-- Layer 3: Annotation layer (for links) -->
                     <div class="annotationLayer" id="left-annotation-layer"></div>
-                    <!-- Keyword overlay container added dynamically by JS -->
+                    <!-- Layer 4: Keyword overlay container added dynamically by JS -->
+                    <!-- <div class="keyword-overlay-container" id="left-keyword-overlay"></div> -->
                 </div>
                 <div class="page-edge-nav page-edge-left"></div>
                 <div class="page-edge-nav page-edge-right"></div>
                 <div class="page-number" id="left-page-number"></div>
                 <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
             </div>
+            <!-- Right Page -->
             <div class="book-page right placeholder-page">
                  <div class="canvas-container">
                     <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
-                     <!-- Basic text layer (optional, for selection/accessibility) -->
+                     <!-- Layer 2: Basic text layer -->
                      <div class="textLayer" id="right-text-layer"></div>
-                     <!-- Annotation layer (for links) -->
+                     <!-- Layer 3: Annotation layer -->
                      <div class="annotationLayer" id="right-annotation-layer"></div>
-                     <!-- Keyword overlay container added dynamically by JS -->
+                     <!-- Layer 4: Keyword overlay container added dynamically by JS -->
+                     <!-- <div class="keyword-overlay-container" id="right-keyword-overlay"></div> -->
                  </div>
                 <div class="page-edge-nav page-edge-left"></div>
                 <div class="page-edge-nav page-edge-right"></div>
@@ -324,6 +382,7 @@
             </div>
         </div>
     </div>
+
     <div class="toc-panel" id="toc-panel"></div>
     <div class="loading-overlay" id="loading-overlay"></div>
     <div class="page-slider-container" id="page-slider-container"></div>
@@ -331,286 +390,404 @@
 
     <!-- Definition popup will be added dynamically by JS to the body -->
 
-<script>
-    // Populate Inner HTML directly (Toolbar, TOC, Loading, Slider)
-    document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="single-page-btn" title="Single Page View">☰</button><button class="new-btn" id="double-page-btn" title="Double Page View">◫</button><button class="new-btn" id="rotate-btn" title="Rotate View">📱</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
-    document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
-    document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
-    document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
-</script>
+<script type="module"> // Use module type for imports
 
-<script>
-    // --- UI Elements (Removed old popup elements) ---
-    // Definition popup is created dynamically
-
-    // --- State Variables ---
-    let currentViewports = {};
-    let keywordDefinitions = {}; // Stores { keyword_lowercase: definition }
-    let pageKeywords = {}; // Stores { pageNum: [keyword1, keyword2, ...] } (Original case)
-
-    // Use the pdfjsViewer library namespace
+    // --- Imports ---
+    // Assuming pdf.mjs and pdf_viewer.mjs are correctly sourced via CDN or locally
+    // The CDN links provided earlier use .min.mjs which should export these
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    const book={title:"No Document",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]};
-    const user={readingProgress:{furthestPage:1}};
-    let toolbarTimer=null;
-    let toolbarHover=!1;
-    const pageCache=new Map();
-    const MAX_CACHE_SIZE=15;
-    let PAGE_PADDING=15;
+    // Check if libraries loaded
+    if (!pdfjsLib || !pdfjsViewer) {
+        console.error("PDF.js libraries not loaded correctly. Check script tags and paths.");
+        document.body.innerHTML = "Error: PDF.js libraries failed to load.";
+        // Use throw new Error() or return depending on context if this were inside a function
+    }
+
+    // --- Global Worker ---
+    // Use the property from the imported library object
+    if (pdfjsLib && pdfjsLib.GlobalWorkerOptions) {
+       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.mjs';
+    }
+
+    // --- State Variables ---
+    let currentViewports = {}; // Stores { canvasId: viewport }
+    let keywordDefinitions = {}; // Stores { keyword_lowercase: definition }
+    let pageKeywords = {}; // Stores { pageNum: [keyword1, keyword2, ...] } (Original case)
+
+    const book = { title: "No Document", totalPages: 0, currentPage: 1, isDoublePageView: true, pdfDocument: null, outline: [] };
+    const user = { readingProgress: { furthestPage: 1 } };
+    let toolbarTimer = null;
+    let toolbarHover = false;
+    const pageCache = new Map();
+    const MAX_CACHE_SIZE = 15; // Keep cache reasonable
+    let PAGE_PADDING = 15; // Default, updated on init
     let resizeTimer;
-    let sliderHideTimeout=null;
-    const updateStatus=m=>console.log("Status:",m);
+    let sliderHideTimeout = null;
+    const updateStatus = msg => console.log(`[Reader Status] ${msg}`); // Simple console logger
 
-    // --- Basic Link Service for Annotations ---
+    // --- PDF.js Helper Instances ---
     const linkService = new pdfjsViewer.SimpleLinkService();
+    const eventBus = new pdfjsViewer.EventBus(); // Needed for TextLayerBuilder and AnnotationLayerBuilder
 
-    // --- ADDED: Event Bus (Still useful for Text Layer if kept, and potentially other PDF.js events) ---
-    const eventBus = new pdfjsViewer.EventBus();
-
-    // --- Toolbar Logic --- (Unchanged)
+    // --- Toolbar Logic (Keep As Is) ---
     function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
     function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=false;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=true}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
 
-    // --- Caching & Page Loading --- (Unchanged)
+    // --- Caching & Page Loading Indicators (Keep As Is) ---
     function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){pageCache.delete(pageCache.keys().next().value)}}
     function showPageLoading(cId){document.getElementById(cId)?.closest('.book-page')?.querySelector('.page-loading-overlay')?.style.setProperty('display','flex')}
     function hidePageLoading(cId){document.getElementById(cId)?.closest('.book-page')?.querySelector('.page-loading-overlay')?.style.setProperty('display','none')}
 
-    // --- MODIFIED: renderPage ---
+    // --- Page Rendering Pipeline ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
-        const textLayerContainer = canvasContainer?.querySelector('.textLayer'); // Keep reference if using basic text layer
+        const textLayerContainer = canvasContainer?.querySelector('.textLayer');
         const annotationLayerContainer = canvasContainer?.querySelector('.annotationLayer');
-        const pageElement = canvas?.closest('.book-page');
+        const pageElement = canvas?.closest('.book-page'); // The .book-page element
 
-        delete currentViewports[canvasId];
-        // Clear custom overlay if it exists
+        // --- Initial Cleanup ---
+        delete currentViewports[canvasId]; // Remove old viewport for this slot
+        // Remove any *existing* custom overlay container for this page
         const existingOverlay = pageElement?.querySelector('.keyword-overlay-container');
         if (existingOverlay) existingOverlay.remove();
-
-        if (textLayerContainer) textLayerContainer.innerHTML = ''; // Clear basic text layer if used
+        // Clear standard layers
+        if (textLayerContainer) textLayerContainer.innerHTML = '';
         if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
 
-        if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || /*!textLayerContainer ||*/ !annotationLayerContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
-            if (canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // --- Validation ---
+        if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
+            if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas if invalid state
             hidePageLoading(canvasId);
+            // Make page placeholder if it's the right page and out of bounds
+            if (pageElement?.classList.contains('right') && pageNum > book.totalPages) {
+                 pageElement.classList.add('placeholder-page');
+            } else {
+                 pageElement?.classList.remove('placeholder-page');
+            }
             return;
         }
-        showPageLoading(canvasId);
-        pageElement.classList.remove('placeholder-page');
 
-        let page; let viewport;
+        showPageLoading(canvasId);
+        pageElement.classList.remove('placeholder-page'); // Ensure it's not a placeholder if rendering
+
+        let page;
+        let viewport;
 
         try {
-             if (pageCache.has(pageNum)) {
-                const d = pageCache.get(pageNum);
-                canvas.width = d.width; canvas.height = d.height;
-                canvas.style.width = `${d.styleWidth}px`; canvas.style.height = `${d.styleHeight}px`;
-                ctx.putImageData(d.imageData, 0, 0);
-                pageCache.delete(pageNum); pageCache.set(pageNum, d);
-                viewport = d.viewport; // Use cached viewport
-                currentViewports[canvasId] = viewport;
-                hidePageLoading(canvasId);
-                updateStatus(`Rendered canvas page ${pageNum} from cache`);
-                page = await book.pdfDocument.getPage(pageNum); // Still need page object for layers
-            } else {
-                page = await book.pdfDocument.getPage(pageNum);
-                const containerStyle = getComputedStyle(canvasContainer);
-                const availableWidth = parseFloat(containerStyle.width);
-                const availableHeight = parseFloat(containerStyle.height);
-                if (availableWidth <= 0 || availableHeight <= 0) throw new Error("Invalid container dimensions");
+            // --- Get PDFPageProxy Object ---
+            page = await book.pdfDocument.getPage(pageNum);
 
-                const defaultViewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-                viewport = page.getViewport({ scale: scale });
-                currentViewports[canvasId] = viewport;
+            // --- Calculate Viewport ---
+            // Get available dimensions from the container where the canvas resides
+            const containerStyle = getComputedStyle(canvasContainer);
+            const availableWidth = parseFloat(containerStyle.width);
+            const availableHeight = parseFloat(containerStyle.height);
 
-                const dpr = window.devicePixelRatio || 1;
-                canvas.width = Math.floor(viewport.width * dpr); canvas.height = Math.floor(viewport.height * dpr);
-                canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
-                ctx.scale(dpr, dpr);
+            if (availableWidth <= 0 || availableHeight <= 0) throw new Error("Canvas container has zero dimensions");
 
-                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            const defaultViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+            viewport = page.getViewport({ scale: scale });
+            currentViewports[canvasId] = viewport; // Store the calculated viewport
 
-                const iData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                pageCache.set(pageNum, { imageData: iData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport: viewport });
-                trimCache();
-                updateStatus(`Rendered canvas page ${pageNum} and cached`);
-                hidePageLoading(canvasId);
-            }
+            // --- Render Canvas ---
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(viewport.width * dpr);
+            canvas.height = Math.floor(viewport.height * dpr);
+            canvas.style.width = `${Math.floor(viewport.width)}px`;
+            canvas.style.height = `${Math.floor(viewport.height)}px`;
+            ctx.scale(dpr, dpr); // Scale context for high-res
 
-            // Render Annotation Layer (for links)
-            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
+            const renderContext = { canvasContext: ctx, viewport: viewport };
+            await page.render(renderContext).promise;
+            updateStatus(`Rendered canvas page ${pageNum}`);
 
-            // *** NEW: Add Custom Keyword Overlays ***
-            if (pageElement && currentViewports[canvasId]) {
-                 // Call the function to create overlays for this page
-                 // Pass the *page object* itself to avoid re-fetching inside createKeywordOverlays
-                 createKeywordOverlays(page, pageElement, currentViewports[canvasId]);
-                 updateStatus(`Initiated keyword overlay creation for page ${pageNum}`);
-            } else {
-                 console.warn(`Could not create overlays for page ${pageNum} - missing element or viewport.`);
-            }
+            // --- Render Standard Layers (Annotations & Basic Text) ---
+            // These can run concurrently after viewport is known
+            const annotationPromise = renderAnnotationLayer(page, annotationLayerContainer, viewport);
+            const textLayerPromise = renderBasicTextLayer(page, textLayerContainer, viewport); // Optional, for selection
 
-             // Optional: Render basic text layer for accessibility/selection (uncomment if needed)
-             // if (textLayerContainer) {
-             //     await renderBasicTextLayer(page, textLayerContainer, viewport);
-             // }
+            // --- Render Custom Keyword Overlay ---
+            // This *must* run after the viewport is finalized
+            // Pass the canvasContainer directly for appending the overlay
+            const overlayPromise = createKeywordOverlays(page, canvasContainer, viewport);
 
-        } catch (e) {
-             console.error(`Error rendering page ${pageNum}:`, e);
-             if(ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas on error
-             hidePageLoading(canvasId);
+            // Wait for all layers to finish rendering for this page
+            await Promise.all([annotationPromise, textLayerPromise, overlayPromise]);
+
+        } catch (error) {
+            console.error(`Error rendering page ${pageNum} (canvasId: ${canvasId}):`, error);
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas on error
+        } finally {
+            hidePageLoading(canvasId); // Ensure loading indicator is hidden
         }
     }
 
-    // --- REPLACED: renderAndEnhanceTextLayer with renderBasicTextLayer (Optional) ---
-    // This function ONLY renders the text spans, without any keyword logic.
-    // Call this from renderPage if you want selectable text / accessibility features.
+    // --- Renders Basic Text Layer (for Selection/Accessibility) ---
     async function renderBasicTextLayer(page, container, viewport) {
-         if (!page || !container || !viewport) return;
-         container.innerHTML = ''; // Clear previous content
-         try {
-             const textContent = await page.getTextContent({ normalizeWhitespace: true });
+        if (!page || !container || !viewport) return;
+        container.innerHTML = ''; // Clear previous
+        try {
+            const textContent = await page.getTextContent({ normalizeWhitespace: true });
 
-             // Use TextLayerBuilder from pdfjsViewer namespace (v3+)
-             const textLayerBuilder = new pdfjsViewer.TextLayerBuilder({
-                  textLayerDiv: container,
-                  eventBus: eventBus, // Still useful for text selection events
-                  pageIndex: page.pageIndex,
-                  viewport: viewport,
-                  enhanceTextSelection: true, // Keep text selection enabled
-              });
+            // Use TextLayerBuilder from pdfjsViewer namespace
+            const textLayerBuilder = new pdfjsViewer.TextLayerBuilder({
+                textLayerDiv: container,
+                eventBus: eventBus, // Link to event bus
+                pageIndex: page.pageIndex,
+                viewport: viewport,
+                enhanceTextSelection: true, // Enable text selection enhancement
+            });
 
-             textLayerBuilder.setTextContentItems(textContent.items);
-             textLayerBuilder.render(); // Render the basic spans
+            // Correct method in v3+ is setTextContentItems
+            textLayerBuilder.setTextContentItems(textContent.items);
 
-             updateStatus(`Basic text layer rendered for page ${page.pageNumber}.`);
-         } catch (error) {
-              console.error(`Error rendering basic text layer for page ${page.pageNumber}:`, error);
-              container.innerHTML = '';
-         }
-     }
+            textLayerBuilder.render(); // Render the layer
+            updateStatus(`Rendered basic text layer for page ${page.pageNumber}.`);
 
-    // --- renderAnnotationLayer (Unchanged) ---
+        } catch (error) {
+            console.error(`Error rendering basic text layer for page ${page.pageNumber}:`, error);
+            container.innerHTML = ''; // Clear on error
+        }
+    }
+
+    // --- Renders Annotation Layer (for Links) ---
     async function renderAnnotationLayer(page, container, viewport) {
-         if (!page || !container || !viewport) return;
-         container.innerHTML = ''; // Clear previous
-         try {
-             const annotations = await page.getAnnotations();
-              // Use AnnotationLayerBuilder from pdfjsViewer namespace
-              const annotationLayerBuilder = new pdfjsViewer.AnnotationLayerBuilder({
-                  pageDiv: container, // Use the container div directly
-                  pdfPage: page,
-                  linkService: linkService,
-                  // eventBus: eventBus, // Optional
-                  annotationStorage: null, // No storage needed for simple links
-                  renderForms: false,
-                  enableScripting: false, // Disable scripting for security
-              });
+        if (!page || !container || !viewport) return;
+        container.innerHTML = ''; // Clear previous
+        try {
+            const annotations = await page.getAnnotations();
+            if (annotations.length === 0) return; // No annotations
 
-             annotationLayerBuilder.render(viewport.clone({ dontFlip: true })); // Render with cloned viewport
-             updateStatus(`Annotation layer rendered for page ${page.pageNumber} with ${annotations.length} annotations.`);
-         } catch (error) {
-             console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
-             container.innerHTML = '';
-         }
-     }
+             // Use AnnotationLayerBuilder from pdfjsViewer namespace
+             const annotationLayerBuilder = new pdfjsViewer.AnnotationLayerBuilder({
+                 pageDiv: container, // The div where annotations will be appended
+                 pdfPage: page,
+                 linkService: linkService, // Use the global link service
+                 annotationStorage: null, // No custom storage needed for links
+                 renderForms: false, // Typically don't need PDF forms
+                 enableScripting: false, // Disable for security
+                 // eventBus: eventBus, // Can optionally connect to event bus
+             });
 
-    // --- preloadAdjacentPages (Unchanged) ---
+            // Render annotations into the container
+            // Pass a clone of the viewport, potentially with dontFlip: true if needed by builder version
+            annotationLayerBuilder.render(viewport.clone({ dontFlip: true }));
+
+            updateStatus(`Rendered annotation layer for page ${page.pageNumber} with ${annotations.length} annotations.`);
+        } catch (error) {
+            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
+            container.innerHTML = ''; // Clear on error
+        }
+    }
+
+    // --- Preloading (Keep As Is, maybe optimize later) ---
     function preloadAdjacentPages(cp){const pToLoad=[];if(book.isDoublePageView){if(cp>2)pToLoad.push(cp-2,cp-1);if(cp+2<=book.totalPages)pToLoad.push(cp+2);if(cp+3<=book.totalPages)pToLoad.push(cp+3)}else{if(cp>1)pToLoad.push(cp-1);if(cp+1<=book.totalPages)pToLoad.push(cp+1)}const uniqueP=[...new Set(pToLoad)].filter(p=>p>0&&p<=book.totalPages&&!pageCache.has(p));if(uniqueP.length===0)return;uniqueP.forEach(pn=>{book.pdfDocument?.getPage(pn).then(p=>{const bw=650,bh=842;const aw=bw-(2*PAGE_PADDING),ah=bh-(2*PAGE_PADDING);const v=p.getViewport({scale:1});const s=Math.min(aw/v.width,ah/v.height);const sv=p.getViewport({scale:s});const tc=document.createElement('canvas');const tx=tc.getContext('2d');const dpr=window.devicePixelRatio||1;tc.width=Math.floor(sv.width*dpr);tc.height=Math.floor(sv.height*dpr);tx.scale(dpr,dpr);p.render({canvasContext:tx,viewport:sv}).promise.then(()=>{const iData=tx.getImageData(0,0,tc.width,tc.height);if(!pageCache.has(pn)){pageCache.set(pn,{imageData:iData,width:tc.width,height:tc.height,styleWidth:Math.floor(sv.width),styleHeight:Math.floor(sv.height),viewport:sv});trimCache()}})})})}
 
-    // --- updateDisplay (Minor adjustments) ---
+    // --- Display Update Logic ---
     async function updateDisplay() {
-        if (!book.pdfDocument) { /* ... unchanged ... */ return; }
-        const lpNum = book.currentPage; const rpNum = book.isDoublePageView ? book.currentPage + 1 : 0;
-        updateStatus(`Updating display for page(s): ${lpNum}${rpNum > 0 ? ', ' + rpNum : ''}`);
-        const lDiv = document.querySelector('.book-page.left'), rDiv = document.querySelector('.book-page.right');
-        const lNum = document.getElementById('left-page-number'), rNum = document.getElementById('right-page-number');
-        // References to text/annotation layers might be needed if rendering them
-        // const lTextLayer = document.getElementById('left-text-layer'), rTextLayer = document.getElementById('right-text-layer');
-        // const lAnnLayer = document.getElementById('left-annotation-layer'), rAnnLayer = document.getElementById('right-annotation-layer');
-        if (!lDiv||!rDiv||!lNum||!rNum /*||!lTextLayer||!rTextLayer||!lAnnLayer||!rAnnLayer*/) { console.error("Page elements missing"); return }
-
-        lDiv.style.visibility='hidden'; rDiv.style.display='none'; rDiv.classList.remove('placeholder-page');
-        // Clear layers if they exist and are being used
-        // lTextLayer.innerHTML=''; rTextLayer.innerHTML=''; lAnnLayer.innerHTML=''; rAnnLayer.innerHTML='';
-        // Clear custom overlays
-        lDiv.querySelector('.keyword-overlay-container')?.remove();
-        rDiv.querySelector('.keyword-overlay-container')?.remove();
-
-
-        if (lpNum>=1&&lpNum<=book.totalPages) { lNum.textContent=lpNum; lDiv.style.visibility='visible'; await renderPage(lpNum,'left-page-canvas'); }
-        else { lNum.textContent=''; document.getElementById('left-page-canvas')?.getContext('2d').clearRect(0,0,1,1); }
-
-        if (book.isDoublePageView) {
-            if (rpNum>=1&&rpNum<=book.totalPages) { rDiv.style.display='flex'; rNum.textContent=rpNum; await renderPage(rpNum,'right-page-canvas'); }
-            else if (lpNum>=1&&lpNum<=book.totalPages) { rDiv.style.display='flex'; rDiv.classList.add('placeholder-page'); rNum.textContent=''; document.getElementById('right-page-canvas')?.getContext('2d').clearRect(0,0,1,1); }
+        if (!book.pdfDocument && book.totalPages === 0) {
+            // Handle case where no PDF is loaded yet or loading failed
+            document.querySelector('.book-page.left')?.style.setProperty('visibility', 'hidden');
+            document.querySelector('.book-page.right')?.style.setProperty('display', 'none');
+            updateStatus("No PDF document loaded to display.");
+            return;
         }
-        updateSliderPosition(); preloadAdjacentPages(book.currentPage); updateStatus("Display update complete.");
+
+        const lpNum = book.currentPage;
+        const rpNum = book.isDoublePageView ? book.currentPage + 1 : 0;
+        updateStatus(`Updating display for page(s): ${lpNum}${rpNum > 0 && rpNum <= book.totalPages ? ', ' + rpNum : ''}`);
+
+        const lDiv = document.querySelector('.book-page.left');
+        const rDiv = document.querySelector('.book-page.right');
+        const lNumEl = document.getElementById('left-page-number');
+        const rNumEl = document.getElementById('right-page-number');
+
+        if (!lDiv || !rDiv || !lNumEl || !rNumEl) {
+            console.error("Page elements missing during updateDisplay");
+            return;
+        }
+
+        // Reset right page visibility and placeholder status initially
+        rDiv.style.display = 'none';
+        rDiv.classList.remove('placeholder-page');
+
+        // Create promises for rendering pages
+        const renderPromises = [];
+
+        // Render Left Page
+        if (lpNum >= 1 && lpNum <= book.totalPages) {
+            lNumEl.textContent = lpNum;
+            lDiv.style.visibility = 'visible'; // Make visible before render starts
+            renderPromises.push(renderPage(lpNum, 'left-page-canvas'));
+        } else {
+            lNumEl.textContent = '';
+            lDiv.style.visibility = 'hidden'; // Hide if out of bounds
+            document.getElementById('left-page-canvas')?.getContext('2d').clearRect(0, 0, 1, 1);
+        }
+
+        // Render Right Page (if double page view)
+        if (book.isDoublePageView) {
+            rDiv.style.display = 'flex'; // Show the right page container
+            if (rpNum >= 1 && rpNum <= book.totalPages) {
+                rNumEl.textContent = rpNum;
+                renderPromises.push(renderPage(rpNum, 'right-page-canvas'));
+            } else {
+                // Show placeholder if left page is valid but right is out of bounds
+                rDiv.classList.add('placeholder-page');
+                rNumEl.textContent = '';
+                document.getElementById('right-page-canvas')?.getContext('2d').clearRect(0, 0, 1, 1);
+                // Ensure overlay is cleared on placeholder
+                 const existingOverlay = rDiv.querySelector('.keyword-overlay-container');
+                 if (existingOverlay) existingOverlay.remove();
+                 rDiv.querySelector('.textLayer')?.replaceChildren(); // Clear standard layers too
+                 rDiv.querySelector('.annotationLayer')?.replaceChildren();
+
+            }
+        }
+
+        // Wait for all renders to complete
+        await Promise.all(renderPromises);
+
+        updateSliderPosition(); // Update slider after pages are potentially rendered
+        preloadAdjacentPages(book.currentPage); // Preload next pages
+        updateStatus("Display update complete.");
     }
+
 
     // --- Navigation (Add hideDefinitionPopup) ---
-    function nextPage(){hideDefinitionPopup(); const i=book.isDoublePageView?2:1;if(book.currentPage+i<=book.totalPages){jumpToPage(book.currentPage+i)}}
-    function prevPage(){hideDefinitionPopup(); const d=book.isDoublePageView?2:1;if(book.currentPage-d>=1){jumpToPage(book.currentPage-d)}}
-    function jumpToPage(pn){if(!book.pdfDocument||pn<1||pn>book.totalPages)return;let tp=pn;if(book.isDoublePageView&&tp>1&&tp%2!==1)tp--;if(tp<1)tp=1;if(tp===book.currentPage)return;book.currentPage=tp;if(tp>user.readingProgress.furthestPage)user.readingProgress.furthestPage=tp; hideDefinitionPopup(); // Hide popup on jump
- updateDisplay();showPageSlider();manageToolbar(false)}
+    function nextPage() { hideDefinitionPopup(); const increment = book.isDoublePageView ? 2 : 1; if (book.currentPage + increment <= book.totalPages) { jumpToPage(book.currentPage + increment); } }
+    function prevPage() { hideDefinitionPopup(); const decrement = book.isDoublePageView ? 2 : 1; if (book.currentPage - decrement >= 1) { jumpToPage(book.currentPage - decrement); } }
+    function jumpToPage(pageNum) {
+        if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages) return;
+        let targetPage = pageNum;
+        // Ensure left page is odd in double page view (except page 1)
+        if (book.isDoublePageView && targetPage > 1 && targetPage % 2 !== 1) {
+            targetPage--;
+        }
+        if (targetPage < 1) targetPage = 1;
+        if (targetPage === book.currentPage) return; // No change
 
-    // --- View Modes (Add hideDefinitionPopup) ---
-    function setSinglePageView(){if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Single page view");book.isDoublePageView=false;document.body.classList.remove('rotated-mode');document.body.classList.add('fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%)'; hideDefinitionPopup(); updateDisplay();manageToolbar();updateSliderTotalPages();updateSliderPosition()}
-    function setDoublePageView(){if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return;updateStatus("Double page view");book.isDoublePageView=true;document.body.classList.remove('rotated-mode','fullscreen-mode');document.querySelector('.book-spread').style.transform='translate(-50%, -50%)';if(book.currentPage>1&&book.currentPage%2===0)book.currentPage--; hideDefinitionPopup(); updateDisplay();manageToolbar();updateSliderTotalPages();updateSliderPosition()}
-    function setRotatedView() {
-        updateStatus("Rotated view"); book.isDoublePageView=false;
-        document.body.classList.remove('fullscreen-mode'); document.body.classList.add('rotated-mode');
-        hideDefinitionPopup();
-        updateDisplay().then(() => {
-            const sp = document.querySelector('.book-spread');
-            const canvasContainer = document.getElementById('left-page-canvas')?.closest('.canvas-container');
-            if (!canvasContainer || !sp) return;
-            const vpW = window.innerWidth; const vpH = window.innerHeight;
-            const baseW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
-            const baseH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
-            const scaleX = vpW / baseH; const scaleY = vpH / baseW;
-            const scale = Math.min(scaleX, scaleY) * 0.95;
-            sp.style.transformOrigin='center center'; sp.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${scale})`;
-        });
-        manageToolbar(); updateSliderTotalPages(); updateSliderPosition();
+        book.currentPage = targetPage;
+        if (targetPage > user.readingProgress.furthestPage) {
+            user.readingProgress.furthestPage = targetPage;
+            // Optionally save progress here (e.g., localStorage)
+        }
+        hideDefinitionPopup(); // Hide any open popup before updating display
+        updateDisplay(); // Update the view to show the new page(s)
+        showPageSlider(); // Briefly show slider on jump
+        manageToolbar(false); // Hide toolbar
     }
 
-    // --- UI Toggles (Unchanged) ---
+    // --- View Modes (Add hideDefinitionPopup, simplify) ---
+    function applyViewModeStyles(mode) {
+        document.body.classList.remove('fullscreen-mode', 'double-page-mode', 'rotated-mode');
+        if (mode === 'single') document.body.classList.add('fullscreen-mode');
+        // else if (mode === 'double') document.body.classList.add('double-page-mode'); // Default, no class needed?
+        else if (mode === 'rotated') document.body.classList.add('rotated-mode');
+
+        // Reset transform for non-rotated modes
+        const spread = document.querySelector('.book-spread');
+        if (spread && mode !== 'rotated') {
+             spread.style.transform = 'translate(-50%, -50%)';
+             spread.style.transformOrigin = 'center center';
+        }
+    }
+    async function setViewMode(mode) {
+        hideDefinitionPopup();
+        let needsDisplayUpdate = false;
+
+        if (mode === 'single') {
+            if (book.isDoublePageView || document.body.classList.contains('rotated-mode')) {
+                 updateStatus("Switching to Single Page View");
+                 book.isDoublePageView = false;
+                 applyViewModeStyles('single');
+                 needsDisplayUpdate = true;
+            }
+        } else if (mode === 'double') {
+            if (!book.isDoublePageView || document.body.classList.contains('rotated-mode')) {
+                 updateStatus("Switching to Double Page View");
+                 book.isDoublePageView = true;
+                 // Ensure current page is odd if switching to double (unless it's page 1)
+                 if (book.currentPage > 1 && book.currentPage % 2 === 0) {
+                     book.currentPage--;
+                 }
+                 applyViewModeStyles('double');
+                 needsDisplayUpdate = true;
+             }
+        } else if (mode === 'rotated') {
+             if (!document.body.classList.contains('rotated-mode')) {
+                 updateStatus("Switching to Rotated View");
+                 book.isDoublePageView = false; // Rotated is always single page
+                 applyViewModeStyles('rotated');
+                 needsDisplayUpdate = true; // Need to re-render for rotation scale
+             }
+        }
+
+        if (needsDisplayUpdate) {
+            await updateDisplay(); // Re-render pages for the new layout
+
+            if (mode === 'rotated') {
+                 // Apply rotation transform AFTER display update ensures correct canvas dimensions
+                 const sp = document.querySelector('.book-spread');
+                 const canvasContainer = document.getElementById('left-page-canvas')?.closest('.canvas-container');
+                 if (!canvasContainer || !sp) return;
+
+                 // Get viewport and base page dimensions (consider moving base dims to constants)
+                 const vpW = window.innerWidth; const vpH = window.innerHeight;
+                 const baseW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
+                 const baseH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
+
+                 // Calculate scale to fit rotated page (page height fits viewport width, page width fits viewport height)
+                 const scaleX = vpW / baseH; const scaleY = vpH / baseW;
+                 const scale = Math.min(scaleX, scaleY) * 0.95; // Add some padding
+
+                 sp.style.transformOrigin = 'center center';
+                 sp.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
+             }
+
+             manageToolbar(); // Update toolbar position/style
+             updateSliderTotalPages(); // Max value might change conceptually
+             updateSliderPosition(); // Current value display might change
+        }
+    }
+    // --- End View Modes ---
+
+    // --- UI Toggles (Keep As Is) ---
     function toggleElement(id,show){document.getElementById(id)?.classList.toggle('visible',show)}
     function showTableOfContents(){if(!document.getElementById('toc-btn')?.hasAttribute('disabled')){toggleElement('toc-panel',true);manageToolbar(false)}}
     function hideTableOfContents(){toggleElement('toc-panel',false)}
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Unchanged) ---
+    // --- Slider Logic (Keep As Is) ---
     function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
     function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3000)}
-    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;s.addEventListener('input',()=>{const pn=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let pt=`Page ${pn}`;if(book.isDoublePageView&&pn+1<=book.totalPages)pt+=`-${pn+1}`;d.textContent=pt}updateSliderStyle(s,pn);resetSliderHideTimer()});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
+    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;s.addEventListener('input',()=>{const pn=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let pt=`Page ${pn}`;if(book.isDoublePageView&&pn<book.totalPages)pt+=`-${pn+1}`;d.textContent=pt}updateSliderStyle(s,pn);resetSliderHideTimer()});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
-    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const cp=book.currentPage>0?book.currentPage:1,tt=book.totalPages>0?book.totalPages:1;s.value=cp;let pt=`Page ${cp}`;if(book.isDoublePageView&&cp+1<=tt)pt+=`-${cp+1}`;d.textContent=pt;updateSliderStyle(s,cp)}}
+    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const cp=book.currentPage>0?book.currentPage:1,tt=book.totalPages>0?book.totalPages:1;s.value=cp;let pt=`Page ${cp}`;if(book.isDoublePageView&&cp<tt)pt+=`-${cp+1}`;d.textContent=pt;updateSliderStyle(s,cp)}}
     function updateSliderStyle(sEl,val){const min=parseInt(sEl.min||1),max=parseInt(sEl.max||1),range=(max>min)?(max-min):1,p=((val-min)/range)*100;sEl.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
 
-    // --- Load PDF (Adjust overlay parsing) ---
+    // --- Load PDF & Overlay ---
     async function loadPdf(source) {
         updateStatus("loadPdf started"); showLoading("Initializing PDF...");
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){}} book.pdfDocument=null;
-        hideDefinitionPopup();
+        if (book.pdfDocument) { try { await book.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF document:", e); } }
+        book.pdfDocument = null; book.totalPages = 0; book.currentPage = 1; book.outline = [];
+        hideDefinitionPopup(); // Ensure no popup lingers
 
         let filename = "Document";
-        try { filename = decodeURIComponent(source.split('/').pop() || filename); } catch(e){}
+        try { filename = decodeURIComponent(source.split('/').pop().split('?')[0] || filename); } catch(e){} // Basic filename extraction
 
         try {
-            const loadTask = pdfjsLib.getDocument(source);
-            // Fetch overlay *concurrently*
+            const loadingTask = pdfjsLib.getDocument(source);
+
+            // --- Fetch Overlay JSON Concurrently ---
             const overlayUrl = source.replace(/\.pdf$/i, '.overlay.json');
             updateStatus(`Attempting to fetch overlay: ${overlayUrl}`);
             const overlayPromise = fetch(overlayUrl)
@@ -619,109 +796,193 @@
                     return response.json();
                 })
                 .then(data => {
-                     if (!data||typeof data.keywords!=='object'||typeof data.pages!=='object') throw new Error("Invalid overlay structure");
-                     // Store definitions with lowercase keys for reliable lookup
+                     if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') {
+                         throw new Error("Invalid overlay JSON structure");
+                     }
+                     // Process and store definitions (lowercase keys for matching)
                      keywordDefinitions = {};
                      for (const key in data.keywords) {
-                        keywordDefinitions[key.toLowerCase()] = data.keywords[key];
+                         if (Object.hasOwnProperty.call(data.keywords, key)) {
+                            keywordDefinitions[key.toLowerCase()] = data.keywords[key];
+                         }
                      }
-                     pageKeywords=data.pages||{}; // Keep original case for display potentially
+                     // Store page keywords (original case might be useful for display)
+                     pageKeywords = data.pages || {};
                      updateStatus(`Overlay loaded: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages.`);
-                     return data;
+                     return true; // Indicate success
                 })
                 .catch(err => {
-                     console.warn(`Overlay fetch/parse failed: ${err.message}`);
-                     keywordDefinitions={}; pageKeywords={};
-                     return null;
+                     console.warn(`Overlay file not found or invalid (${overlayUrl}): ${err.message}. Keyword highlighting disabled.`);
+                     keywordDefinitions = {}; pageKeywords = {}; // Reset keyword data
+                     return false; // Indicate failure
                 });
 
-            // Wait for PDF loading
-            book.pdfDocument = await loadTask.promise;
-            book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1;
+            // --- Wait for PDF Document Loading ---
+            book.pdfDocument = await loadingTask.promise;
+            book.totalPages = book.pdfDocument.numPages;
+            book.currentPage = 1; // Reset to first page
+            user.readingProgress.furthestPage = 1;
             book.title = filename.replace(/\.pdf$/i, '');
             updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
-            document.title = `${book.title} - Heritage History™`;
-            updateSliderTotalPages(); showLoading("Processing metadata...");
+            document.title = `${book.title} - Heritage History™ Reader`;
 
-            // Wait for overlay fetch attempt
-             const overlayResult = await overlayPromise;
-             if (overlayResult === null) {
-                console.warn(`Warning: Overlay file (${overlayUrl}) could not be loaded or parsed. Definitions/Highlighting will not work.`);
-             }
+            // Update slider based on total pages
+            updateSliderTotalPages();
+            updateSliderPosition(); // Set slider to page 1
 
-            try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); }
-            catch (oe) { book.outline = []; populateTOC(); }
+            // --- Wait for Overlay Fetch Result ---
+            showLoading("Processing metadata...");
+            await overlayPromise; // Wait for fetch attempt to complete
 
-            if (window.innerWidth < 1000) setSinglePageView(); else setDoublePageView();
-            requestAnimationFrame(updateDisplay); // Initial render
+            // --- Get Outline (TOC) ---
+            try {
+                book.outline = await book.pdfDocument.getOutline() || [];
+                populateTOC();
+            } catch (outlineError) {
+                console.warn("Could not get PDF outline:", outlineError);
+                book.outline = [];
+                populateTOC(); // Still call to update UI (e.g., disable button)
+            }
 
-        } catch (e) {
-            console.error("Error loading PDF:", e); alert(`Failed to load PDF: ${e.message||e}`);
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[];
-            keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader";
+            // --- Initial Display ---
+             // Determine initial view based on window width
+             const initialDoublePage = window.innerWidth >= 1000; // Example threshold
+             await setViewMode(initialDoublePage ? 'double' : 'single');
+             // updateDisplay is called within setViewMode if mode changes
+
+        } catch (error) {
+            console.error("Error loading PDF:", error);
+            alert(`Failed to load PDF: ${error.message || error}`);
+            // Reset state thoroughly on failure
+            book.pdfDocument = null; book.totalPages = 0; book.currentPage = 1; book.title = "No Document"; book.outline = [];
+            keywordDefinitions = {}; pageKeywords = {}; document.title = "Heritage History™ Reader";
             updateSliderTotalPages(); updateSliderPosition(); populateTOC();
-             document.querySelector('.main-container .book-spread').innerHTML = `<div style="color: var(--text-on-page); padding: 30px; text-align: center; width: 100%;">Failed to load document: ${e.message}</div>`;
-        } finally { hideLoading(); }
+            // Display error message in the reader area
+            const spreadContainer = document.querySelector('.main-container .book-spread');
+            if (spreadContainer) {
+                 spreadContainer.innerHTML = `<div style="color: var(--text-on-page); padding: 30px; text-align: center; width: 100%; background: var(--page); border-radius: 5px;">Failed to load document. Please check the URL and network connection.<br><small>${error.message}</small></div>`;
+            }
+        } finally {
+            hideLoading(); // Ensure loading overlay is hidden
+        }
     }
 
-    // --- TOC population (Unchanged) ---
-    function populateTOC(){const tl=document.getElementById('toc-list'),tb=document.getElementById('toc-btn');if(!tl||!tb)return;tl.innerHTML='';tb.disabled=true;if(!book.outline||book.outline.length===0){tl.innerHTML='<em>No table of contents.</em>';return}tb.disabled=false;const createItem=(item,level=0)=>{const d=document.createElement('div');d.className=level===0?'toc-chapter':'toc-section';d.style.marginLeft=`${level*15}px`;const ts=document.createElement('span');ts.className=level===0?'toc-chapter-title':'';ts.textContent=item.title||'Untitled';ts.style.cursor='pointer';ts.onclick=async()=>{try{let dest=item.dest,pi=-1;if(typeof dest==='string'){dest=await book.pdfDocument.getDestination(dest)}if(Array.isArray(dest)&&typeof dest[0]==='object'){pi=await book.pdfDocument.getPageIndex(dest[0])}else if(Array.isArray(dest)&&typeof dest[0]==='number'){pi=dest[0]-1}else{console.warn("Unknown TOC dest:",item.dest)}if(pi>=0){jumpToPage(pi+1);hideTableOfContents()}else{throw new Error('Failed to resolve page')}}catch(e){alert(`Nav failed: ${e.message}`)}};d.appendChild(ts);if(item.items?.length>0){const sl=document.createElement('div');if(level===0)sl.className='toc-sections';item.items.forEach(si=>{const se=createItem(si,level+1);if(se)sl.appendChild(se)});if(sl.hasChildNodes())d.appendChild(sl)}return d};book.outline.forEach(item=>{const ie=createItem(item);if(ie)tl.appendChild(ie)});if(!tl.hasChildNodes()){tl.innerHTML='<em>Error processing TOC.</em>';tb.disabled=true}}
 
-    // --- Event Setup (Remove old text layer/popup listeners, add hide on escape) ---
+    // --- TOC population (Keep As Is) ---
+     function populateTOC(){const tl=document.getElementById('toc-list'),tb=document.getElementById('toc-btn');if(!tl||!tb)return;tl.innerHTML='';tb.disabled=true;if(!book.outline||book.outline.length===0){tl.innerHTML='<em>No table of contents available.</em>';return}tb.disabled=false;const createItem=async(item,level=0)=>{const d=document.createElement('div');d.className=level===0?'toc-chapter':'toc-section';d.style.marginLeft=`${level*15}px`;const ts=document.createElement('span');ts.className=level===0?'toc-chapter-title':'';ts.textContent=item.title||'Untitled Section';ts.style.cursor='pointer';ts.onclick=async()=>{try{let dest=item.dest,pageIndex=-1;if(typeof dest==='string'){dest=await book.pdfDocument.getDestination(dest)}if(Array.isArray(dest)&&dest[0]?.gen===undefined){console.warn("TOC destination might be a page number array, trying index 0:", dest); pageIndex = dest[0] -1; } else if (Array.isArray(dest)&& dest[0]?.gen !== undefined) {pageIndex=await book.pdfDocument.getPageIndex(dest[0])} else if(typeof dest === 'number') { pageIndex = dest -1; } else{console.warn("Unknown TOC destination format:",item.dest)}if(pageIndex>=0){jumpToPage(pageIndex+1);hideTableOfContents()}else{throw new Error('Failed to resolve page index from destination')}}catch(e){console.error("TOC navigation failed:",e);alert(`Navigation failed: ${e.message}`)}};d.appendChild(ts);if(item.items?.length>0){const sl=document.createElement('div');if(level===0)sl.className='toc-sections';const itemPromises=item.items.map(si=>createItem(si,level+1));const subItems=await Promise.all(itemPromises);subItems.forEach(se=>{if(se)sl.appendChild(se)});if(sl.hasChildNodes())d.appendChild(sl)}return d};const tocPromises=book.outline.map(item=>createItem(item));Promise.all(tocPromises).then(items=>{items.forEach(ie=>{if(ie)tl.appendChild(ie)});if(!tl.hasChildNodes()){tl.innerHTML='<em>Error processing TOC entries.</em>';tb.disabled=true}}).catch(e=>{console.error("Error creating TOC:", e); tl.innerHTML='<em>Error creating TOC.</em>'; tb.disabled=true;})}
+
+    // --- Event Setup ---
     function setupEvents() {
         updateStatus("Setting up events");
         const tbar = document.getElementById('new-toolbar');
         tbar?.addEventListener('click', e => {
             const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return;
-            const id = btn.id; updateStatus(`Toolbar: ${id}`);
+            const id = btn.id; updateStatus(`Toolbar click: ${id}`);
             switch (id) {
-                case 'single-page-btn': setSinglePageView(); break;
-                case 'double-page-btn': setDoublePageView(); break;
-                case 'rotate-btn': setRotatedView(); break;
+                case 'single-page-btn': setViewMode('single'); break;
+                case 'double-page-btn': setViewMode('double'); break;
+                case 'rotate-btn': setViewMode('rotated'); break;
                 case 'toc-btn': showTableOfContents(); break;
             }
-            resetSliderHideTimer(); manageToolbar(true); toolbarHover = false; manageToolbar(false);
+            // Toolbar visibility management might need adjustment based on user preference
+            resetSliderHideTimer(); // Keep slider visible briefly after toolbar interaction
+            // manageToolbar(true); toolbarHover = false; manageToolbar(false); // Auto-hide logic
         });
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        // Removed old close popup button listener
 
-        // Removed old Text Layer event delegation
+        // Page turn navigation (Edges)
+         document.querySelectorAll('.page-edge-nav').forEach(el => {
+             el.addEventListener('click', e => {
+                 const pageElement = e.target.closest('.book-page');
+                 if (!pageElement || pageElement.classList.contains('placeholder-page')) return;
 
-        // Page turn navigation (Unchanged)
-         document.querySelectorAll('.page-edge-nav').forEach(el=>{el.addEventListener('click',e=>{const pp=e.target.closest('.book-page');if(!pp||pp.classList.contains('placeholder-page'))return;const ir=document.body.classList.contains('rotated-mode'),ilp=pp.classList.contains('left'),ice=e.target.classList.contains('page-edge-left'),ispv=!book.isDoublePageView;if(ir){if(ice)prevPage();else nextPage()}else if(ispv){if(ice)prevPage();else nextPage()}else{if(ice&&ilp)prevPage();else if(!ice&&!ilp)nextPage()}})});
+                 const isRotated = document.body.classList.contains('rotated-mode');
+                 const isLeftPage = pageElement.classList.contains('left');
+                 const isEdgeLeft = e.target.classList.contains('page-edge-left');
+                 const isSingleView = !book.isDoublePageView; // Check current state
 
-        // Keyboard navigation (Add Escape key check for popup)
+                 // Determine action based on view mode and click position
+                 if (isRotated) {
+                      if (isEdgeLeft) prevPage(); else nextPage();
+                 } else if (isSingleView) {
+                      if (isEdgeLeft) prevPage(); else nextPage();
+                 } else { // Double Page View (not rotated)
+                      if (isEdgeLeft && isLeftPage) prevPage();    // Click left edge of left page
+                      else if (!isEdgeLeft && !isLeftPage) nextPage(); // Click right edge of right page
+                      // Clicks on inner edges in double view could optionally turn single pages,
+                      // but current logic only turns spreads via outer edges.
+                 }
+             });
+         });
+
+        // Keyboard navigation
         document.addEventListener('keydown', e => {
-             // Check if popup is visible *first*
+            // 1. Check for active popup first (Escape key)
             if (e.key === 'Escape' && document.querySelector('.definition-popup.visible')) {
                 hideDefinitionPopup();
-                e.preventDefault(); // Prevent other escape actions
+                e.preventDefault(); // Stop further processing (like closing TOC)
                 return;
             }
-            if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||document.querySelector('.toc-panel.visible')) return; // Check TOC visibility
-            if (e.ctrlKey||e.altKey||e.metaKey) return;
-            let navAct=false;
-            switch(e.key){case'ArrowRight':case'PageDown':nextPage();navAct=true;break;case'ArrowLeft':case'PageUp':prevPage();navAct=true;break;case'Home':if(book.totalPages>0)jumpToPage(1);navAct=true;break;case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=true;break; /* Escape handled above */ }
-            if(navAct){e.preventDefault();showPageSlider();manageToolbar(false)}
+            // 2. Ignore input fields, TOC panel
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || document.querySelector('.toc-panel.visible')) return;
+            // 3. Ignore if modifier keys are pressed
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+            let navAction = false;
+            switch (e.key) {
+                case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break;
+                case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break;
+                case 'Home': if (book.totalPages > 0) jumpToPage(1); navAction = true; break;
+                case 'End': if (book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break;
+                // Escape key handled above
+            }
+            if (navAction) {
+                e.preventDefault(); // Prevent default browser scroll
+                showPageSlider(); // Show slider on keyboard nav
+                manageToolbar(false); // Hide toolbar
+            }
         });
 
-        // Resize handling (Add hideDefinitionPopup)
-        window.addEventListener('resize', ()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode'))setRotatedView();else if(document.body.classList.contains('fullscreen-mode'))setSinglePageView();else setDoublePageView();manageToolbar()},250)});
+        // Resize handling
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                updateStatus("Resize detected.");
+                hideDefinitionPopup(); // Close popup on resize
 
-        // Double-click view toggle (Unchanged)
-         document.querySelector('.main-container').addEventListener('dblclick',e=>{if(e.target===e.currentTarget&&!document.body.classList.contains('rotated-mode')){if(document.body.classList.contains('fullscreen-mode'))setDoublePageView();else setSinglePageView()}});
+                // Re-apply view mode to recalculate layout/scale
+                if (document.body.classList.contains('rotated-mode')) {
+                     setViewMode('rotated');
+                } else if (document.body.classList.contains('fullscreen-mode')) {
+                     setViewMode('single');
+                } else {
+                     setViewMode('double'); // Default to double if no specific mode class
+                }
+                // manageToolbar(); // Update toolbar state if needed
+            }, 250); // Debounce resize event
+        });
 
-        // Touch swipe navigation (Unchanged, ensure popup doesn't block)
+        // Double-click view toggle (Optional)
+         document.querySelector('.main-container').addEventListener('dblclick', e => {
+             // Check if click is directly on the background, not on pages or controls
+             if (e.target === e.currentTarget && !document.body.classList.contains('rotated-mode')) {
+                 if (document.body.classList.contains('fullscreen-mode')) {
+                     setViewMode('double');
+                 } else {
+                     setViewMode('single');
+                 }
+             }
+         });
+
+        // Touch swipe navigation (Keep As Is, check target exclusions)
          let tsX=0,tsY=0,tst=0;const SW_TH=50,SW_TL=500,SW_A=35;
-         document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, .definition-popup, .keyword-highlight, .annotationLayer a'))return; if(e.touches.length===1){tsX=e.touches[0].screenX;tsY=e.touches[0].screenY;tst=Date.now()}else{tsX=0;tsY=0}},{passive:true});
-         document.body.addEventListener('touchend',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, .definition-popup, .keyword-highlight, .annotationLayer a'))return; if(tsX===0&&tsY===0)return;if(e.changedTouches.length===1){const teX=e.changedTouches[0].screenX,teY=e.changedTouches[0].screenY;if(Date.now()-tst<SW_TL){handleSwipe(tsX,tsY,teX,teY)}}tsX=0;tsY=0;tst=0});
+         document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, .definition-popup, .keyword-highlight, .annotationLayer a, .textLayer span'))return; if(e.touches.length===1){tsX=e.touches[0].screenX;tsY=e.touches[0].screenY;tst=Date.now()}else{tsX=0;tsY=0}},{passive:true});
+         document.body.addEventListener('touchend',e=>{if(e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #page-slider-trigger-zone, .definition-popup, .keyword-highlight, .annotationLayer a, .textLayer span'))return; if(tsX===0&&tsY===0)return;if(e.changedTouches.length===1){const teX=e.changedTouches[0].screenX,teY=e.changedTouches[0].screenY;if(Date.now()-tst<SW_TL){handleSwipe(tsX,tsY,teX,teY)}}tsX=0;tsY=0;tst=0});
          function handleSwipe(sx,sy,ex,ey){const dx=ex-sx,dy=ey-sy,adx=Math.abs(dx),ady=Math.abs(dy);if(adx<SW_TH&&ady<SW_TH)return;if(Math.atan2(ady,adx)*180/Math.PI<=SW_A){if(dx>SW_TH)prevPage();else if(dx<-SW_TH)nextPage();showPageSlider();manageToolbar(false)}}
 
-        // Slider trigger zone (Unchanged)
+        // Slider trigger zone (Keep As Is)
         const sliderTrigger=document.getElementById('page-slider-trigger-zone'),sliderCont=document.getElementById('page-slider-container');
         if(sliderTrigger&&sliderCont){sliderTrigger.addEventListener('mouseenter',()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}});sliderTrigger.addEventListener('mouseleave',e=>{if(!sliderCont.contains(e.relatedTarget))resetSliderHideTimer()});sliderCont.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sliderCont.addEventListener('mouseleave',e=>{if(!sliderTrigger.contains(e.relatedTarget))resetSliderHideTimer()})}
-
-        // Removed old outside click listener for popup (handled by new system)
 
         updateStatus("Events setup complete");
     }
@@ -729,288 +990,305 @@
     // --- NEW: Custom Keyword Overlay Functions ---
 
     /**
-     * Create and add keyword overlays after a PDF page has been rendered
-     * @param {PDFPageProxy} page - The PDF.js page object
-     * @param {HTMLElement} pageElement - The .book-page container element
-     * @param {PDFPageViewPort} viewport - The viewport used for rendering
+     * Creates and adds keyword highlight overlays for a given page.
+     * @param {PDFPageProxy} page - The PDF.js page object.
+     * @param {HTMLElement} canvasContainer - The container holding the canvas and layers.
+     * @param {PDFPageViewPort} viewport - The viewport used for rendering.
      */
-    async function createKeywordOverlays(page, pageElement, viewport) {
+    async function createKeywordOverlays(page, canvasContainer, viewport) {
         const pageNum = page.pageNumber;
-        // Remove any existing overlay container
-        const existingContainer = pageElement.querySelector('.keyword-overlay-container');
-        if (existingContainer) {
-            existingContainer.remove();
+        // Ensure the container for overlays exists within the canvasContainer
+        let overlayContainer = canvasContainer.querySelector('.keyword-overlay-container');
+        if (!overlayContainer) {
+            overlayContainer = document.createElement('div');
+            overlayContainer.className = 'keyword-overlay-container';
+            // Append inside canvasContainer, ensuring it's sized correctly by CSS
+            canvasContainer.appendChild(overlayContainer);
+        } else {
+            overlayContainer.innerHTML = ''; // Clear previous overlays if container exists
         }
 
-        // Get keywords for this page (using original case from pageKeywords)
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
         if (keywordsForPage.length === 0) {
             return; // No keywords for this page
         }
-
-        // Create overlay container
-        const overlayContainer = document.createElement('div');
-        overlayContainer.className = 'keyword-overlay-container';
-
-        // Add to page's canvas container
-        const canvasContainer = pageElement.querySelector('.canvas-container');
-        if (!canvasContainer) return;
-        // Insert *after* canvas and other layers, but set pointer-events: none on container
-        canvasContainer.appendChild(overlayContainer);
+        updateStatus(`Creating overlays for ${keywordsForPage.length} keywords on page ${pageNum}`);
 
         try {
-            // Get all text items from the page
-            const textContent = await page.getTextContent({ normalizeWhitespace: true });
+            // Get text content with combined text items for better context
+            const textContent = await page.getTextContent({ includeMarkedContent: true, normalizeWhitespace: true });
+            const textItems = textContent.items;
 
-            // Find keywords in the text items
-            for (const textItem of textContent.items) {
-                const itemText = textItem.str;
-                if (!itemText.trim()) continue;
+            // Utility to convert PDF point to viewport pixel
+            const transformPoint = (x, y) => pdfjsLib.Util.applyTransform([x, y], viewport.transform);
 
-                // Check if this text item contains any keywords for this page
-                for (const keyword of keywordsForPage) {
-                    // More robust regex: handles potential variations within the item
-                    // Use 'i' for case-insensitivity, ensure word boundaries
-                    const escapedKeyword = keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+            // Iterate through keywords defined for this page
+            for (const keyword of keywordsForPage) {
+                const definition = keywordDefinitions[keyword.toLowerCase()];
+                if (!definition) continue; // Skip if no definition found
+
+                const escapedKeyword = keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                // Regex to find keyword as whole word, case-insensitive
+                const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi');
+
+                // Iterate through text items on the page
+                for (let i = 0; i < textItems.length; i++) {
+                    const item = textItems[i];
+                    const itemText = item.str;
                     let match;
 
                     // Find all occurrences of the keyword within this text item
                     while ((match = regex.exec(itemText)) !== null) {
-                        // Get definition using lowercase keyword
-                        const definition = keywordDefinitions[keyword.toLowerCase()];
-                        if (!definition) continue; // Skip if no definition found
-
-                        // Create a highlight element for this specific keyword occurrence
-                        // We need to calculate the position *of the match* within the textItem
                         const matchIndex = match.index;
-                        const matchLength = match[1].length; // Length of the matched keyword
+                        const matchLength = match[0].length; // Use matched string length
 
-                        // Estimate the position and width of the matched keyword within the textItem
-                        // This is an approximation, assuming uniform character widths within the item
-                        const itemWidth = textItem.width * viewport.scale;
-                        const charWidth = itemWidth / itemText.length;
-                        const matchWidth = charWidth * matchLength;
-                        const matchOffsetX = charWidth * matchIndex;
+                        // --- Precise Bounding Box Calculation ---
+                        // This part is complex and often requires library support or careful calculation.
+                        // PDF.js doesn't directly provide bounding boxes for sub-string text.
+                        // We'll use the textItem's bounding box as an approximation for now,
+                        // which causes the highlight to cover the whole text item containing the keyword.
+                        // For a more precise highlight, advanced text metrics analysis is needed.
 
-                         // Calculate position based on the text item's transform and viewport
-                         const transform = viewport.transform;
-                         // Base position of the textItem
-                         const itemX = transform[0] * textItem.transform[4] + transform[2] * textItem.transform[5] + transform[4];
-                         const itemY = transform[1] * textItem.transform[4] + transform[3] * textItem.transform[5] + transform[5];
-                         // Adjust for text direction if needed (usually left-to-right is default)
-                         // textItem.dir === 'rtl' ? itemWidth - matchOffsetX - matchWidth : matchOffsetX;
-                         const highlightX = itemX + matchOffsetX;
-                         // PDF coordinate system's origin is bottom-left, HTML is top-left
-                         const highlightY = itemY - (textItem.height * viewport.scale); // Top edge of the text line
+                        // Get bounding box of the *entire* textItem in PDF coordinates
+                        // Transform matrix: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                        const angle = Math.atan2(tx[1], tx[0]); // Rotation angle
+                        const itemWidth = item.width * viewport.scale;
+                        const itemHeight = item.height * viewport.scale;
 
-                         createHighlightElement(
-                             keyword, // Use original case keyword for display
-                             highlightX,
-                             highlightY,
-                             matchWidth,
-                             textItem.height * viewport.scale,
-                             overlayContainer,
-                             definition
-                         );
+                        // Calculate top-left corner in viewport coordinates
+                        // [4] is translateX, [5] is translateY (bottom-left origin in PDF)
+                        const p1 = transformPoint(item.transform[4], item.transform[5]);
+                        const p2 = transformPoint(item.transform[4] + item.width, item.transform[5] + item.height);
+
+                        // Approximate bounding box in CSS pixels (top-left corner, width, height)
+                        // This uses the full textItem's box.
+                        const cssX = p1[0];
+                        const cssY = p1[1] - itemHeight; // Adjust for top-left origin
+                        const cssWidth = itemWidth;
+                        const cssHeight = itemHeight;
+
+                        // Create highlight using the approximated full item box
+                        createHighlightElement(
+                            keyword,
+                            cssX,
+                            cssY,
+                            cssWidth,
+                            cssHeight,
+                            overlayContainer,
+                            definition
+                        );
+
+                         // If you only want one highlight per text item for a given keyword, break here:
+                         // break;
                     }
-                     // If a keyword was found in this item, no need to check other keywords for the same item?
-                     // Let's allow multiple keywords potentially in one item if needed.
-                     // break; // Uncomment if only one keyword highlight per textItem is desired
                 }
             }
         } catch (error) {
-            console.error(`Error creating keyword overlays for page ${pageNum}:`, error);
+            console.error(`Error processing text content or creating overlays for page ${pageNum}:`, error);
         }
     }
 
+
     /**
-     * Create a single highlight element for a keyword occurrence
-     * @param {string} keyword - The keyword text (original case)
-     * @param {number} x - Calculated left position (CSS pixels)
-     * @param {number} y - Calculated top position (CSS pixels)
-     * @param {number} width - Calculated width (CSS pixels)
-     * @param {number} height - Calculated height (CSS pixels)
-     * @param {HTMLElement} container - The .keyword-overlay-container to append to
-     * @param {string} definition - The definition text
+     * Creates a single highlight div and appends it to the container.
      */
     function createHighlightElement(keyword, x, y, width, height, container, definition) {
-        // Create the highlight element
         const highlight = document.createElement('div');
         highlight.className = 'keyword-highlight';
-        highlight.dataset.keyword = keyword; // Store original case for display
-        highlight.dataset.definition = definition || `No definition available for "${keyword}"`;
+        highlight.dataset.keyword = keyword; // Store original case for title
+        highlight.dataset.definition = definition;
 
-        // Set position and size (ensure non-negative dimensions)
-        highlight.style.left = `${Math.max(0, x)}px`;
-        highlight.style.top = `${Math.max(0, y)}px`;
-        highlight.style.width = `${Math.max(2, width)}px`; // Min width for visibility
-        highlight.style.height = `${Math.max(2, height)}px`; // Min height
+        // Apply calculated styles
+        highlight.style.left = `${x}px`;
+        highlight.style.top = `${y}px`;
+        // Ensure minimum dimensions for visibility/clickability
+        highlight.style.width = `${Math.max(5, width)}px`;
+        highlight.style.height = `${Math.max(5, height)}px`;
 
-        // Add click handler
+        // Add click listener to show popup
         highlight.addEventListener('click', event => {
-            event.stopPropagation(); // Prevent clicks passing through
+            event.stopPropagation(); // Prevent triggering underlying layers
             showDefinitionPopup(
                 event.currentTarget.dataset.keyword,
                 event.currentTarget.dataset.definition,
-                event.currentTarget.getBoundingClientRect() // Use currentTarget for reliability
+                event.currentTarget.getBoundingClientRect() // Get screen position of the highlight
             );
         });
 
-        // Add to container
         container.appendChild(highlight);
     }
 
     /**
-     * Show a definition popup near the clicked highlight element
-     * @param {string} keyword - Keyword to display
-     * @param {string} definition - Definition text
-     * @param {DOMRect} rect - Bounding rectangle of the clicked highlight element
+     * Shows the definition popup near the clicked highlight.
      */
     function showDefinitionPopup(keyword, definition, rect) {
-        // Remove any existing popup first
-        hideDefinitionPopup();
+        hideDefinitionPopup(); // Close any existing popup
 
-        // Create popup structure
         const popup = document.createElement('div');
         popup.className = 'definition-popup';
-        // Use textContent for security where possible, innerHTML for definition which might contain formatting
-        const titleEl = document.createElement('div');
-        titleEl.className = 'definition-popup-title';
-        titleEl.textContent = keyword.charAt(0).toUpperCase() + keyword.slice(1); // Capitalize
+        popup.id = 'definition-popup-active'; // Unique ID while visible
 
-        const contentEl = document.createElement('div');
-        contentEl.className = 'definition-popup-content';
-        contentEl.innerHTML = definition; // Assuming definition might have basic HTML
+        // Sanitize definition content if it allows HTML (use a library like DOMPurify if needed)
+        // For now, assuming basic safe HTML or just text
+        popup.innerHTML = `
+            <button class="definition-popup-close" aria-label="Close definition">×</button>
+            <div class="definition-popup-title">${keyword.charAt(0).toUpperCase() + keyword.slice(1)}</div>
+            <div class="definition-popup-content">${definition}</div>
+        `;
 
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'definition-popup-close';
-        closeBtn.setAttribute('aria-label', 'Close definition');
-        closeBtn.innerHTML = '×'; // Use times symbol
+        document.body.appendChild(popup); // Add to body for positioning context
 
-        popup.appendChild(closeBtn);
-        popup.appendChild(titleEl);
-        popup.appendChild(contentEl);
-
-        // Add to body to ensure it's not clipped
-        document.body.appendChild(popup);
-
-        // Calculate best position (relative to viewport)
-        const popupRect = popup.getBoundingClientRect(); // Get dimensions *after* adding to body
-        const PADDING = 10; // Space from viewport edges
-        const OFFSET = 8;   // Space from the highlight element
+        // Calculate position
+        const popupRect = popup.getBoundingClientRect();
+        const PADDING = 10; // Viewport padding
+        const OFFSET = 8;   // Offset from highlight
 
         let idealTop = rect.bottom + OFFSET;
-        let idealLeft = rect.left;
+        let idealLeft = rect.left + (rect.width / 2) - (popupRect.width / 2); // Center align initially
 
-        // Adjust horizontal position
-        if (idealLeft + popupRect.width > window.innerWidth - PADDING) {
-            idealLeft = window.innerWidth - popupRect.width - PADDING;
-        }
+        // Adjust horizontal position to stay within viewport
         if (idealLeft < PADDING) {
             idealLeft = PADDING;
+        } else if (idealLeft + popupRect.width > window.innerWidth - PADDING) {
+            idealLeft = window.innerWidth - popupRect.width - PADDING;
         }
 
-        // Adjust vertical position (prefer below, move above if needed)
+        // Adjust vertical position (prefer below, flip above if needed)
         if (idealTop + popupRect.height > window.innerHeight - PADDING) {
             idealTop = rect.top - popupRect.height - OFFSET;
-            // If it also goes off the top, position at top padding edge
-             if (idealTop < PADDING) {
-                 idealTop = PADDING;
-             }
+            // If flipping above also goes off-screen, place at top padding edge
+            if (idealTop < PADDING) {
+                idealTop = PADDING;
+            }
         }
-         // Ensure it doesn't go off the top when initially positioned below
-         if (idealTop < PADDING && rect.bottom + OFFSET + popupRect.height <= window.innerHeight - PADDING) {
-             idealTop = PADDING;
+         // Re-check if initially placed below but goes off top
+         if (idealTop < PADDING && (rect.bottom + OFFSET + popupRect.height <= window.innerHeight - PADDING)) {
+            idealTop = PADDING;
          }
-
 
         popup.style.left = `${idealLeft}px`;
         popup.style.top = `${idealTop}px`;
 
-        // Add close handler for the button
-        closeBtn.addEventListener('click', event => {
-            event.stopPropagation();
-            hideDefinitionPopup();
-        });
+        // Add event listeners for closing
+        popup.querySelector('.definition-popup-close').addEventListener('click', hideDefinitionPopup);
+        // Use a named function for the outside click listener for easy removal
+        // Add listener in capture phase to catch clicks before they might be stopped elsewhere
+        document.addEventListener('click', handleClickOutsidePopup, true);
+        // Escape key is handled globally in setupEvents
 
-        // Add global listeners (only once when popup is shown)
-        // Use named functions for removal
-        document.addEventListener('click', handleClickOutsidePopup, true); // Use capture phase
-        // Escape key is handled in the main keydown listener setupEvents
-
-        // Show with animation (using requestAnimationFrame for smoother start)
+        // Trigger animation
         requestAnimationFrame(() => {
-             requestAnimationFrame(() => { // Double RAF ensures styles are applied before transition starts
+             requestAnimationFrame(() => { // Double RAF to ensure styles are applied
                 popup.classList.add('visible');
             });
         });
     }
 
     /**
-     * Hide the currently visible definition popup
+     * Hides the currently visible definition popup.
      */
     function hideDefinitionPopup() {
-        const popup = document.querySelector('.definition-popup');
+        const popup = document.getElementById('definition-popup-active'); // Target by ID
         if (popup) {
             popup.classList.remove('visible');
-            // Remove after animation completes
-            popup.addEventListener('transitionend', () => {
-                if (popup.parentNode) {
+            // Remove the global click listener immediately
+            document.removeEventListener('click', handleClickOutsidePopup, true);
+
+            // Remove the element after the transition ends
+            const removeElement = () => {
+                 // Check if it still exists before removing
+                 if (popup.parentNode) {
+                     popup.parentNode.removeChild(popup);
+                 }
+                 popup.removeEventListener('transitionend', removeElement); // Clean up listener
+            };
+            popup.addEventListener('transitionend', removeElement, { once: true });
+
+             // Fallback: Remove after a delay slightly longer than transition, in case transitionend doesn't fire
+             setTimeout(() => {
+                 if (popup.parentNode) {
                     popup.parentNode.removeChild(popup);
-                }
-                 // Clean up global listener after removal
-                 document.removeEventListener('click', handleClickOutsidePopup, true);
-            }, { once: true }); // Ensure listener runs only once
-             // Fallback removal if transitionend doesn't fire (e.g., display: none)
-            setTimeout(() => {
-                 if (popup.parentNode) popup.parentNode.removeChild(popup);
-                 document.removeEventListener('click', handleClickOutsidePopup, true);
-            }, 300); // Slightly longer than transition
-        } else {
-             // If no popup exists, ensure listener is removed anyway
-             document.removeEventListener('click', handleClickOutsidePopup, true);
+                 }
+             }, 300); // Match CSS transition duration + buffer
         }
+        // Ensure listener is removed even if popup wasn't found (belt-and-suspenders)
+        document.removeEventListener('click', handleClickOutsidePopup, true);
     }
 
     /**
-     * Named function to handle clicks outside the popup for removal.
+     * Named event handler for closing the popup when clicking outside.
      */
     function handleClickOutsidePopup(event) {
-        const popup = document.querySelector('.definition-popup');
-        // Check if popup exists, is visible, and the click was outside both the popup and the highlights
-        if (popup && popup.classList.contains('visible') &&
-            !popup.contains(event.target) &&
-            !event.target.closest('.keyword-highlight'))
-        {
+        const popup = document.getElementById('definition-popup-active');
+        // Check if popup exists and the click target is neither the popup nor a highlight trigger
+        if (popup && !popup.contains(event.target) && !event.target.closest('.keyword-highlight')) {
             hideDefinitionPopup();
         }
     }
+
     // --- END: Custom Keyword Overlay Functions ---
 
 
     // --- Initialization ---
     async function init() {
-        updateStatus("Initializing app");
+        updateStatus("Initializing application");
         try {
-            try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; }
-            catch (ce) { PAGE_PADDING = 15; }
-            setupEvents(); setupToolbarHover(); initPageSlider(); hideLoading();
+            // Try to get page padding from CSS variable
+            try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding').trim()) || 15; }
+            catch (e) { PAGE_PADDING = 15; console.warn("Could not parse --page-padding CSS var, using default."); }
+
+            // Populate static innerHTML first
+            document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="single-page-btn" title="Single Page View">📄</button><button class="new-btn" id="double-page-btn" title="Double Page View">📖</button><button class="new-btn" id="rotate-btn" title="Rotate View">🔄</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
+            document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
+            document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
+            document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
+
+
+            setupEvents();
+            setupToolbarHover();
+            initPageSlider();
+            hideLoading(); // Start with loading hidden
+
             const urlParams = new URLSearchParams(window.location.search);
             const pdfUrlParam = urlParams.get('pdf');
-            if (pdfUrlParam) { await loadPdf(pdfUrlParam); }
-            else {
-                updateStatus("No PDF specified in URL.");
-                document.querySelector('.main-container .book-spread').innerHTML = `<div style="color:var(--text-on-page);padding:30px;text-align:center;width:100%;">Load using ?pdf=... URL parameter.</div>`;
-                document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden');
-                document.querySelector('.book-page.right')?.style.setProperty('display','none');
+
+            if (pdfUrlParam) {
+                await loadPdf(decodeURIComponent(pdfUrlParam)); // Decode URL param
+            } else {
+                updateStatus("No PDF specified in URL (?pdf=...).");
+                // Display message indicating how to load a PDF
+                 const spreadContainer = document.querySelector('.main-container .book-spread');
+                 if (spreadContainer) {
+                    spreadContainer.innerHTML = `<div style="color: var(--text-on-page); padding: 30px; text-align: center; width: 100%; background: var(--page); border-radius: 5px;">Please provide a PDF document URL using the '?pdf=' parameter.</div>`;
+                 }
+                document.querySelector('.book-page.left')?.style.setProperty('visibility', 'hidden');
+                document.querySelector('.book-page.right')?.style.setProperty('display', 'none');
             }
-            window.addEventListener('beforeunload', () => { pageCache.clear(); if (book.pdfDocument) book.pdfDocument.destroy(); hideDefinitionPopup(); });
-            updateStatus("Init complete.");
-        } catch (e) { console.error("Init failed:", e); document.body.innerHTML = `<pre>Init Error: ${e.stack||e}</pre>`; }
+
+            // Cleanup on page leave
+            window.addEventListener('beforeunload', () => {
+                pageCache.clear();
+                if (book.pdfDocument) {
+                    book.pdfDocument.destroy().catch(e => console.warn("Error destroying PDF on unload:", e));
+                }
+                hideDefinitionPopup(); // Ensure popup is closed
+            });
+
+            updateStatus("Initialization complete.");
+
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            document.body.innerHTML = `<div style="padding: 20px; color: red; background: white; border: 1px solid red;">Application Initialization Error: ${error.message}<br><pre>${error.stack || ''}</pre></div>`;
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    // --- Start the application ---
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init(); // DOMContentLoaded already fired
+    }
 
 </script>
 </body>
