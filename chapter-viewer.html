@@ -10,9 +10,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.css">
     <style>
-:root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
+:root{
+    --primary:#4a90e2;
+    --secondary:#50e3c2;
+    --accent:#f5a623; /* Amber/Orange */
+    --fiery-orange: #f97316; /* Adjusted fiery orange */
+    --lab-blue:#080e1c;
+    --page:#fff;
+    --text-on-dark:rgba(255,255,255,.9);
+    --text-on-page:#333;
+    --header-h:60px;
+    --page-w:650px;
+    --page-h:842px;
+    --page-padding:15px;
+    /* Modern Font Stack */
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Georgia',serif;background-color:var(--lab-blue);color:var(--text-on-dark);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;position:fixed;line-height:1.6}
+body{
+    font-family: 'Georgia', serif; /* Keep base Georgia */
+    background-color:var(--lab-blue);
+    color:var(--text-on-dark);
+    height:100vh; width:100vw;
+    overflow:hidden; display:flex; flex-direction:column; position:fixed;
+    line-height:1.6
+}
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
 @keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
 @media (prefers-reduced-motion:reduce){body::before{animation:none!important}}
@@ -74,7 +96,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);hei
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
-.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden}
+.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);} /* Use modern font */
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
@@ -119,121 +141,114 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 /* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
 .textLayer {
     position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
-    opacity: 1; /* Keep layer itself present */
-    line-height: 1.0;
-    /* Make base text invisible and non-interactive */
-    color: transparent !important;
-    user-select: none; -webkit-user-select: none;
-    pointer-events: none !important; /* Layer doesn't capture events */
-    z-index: 2; /* Below annotations and custom overlay */
+    opacity: 1; line-height: 1.0; color: transparent !important;
+    user-select: none; -webkit-user-select: none; pointer-events: none !important;
+    z-index: 2;
 }
 .textLayer > div {
-    position: absolute; white-space: pre; cursor: default; /* Change cursor? */
-    transform-origin: 0% 0%;
-    pointer-events: none !important; /* Children also don't capture events */
-    border-radius: 2px;
+    position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%;
+    pointer-events: none !important; border-radius: 2px;
 }
 .annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
 .annotationLayer section { position: absolute; pointer-events: auto; }
 .annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
 .annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
 
-/* --- START: Custom Keyword Overlay & Popup Styles --- */
+/* --- START: Custom Keyword Overlay & Popup Styles (UPDATED) --- */
 .keyword-overlay-container {
-  position: absolute;
-  /* Position relative to canvas-container */
-  top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; /* Container doesn't block */
-  z-index: 4; /* Above text and annotation layers */
-  overflow: hidden; /* Clip highlights to container bounds */
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 4; overflow: hidden;
 }
 
 .keyword-highlight {
   position: absolute;
-  background: transparent; /* Start transparent */
-  border-bottom: 2px solid transparent; /* Underline effect */
-  transition: all 0.2s ease-out;
-  pointer-events: auto; /* Highlights ARE interactive */
+  background: transparent;
+  /* border-bottom: 2px solid transparent; REMOVED underline */
+  transition: background 0.2s ease-out, box-shadow 0.2s ease-out; /* Added box-shadow transition */
+  pointer-events: auto;
   cursor: pointer;
-  z-index: 5; /* Ensure they are clickable */
-  box-sizing: border-box; /* Include border in dimensions */
-  border-radius: 2px; /* Slight rounding */
+  z-index: 5;
+  box-sizing: border-box;
+  border-radius: 3px; /* Slightly more rounding */
 }
 
 .keyword-highlight:hover {
-  background: linear-gradient(to right, rgba(255, 165, 0, 0.15), rgba(255, 100, 0, 0.15));
-  border-bottom-color: var(--accent); /* Use theme color */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  /* UPDATED: Fiery orange to amber gradient background */
+  background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); /* Orange -> Amber */
+  /* border-bottom-color: var(--accent); REMOVED underline color change */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
 }
 
-/* Use ID for specificity */
+/* Definition Popup - Modern Styling */
 #definition-popup {
-  position: fixed; /* Use fixed positioning for viewport relativity */
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
-  padding: 12px 16px;
-  max-width: 300px;
+  position: fixed;
+  background: #ffffff; /* Clean white */
+  border-radius: 8px; /* Modern rounding */
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  padding: 14px 18px; /* Adjust padding */
+  max-width: 320px; /* Slightly wider */
   min-width: 180px;
-  font-family: 'Georgia', serif; /* Or use sans-serif like 'Helvetica Neue', Arial, sans-serif */
-  color: #333;
-  z-index: 10002; /* Above everything */
-  transform-origin: top center; /* Default animation origin */
-  transform: translateY(8px) scale(0.98); /* Start slightly down and scaled */
+  font-family: var(--font-sans); /* Use modern font stack */
+  color: #2d3748; /* Darker gray text (like Tailwind's gray-800) */
+  z-index: 10002;
+  transform-origin: top center;
+  transform: translateY(6px) scale(0.97); /* Adjust start transform */
   opacity: 0;
   visibility: hidden;
-  transition: transform 0.20s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.20s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0.20s; /* Hide after transition */
-  pointer-events: none; /* Not interactive when hidden */
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0.18s;
+  pointer-events: none;
 }
 
 #definition-popup.visible {
-  transform: translateY(0) scale(1); /* Animate to final position/scale */
+  transform: translateY(0) scale(1);
   opacity: 1;
   visibility: visible;
-  transition: transform 0.20s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.20s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0s; /* Make visible immediately */
-   pointer-events: auto; /* Interactive when visible */
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0s;
+   pointer-events: auto;
 }
 
 #popup-word { /* Title */
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-weight: 600; /* Semi-bold */
+  font-size: 15px; /* Adjust size */
+  margin: 0 0 10px 0; /* Adjust margin */
   color: var(--primary);
-  border-bottom: 1px solid #eee;
-  padding-bottom: 6px;
+  border-bottom: 1px solid #e2e8f0; /* Lighter border (like Tailwind's gray-200) */
+  padding: 0 0 8px 0; /* Adjust padding */
 }
 
 #popup-definition { /* Content */
   font-size: 14px;
-  line-height: 1.5;
-  max-height: 180px; /* Limit height and allow scroll */
+  line-height: 1.6; /* Adjust line height */
+  max-height: 180px;
   overflow-y: auto;
-  padding-right: 5px; /* Space for scrollbar */
+  color: #4a5568; /* Medium gray text (like Tailwind's gray-600) */
+  padding-right: 5px;
   margin-right: -5px;
 }
-/* Add scrollbar styling (optional) */
+/* Scrollbar styling */
 #popup-definition::-webkit-scrollbar { width: 5px; }
-#popup-definition::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px;}
-#popup-definition::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px;}
-#popup-definition::-webkit-scrollbar-thumb:hover { background: #aaa; }
+#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;} /* Lighter track */
+#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;} /* Medium thumb */
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; } /* Darker on hover */
 
 #close-popup-btn { /* Close button */
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 6px; /* Adjust position */
+  right: 6px;
   cursor: pointer;
-  font-size: 18px;
-  color: #aaa;
+  font-size: 20px; /* Make slightly larger/bolder 'x' */
+  font-weight: 300;
+  color: #a0aec0; /* Medium-light gray */
   transition: color 0.2s, background-color 0.2s;
   background: none;
   border: none;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 28px; /* Increase clickable area */
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,8 +256,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
   line-height: 1;
 }
 #close-popup-btn:hover {
-  color: #333;
-  background-color: #f0f0f0;
+  color: #4a5568; /* Darker gray */
+  background-color: #edf2f7; /* Light gray background */
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
 
@@ -263,7 +278,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
                     <div class="textLayer" id="left-text-layer"></div>
                     <div class="annotationLayer" id="left-annotation-layer"></div>
-                    {/* *** NEW: Custom Keyword Overlay *** */}
+                    {/* *** Custom Keyword Overlay *** */}
                     <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
                 </div>
                 <div class="page-edge-nav page-edge-left"></div>
@@ -277,7 +292,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                     <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
                      <div class="textLayer" id="right-text-layer"></div>
                      <div class="annotationLayer" id="right-annotation-layer"></div>
-                     {/* *** NEW: Custom Keyword Overlay *** */}
+                     {/* *** Custom Keyword Overlay *** */}
                      <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
                  </div>
                 <div class="page-edge-nav page-edge-left"></div>
@@ -294,7 +309,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     <div class="page-slider-container" id="page-slider-container"></div>
     <div id="page-slider-trigger-zone"></div>
 
-    <!-- *** NEW: Custom Definition Popup Structure *** -->
+    <!-- *** Custom Definition Popup Structure *** -->
     <div class="definition-popup" id="definition-popup">
         <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
         <div class="definition-popup-title" id="popup-word">Keyword</div>
@@ -310,7 +325,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 </script>
 <script>
     // --- UI Elements ---
-    const definitionPopup = document.getElementById('definition-popup'); // New popup structure
+    const definitionPopup = document.getElementById('definition-popup');
     const popupWord = document.getElementById('popup-word');
     const popupDefinition = document.getElementById('popup-definition');
     const closePopupBtn = document.getElementById('close-popup-btn');
@@ -323,7 +338,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
     // --- PDF.js Setup (Using v2.5.207) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer']; // Still used for SimpleLinkService
+    const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.worker.min.js';
 
     const book={title:"No Document",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]};
@@ -333,12 +348,12 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     let toolbarHover=!1;
     const pageCache=new Map();
     const MAX_CACHE_SIZE=20;
-    let PAGE_PADDING=15; // Read from CSS later
+    let PAGE_PADDING=15;
     let resizeTimer;
     let sliderHideTimeout=null;
 
-    const linkService = new pdfjsViewer.SimpleLinkService(); // Needed for AnnotationLayer
-    const eventBus = new pdfjsViewer.EventBus(); // May not be strictly needed now
+    const linkService = new pdfjsViewer.SimpleLinkService();
+    const eventBus = new pdfjsViewer.EventBus();
 
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
     // const updateStatus = () => {}; // Production
@@ -352,153 +367,94 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- NEW: createKeywordOverlays Function ---
-    /**
-     * Creates custom absolutely positioned overlays for keywords on a page.
-     * @param {number} pageNum - The page number (1-based).
-     * @param {HTMLElement} pageElement - The .book-page container element.
-     * @param {PDFPageViewport} viewport - The viewport used for rendering the page.
-     */
+    // --- Custom Keyword Overlay Creation ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
-        const canvasContainer = pageElement.querySelector('.canvas-container'); // Needed for positioning context
+        const canvasContainer = pageElement.querySelector('.canvas-container');
 
         if (!book.pdfDocument || !overlayContainer || !canvasContainer) {
-            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`);
-            return;
+            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
         }
-
-        overlayContainer.innerHTML = ''; // Clear previous overlays
+        overlayContainer.innerHTML = '';
 
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
-        if (keywordsForPage.length === 0) {
-            // updateStatus(`No keywords defined for page ${pageNum}.`);
-            return; // No keywords for this page
-        }
+        if (keywordsForPage.length === 0) return;
 
-        // Create efficient lookup structures
         const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
         const lowerCaseDefs = {};
-        for (const key in keywordDefinitions) {
-            lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key];
-        }
+        for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
 
         try {
             const page = await book.pdfDocument.getPage(pageNum);
-            // Get text content with whitespace normalized
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
 
             textContent.items.forEach(item => {
-                const itemText = item.str; // Use original string from item
-                if (!itemText || itemText.trim().length === 0) return; // Skip empty items
+                const itemText = item.str;
+                if (!itemText || itemText.trim().length === 0) return;
 
-                // Check if this item's text contains any keyword for the page
                 keywordsForPage.forEach((originalKeyword, index) => {
                     const keywordLower = lowerCaseKeywords[index];
                     const definition = lowerCaseDefs[keywordLower];
-                    if (!definition) return; // Skip if definition missing
+                    if (!definition) return;
 
-                    // Find occurrences of the keyword within the item string (case-insensitive, whole word)
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    // Regex: \b ensures word boundary, 'gi' for global, case-insensitive
                     const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                     let match;
 
                     while ((match = regex.exec(itemText)) !== null) {
-                        // --- Calculate Position (Highlighting the whole text item for now) ---
-                        // item.transform includes matrix for PDF space -> device space for this item.
-                        // item.width/height are in device space (pixels after transform).
-
-                        // Calculate the transformation matrix relative to the viewport
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-
-                        // Get item dimensions in device pixels
                         const itemWidth = item.width;
                         const itemHeight = item.height;
-
-                        // Calculate top-left corner in device pixels relative to viewport (0,0)
-                        // tx[4] is the transformed X origin (left edge for LTR text)
-                        // tx[5] is the transformed Y origin (baseline for horizontal text)
                         let left = tx[4];
-                        let top = tx[5] - itemHeight; // Y is baseline, so subtract height for top edge
+                        let top = tx[5] - itemHeight;
+                        if (left < 0) left = 0; if (top < 0) top = 0;
 
-                        // Position is relative to the viewport's origin (top-left of the rendered page area).
-                        // The overlayContainer is positioned absolutely within the canvasContainer,
-                        // which itself has padding. The calculated left/top should directly map
-                        // to the overlayContainer's coordinate space if it fills the canvasContainer.
-
-                        // Clamp positions to ensure they are not negative (can happen with rounding or small elements)
-                        if (left < 0) left = 0;
-                        if (top < 0) top = 0;
-
-                        // --- Create Highlight Element ---
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
                         highlightDiv.style.left = `${left}px`;
                         highlightDiv.style.top = `${top}px`;
                         highlightDiv.style.width = `${itemWidth}px`;
                         highlightDiv.style.height = `${itemHeight}px`;
-
                         highlightDiv.dataset.keyword = originalKeyword;
                         highlightDiv.dataset.definition = definition;
-                        highlightDiv.title = `Definition: ${originalKeyword}`; // Tooltip
+                        highlightDiv.title = `Definition: ${originalKeyword}`;
 
-                        // Attach click listener directly
                         highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation(); // Prevent accidental page turns etc.
-                            // Get position relative to the VIEWPORT for fixed positioning of popup
+                            e.stopPropagation();
                             const rect = highlightDiv.getBoundingClientRect();
                             showDefinitionPopup(originalKeyword, definition, rect.left, rect.bottom, rect.top);
                         });
 
                         overlayContainer.appendChild(highlightDiv);
-
-                        // Highlight the *entire* text item if *any* keyword is found within it.
-                        // Break the inner keyword loop to avoid adding multiple highlights for the same item.
-                        return; // Move to the next text item
-                    } // End while match
-                }); // End forEach keyword
-            }); // End forEach text item
-
-            // updateStatus(`Created custom keyword overlays for page ${pageNum}`);
+                        return; // Highlight whole item once if any keyword matches
+                    }
+                });
+            });
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = ''; // Clear on error
+            overlayContainer.innerHTML = '';
         }
     }
 
-    // --- NEW: Simplified renderAndEnhanceTextLayer ---
-    /**
-     * Renders the base text layer for accessibility, but makes it invisible
-     * and non-interactive, as the custom overlay handles interactions.
-     * Uses PDF.js v2.5.207 core function.
-     */
+    // --- Simplified Base Text Layer Rendering (for accessibility) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
       if (!page || !container || !viewport) return;
-      container.innerHTML = ''; // Clear previous
-
-      // Ensure the container itself is not capturing events and text is hidden via CSS
-      container.style.pointerEvents = 'none';
-      container.style.color = 'transparent';
-
+      container.innerHTML = '';
+      container.style.pointerEvents = 'none'; container.style.color = 'transparent'; // Ensure hidden via CSS
       try {
         const textContent = await page.getTextContent({normalizeWhitespace: true});
-        // Use the core rendering function (v2.5.207 API)
         const renderTask = pdfjsLib.renderTextLayer({
-          textContent: textContent,
-          container: container,
-          viewport: viewport,
+          textContent: textContent, container: container, viewport: viewport,
         });
         await renderTask.promise;
-        // updateStatus(`Rendered transparent base text layer for page ${page.pageNumber}`);
       } catch (error) {
         console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error);
-        container.innerHTML = ''; // Clear on error
+        container.innerHTML = '';
       }
     }
 
-    // --- Annotation Layer Rendering (using v2.5.207 core function) ---
+    // --- Annotation Layer Rendering (Unchanged from previous) ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
         container.innerHTML = '';
@@ -506,34 +462,28 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             const annotations = await page.getAnnotations();
             if (annotations.length === 0) return;
             pdfjsLib.AnnotationLayer.render({
-                viewport: viewport.clone({ dontFlip: true }),
-                div: container,
-                annotations: annotations,
-                page: page,
-                linkService: linkService
+                viewport: viewport.clone({ dontFlip: true }), div: container,
+                annotations: annotations, page: page, linkService: linkService
             });
-            // updateStatus(`Annotation layer rendered via pdfjsLib.AnnotationLayer.render for page ${page.pageNumber}`);
         } catch (error) {
             console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
             container.innerHTML = '';
         }
     }
 
-    // --- renderPage function (MODIFIED to call createKeywordOverlays) ---
+    // --- renderPage function (Calls createKeywordOverlays) ---
     async function renderPage(pageNum, canvasId) {
-        const canvas = document.getElementById(canvasId);
-        const ctx = canvas?.getContext('2d');
+        const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
         const textLayerContainer = canvasContainer?.querySelector('.textLayer');
         const annotationLayerContainer = canvasContainer?.querySelector('.annotationLayer');
-        const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container'); // Get overlay container
+        const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container');
         const pageElement = canvas?.closest('.book-page');
 
-        // Clear previous layers
         delete currentViewports[canvasId];
         if (textLayerContainer) textLayerContainer.innerHTML = '';
         if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
-        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = ''; // Clear custom overlay too
+        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
 
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -545,8 +495,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         let page; let viewport;
 
         try {
-            // --- Canvas Rendering (from cache or new) ---
-            if (pageCache.has(pageNum)) {
+            if (pageCache.has(pageNum)) { /* ... load from cache ... */
                 const cachedData = pageCache.get(pageNum);
                 canvas.width = cachedData.width; canvas.height = cachedData.height;
                 canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
@@ -554,17 +503,12 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 page = await book.pdfDocument.getPage(pageNum); viewport = cachedData.viewport;
                 currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData);
                 hidePageLoading(canvasId);
-            } else {
+            } else { /* ... render new ... */
                 page = await book.pdfDocument.getPage(pageNum);
-                const containerStyle = getComputedStyle(canvasContainer);
-                const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
+                const containerStyle = getComputedStyle(canvasContainer); const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
                 if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} zero dimensions.`); hidePageLoading(canvasId); return; }
-                const defaultViewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-                viewport = page.getViewport({ scale: scale }); currentViewports[canvasId] = viewport;
-                const outputScale = window.devicePixelRatio || 1;
-                canvas.width = Math.floor(viewport.width * outputScale); canvas.height = Math.floor(viewport.height * outputScale);
-                canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
+                const defaultViewport = page.getViewport({ scale: 1 }); const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height); viewport = page.getViewport({ scale: scale }); currentViewports[canvasId] = viewport;
+                const outputScale = window.devicePixelRatio || 1; canvas.width = Math.floor(viewport.width * outputScale); canvas.height = Math.floor(viewport.height * outputScale); canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
                 const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
                 await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -572,13 +516,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 trimCache(); hidePageLoading(canvasId);
             }
 
-            // --- Render Layers ---
-            // 1. Render TRANSPARENT base text layer (for accessibility)
+            // Render Layers: Base Text -> Annotations -> Custom Keywords
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
-            // 2. Render annotation layer (links)
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            // 3. *** NEW: Create CUSTOM keyword overlays ***
-            await createKeywordOverlays(pageNum, pageElement, viewport); // Pass pageElement and viewport
+            await createKeywordOverlays(pageNum, pageElement, viewport);
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -587,7 +528,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         }
     }
 
-    // --- Update Display (Calls renderPage) - Unchanged ---
+    // --- Update Display (Unchanged) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage; const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
@@ -659,7 +600,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
 
     // --- Overlay Data Loading (Unchanged) ---
-    async function loadOverlayData(pdfUrl) {
+    async function loadOverlayData(pdfUrl) { /* ... unchanged ... */
         const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json'); updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
         try {
             const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
@@ -668,10 +609,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             const processedPages = {}; for (const [pageNum, pageWords] of Object.entries(data.pages)) { if (pageNum && !isNaN(parseInt(pageNum)) && Array.isArray(pageWords) && pageWords.every(w => typeof w === 'string')) { processedPages[pageNum.toString()] = pageWords; } else { console.warn(`Invalid page entry skipped: Page='${pageNum}'`); } } pageKeywords = processedPages;
             updateStatus(`Overlay loaded successfully: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages defined.`); return true;
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
-    }
+     }
 
     // --- PDF Loading (Unchanged) ---
-    async function loadPdf(pdfUrl) {
+    async function loadPdf(pdfUrl) { /* ... unchanged ... */
         updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true; let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
             updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
@@ -683,8 +624,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         } finally { hideLoading(); updateStatus("loadPdf finished."); }
     }
 
-    // --- TOC population (Unchanged, using v2.x compatible logic) ---
-    function populateTOC() {
+    // --- TOC population (Unchanged) ---
+    function populateTOC() { /* ... unchanged ... */
         const tocList = document.getElementById('toc-list'), tocButton = document.getElementById('toc-btn'); if (!tocList || !tocButton) return; tocList.innerHTML = ''; tocButton.disabled = true; if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
@@ -704,9 +645,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
         };
         book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); }); if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
-    }
+     }
 
-    // --- NEW: Popup Handling Functions (Using new classes/structure) ---
+    // --- Popup Handling Functions (Updated Positioning Logic) ---
     function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) return;
 
@@ -714,30 +655,28 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         popupDefinition.innerHTML = definition || `<span class="error-message">Definition not available.</span>`;
         popupDefinition.scrollTop = 0; // Reset scroll
 
-        // Calculate position based on the clicked highlight element's viewport coordinates
         const popupRect = definitionPopup.getBoundingClientRect(); // Get dimensions (might be 0 if hidden first time)
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const margin = 10; // Viewport margin
 
         // Estimate dimensions if needed
-        const estWidth = Math.min(popupRect.width || 300, 300);
-        const estHeight = popupRect.height || 150; // Rough estimate
+        const estWidth = Math.min(popupRect.width || 320, 320); // Use max-width
+        const estHeight = Math.min(popupRect.height || 250, 250); // Estimate height for calc
 
         // Position Strategy: Try to place centered above, fallback to below.
-        let posX = clickLeft - (estWidth / 2); // Center horizontally relative to click start
+        // Horizontal: Center on the clicked element's approximate middle
+        const clickCenterX = clickLeft + ( (definitionPopup.style.width ? parseFloat(definitionPopup.style.width) : estWidth) / 2); // Use known width if possible
+        let posX = clickCenterX - (estWidth / 2);
         let posY = clickTop - estHeight - 10; // Place 10px above
         let transformOrigin = 'bottom center';
 
         // Adjust horizontal position to stay within viewport bounds
-        if (posX < margin) {
-            posX = margin;
-        } else if (posX + estWidth > viewportWidth - margin) {
-            posX = viewportWidth - estWidth - margin;
-        }
+        if (posX < margin) { posX = margin; }
+        else if (posX + estWidth > viewportWidth - margin) { posX = viewportWidth - estWidth - margin; }
 
         // If placing above goes off-screen OR overlaps too much with top controls, place below
-        if (posY < margin /* || posY < (SOME_TOP_UI_HEIGHT) */) {
+        if (posY < margin) {
             posY = clickBottom + 10; // Place 10px below
             transformOrigin = 'top center'; // Animate from top
         }
@@ -745,10 +684,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         // Final check if placing below goes off-screen
         if (posY + estHeight > viewportHeight - margin) {
              posY = viewportHeight - estHeight - margin; // Clamp to bottom
-             // If clamped to bottom, maybe force origin to bottom?
-             // transformOrigin = 'bottom center';
+             // Keep origin as 'top center' if we clamped at bottom after trying below
         }
-         if (posY < margin) { // Final top clamp
+         if (posY < margin) { // Final top clamp (if somehow still needed)
              posY = margin;
          }
 
@@ -761,13 +699,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     }
 
     function hideDefinitionPopup() {
-        // Use class removal for transitions
-        if (definitionPopup) { // Check if popup exists
-            definitionPopup.classList.remove('visible');
-        }
+        if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- Event Setup (MODIFIED for new popup and overlay) ---
+    // --- Event Setup (Updated for new popup logic) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -775,18 +710,16 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
         // --- Keyword Interactions Handled Directly on elements in createKeywordOverlays ---
-        // No delegation needed here unless preferred.
 
-        // --- Existing Event Listeners (Toolbar, TOC, Page Edges, Keyboard, Resize, Touch, Slider) ---
+        // --- Other Event Listeners ---
         toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Attach to new close button
+        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use new function
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
         document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
         window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode') || document.body.classList.contains('fullscreen-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); updateDisplay(); } manageToolbar(); }, 250); });
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
-        // Outside Click for Popup Close (Updated check)
         document.addEventListener('click', e => { if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) { hideDefinitionPopup(); } }, true);
         updateStatus("Events setup complete");
     }
