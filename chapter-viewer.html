@@ -11,6 +11,7 @@
     <style>
 :root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
 *{margin:0;padding:0;box-sizing:border-box}
+html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
 body{font-family:'Georgia',serif;background-color:var(--lab-blue);color:var(--text-on-dark);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;position:fixed;line-height:1.6}
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
 @keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
@@ -309,6 +310,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
 </script>
 <script>
+    'use strict'; // Enable Strict Mode
+
     // --- UI Elements ---
     const definitionPopup = document.getElementById('definition-popup');
     const popupWord = document.getElementById('popup-word');
@@ -336,7 +339,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     let toolbarTimer=null;
     let toolbarHover=!1;
     const pageCache=new Map();
-    const MAX_CACHE_SIZE=20; // Increased cache size slightly
+    const MAX_CACHE_SIZE=20; // Cache size
     let PAGE_PADDING=15; // Default, will be read from CSS
     let resizeTimer;
     let sliderHideTimeout=null;
@@ -356,7 +359,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=false;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=true}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
 
     // --- Caching & Page Loading ---
-    function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){pageCache.delete(pageCache.keys().next().value); updateStatus(`Cache trimmed, size: ${pageCache.size}`)}}
+    function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){const keyToDelete = pageCache.keys().next().value; pageCache.delete(keyToDelete); updateStatus(`Cache trimmed, removed page ${keyToDelete}, size: ${pageCache.size}`)}}
     function showPageLoading(canvasId){
         const overlay = document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');
         if (overlay) overlay.style.display = 'flex';
@@ -366,6 +369,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         if (overlay) overlay.style.display = 'none';
     }
 
+    // --- ** REVISED renderPage function ** ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId);
         const ctx = canvas?.getContext('2d');
@@ -381,19 +385,38 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (pageElement) pageElement.classList.add('placeholder-page'); // Ensure it looks like a placeholder if invalid
+            if (pageElement) pageElement.classList.add('placeholder-page');
             hidePageLoading(canvasId);
-            // updateStatus(`Skipping render for invalid pageNum ${pageNum} on canvas ${canvasId}`);
             return;
         }
 
         showPageLoading(canvasId);
-        pageElement.classList.remove('placeholder-page'); // Ensure it's not marked as placeholder
+        pageElement.classList.remove('placeholder-page');
 
         let page;
-        let viewport; // Ensure viewport is declared in the outer scope
+        let viewport; // Viewport used for rendering layers
 
         try {
+            // --- Calculate viewport based on CURRENT container size ---
+            // This is needed for both cache hits (layer rendering) and misses (canvas+layer rendering)
+            const containerStyle = getComputedStyle(canvasContainer);
+            const availableWidth = parseFloat(containerStyle.width);
+            const availableHeight = parseFloat(containerStyle.height);
+
+            if (availableWidth <= 0 || availableHeight <= 0) {
+                 console.warn(`Canvas container ${canvasId} has zero dimensions. Skipping render.`);
+                 hidePageLoading(canvasId);
+                 return;
+            }
+
+            // Get page object first (needed for viewport calculation)
+            page = await book.pdfDocument.getPage(pageNum);
+            const defaultViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+            viewport = page.getViewport({ scale: scale }); // This is the viewport for the CURRENT size
+            currentViewports[canvasId] = viewport; // Store it
+
+            // --- Check Cache ---
             if (pageCache.has(pageNum)) {
                 // --- CACHE HIT ---
                 const cachedData = pageCache.get(pageNum);
@@ -403,38 +426,17 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 canvas.style.height = `${cachedData.styleHeight}px`;
                 ctx.putImageData(cachedData.imageData, 0, 0);
 
-                // Re-fetch the page object for layers, use cached viewport
-                page = await book.pdfDocument.getPage(pageNum);
-                viewport = cachedData.viewport;
-                currentViewports[canvasId] = viewport; // Store the current viewport
-
                 // Move accessed item to the end of the cache Map (LRU behavior)
                 pageCache.delete(pageNum);
                 pageCache.set(pageNum, cachedData);
 
                 hidePageLoading(canvasId);
                 updateStatus(`Rendered canvas page ${pageNum} from cache`);
+                // Layers will be rendered below using the *newly calculated* viewport
 
             } else {
                 // --- CACHE MISS ---
-                page = await book.pdfDocument.getPage(pageNum);
-
-                // Calculate viewport based on the container's current size
-                const containerStyle = getComputedStyle(canvasContainer);
-                const availableWidth = parseFloat(containerStyle.width);
-                const availableHeight = parseFloat(containerStyle.height);
-
-                if (availableWidth <= 0 || availableHeight <= 0) {
-                     console.warn(`Canvas container ${canvasId} has zero dimensions. Skipping render.`);
-                     hidePageLoading(canvasId);
-                     return; // Avoid division by zero or invisible render
-                }
-
-                const defaultViewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-                viewport = page.getViewport({ scale: scale });
-                currentViewports[canvasId] = viewport; // Store the current viewport
-
+                // We already have the 'page' and calculated 'viewport'
                 // Set canvas size considering device pixel ratio for sharpness
                 const outputScale = window.devicePixelRatio || 1;
                 canvas.width = Math.floor(viewport.width * outputScale);
@@ -452,22 +454,36 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 }).promise;
 
                 // Cache the rendered data
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                pageCache.set(pageNum, {
-                    imageData: imageData,
-                    width: canvas.width,
-                    height: canvas.height,
-                    styleWidth: Math.floor(viewport.width),
-                    styleHeight: Math.floor(viewport.height),
-                    viewport: viewport // Cache the viewport used
-                });
-                trimCache(); // Check cache size after adding
-                updateStatus(`Rendered canvas page ${pageNum} and cached`);
+                // Use requestIdleCallback or setTimeout to avoid blocking main thread for caching
+                setTimeout(() => {
+                    try {
+                         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                         pageCache.set(pageNum, {
+                             imageData: imageData,
+                             width: canvas.width,
+                             height: canvas.height,
+                             styleWidth: Math.floor(viewport.width), // Store style dimensions used
+                             styleHeight: Math.floor(viewport.height),
+                             // DO NOT cache the viewport here, as it might change on resize.
+                             // We only cache the image data and its dimensions.
+                         });
+                         trimCache(); // Check cache size after adding
+                         updateStatus(`Rendered canvas page ${pageNum} and cached`);
+                     } catch(cacheError) {
+                        console.error(`Error caching page ${pageNum}:`, cacheError);
+                        // If getImageData fails (e.g., tainted canvas), clear the entry
+                        if (pageCache.has(pageNum)) {
+                            pageCache.delete(pageNum);
+                        }
+                     }
+                }, 0); // Defer caching slightly
+
+
                 hidePageLoading(canvasId);
             }
 
             // --- RENDER LAYERS (Text & Annotation) ---
-            // These must run after the canvas is ready and we have the 'page' and 'viewport' objects
+            // Crucially, use the 'viewport' calculated based on the *current* container size
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
 
@@ -475,21 +491,19 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
             if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas on error
             hidePageLoading(canvasId);
-            pageElement.classList.add('placeholder-page'); // Mark as placeholder on error
+            if (pageElement) pageElement.classList.add('placeholder-page'); // Mark as placeholder on error
         }
     }
 
 
+    // --- ** REVISED renderAndEnhanceTextLayer function ** ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
         if (!page || !container || !viewport) {
             console.warn("Skipping text layer render: missing page, container, or viewport.");
             return;
         }
         const pageNum = page.pageNumber;
-        // Get keywords *specifically* for this page number (using string key for JSON object)
         const keywordsForPage = pageKeywords[String(pageNum)] || [];
-        // Convert to lowercase set for efficient definition lookup
-        const keywordsLower = new Set(keywordsForPage.map(k => k.toLowerCase()));
 
         container.innerHTML = ''; // Clear previous content
 
@@ -499,14 +513,15 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             // Use TextLayerBuilder from pdfjsViewer namespace
             const textLayerBuilder = new pdfjsViewer.TextLayerBuilder({
                 textLayerDiv: container,
-                eventBus: eventBus, // Pass the event bus
+                eventBus: eventBus,
                 pageIndex: page.pageIndex,
                 viewport: viewport,
-                // enhanceTextSelection: true // Can enable if general text selection desired (OUT OF SCOPE per brief)
+                // enhanceTextSelection: true // OUT OF SCOPE
             });
 
-            // Use setTextContentItems for PDF.js v3+
-            textLayerBuilder.setTextContentItems(textContent.items);
+            // --- CORRECTED: Use setTextContent ---
+            textLayerBuilder.setTextContent(textContent);
+            // --- END CORRECTION ---
 
             textLayerBuilder.render(); // Renders the spans into the container
 
@@ -516,46 +531,42 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 let interactiveCount = 0;
 
                 renderedSpans.forEach(span => {
-                    if (!span.textContent?.trim()) return; // Skip empty spans
+                    if (!span.textContent?.trim()) return;
 
                     const spanText = span.textContent;
-                    const spanTextLower = spanText.toLowerCase();
 
-                    // Find the *first* matching keyword for this span (longest match first might be better, but simple first match is ok)
                     for (const originalKeyword of keywordsForPage) {
                         const lowerKeyword = originalKeyword.toLowerCase();
-                        // Use regex for whole word matching, case-insensitive
-                        // Escape special regex characters in the keyword
                         const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                        const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'i'); // 'i' for case-insensitive
+                        const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'i');
 
                         if (regex.test(spanText)) {
                             const definition = keywordDefinitions[lowerKeyword];
                             if (definition) {
                                 span.classList.add('keyword-interactive');
-                                span.dataset.keyword = originalKeyword; // Store ORIGINAL case for display
+                                span.dataset.keyword = originalKeyword;
                                 span.dataset.definition = definition;
-                                span.title = `Click for definition of "${originalKeyword}"`; // Add tooltip
+                                span.title = `Click for definition of "${originalKeyword}"`;
                                 interactiveCount++;
-                                break; // Apply only the first found keyword to this span
-                            } else {
-                                // console.warn(`Definition not found for keyword '${lowerKeyword}' on page ${pageNum}`);
+                                break; // Apply only first match per span
                             }
                         }
                     }
                 });
-                 // updateStatus(`Text layer rendered for page ${pageNum}. ${interactiveCount} interactive keywords found.`);
+                // updateStatus(`Text layer rendered for page ${pageNum}. ${interactiveCount} interactive keywords found.`);
             } else {
-                 // updateStatus(`Text layer rendered for page ${pageNum}. No keywords defined or overlay missing.`);
+                // updateStatus(`Text layer rendered for page ${pageNum}. No keywords defined or overlay missing.`);
             }
 
         } catch (error) {
+            // Log the specific error
             console.error(`Error rendering/enhancing text layer for page ${pageNum}:`, error);
-            container.innerHTML = ''; // Clear on error
+             // Add the error message to the layer container for visibility during debugging
+             container.innerHTML = `<div style="color:red; padding:10px; font-size:12px; border:1px solid red;">Text Layer Error: ${error.message}</div>`;
         }
     }
 
-     async function renderAnnotationLayer(page, container, viewport) {
+    async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) {
             console.warn("Skipping annotation layer render: missing page, container, or viewport.");
             return;
@@ -563,44 +574,39 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         container.innerHTML = ''; // Clear previous content
 
         try {
-            const annotations = await page.getAnnotations({ intent: 'display' }); // Specify intent
+            const annotations = await page.getAnnotations({ intent: 'display' });
             if (annotations.length === 0) {
                 // updateStatus(`Annotation layer: No annotations found on page ${page.pageNumber}.`);
-                return; // Nothing to render
+                return;
             }
 
-            // Use AnnotationLayerBuilder from pdfjsViewer namespace
-            // Ensure pageDiv points to the container where annotations should be added
             const annotationLayerBuilder = new pdfjsViewer.AnnotationLayerBuilder({
-                pageDiv: container, // The div where sections will be appended
+                pageDiv: container,
                 pdfPage: page,
-                linkService: linkService, // Use the globally defined linkService
-                downloadManager: null, // Not needed for basic links
-                annotationStorage: null, // Not needed for basic links
-                renderForms: false,      // Forms are out of scope
-                enableScripting: false, // Security: disable scripting in PDFs
-                // eventBus: eventBus, // Can be passed if needed for more complex interactions
+                linkService: linkService,
+                downloadManager: null,
+                annotationStorage: null,
+                renderForms: false,
+                enableScripting: false,
+                // eventBus: eventBus, // Not typically needed for basic links
             });
 
-            // Render the annotations into the container
-            // Clone viewport with dontFlip: true as recommended for annotations
             annotationLayerBuilder.render(viewport.clone({ dontFlip: true }));
 
             // updateStatus(`Annotation layer rendered for page ${page.pageNumber} with ${annotations.length} annotations.`);
 
         } catch (error) {
             console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
-            container.innerHTML = ''; // Clear on error
+            container.innerHTML = `<div style="color:orange; padding:10px; font-size:12px; border:1px solid orange;">Annotation Layer Error: ${error.message}</div>`; // Display error in container
         }
     }
 
-
-    // --- Update Display ---
+    // --- Update Display (No changes needed here, relies on corrected renderPage) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
 
         const leftPageNum = book.currentPage;
-        const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0; // 0 if single view
+        const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
 
         updateStatus(`Updating display for page(s): ${leftPageNum}${rightPageNum > 0 ? ' & ' + rightPageNum : ''}`);
 
@@ -614,11 +620,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             return;
         }
 
-        // Hide pages initially to prevent flicker
         leftPageDiv.style.visibility = 'hidden';
-        rightPageDiv.style.display = 'none'; // Use display none for right page control
-
-        // Clear right page state explicitly
+        rightPageDiv.style.display = 'none';
         rightPageDiv.classList.remove('placeholder-page');
         const rCanvas = document.getElementById('right-page-canvas');
         const rCtx = rCanvas?.getContext('2d');
@@ -634,9 +637,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
             await renderPage(leftPageNum, 'left-page-canvas');
-            leftPageDiv.style.visibility = 'visible'; // Show after rendering attempt
+            leftPageDiv.style.visibility = 'visible';
         } else {
-            // Handle case where left page is out of bounds (shouldn't normally happen with correct navigation)
             leftPageDiv.style.visibility = 'hidden';
             leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas');
@@ -652,93 +654,89 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         if (book.isDoublePageView) {
             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
                 rightPageNumDisplay.textContent = String(rightPageNum);
-                rightPageDiv.style.display = 'flex'; // Show the container
+                rightPageDiv.style.display = 'flex';
                 await renderPage(rightPageNum, 'right-page-canvas');
             } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-                 // Show placeholder if left page is valid but right is not
                  rightPageDiv.style.display = 'flex';
                  rightPageDiv.classList.add('placeholder-page');
                  rightPageNumDisplay.textContent = '';
             } else {
-                // Hide right page completely if left page is also invalid
                 rightPageDiv.style.display = 'none';
             }
         }
 
-        updateSliderPosition(); // Update slider after page numbers are confirmed
-        preloadAdjacentPages(book.currentPage); // Preload after current pages are rendered
+        updateSliderPosition();
+        // Delay preloading slightly to prioritize current page rendering
+        setTimeout(() => preloadAdjacentPages(book.currentPage), 100);
         updateStatus("Display update complete.");
     }
 
-     // --- Preloading ---
+     // --- Preloading (Refined to use estimated viewport) ---
      function preloadAdjacentPages(currentPage) {
         if (!book.pdfDocument) return;
         const pagesToPreload = [];
-        const lookahead = book.isDoublePageView ? 2 : 1; // Load 2 spreads ahead or 2 pages ahead
+        const lookahead = book.isDoublePageView ? 2 : 1;
 
-        // Add pages forward
+        // Determine pages to preload (simplified logic)
         for (let i = 1; i <= lookahead; i++) {
-            const nextPage = currentPage + (book.isDoublePageView ? i * 2 : i);
-            if (nextPage <= book.totalPages) {
-                pagesToPreload.push(nextPage);
-                if (book.isDoublePageView && nextPage + 1 <= book.totalPages) {
-                    pagesToPreload.push(nextPage + 1);
-                }
-            }
-        }
-        // Add pages backward
-        for (let i = 1; i <= lookahead; i++) {
-             const prevPage = currentPage - (book.isDoublePageView ? i * 2 : i);
-             if (prevPage >= 1) {
-                 pagesToPreload.push(prevPage);
-                 if (book.isDoublePageView && prevPage + 1 <= book.totalPages && prevPage + 1 < currentPage) { // Ensure we don't re-add current right page
-                     pagesToPreload.push(prevPage + 1);
-                 }
-             }
+            const nextPageSet = currentPage + (book.isDoublePageView ? i * 2 : i);
+            if (nextPageSet <= book.totalPages) pagesToPreload.push(nextPageSet);
+            if (book.isDoublePageView && nextPageSet + 1 <= book.totalPages) pagesToPreload.push(nextPageSet + 1);
+
+             const prevPageSet = currentPage - (book.isDoublePageView ? i * 2 : i);
+             if (prevPageSet >= 1) pagesToPreload.push(prevPageSet);
+             if (book.isDoublePageView && prevPageSet + 1 >= 1 && prevPageSet + 1 < currentPage ) pagesToPreload.push(prevPageSet + 1);
          }
-
 
         const uniquePages = [...new Set(pagesToPreload)].filter(p =>
             p > 0 && p <= book.totalPages && !pageCache.has(p)
         );
 
         if (uniquePages.length === 0) return;
-        // updateStatus(`Preloading pages: ${uniquePages.join(', ')}`);
+        updateStatus(`Preloading pages: ${uniquePages.join(', ')}`);
 
         uniquePages.forEach(pageNum => {
-            book.pdfDocument.getPage(pageNum).then(page => {
-                // Use default page dimensions for preloading viewport calculation
-                const defaultViewport = page.getViewport({ scale: 1 });
-                // Simulate rendering in a standard page container to get a reasonable cache size
-                const simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING);
-                const simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING);
-                const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); // Don't upscale beyond 1 for cache
-                const viewport = page.getViewport({ scale: scale });
+             // Use try/catch for each page preload attempt
+            (async () => {
+                try {
+                    const page = await book.pdfDocument.getPage(pageNum);
+                     // Use estimated viewport for preloading (based on default page size variables)
+                    const defaultViewport = page.getViewport({ scale: 1 });
+                    const simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING);
+                    const simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING);
+                    // Calculate scale, but don't render larger than native resolution for cache
+                    const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1.0);
+                    const viewport = page.getViewport({ scale: scale });
 
-                // Create a temporary canvas to render for caching
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                const outputScale = window.devicePixelRatio || 1;
-                tempCanvas.width = Math.floor(viewport.width * outputScale);
-                tempCanvas.height = Math.floor(viewport.height * outputScale);
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                     // Use devicePixelRatio for sharper cache images, similar to main render
+                    const outputScale = window.devicePixelRatio || 1;
+                    tempCanvas.width = Math.floor(viewport.width * outputScale);
+                    tempCanvas.height = Math.floor(viewport.height * outputScale);
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
 
-                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => {
-                    if (!pageCache.has(pageNum)) { // Double check cache hasn't been filled by main render
-                        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                        pageCache.set(pageNum, {
-                            imageData: imageData,
-                            width: tempCanvas.width,
-                            height: tempCanvas.height,
-                            styleWidth: Math.floor(viewport.width),
-                            styleHeight: Math.floor(viewport.height),
-                            viewport: viewport
-                        });
-                        trimCache();
-                        // updateStatus(`Preloaded and cached page ${pageNum}`);
-                    }
-                }).catch(err => console.warn(`Preloading page ${pageNum} failed: ${err.message}`));
-            }).catch(err => console.warn(`Failed to get page ${pageNum} for preloading: ${err.message}`));
+                    await page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise;
+
+                    // Cache after successful render
+                     if (!pageCache.has(pageNum)) { // Double check it wasn't added meanwhile
+                         const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                         pageCache.set(pageNum, {
+                             imageData: imageData,
+                             width: tempCanvas.width,
+                             height: tempCanvas.height,
+                             styleWidth: Math.floor(viewport.width),
+                             styleHeight: Math.floor(viewport.height),
+                         });
+                         trimCache();
+                         // updateStatus(`Preloaded and cached page ${pageNum}`);
+                     }
+                 } catch (err) {
+                     console.warn(`Preloading page ${pageNum} failed: ${err.message}`);
+                      // Ensure failed preload doesn't leave partial cache entry
+                      if(pageCache.has(pageNum)) pageCache.delete(pageNum);
+                 }
+             })(); // Immediately invoke the async function
         });
     }
 
@@ -750,7 +748,6 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         if (targetPage <= book.totalPages) {
             jumpToPage(targetPage);
         } else if (!book.isDoublePageView && book.currentPage < book.totalPages) {
-            // Allow going to the very last page in single page view
             jumpToPage(book.totalPages);
         }
     }
@@ -767,102 +764,90 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             return;
         }
         let targetPage = pageNum;
-        // In double page view, ensure we always jump to a left page (odd number), unless it's page 1
         if (book.isDoublePageView && targetPage > 1 && targetPage % 2 === 0) {
             targetPage--;
         }
         if (targetPage === book.currentPage) {
-             // updateStatus(`Already on page ${targetPage}, jump ignored.`);
-            return; // No change needed
+            return;
         }
 
         updateStatus(`Jumping to page ${targetPage}`);
         book.currentPage = targetPage;
         if (targetPage > user.readingProgress.furthestPage) {
             user.readingProgress.furthestPage = targetPage;
-             // Potentially save progress here in a real app
         }
-        hideDefinitionPopup(); // Close popup on page turn
-        updateDisplay(); // Render the new page(s)
-        showPageSlider(); // Show slider briefly on jump
-        manageToolbar(false); // Hide toolbar if open
+        hideDefinitionPopup();
+        updateDisplay(); // Render new page(s)
+        showPageSlider();
+        manageToolbar(false);
     }
 
     // --- View Modes ---
     function applyCurrentViewModeStyles() {
          const isRotated = document.body.classList.contains('rotated-mode');
-         const isFullscreen = document.body.classList.contains('fullscreen-mode');
          const spread = document.querySelector('.book-spread');
          if (!spread) return;
 
          if (isRotated) {
-              // Calculate scale for rotated view based on viewport and *unrotated* page dimensions
               const vpW = window.innerWidth;
               const vpH = window.innerHeight;
-              // Use the CSS variables for base dimensions
               const baseW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
               const baseH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
-              // When page is rotated 90deg, its height (baseH) fits against viewport width (vpW)
-              // and its width (baseW) fits against viewport height (vpH)
               const scaleX = vpW / baseH;
               const scaleY = vpH / baseW;
-              const scale = Math.min(scaleX, scaleY) * 0.95; // Apply 95% scaling for padding
+              const scale = Math.min(scaleX, scaleY) * 0.95;
 
               spread.style.transformOrigin = 'center center';
               spread.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
           } else {
-              // Reset transform for single or double page view
               spread.style.transformOrigin = 'center center';
               spread.style.transform = 'translate(-50%, -50%)';
           }
-          // Force recalculation of layout for layers
-          // requestAnimationFrame(() => {});
     }
 
     function setSinglePageView(){
-        if(!book.isDoublePageView && !document.body.classList.contains('rotated-mode')) return; // Already in this mode
+        if(!book.isDoublePageView && !document.body.classList.contains('rotated-mode')) return;
         updateStatus("Setting Single Page View");
         book.isDoublePageView=false;
         document.body.classList.remove('rotated-mode');
         document.body.classList.add('fullscreen-mode');
         hideDefinitionPopup();
-        applyCurrentViewModeStyles(); // Apply transform *before* updating display
-        updateDisplay().then(() => {
-            manageToolbar(); // Ensure toolbar repositions correctly
+        applyCurrentViewModeStyles();
+        updateDisplay().then(() => { // Ensure render completes before managing UI
+            manageToolbar();
             updateSliderTotalPages();
             updateSliderPosition();
-        }); // Render necessary pages
+        });
     }
     function setDoublePageView(){
-        if(book.isDoublePageView && !document.body.classList.contains('rotated-mode')) return; // Already in this mode
+        if(book.isDoublePageView && !document.body.classList.contains('rotated-mode')) return;
         updateStatus("Setting Double Page View");
         book.isDoublePageView=true;
         document.body.classList.remove('rotated-mode','fullscreen-mode');
-        // If currently on an even page > 1, move back to the preceding odd page
         if(book.currentPage > 1 && book.currentPage % 2 === 0) {
             book.currentPage--;
         }
         hideDefinitionPopup();
-        applyCurrentViewModeStyles(); // Apply transform *before* updating display
+        applyCurrentViewModeStyles();
         updateDisplay().then(() => {
             manageToolbar();
             updateSliderTotalPages();
             updateSliderPosition();
-        }); // Render necessary pages
+        });
     }
     function setRotatedView() {
-        if(document.body.classList.contains('rotated-mode')) return; // Already in this mode
+        if(document.body.classList.contains('rotated-mode')) return;
         updateStatus("Setting Rotated View");
-        book.isDoublePageView=false; // Rotated is always single page
+        book.isDoublePageView=false;
         document.body.classList.remove('fullscreen-mode');
         document.body.classList.add('rotated-mode');
         hideDefinitionPopup();
-        applyCurrentViewModeStyles(); // Apply transform *before* updating display
+        applyCurrentViewModeStyles();
         updateDisplay().then(() => {
             manageToolbar();
             updateSliderTotalPages();
             updateSliderPosition();
-        }); // Render necessary pages
+        });
     }
 
 
@@ -876,7 +861,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     // --- Slider Logic ---
     function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
-    function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)} // Slightly longer timeout
+    function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)}
     function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;
         let isDragging = false;
         s.addEventListener('input',()=>{
@@ -888,14 +873,15 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 d.textContent=pt;
             }
             updateSliderStyle(s,pn);
-            resetSliderHideTimer(); // Keep slider visible while interacting
+            resetSliderHideTimer();
         });
-         s.addEventListener('pointerdown', () => { isDragging = true; });
-         s.addEventListener('pointerup', () => { isDragging = false; });
-         // 'change' fires after user releases slider or clicks track
-        s.addEventListener('change',()=>{
-            jumpToPage(parseInt(s.value,10));
-            resetSliderHideTimer(); // Reset timer after final selection
+         s.addEventListener('pointerdown', () => { isDragging = true; clearTimeout(sliderHideTimeout); }); // Clear timer on drag start
+         s.addEventListener('pointerup', () => { isDragging = false; resetSliderHideTimer(); }); // Reset timer on drag end
+        s.addEventListener('change',()=>{ // Fires on click or after release
+            if (!isDragging) { // Avoid double jump if already handled by input/drag
+                 jumpToPage(parseInt(s.value,10));
+                 resetSliderHideTimer();
+            }
         });
         sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));
         sc.addEventListener('mouseleave',resetSliderHideTimer);
@@ -911,97 +897,77 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         showLoading("Initializing PDF...");
-        // Reset state
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}}
         book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[];
         hideDefinitionPopup();
-        document.title = "Heritage History™ Reader"; // Reset title
-        document.getElementById('toc-btn').disabled = true; // Disable TOC btn
+        document.title = "Heritage History™ Reader";
+        document.getElementById('toc-btn').disabled = true;
 
         let filename = "Document";
         try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){}
-        book.title = filename; // Set title early
+        book.title = filename;
 
         try {
-            // --- Fetch Overlay Concurrently ---
             const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json');
             updateStatus(`Attempting to fetch overlay: ${overlayUrl}`);
             const overlayPromise = fetch(overlayUrl)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status} (${response.statusText}) fetching overlay`);
-                    }
+                    if (!response.ok) { throw new Error(`HTTP ${response.status} (${response.statusText}) fetching overlay`); }
                     return response.json();
                 })
                 .then(data => {
-                    // Basic validation of overlay structure
-                    if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') {
-                        throw new Error("Invalid overlay JSON structure (missing 'keywords' or 'pages' objects)");
-                    }
-                    // Store the data
+                    if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') { throw new Error("Invalid overlay JSON structure"); }
                     keywordDefinitions = data.keywords || {};
                     pageKeywords = data.pages || {};
                     updateStatus(`Overlay loaded successfully: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages defined.`);
-                    return true; // Indicate success
+                    return true;
                 })
                 .catch(err => {
                     console.warn(`Overlay file warning: ${err.message}. Interactive keywords will be disabled.`);
-                    // Reset overlay data on failure
-                    keywordDefinitions = {};
-                    pageKeywords = {};
-                    // Log warning to console for developers, no user alert needed.
-                    return false; // Indicate failure
+                    keywordDefinitions = {}; pageKeywords = {};
+                    return false;
                 });
 
-            // --- Load PDF Document ---
             updateStatus("Starting PDF document loading...");
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
             book.pdfDocument = await loadingTask.promise;
             book.totalPages = book.pdfDocument.numPages;
-            book.currentPage = 1; // Reset to page 1
+            book.currentPage = 1;
             user.readingProgress.furthestPage = 1;
             updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
             document.title = `${book.title} - Heritage History™ Reader`;
 
-            // Wait for the overlay fetch attempt to finish (it runs concurrently)
-            await overlayPromise; // We don't need the result here, just ensure it's settled.
+            await overlayPromise;
 
-            // --- Process Metadata (TOC) ---
             showLoading("Processing metadata..."); updateStatus("Fetching outline...");
             try {
                 book.outline = await book.pdfDocument.getOutline();
-                populateTOC(); // Populates and enables/disables button
+                populateTOC();
             } catch (outlineError) {
                 console.warn("Could not get PDF outline:", outlineError);
                 book.outline = [];
-                populateTOC(); // Still call to show "No TOC" message
+                populateTOC();
             }
 
-            // --- Initial Display ---
-            updateSliderTotalPages(); // Update slider range first
-            // Determine initial view based on window size
-            if (window.innerWidth < 1000) { // Threshold for double page view
-                setSinglePageView(); // This calls updateDisplay internally
+            updateSliderTotalPages();
+            if (window.innerWidth < 1000) {
+                setSinglePageView(); // Calls updateDisplay
             } else {
-                setDoublePageView(); // This calls updateDisplay internally
+                setDoublePageView(); // Calls updateDisplay
             }
-            // Initial display render is handled by the set...View functions now.
+            // Initial render handled within set...View functions
 
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error);
             alert(`Failed to load PDF: ${error.message || error}`);
-            // Reset critical state
             book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[];
             keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error";
             updateSliderTotalPages(); updateSliderPosition(); populateTOC();
-            // Display error message in the viewer area
             const spreadContainer = document.querySelector('.main-container .book-spread');
-             if (spreadContainer) {
-                  spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
-             }
+             if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
         } finally {
-            hideLoading(); // Ensure loading overlay is hidden
+            hideLoading();
             updateStatus("loadPdf finished.");
         }
     }
@@ -1013,8 +979,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const tocButton = document.getElementById('toc-btn');
         if (!tocList || !tocButton) return;
 
-        tocList.innerHTML = ''; // Clear previous content
-        tocButton.disabled = true; // Disable by default
+        tocList.innerHTML = '';
+        tocButton.disabled = true;
 
         if (!book.outline || book.outline.length === 0) {
             tocList.innerHTML = '<em>No table of contents found in this document.</em>';
@@ -1026,46 +992,37 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const createTocItem = (item, level = 0) => {
             const itemDiv = document.createElement('div');
             itemDiv.className = level === 0 ? 'toc-chapter' : 'toc-section';
-            // Indentation removed for simplicity, handled by nested divs if needed
-            // itemDiv.style.marginLeft = `${level * 15}px`;
 
             const titleSpan = document.createElement('span');
             titleSpan.className = level === 0 ? 'toc-chapter-title' : '';
             titleSpan.textContent = item.title || 'Untitled Section';
             titleSpan.style.cursor = 'pointer';
-            titleSpan.title = `Go to: ${item.title || 'Untitled Section'}`; // Tooltip
+            titleSpan.title = `Go to: ${item.title || 'Untitled Section'}`;
 
             titleSpan.onclick = async (e) => {
                 e.preventDefault();
                 updateStatus(`TOC Click: ${item.title}`);
                 try {
                     let pageIndex = -1;
-                    // Destination can be string (named destination) or array (explicit destination)
                     if (typeof item.dest === 'string') {
                         const destArray = await book.pdfDocument.getDestination(item.dest);
-                        if (destArray && typeof destArray[0] === 'object') {
-                            pageIndex = await book.pdfDocument.getPageIndex(destArray[0]);
+                        // Ensure destArray[0] is a Ref object before getting page index
+                        if (destArray && typeof destArray[0] === 'object' && destArray[0] !== null && 'num' in destArray[0] && 'gen' in destArray[0]) {
+                             pageIndex = await book.pdfDocument.getPageIndex(destArray[0]);
+                        } else {
+                             console.warn("Could not resolve named destination ref:", item.dest, destArray);
                         }
-                    } else if (Array.isArray(item.dest) && typeof item.dest[0] === 'object') {
-                         // Destination is an array like [ref, type, ...coords]
+                    } else if (Array.isArray(item.dest) && typeof item.dest[0] === 'object' && item.dest[0] !== null && 'num' in item.dest[0] && 'gen' in item.dest[0]) {
                         pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
-                    } else if (Array.isArray(item.dest) && typeof item.dest[0] === 'number') {
-                         // Older PDF spec? Destination might be [pageNum, type, ...coords] (0-based?) -> Let's assume it's NOT pageNum directly.
-                         // It's safer to rely on getPageIndex(ref) if available. Let's log a warning if we hit this.
-                         console.warn("TOC destination is an array starting with a number, interpretation might be ambiguous:", item.dest);
-                         // Attempt to resolve ref if possible - this case needs more clarity based on PDF spec / pdf.js behavior
-                         // If item.dest[0] IS the page number (1-based), use it: pageIndex = item.dest[0] - 1;
-                         // For now, we'll rely on the object ref lookup.
                     } else {
-                         console.warn("Unknown TOC destination format:", item.dest);
+                         console.warn("Unknown or unsupported TOC destination format:", item.dest);
                     }
 
-
                     if (pageIndex >= 0) {
-                        jumpToPage(pageIndex + 1); // jumpToPage expects 1-based page number
+                        jumpToPage(pageIndex + 1);
                         hideTableOfContents();
                     } else {
-                        throw new Error(`Could not resolve page for destination: ${item.title}`);
+                        throw new Error(`Could not resolve page index for destination: ${item.title}`);
                     }
                 } catch (navError) {
                     console.error("TOC navigation error:", navError);
@@ -1075,33 +1032,24 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
             itemDiv.appendChild(titleSpan);
 
-            // Recursively add child items
             if (item.items && item.items.length > 0) {
                 const subListDiv = document.createElement('div');
-                 if (level === 0) subListDiv.className = 'toc-sections'; // Add class only for first level's children container
-                 else subListDiv.style.paddingLeft = '15px'; // Indent nested sections
+                 subListDiv.style.paddingLeft = '15px'; // Indent nested sections
+                 if (level === 0) subListDiv.className = 'toc-sections';
 
                 item.items.forEach(subItem => {
                     const subElement = createTocItem(subItem, level + 1);
                     if (subElement) subListDiv.appendChild(subElement);
                 });
-                if (subListDiv.hasChildNodes()) {
-                    itemDiv.appendChild(subListDiv);
-                }
+                if (subListDiv.hasChildNodes()) { itemDiv.appendChild(subListDiv); }
             }
             return itemDiv;
         };
 
-        book.outline.forEach(topItem => {
-            const tocElement = createTocItem(topItem);
-            if (tocElement) tocList.appendChild(tocElement);
-        });
+        book.outline.forEach(topItem => { const tocElement = createTocItem(topItem); if (tocElement) tocList.appendChild(tocElement); });
 
-        if (tocList.hasChildNodes()) {
-            tocButton.disabled = false; // Enable button if TOC was populated
-        } else {
-            tocList.innerHTML = '<em>Error processing Table of Contents data.</em>';
-        }
+        if (tocList.hasChildNodes()) { tocButton.disabled = false; }
+         else { tocList.innerHTML = '<em>Error processing Table of Contents data.</em>'; }
     }
 
 
@@ -1110,9 +1058,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
         const mainContainer = document.querySelector('.main-container');
-        const bookSpread = mainContainer?.querySelector('.book-spread');
+        const bookSpread = mainContainer?.querySelector('.book-spread'); // Attach listeners here for delegation
 
-        // Toolbar Button Clicks
         toolbar?.addEventListener('click', e => {
             const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return;
             const id = btn.id; updateStatus(`Toolbar click: ${id}`);
@@ -1122,113 +1069,73 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 case 'rotate-btn': setRotatedView(); break;
                 case 'toc-btn': showTableOfContents(); break;
             }
-            // Manage toolbar state after action
-            resetSliderHideTimer(); // Keep slider if interaction came from toolbar? Or hide? Let's hide toolbar.
-            toolbarHover = false; // Assume click means intent is finished
-            manageToolbar(false);
+            toolbarHover = false; manageToolbar(false);
         });
 
-        // TOC Panel Close Button
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-
-        // Definition Popup Close Button
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
 
-        // Text Layer Event Delegation (Keywords)
-        bookSpread?.addEventListener('mouseover', e => {
-            if (e.target.classList.contains('keyword-interactive')) {
-                e.target.classList.add('keyword-hover-highlight');
-            }
-        });
-        bookSpread?.addEventListener('mouseout', e => {
-            if (e.target.classList.contains('keyword-interactive')) {
-                e.target.classList.remove('keyword-hover-highlight');
-            }
-        });
-        bookSpread?.addEventListener('click', e => {
-            const targetKeyword = e.target.closest('.keyword-interactive'); // Check target or parent
-            if (targetKeyword) {
-                e.stopPropagation(); // Prevent click from bubbling to dismiss handler
-                const keyword = targetKeyword.dataset.keyword;
-                const definition = targetKeyword.dataset.definition;
-                if (keyword && definition) {
-                    const rect = targetKeyword.getBoundingClientRect();
-                    // Pass coordinates relative to viewport
-                    showDefinitionPopup(keyword, definition, rect.left, rect.bottom, rect.top);
-                } else {
-                    console.warn("Clicked interactive element missing keyword/definition data", targetKeyword);
-                }
-            }
-            // Note: We don't need to handle annotation layer clicks here,
-            // pdfjsViewer.AnnotationLayerBuilder handles link clicks internally via the linkService.
-        });
-
-
-        // Page Turn Navigation (Edge Clicks)
-        bookSpread?.addEventListener('click', e => {
-             if (e.target.classList.contains('page-edge-nav')) {
-                 const pageDiv = e.target.closest('.book-page');
-                 if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
-
-                 const isRotated = document.body.classList.contains('rotated-mode');
-                 const isLeftPage = pageDiv.classList.contains('left');
-                 const isEdgeLeft = e.target.classList.contains('page-edge-left');
-                 const isSingleView = !book.isDoublePageView || isRotated; // Rotated is effectively single view
-
-                 // Simplified Logic:
-                 // Left edge click: Previous Page
-                 // Right edge click: Next Page
-                 if (isEdgeLeft) {
-                     prevPage();
-                 } else {
-                     nextPage();
+        // --- Event Delegation from bookSpread ---
+        if (bookSpread) {
+            bookSpread.addEventListener('mouseover', e => {
+                 const keywordTarget = e.target.closest('.keyword-interactive');
+                 if (keywordTarget) {
+                     keywordTarget.classList.add('keyword-hover-highlight');
                  }
-                 showPageSlider(); // Show slider briefly on edge click
-                 manageToolbar(false); // Hide toolbar
-             }
-         });
+             });
+             bookSpread.addEventListener('mouseout', e => {
+                  const keywordTarget = e.target.closest('.keyword-interactive');
+                  if (keywordTarget) {
+                      keywordTarget.classList.remove('keyword-hover-highlight');
+                  }
+              });
+              bookSpread.addEventListener('click', e => {
+                  // Keyword Click
+                  const targetKeyword = e.target.closest('.keyword-interactive');
+                  if (targetKeyword) {
+                      e.stopPropagation();
+                      const keyword = targetKeyword.dataset.keyword;
+                      const definition = targetKeyword.dataset.definition;
+                      if (keyword && definition) {
+                          const rect = targetKeyword.getBoundingClientRect();
+                          showDefinitionPopup(keyword, definition, rect.left, rect.bottom, rect.top);
+                      }
+                      return; // Don't process edge click if keyword was clicked
+                  }
 
+                  // Page Edge Click
+                  if (e.target.classList.contains('page-edge-nav')) {
+                       const pageDiv = e.target.closest('.book-page');
+                       if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
+                       if (e.target.classList.contains('page-edge-left')) { prevPage(); }
+                       else { nextPage(); }
+                       showPageSlider(); manageToolbar(false);
+                  }
+                  // Annotation links are handled by AnnotationLayerBuilder + linkService
+              });
+        } else {
+             console.error("Book spread container not found for event delegation.");
+        }
 
         // Keyboard Navigation
         document.addEventListener('keydown', e => {
-             // Ignore if focus is on input, textarea, or if modals are open
              if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' ||
                  document.getElementById('toc-panel')?.classList.contains('visible') ||
-                 definitionPopup.classList.contains('visible')) {
-                 return;
-             }
-             // Ignore if modifier keys are pressed
+                 definitionPopup.classList.contains('visible')) { return; }
              if (e.ctrlKey || e.altKey || e.metaKey) return;
 
              let navigationAction = false;
              switch(e.key){
-                 case 'ArrowRight':
-                 case 'PageDown':
-                     nextPage(); navigationAction = true; break;
-                 case 'ArrowLeft':
-                 case 'PageUp':
-                     prevPage(); navigationAction = true; break;
-                 case 'Home':
-                     if(book.totalPages > 0) jumpToPage(1); navigationAction = true; break;
-                 case 'End':
-                     if(book.totalPages > 0) jumpToPage(book.totalPages); navigationAction = true; break;
+                 case 'ArrowRight': case 'PageDown': nextPage(); navigationAction = true; break;
+                 case 'ArrowLeft': case 'PageUp': prevPage(); navigationAction = true; break;
+                 case 'Home': if(book.totalPages > 0) jumpToPage(1); navigationAction = true; break;
+                 case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navigationAction = true; break;
                  case 'Escape':
-                     // Only handle Escape for the popup here
-                     if (definitionPopup.classList.contains('visible')) {
-                         hideDefinitionPopup();
-                         navigationAction = true; // Prevent default behavior like exiting fullscreen
-                     } else if (document.getElementById('toc-panel')?.classList.contains('visible')) {
-                        hideTableOfContents();
-                        navigationAction = true;
-                     }
+                     if (definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); navigationAction = true; }
+                      else if (document.getElementById('toc-panel')?.classList.contains('visible')) { hideTableOfContents(); navigationAction = true; }
                      break;
              }
-
-             if(navigationAction){
-                 e.preventDefault(); // Prevent default browser scroll etc.
-                 showPageSlider(); // Show slider on keyboard nav
-                 manageToolbar(false); // Hide toolbar
-             }
+             if(navigationAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); }
         });
 
         // Resize Handling
@@ -1236,108 +1143,46 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
                 updateStatus("Resize detected.");
-                hideDefinitionPopup(); // Hide popup on resize
-                // Re-apply view mode to recalculate layout/scaling
-                 if(document.body.classList.contains('rotated-mode')) {
-                    applyCurrentViewModeStyles(); // Recalc scale
-                    updateDisplay(); // Re-render pages for new size
-                 } else if(document.body.classList.contains('fullscreen-mode')) {
-                    applyCurrentViewModeStyles();
-                    updateDisplay();
-                 } else { // Double page mode
-                    applyCurrentViewModeStyles();
-                    updateDisplay();
-                 }
-                 // No need to call set...View functions unless the mode logic needs re-evaluation
-                 manageToolbar(); // Adjust toolbar position if needed
-            }, 250); // Debounce resize events
+                hideDefinitionPopup();
+                // Re-apply styles and re-render current view
+                 applyCurrentViewModeStyles();
+                 updateDisplay(); // Will use new dimensions and re-render layers correctly
+                 manageToolbar();
+            }, 250);
         });
-
-        // Double-click view toggle (Optional UX enhancement - disable if not desired)
-        // mainContainer?.addEventListener('dblclick',e=>{
-        //      // Only trigger if clicking the background, not pages or controls
-        //      if(e.target === mainContainer && !document.body.classList.contains('rotated-mode')){
-        //         updateStatus("Double-click detected on background.");
-        //          if(document.body.classList.contains('fullscreen-mode')) setDoublePageView();
-        //          else setSinglePageView();
-        //      }
-        // });
-
 
          // Touch Swipe Navigation
          let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
-         const SWIPE_THRESHOLD = 50; // Min pixels horizontally
-         const SWIPE_TIME_LIMIT = 500; // Max ms
-         const SWIPE_VERTICAL_LIMIT = 70; // Max pixels vertically to be considered horizontal swipe
-
+         const SWIPE_THRESHOLD = 50; const SWIPE_TIME_LIMIT = 500; const SWIPE_VERTICAL_LIMIT = 70;
          document.body.addEventListener('touchstart', e => {
-             // Ignore swipes starting on interactive elements
-             if (e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, #page-slider-trigger-zone, .toc-panel, .page-edge-nav, .new-btn, button, input, a, #definition-popup, .keyword-interactive, .annotationLayer section')) {
-                 touchStartX = 0; touchStartY = 0; // Reset to ignore swipe
-                 return;
+             if (e.target.closest('#new-toolbar, .toolbar-trigger-area, #page-slider-container, #page-slider-trigger-zone, .toc-panel, .page-edge-nav, button, input, a, #definition-popup, .keyword-interactive, .annotationLayer section')) {
+                 touchStartX = 0; touchStartY = 0; return;
              }
              if (e.touches.length === 1) {
-                 touchStartX = e.touches[0].screenX;
-                 touchStartY = e.touches[0].screenY;
-                 touchStartTime = Date.now();
-             } else {
-                 // Reset if multiple touches start
-                 touchStartX = 0; touchStartY = 0;
-             }
-         }, { passive: true }); // Passive for performance
-
+                 touchStartX = e.touches[0].screenX; touchStartY = e.touches[0].screenY; touchStartTime = Date.now();
+             } else { touchStartX = 0; touchStartY = 0; }
+         }, { passive: true });
          document.body.addEventListener('touchend', e => {
-              if (touchStartX === 0 && touchStartY === 0) return; // Ignore if swipe didn't start properly
-
-              if (e.changedTouches.length === 1) {
-                  const touchEndX = e.changedTouches[0].screenX;
-                  const touchEndY = e.changedTouches[0].screenY;
-                  const timeElapsed = Date.now() - touchStartTime;
-
-                  if (timeElapsed < SWIPE_TIME_LIMIT) {
-                      const deltaX = touchEndX - touchStartX;
-                      const deltaY = touchEndY - touchStartY;
-                      const absDeltaX = Math.abs(deltaX);
-                      const absDeltaY = Math.abs(deltaY);
-
-                      // Check if it's primarily a horizontal swipe
-                      if (absDeltaX > SWIPE_THRESHOLD && absDeltaY < SWIPE_VERTICAL_LIMIT) {
-                           if (deltaX > 0) { // Swipe Right (Previous Page)
-                               prevPage();
-                           } else { // Swipe Left (Next Page)
-                               nextPage();
-                           }
-                           showPageSlider(); // Show slider on swipe
-                           manageToolbar(false); // Hide toolbar
-                           // e.preventDefault(); // Prevent default only if swipe detected? Maybe not needed with passive listener.
-                       }
-                  }
+              if (touchStartX === 0 && touchStartY === 0 || e.changedTouches.length !== 1) return;
+              const touchEndX = e.changedTouches[0].screenX; const touchEndY = e.changedTouches[0].screenY;
+              if (Date.now() - touchStartTime < SWIPE_TIME_LIMIT) {
+                  const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
+                  if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_VERTICAL_LIMIT) {
+                       if (deltaX > 0) { prevPage(); } else { nextPage(); }
+                       showPageSlider(); manageToolbar(false);
+                   }
               }
-              // Reset swipe tracking state
               touchStartX = 0; touchStartY = 0; touchStartTime = 0;
           });
-
 
         // Slider Trigger Zone Interaction
         const sliderTriggerZone = document.getElementById('page-slider-trigger-zone');
         const sliderContainer = document.getElementById('page-slider-container');
         if(sliderTriggerZone && sliderContainer){
-            const enterTrigger = () => {
-                 if(book.pdfDocument && book.totalPages > 0){
-                     showPageSlider();
-                     clearTimeout(sliderHideTimeout); // Keep slider visible while mouse is over trigger or slider itself
-                 }
-             };
-             const leaveTriggerOrSlider = (event) => {
-                  // Check if the mouse is moving from the trigger to the slider or vice-versa
-                 const relatedTarget = event.relatedTarget;
-                 if (!sliderContainer.contains(relatedTarget) && !sliderTriggerZone.contains(relatedTarget)) {
-                     resetSliderHideTimer(); // Start hide timer only if mouse leaves both areas
-                 }
-             };
-
+            const enterTrigger = () => { if(book.pdfDocument && book.totalPages > 0){ showPageSlider(); clearTimeout(sliderHideTimeout); } };
+            const leaveTriggerOrSlider = (event) => { const relatedTarget = event.relatedTarget; if (!sliderContainer.contains(relatedTarget) && !sliderTriggerZone.contains(relatedTarget)) { resetSliderHideTimer(); } };
             sliderTriggerZone.addEventListener('mouseenter', enterTrigger);
-            sliderContainer.addEventListener('mouseenter', enterTrigger); // Also clear timer when entering slider itself
+            sliderContainer.addEventListener('mouseenter', enterTrigger);
             sliderTriggerZone.addEventListener('mouseleave', leaveTriggerOrSlider);
             sliderContainer.addEventListener('mouseleave', leaveTriggerOrSlider);
         }
@@ -1345,12 +1190,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         // Close Definition Popup on Outside Click (Capture phase)
         document.addEventListener('click', e => {
             if (definitionPopup.classList.contains('visible') &&
-                !definitionPopup.contains(e.target) && // Click is outside popup
-                !e.target.closest('.keyword-interactive')) // And not on another keyword
-            {
-                hideDefinitionPopup();
-            }
-        }, true); // Use capture phase to catch click before it might be stopped elsewhere
+                !definitionPopup.contains(e.target) &&
+                !e.target.closest('.keyword-interactive'))
+            { hideDefinitionPopup(); }
+        }, true);
 
         updateStatus("Events setup complete");
     }
@@ -1360,74 +1203,58 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) return;
 
-        // Sanitize definition HTML slightly if needed (basic example)
-        // In a real app, use a proper sanitizer library if definition HTML is complex or untrusted
-        const cleanDefinition = definition; // Assuming definition content is safe for now
-
-        popupWord.textContent = word; // Use original case provided
+        const cleanDefinition = definition; // Assuming safe HTML for now
+        popupWord.textContent = word;
         popupDefinition.innerHTML = cleanDefinition;
 
-        // Initial position slightly below the keyword
         let popupLeft = clickLeft;
-        let popupTop = clickBottom + 8; // Add small gap
+        let popupTop = clickBottom + 8;
 
-        definitionPopup.style.left = `0px`; // Reset position for measurement
-        definitionPopup.style.top = `0px`;
+        definitionPopup.style.left = `0px`; definitionPopup.style.top = `0px`;
         definitionPopup.style.transform = 'scale(0.95) translateY(5px)';
         definitionPopup.style.opacity = '0';
-        definitionPopup.classList.add('visible'); // Make it display: block for measurement
+        definitionPopup.classList.add('visible');
         definitionPopup.style.pointerEvents = 'none';
 
-
-        // Use requestAnimationFrame to allow the browser to render the popup (with display:block)
-        // so we can measure its dimensions accurately.
         requestAnimationFrame(() => {
             const popupRect = definitionPopup.getBoundingClientRect();
-            const winWidth = window.innerWidth;
-            const winHeight = window.innerHeight;
+            const winWidth = window.innerWidth; const winHeight = window.innerHeight;
 
-            // Adjust horizontal position
-            if (popupLeft + popupRect.width > winWidth - 10) { // Check right edge
-                popupLeft = winWidth - popupRect.width - 10; // Move left
-            }
-            if (popupLeft < 10) { // Check left edge
-                popupLeft = 10;
-            }
+            if (popupLeft + popupRect.width > winWidth - 10) { popupLeft = winWidth - popupRect.width - 10; }
+            if (popupLeft < 10) { popupLeft = 10; }
 
-            // Adjust vertical position
-            if (popupTop + popupRect.height > winHeight - 10) { // Check bottom edge
-                // Try placing it above the keyword instead
-                 popupTop = clickTop - popupRect.height - 8; // Use clickTop, add gap
-                 definitionPopup.style.transform = 'scale(0.95) translateY(-5px)'; // Adjust animation origin
+            if (popupTop + popupRect.height > winHeight - 10) {
+                 popupTop = clickTop - popupRect.height - 8;
+                 definitionPopup.style.transform = 'scale(0.95) translateY(-5px)'; // Adjust animation origin if moved above
             }
-            if (popupTop < 10) { // Check top edge (even after moving above)
-                popupTop = 10;
+             // Prevent going off the top edge if moved above
+            if (popupTop < 10) {
+                 popupTop = 10;
+                 // If it still doesn't fit, it might overlap the keyword, which is acceptable
             }
 
-            // Apply final calculated position
-            definitionPopup.style.left = `${Math.max(5, popupLeft)}px`; // Ensure min 5px margin
+
+            definitionPopup.style.left = `${Math.max(5, popupLeft)}px`;
             definitionPopup.style.top = `${Math.max(5, popupTop)}px`;
 
-            // Fade in and scale up
-            requestAnimationFrame(() => { // Second RAF for the transition styles
+            requestAnimationFrame(() => {
                  definitionPopup.style.opacity = '1';
                  definitionPopup.style.transform = 'scale(1) translateY(0)';
-                 definitionPopup.style.pointerEvents = 'auto'; // Make it interactive
+                 definitionPopup.style.pointerEvents = 'auto';
             });
         });
     }
-
     function hideDefinitionPopup() {
         if (definitionPopup && definitionPopup.classList.contains('visible')) {
             definitionPopup.style.opacity = '0';
-            definitionPopup.style.transform = 'scale(0.95)'; // Optional: scale down on hide
+            definitionPopup.style.transform = 'scale(0.95)';
             definitionPopup.style.pointerEvents = 'none';
-            // Optionally remove the visible class after transition ends
-             setTimeout(() => {
-                if (definitionPopup.style.opacity === '0') { // Check if still hidden
+            setTimeout(() => {
+                // Check visibility flag again before removing class, in case it was re-shown quickly
+                if (definitionPopup.style.opacity === '0') {
                     definitionPopup.classList.remove('visible');
                 }
-             }, 200); // Match transition duration
+            }, 200); // Match CSS transition duration
         }
     }
 
@@ -1435,22 +1262,20 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     async function init() {
         updateStatus("Initializing application...");
         try {
-            // Try reading page padding from CSS variable
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; }
             catch (cssVarError) { PAGE_PADDING = 15; console.warn("Could not read --page-padding CSS var, using default 15px."); }
 
-            setupEvents(); // Setup all event listeners
-            setupToolbarHover(); // Setup toolbar show/hide logic
-            initPageSlider(); // Setup slider controls
-            hideLoading(); // Ensure loading overlay is hidden initially
+            setupEvents();
+            setupToolbarHover();
+            initPageSlider();
+            hideLoading();
 
-            // Get PDF URL from query parameter
             const urlParams = new URLSearchParams(window.location.search);
             const pdfUrlParam = urlParams.get('pdf');
 
             if (pdfUrlParam) {
                 updateStatus(`PDF URL parameter found: ${pdfUrlParam}`);
-                await loadPdf(pdfUrlParam); // Load the PDF and overlay
+                await loadPdf(pdfUrlParam);
             } else {
                 updateStatus("No PDF specified in URL parameter (?pdf=...).");
                 const spreadContainer = document.querySelector('.main-container .book-spread');
@@ -1458,17 +1283,15 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                      spreadContainer.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;">
                      <h2>Welcome to the Interactive Reader</h2>
                      <p style="margin-top: 15px;">To view a document, please provide its URL in the address bar using the <code>?pdf=</code> parameter.</p>
-                     <p style="margin-top: 10px; font-size: 0.9em;">Example: <code>${window.location.href}?pdf=path/to/your/document.pdf</code></p>
+                     <p style="margin-top: 10px; font-size: 0.9em;">Example: <code>${window.location.origin}${window.location.pathname}?pdf=path/to/document.pdf</code></p>
                      </div>`;
                  }
-                // Hide page elements explicitly if no PDF is loaded
                  document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden');
                  document.querySelector('.book-page.right')?.style.setProperty('display','none');
                  document.getElementById('page-slider-container')?.classList.remove('visible');
                  document.getElementById('new-toolbar')?.classList.remove('visible');
             }
 
-            // Cleanup on unload
             window.addEventListener('beforeunload', () => {
                 updateStatus("Unloading - Clearing cache and destroying PDF object.");
                 pageCache.clear();
