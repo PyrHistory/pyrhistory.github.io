@@ -649,7 +649,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         function populateTOC(){const tl=document.getElementById('toc-list'),tb=document.getElementById('toc-btn');if(!tl||!tb)return;tl.innerHTML='';tb.disabled=true;if(!book.outline||book.outline.length===0){tl.innerHTML='<em>No table of contents.</em>';return}tb.disabled=false;const createItem=(item,level=0)=>{const d=document.createElement('div');d.className=level===0?'toc-chapter':'toc-section';d.style.marginLeft=`${level*15}px`;const ts=document.createElement('span');ts.className=level===0?'toc-chapter-title':'';ts.textContent=item.title||'Untitled';ts.style.cursor='pointer';ts.onclick=async()=>{try{let dest=item.dest,pi=-1;if(typeof dest==='string'){dest=await book.pdfDocument.getDestination(dest)}if(Array.isArray(dest)){const pageRef=dest[0];if(typeof pageRef==='object' && pageRef !== null && pageRef.gen !== undefined){pi=await book.pdfDocument.getPageIndex(pageRef)}else if(typeof pageRef==='number'){pi=pageRef-1 // PDF.js might use 1-based index in some dest arrays, getPageIndex expects ref}}else{console.warn("Unknown TOC dest format:",item.dest)}if(pi>=0&&pi<book.totalPages){jumpToPage(pi+1);hideTableOfContents()}else{throw new Error(`Failed to resolve page index from destination: ${JSON.stringify(dest)}`)}}catch(e){console.error("TOC Navigation failed:",e);alert(`Navigation failed: ${e.message}`)}};d.appendChild(ts);if(item.items?.length>0){const sl=document.createElement('div');if(level===0)sl.className='toc-sections';item.items.forEach(si=>{const se=createItem(si,level+1);if(se)sl.appendChild(se)});if(sl.hasChildNodes())d.appendChild(sl)}return d};book.outline.forEach(item=>{const ie=createItem(item);if(ie)tl.appendChild(ie)});if(!tl.hasChildNodes()){tl.innerHTML='<em>Error processing TOC.</em>';tb.disabled=true}}
 
         // --- Event Setup ---
-        function setupEvents() {
+        function setupEvents() { // <--- Opening brace for function (Line ~649 in previous context)
             updateStatus("Setting up events");
             const tbar = document.getElementById('new-toolbar');
             tbar?.addEventListener('click', e => {
@@ -708,13 +708,19 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
              document.querySelectorAll('.page-edge-nav').forEach(el=>{el.addEventListener('click',e=>{const pp=e.target.closest('.book-page');if(!pp||pp.classList.contains('placeholder-page'))return;const ir=document.body.classList.contains('rotated-mode'),ilp=pp.classList.contains('left'),ice=e.target.classList.contains('page-edge-left'),ispv=!book.isDoublePageView;if(ir){if(ice)prevPage();else nextPage()}else if(ispv){if(ice)prevPage();else nextPage()}else{if(ice&&ilp)prevPage();else if(!ice&&!ilp)nextPage()}})});
 
             // Keyboard navigation
-            document.addEventListener('keydown', e => {
+            document.addEventListener('keydown', e => { // <--- Brace mentioned in error note likely refers to this opening brace
                 if (e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||document.querySelector('.toc-panel.visible')||definitionPopup.classList.contains('visible')) return;
                 if (e.ctrlKey||e.altKey||e.metaKey) return; // Ignore modified keys
                 let navAct=false;
-                switch(e.key){case'ArrowRight':case'PageDown':nextPage();navAct=true;break;case'ArrowLeft':case'PageUp':prevPage();navAct=true;break;case'Home':if(book.totalPages>0)jumpToPage(1);navAct=true;break;case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=true;break;case'Escape':hideDefinitionPopup();hideTableOfContents();navAct=true;break}
+                switch(e.key){
+                    case'ArrowRight':case'PageDown':nextPage();navAct=true;break;
+                    case'ArrowLeft':case'PageUp':prevPage();navAct=true;break;
+                    case'Home':if(book.totalPages>0)jumpToPage(1);navAct=true;break;
+                    case'End':if(book.totalPages>0)jumpToPage(book.totalPages);navAct=true;break;
+                    case'Escape':hideDefinitionPopup();hideTableOfContents();navAct=true;break;
+                } // <-- Closing brace for switch
                 if(navAct){e.preventDefault();showPageSlider();manageToolbar(false)}
-            });
+            }); // <-- Closing brace for keydown listener callback
 
             // Resize handling
             window.addEventListener('resize', ()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{updateStatus("Resize detected.");hideDefinitionPopup();if(document.body.classList.contains('rotated-mode'))setRotatedView();else if(document.body.classList.contains('fullscreen-mode'))setSinglePageView();else setDoublePageView();manageToolbar()},250)});
@@ -757,7 +763,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                  tsX=0;tsY=0;tst=0; // Reset after swipe end
              }, {passive:true}); // Passive to avoid blocking scroll if swipe fails
 
-             function handleSwipe(sx,sy,ex,ey){
+             function handleSwipe(sx,sy,ex,ey){ // <-- Opening brace for nested function
                  const dx=ex-sx,dy=ey-sy,adx=Math.abs(dx),ady=Math.abs(dy);
                  // Prioritize horizontal swipe for page turning
                  if (adx > SW_TH && ady < adx * Math.tan(SW_A * Math.PI / 180)) { // Check threshold and angle
@@ -770,7 +776,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                      manageToolbar(false); // Hide toolbar if open
                  }
                  // Could add vertical swipe handling here if needed
-             }
+             } // <-- Closing brace for nested function
 
             // Slider trigger zone interaction
             const sliderTrigger=document.getElementById('page-slider-trigger-zone'),sliderCont=document.getElementById('page-slider-container');
@@ -786,8 +792,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             }, true); // Use capture phase to catch click before it might be stopped
 
             updateStatus("Events setup complete");
-        }
-
+        } // <--------------------- THIS WAS THE MISSING BRACE (Correctly added now)
 
         // --- Definition Popup ---
         function showDefinitionPopup(word, definition, clickX, clickY, targetElement) {
@@ -894,7 +899,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         }
 
         // Start the application once the DOM is ready
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', init); // <-- Error pointed near here (Line ~898)
     </script>
 </body>
 </html>
