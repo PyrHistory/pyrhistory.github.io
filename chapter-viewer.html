@@ -280,6 +280,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         // --- Basic Link Service for Annotations ---
         const linkService = new pdfjsViewer.SimpleLinkService();
 
+        // --- ADDED: Event Bus ---
+        const eventBus = new pdfjsViewer.EventBus();
+
         // --- Toolbar Logic ---
         function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
         function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=false;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=true}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
@@ -370,18 +373,22 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
              container.innerHTML = ''; // Clear previous content
              try {
                  const textContent = await page.getTextContent({ normalizeWhitespace: true });
+
                  // Use TextLayerBuilder from pdfjsViewer namespace
                  const textLayerBuilder = new pdfjsViewer.TextLayerBuilder({
                       textLayerDiv: container,
+                      eventBus: eventBus, // <-- PASS EVENT BUS
                       pageIndex: page.pageIndex,
                       viewport: viewport,
                       enhanceTextSelection: true,
+                      // highlighter: highlighter, // Optional for find functionality
                   });
 
-                 // --- FIX APPLIED HERE (AGAIN) ---
+                 // --- ADDED: Inspect the created object ---
+                 console.log("Inspecting textLayerBuilder object:", textLayerBuilder);
+
                  // Use setTextContentItems for PDF.js v3+
                  textLayerBuilder.setTextContentItems(textContent.items);
-                 // --- END FIX ---
 
                  textLayerBuilder.render(); // This renders the spans into the container
 
@@ -423,6 +430,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                       pageDiv: container, // Use the container div directly
                       pdfPage: page,
                       linkService: linkService,
+                      // Add eventBus here too if needed, though often less critical for basic links
+                      // eventBus: eventBus,
                       annotationStorage: null, // No storage needed for simple links
                       renderForms: false,
                       enableScripting: false, // Disable scripting for security
