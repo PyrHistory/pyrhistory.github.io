@@ -288,7 +288,12 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
         // --- Basic Link Service for Annotations ---
         class SimpleLinkService {
-          constructor() { this.externalLinkTarget = pdfjsLib.LinkTarget.BLANK; this.externalLinkRel = "noopener noreferrer nofollow"; }
+  constructor() {
+    // Removed: this.externalLinkTarget = pdfjsLib.LinkTarget.BLANK;
+    // We can rely on default browser behavior or AnnotationLayer defaults
+    // for external links for now. Keep rel for security/SEO best practice.
+    this.externalLinkRel = "noopener noreferrer nofollow";
+  }
           get page() { return book.currentPage; }
           set page(val) { jumpToPage(val); }
           navigateTo(dest) {
@@ -303,7 +308,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
           executeNamedAction(action) { console.warn("Named actions not implemented:", action); }
           cachePageRef(pageNum, pageRef) {}
         }
-        const linkService = new SimpleLinkService();
+        const linkService = new SimpleLinkService(); // Instantiate it
 
         // --- Toolbar Logic (unchanged) ---
         function manageToolbar(s=null){const t=document.getElementById("new-toolbar"),a=document.getElementById("toolbar-trigger-area"),d=document.body;null!==s?d.classList.toggle("toolbar-visible",s):d.classList.toggle("toolbar-visible"),t.classList.toggle("visible",d.classList.contains("toolbar-visible")),a.style.pointerEvents=d.classList.contains("toolbar-visible")?"none":"auto";clearTimeout(toolbarTimer);toolbarTimer=setTimeout(()=>{d.classList.remove("toolbar-visible");t.classList.remove("visible");a.style.pointerEvents="auto"},5e3)}
