@@ -255,8 +255,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
         // --- State Variables ---
         let currentViewports = {};
-        let keywordDefinitions = {}; // Stores { keyword: definition }
-        let pageKeywords = {}; // Stores { pageNum: [keyword1, keyword2, ...] }
+        let keywordDefinitions = {}; // Stores { keyword_lowercase: definition } <-- Key change noted
+        let pageKeywords = {}; // Stores { pageNum: [keywordOriginalCase1, keywordOriginalCase2, ...] } <-- Value change noted
 
         // Use the pdfjsViewer library namespace
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -360,11 +360,16 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             }
         }
 
+        // --- START: MODIFIED FUNCTION ---
         async function renderAndEnhanceTextLayer(page, container, viewport) {
              if (!page || !container || !viewport) return;
              const pageNum = page.pageNumber;
-             // Check if glossary page (assuming glossary starts > page 58)
-             const isGlossaryPage = pageNum > 58;
+             // Check if glossary page (using the logic from your previous overlay structure)
+             // Assuming glossary starts *after* the last page listed in `pageKeywords`.
+             // Find the highest page number with keywords. If none, assume no glossary limit.
+             const maxKeywordPage = Math.max(0, ...Object.keys(pageKeywords).map(Number));
+             const isGlossaryPage = maxKeywordPage > 0 && pageNum > maxKeywordPage; // A simple heuristic
+
              const keywordsForPage = !isGlossaryPage ? (pageKeywords[pageNum] || []) : [];
 
              container.innerHTML = ''; // Clear previous content
@@ -381,41 +386,54 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                       // highlighter: highlighter, // Optional for find functionality
                   });
 
-                 // --- ADDED: Inspect the created object ---
-                 console.log("Inspecting textLayerBuilder object:", textLayerBuilder);
-
                  // Use setTextContentItems for PDF.js v3+
                  textLayerBuilder.setTextContentItems(textContent.items);
 
                  textLayerBuilder.render(); // This renders the spans into the container
 
-                // Enhancement happens *after* rendering
-                 if (keywordsForPage.length > 0) {
-                     const renderedSpans = container.querySelectorAll('span[role="presentation"]'); // pdf.js >= 2.1 adds role
+                 // Enhancement happens *after* rendering
+                 if (keywordsForPage.length > 0 && Object.keys(keywordDefinitions).length > 0) { // Check if definitions loaded
+                     const renderedSpans = container.querySelectorAll('span[role="presentation"]');
                      renderedSpans.forEach(span => {
                          if (!span.textContent.trim()) return;
                          const spanText = span.textContent;
-                         for (const keyword of keywordsForPage) {
+
+                         for (const keyword /* original case */ of keywordsForPage) {
                              const escapedKeyword = keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                             // Use case-insensitive regex to find keyword within span text
                              const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+
                              if (regex.test(spanText)) {
-                                 const definition = keywordDefinitions[keyword];
+                                 // *** THE FIX IS HERE ***
+                                 const keywordLower = keyword.toLowerCase(); // Convert original case to lowercase
+                                 const definition = keywordDefinitions[keywordLower]; // Look up using LOWERCASE key
+
                                  if (definition) {
                                      span.classList.add('keyword-interactive');
-                                     span.dataset.keyword = keyword;
-                                     span.dataset.definition = definition;
-                                     break;
+                                     span.dataset.keyword = keyword; // Store original case for display
+                                     span.dataset.definition = definition; // Store the found definition
+                                     // console.log(`Made "${keyword}" interactive on page ${pageNum}`); // Debugging
+                                     // No need to continue checking other keywords *for this specific span* if one matched
+                                     // But we DO need to check other keywords for other parts of the span if using innerHTML replacement later.
+                                     // For simple class/data addition, `break` is fine if only one keyword match per span is desired.
+                                     // Let's assume one match is enough for now.
+                                     break; // Move to the next span once *a* keyword is matched in this one.
+                                 } else {
+                                     // Optional: Log if a keyword is mapped but missing definition
+                                     // console.warn(`Keyword "${keyword}" (mapped to page ${pageNum}) not found in definitions object.`);
                                  }
                              }
                          }
                      });
                  }
-                 //updateStatus(`Text layer rendered for page ${pageNum}. ${container.querySelectorAll('.keyword-interactive').length} interactive keywords.`);
+                 // updateStatus(`Text layer rendered for page ${pageNum}. ${container.querySelectorAll('.keyword-interactive').length} interactive keywords.`);
              } catch (error) {
-                  console.error(`Error rendering text layer for page ${pageNum}:`, error);
+                  console.error(`Error rendering/enhancing text layer for page ${pageNum}:`, error);
                   container.innerHTML = '';
              }
          }
+        // --- END: MODIFIED FUNCTION ---
+
 
         async function renderAnnotationLayer(page, container, viewport) {
              if (!page || !container || !viewport) return;
@@ -601,8 +619,14 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                  layer.addEventListener('click', e => {
                      if (e.target.classList.contains('keyword-interactive')) {
                          e.stopPropagation();
-                         const keyword = e.target.dataset.keyword; const definition = e.target.dataset.definition;
-                         if (keyword && definition) { const rect = e.target.getBoundingClientRect(); showDefinitionPopup(keyword, definition, rect.left, rect.bottom); }
+                         const keyword = e.target.dataset.keyword; // Original case keyword from dataset
+                         const definition = e.target.dataset.definition; // Definition from dataset
+                         if (keyword && definition) {
+                             const rect = e.target.getBoundingClientRect();
+                             showDefinitionPopup(keyword, definition, rect.left, rect.bottom);
+                         } else {
+                              console.warn("Clicked interactive keyword but data attributes missing:", e.target);
+                         }
                      }
                  });
              });
@@ -645,7 +669,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         // --- Definition Popup ---
         function showDefinitionPopup(word, definition, clickLeft, clickBottom) {
             if (!definitionPopup || !popupWord || !popupDefinition) return;
-            popupWord.textContent = word.charAt(0).toUpperCase() + word.slice(1);
+            popupWord.textContent = word.charAt(0).toUpperCase() + word.slice(1); // Display original case word
             popupDefinition.innerHTML = definition;
 
             let popupLeft = clickLeft; let popupTop = clickBottom + 5;
