@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,16 +27,14 @@
     /* Modern Font Stack */
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-    /* Gradient and related variables needed for button effect */
-    --scroll: rgba(44,62,80,.8); /* Base button background */
-    --text-light-bg-primary: var(--text-on-dark); /* Button text color */
-    /* Ensure this gradient is defined appropriately */
-    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8);
-    --radius-full: 50%; /* Used in original example, adapt if needed */
-    --text-dark: var(--text-on-dark); /* Hover text color (seems same as base) */
-    --space-sm: 8px; /* Spacing if needed */
-    --space-xs: 4px; /* Spacing if needed */
-    --button-radius: 4px; /* Specific radius for .new-btn */
+    /* Add these variables if not defined elsewhere, based on the time-capsule example */
+    --scroll: rgba(44,62,80,.8); /* Example value, adjust if needed */
+    --text-light-bg-primary: var(--text-on-dark); /* Example value */
+    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8); /* Example gradient */
+    --radius-full: 50%; /* Define if not already defined */
+    --text-dark: #fff; /* Example value for hover */
+    --space-sm: 8px; /* Example value */
+    --space-xs: 4px; /* Example value */
 
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -110,92 +109,141 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     right:0!important; /* Slide in from the right */
     transform:none!important; /* No translation needed */
 }
-
-/* --- START: Updated .new-btn with Time Capsule Effect --- */
+/* Base button style */
 .new-btn{
-    /* Base Styles (mostly kept, added position/overflow/z-index) */
-    background: var(--scroll)!important; /* Use variable for base */
+    background:rgba(44,62,80,.8)!important;
     border:1px solid rgba(255,255,255,.15)!important;
-    color: var(--text-light-bg-primary)!important; /* Use variable */
+    color:var(--text-on-dark)!important;
     width:48px!important;
     height:48px!important;
-    border-radius: var(--button-radius) !important; /* Use variable */
+    border-radius:4px!important; /* Default rounded square */
     display:flex!important;
     align-items:center!important;
     justify-content:center!important;
-    font-size:25px!important; /* Base size for symbols */
+    font-size:25px!important; /* Base font size for symbols */
     cursor:pointer!important;
     transition:all .2s!important;
     box-shadow:0 2px 5px rgba(0,0,0,.2)!important;
     user-select:none!important;
     flex-shrink:0;
-    transform: rotate(0deg)!important;
-    padding: 0; /* Reset padding for icon/text centering */
-    position: relative; /* Crucial for pseudo-element */
-    overflow: hidden; /* Crucial to contain the effect */
-    z-index: 1; /* Button layer */
+    transform: rotate(0deg)!important; /* Ensure buttons are never rotated */
+    padding: 0; /* Reset padding for icon centering */
+    position: relative; /* Needed for pseudo-element positioning or stacking */
+    overflow: visible; /* Allow hover effects like translate */
+    /* z-index: 1; Needed by Time Capsule */
+}
+/* Ensure icons/text within buttons are centered */
+.new-btn > *, .new-btn .icon {
+    margin: 0; /* Remove default margins */
+    line-height: 1; /* Helps vertical centering of text symbols */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.new-btn .icon { /* Specific SVG icon styling */
+    width: 24px; /* Default icon size */
+    height: 24px;
+    stroke-width: 1.5;
 }
 
-.new-btn::before {
-    content: "";
-    position: absolute;
-    z-index: -1; /* Behind the button content */
-    top: -3px; left: -3px; right: -3px; bottom: -3px; /* Slightly larger */
-    background: var(--gradient-time-capsule); /* Apply the gradient */
-    background-size: 300% 300%; /* For animation movement */
-    border-radius: var(--button-radius); /* Match button radius */
-    filter: blur(3px); /* Initial blur */
-    opacity: 0.35; /* Initial opacity */
-    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
-    animation: hazyGradientAnimation 6s linear infinite; /* The animation */
-}
-
-.new-btn:hover {
-    /* Keep existing hover effects */
-    background: var(--scroll)!important; /* Maintain base background */
-    color: var(--text-dark)!important; /* Use variable for hover text */
+.new-btn:hover{
+    background:rgba(52,73,94,.9)!important;
     border-color:rgba(255,255,255,.25)!important;
-    box-shadow:0 2px 8px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.15)!important; /* Enhanced shadow maybe? */
+    box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
     transform:translateY(-2px)!important; /* Keep vertical hover effect */
 }
-
-.new-btn:hover::before {
-    opacity: 0.8; /* Increase opacity on hover */
-    filter: blur(5px); /* Increase blur on hover */
-}
-
 .new-btn:active{
     transform:translateY(1px)!important; /* Keep vertical active effect */
 }
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
-/* Ensure button content (icon or text) is above the pseudo-element */
-.new-btn .icon,
-.new-btn span {
-    position: relative; /* Needed for z-index */
+/* Back Button Specific Styles */
+#back-btn {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 28px !important; /* Larger symbol */
+    color: var(--text-on-dark) !important;
+    /* Keep width/height for layout alignment */
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: color 0.2s, transform 0.2s !important;
+}
+
+#back-btn:hover {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--accent) !important; /* Change color on hover */
+    transform: translateX(-3px) !important; /* Move left slightly */
+}
+#back-btn:active {
+    transform: translateX(0px) !important; /* Reset on active */
+    color: var(--secondary) !important;
+}
+
+
+/* Time Capsule Button (Last button) */
+#time-capsule-btn {
+    position: relative; /* Needed for pseudo-element */
+    overflow: hidden; /* Clip pseudo-element */
+    z-index: 1; /* Stacking context */
+    border-radius: 50% !important; /* Make it a circle */
+    padding: 0 !important; /* Ensure padding doesn't interfere */
+    /* Inherits base .new-btn styles (size, flex centering, base bg/color) */
+}
+
+#time-capsule-btn::before {
+    content: "";
+    position: absolute;
+    z-index: -1; /* Behind the button content */
+    top: -3px; left: -3px; right: -3px; bottom: -3px; /* Offset for effect */
+    background: var(--gradient-time-capsule);
+    background-size: 300% 300%;
+    border-radius: 50%; /* Match button shape */
+    filter: blur(3px); /* Initial blur */
+    opacity: 0.35; /* Initial opacity */
+    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+    animation: hazyGradientAnimation 6s linear infinite;
+    pointer-events: none; /* Don't interfere with clicks */
+}
+
+/* Hover effects specific to Time Capsule button */
+#time-capsule-btn:hover {
+    /* Use standard .new-btn hover styles for consistency */
+    background: rgba(52,73,94,.9) !important;
+    border-color: rgba(255,255,255,.25) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+    transform: translateY(-2px) !important;
+    color: var(--text-on-dark) !important; /* Keep icon color */
+}
+
+#time-capsule-btn:hover::before {
+    opacity: 0.8; /* Increased opacity on hover */
+    filter: blur(5px); /* Increased blur on hover */
+}
+
+/* Ensure icon/content inside Time Capsule button remains visible */
+#time-capsule-btn .icon { /* Target the SVG icon */
+    position: relative;
     z-index: 2; /* Above the ::before pseudo-element */
-    margin: 0; /* Reset margin if any */
+    margin: 0; /* Ensure no extra margin */
+    /* Size and stroke-width inherited from .new-btn .icon */
+    color: var(--text-on-dark) !important; /* Ensure correct color */
 }
 
-/* Adjust icon-specific styles if needed */
-#toc-btn .icon {
-    width: 24px; /* Adjust icon size if needed */
-    height: 24px;
-    stroke-width: 1.5;
-    /* z-index and position handled by the rule above */
+#time-capsule-btn:hover .icon {
+    color: var(--text-on-dark) !important; /* Keep color on hover */
 }
 
-/* Adjust specific button font sizes if needed */
-#single-page-btn span { font-size: 28px; line-height: 1; }
-#back-to-start-btn span { font-size: 28px; line-height: 1; }
 
-
-@keyframes hazyGradientAnimation { /* Gradient animation */
+@keyframes hazyGradientAnimation { /* Ensure animation is defined */
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-/* --- END: Updated .new-btn --- */
 
 
 .page-slider-container{
@@ -476,16 +524,17 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
 </div>
 <script>
-    // --- START: HTML Population (Update Icons & Add New Button) ---
+    // --- START: HTML Population (Update Icons and Buttons) ---
     // Define the SVG icon string (unchanged)
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-    // Update the toolbar HTML: Add new button, wrap symbols in <span> for z-index control
+
+    // Update the toolbar HTML: Add Back button, change last button to Time Capsule
     document.getElementById('new-toolbar').innerHTML = `
-        <button class="new-btn" id="back-to-start-btn" title="Go to First Page"><span>↤</span></button>
-        <button class="new-btn" id="single-page-btn" title="Single Page View"><span>▯</span></button>
-        <button class="new-btn" id="double-page-btn" title="Double Page View"><span>◫</span></button>
-        <button class="new-btn" id="rotate-btn" title="Rotate Content"><span>↷</span></button>
-        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button>
+        <button class="new-btn" id="back-btn" title="Go Back">↤</button>
+        <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button>
+        <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
+        <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button>
+        <button class="new-btn" id="time-capsule-btn" title="Time Capsule (TOC Disabled)">${boxIconSVG}</button>
     `;
     // --- END: HTML Population ---
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
@@ -898,7 +947,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
 
     // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
-    // function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // DISABLED
+    // function showTableOfContents(){if(!document.getElementById('time-capsule-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // Functionality removed from this button
     function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
@@ -927,9 +976,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     // --- PDF Loading (Unchanged) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
-        // Set toc-btn to disabled state initially (it was removed in HTML population, but let's be sure)
-        const tocBtn = document.getElementById('toc-btn');
-        // if (tocBtn) tocBtn.disabled = true; // Keep button enabled visually, just remove functionality
+
+        // TOC functionality is disabled for the time-capsule button, so no need to manage its disabled state here
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
@@ -954,9 +1002,9 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
 
     // --- TOC population (Unchanged) ---
     function populateTOC() {
-        const tocList = document.getElementById('toc-list'); //, tocButton = document.getElementById('toc-btn'); // Don't need button ref here
+        const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
-        // tocButton.disabled = true; // Keep button enabled visually
+        // Time capsule button doesn't open TOC, so no button state to manage here
         if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
@@ -976,7 +1024,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
             d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
         };
         book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); });
-        // if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>'; // Don't enable button
         if (!tocList.hasChildNodes()) tocList.innerHTML = '<em>Error processing TOC data.</em>';
      }
 
@@ -1008,7 +1055,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     }
 
 
-    // --- Event Setup (Add Case for New Button) ---
+    // --- Event Setup (Update Toolbar Handler) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -1018,19 +1065,26 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         // Toolbar Clicks
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
-             // if (!btn || btn.disabled) return; // Remove disabled check if we keep it enabled visually
-             if (!btn) return;
-             const id = btn.id;
-             switch (id) {
-                 case 'back-to-start-btn': // *** NEW CASE ***
-                     if (book.totalPages > 0) jumpToPage(1);
+             if (!btn) return; // Ignore clicks not on a button
+             // const id = btn.id; // No longer need disabled check
+
+             switch (btn.id) {
+                 case 'back-btn':
+                     window.history.back(); // Go to previous page in browser history
                      break;
-                 case 'single-page-btn': setSinglePageView(); break;
-                 case 'double-page-btn': setDoublePageView(); break;
-                 case 'rotate-btn': setRotatedView(); break;
-                 case 'toc-btn':
-                     // DO NOTHING - Feature Disabled
-                     console.log("TOC button clicked (feature disabled).");
+                 case 'single-page-btn':
+                     setSinglePageView();
+                     break;
+                 case 'double-page-btn':
+                     setDoublePageView();
+                     break;
+                 case 'rotate-btn':
+                     setRotatedView();
+                     break;
+                 case 'time-capsule-btn':
+                     // DO NOTHING - Feature Disabled (was TOC button)
+                     console.log("Time Capsule button clicked (feature disabled).");
+                     // Could add different functionality here later if needed
                      break;
              }
              resetSliderHideTimer();
