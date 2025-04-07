@@ -142,58 +142,17 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
-/* START: TOC Button Specific Styles */
-#toc-btn {
-    width: 40px !important; /* Adjusted size for circle */
-    height: 40px !important;
-    border-radius: 50% !important; /* Circle shape */
-    border: none !important; /* Override base border */
-    background: var(--scroll) !important; /* Match time capsule base */
-    padding: 0 !important; /* Ensure no padding */
-    transition: transform 0.3s ease, box-shadow 0.3s ease !important; /* Keep consistent transitions */
-}
-
+/* START: TOC Button Icon SVG Styles (only icon styling remains) */
 #toc-btn .icon {
-    width: 20px; /* Adjust icon size for the circle */
-    height: 20px;
-    color: var(--text-light-bg-primary); /* Match time capsule icon color */
+    width: 24px; /* Adjust icon size if needed within the standard button */
+    height: 24px;
+    color: var(--text-light-bg-primary); /* Use default text color */
     position: relative;
-    z-index: 2; /* Icon above gradient */
+    z-index: 2;
     margin: 0; /* Reset margin */
-    stroke-width: 1.5; /* Thinner lines for smaller icon */
+    stroke-width: 1.5;
 }
-
-#toc-btn::before {
-    content: "";
-    position: absolute;
-    z-index: 1; /* Behind the icon */
-    top: -3px; left: -3px; right: -3px; bottom: -3px; /* Slightly larger for blur effect */
-    background: var(--gradient-time-capsule); /* Use the defined gradient */
-    background-size: 300% 300%;
-    border-radius: 50%; /* Match button shape */
-    filter: blur(3px);
-    opacity: 0; /* Hidden by default */
-    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
-    animation: hazyGradientAnimation 6s linear infinite; /* Use the animation */
-    pointer-events: none; /* Don't intercept clicks */
-}
-
-#toc-btn:hover {
-    transform: translateY(-3px) !important; /* Match time capsule hover lift */
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important; /* Match time capsule shadow */
-    background: var(--scroll) !important; /* Keep background consistent */
-    border-color: transparent !important; /* Ensure no border on hover */
-}
-
-#toc-btn:hover::before {
-    opacity: 0.8 !important; /* Show gradient on hover */
-    filter: blur(5px) !important; /* Increase blur on hover */
-}
-
-#toc-btn:active {
-    transform: translateY(1px) !important; /* Keep active press effect */
-}
-/* END: TOC Button Specific Styles */
+/* END: TOC Button Styles */
 
 @keyframes hazyGradientAnimation { /* Ensure animation is defined */
     0% { background-position: 0% 50%; }
@@ -480,15 +439,15 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
 </div>
 <script>
-    // --- START: HTML Population (Update Rotate Button AND TOC Button) ---
-    // Define the SVG icon string
+    // --- START: HTML Population (Update Icons) ---
+    // Define the SVG icon string (unchanged)
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-    // Update the toolbar HTML, replacing the TOC button content and removing 'disabled'
+    // Update the toolbar HTML with new icons for single page and rotate buttons
     document.getElementById('new-toolbar').innerHTML = `
-        <button class="new-btn" id="single-page-btn" title="Single Page View">☰</button>
+        <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button> {/* Changed icon */}
         <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
-        <button class="new-btn" id="rotate-btn" title="Rotate Content">🔄</button>
-        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button>
+        <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button> {/* Changed icon */}
+        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button> {/* Keep SVG, styling adjusted via CSS */}
     `;
     // --- END: HTML Population ---
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
@@ -810,7 +769,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
     function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
 
-    // --- START: View Modes (Updated) ---
+    // --- START: View Modes (Unchanged) ---
     function applyCurrentViewModeStyles() {
         const isContentRotated = document.body.classList.contains('content-rotated-mode'); // Use new class
         const spread = document.querySelector('.book-spread');
@@ -897,9 +856,9 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
             updateSliderPosition();
         });
     }
-    // --- END: View Modes (Updated) ---
+    // --- END: View Modes (Unchanged) ---
 
-    // --- UI Toggles (Modified for TOC) ---
+    // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
     // function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // DISABLED
     function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
@@ -927,7 +886,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- PDF Loading (Adjusted Default View & TOC Button State) ---
+    // --- PDF Loading (Unchanged) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
         // Set toc-btn to disabled state initially (it was removed in HTML population, but let's be sure)
@@ -955,7 +914,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         } finally { hideLoading(); updateStatus("loadPdf finished."); }
     }
 
-    // --- TOC population (Modified to not enable button) ---
+    // --- TOC population (Unchanged) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list'); //, tocButton = document.getElementById('toc-btn'); // Don't need button ref here
         if (!tocList) return; tocList.innerHTML = '';
@@ -1011,7 +970,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     }
 
 
-    // --- Event Setup (Updated: Removed TOC button action) ---
+    // --- Event Setup (Unchanged) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
