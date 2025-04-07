@@ -486,6 +486,20 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
 .keyword-highlight:hover { background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+/* --- START: ADDED GRADIENT UNDERLINE --- */
+.keyword-highlight::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -2px; /* Position 2px below the highlight box */
+    width: 100%;
+    height: 1.5px;  /* Make it slightly thicker but still subtle */
+    background: linear-gradient(to right, var(--fiery-orange), var(--accent));
+    pointer-events: none; /* Prevent interaction with the line itself */
+    border-radius: 1px; /* Slightly rounded ends */
+    opacity: 0.9; /* Make it slightly less intense */
+}
+/* --- END: ADDED GRADIENT UNDERLINE --- */
 #definition-popup { position: fixed; background: #ffffff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); padding: 14px 18px; max-width: 320px; min-width: 180px; font-family: var(--font-sans); color: #2d3748; z-index: 10002; transform-origin: top center; transform: translateY(6px) scale(0.98); opacity: 0; visibility: hidden; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s; pointer-events: none; }
 #definition-popup.visible { transform: translateY(0) scale(1); opacity: 1; visibility: visible; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s; pointer-events: auto; }
 #popup-word { font-weight: 600; font-size: 15px; margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0; }
