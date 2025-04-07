@@ -26,6 +26,16 @@
     --page-padding:15px;
     /* Modern Font Stack */
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    /* Add these variables if not defined elsewhere, based on the time-capsule example */
+    --scroll: rgba(44,62,80,.8); /* Example value, adjust if needed */
+    --text-light-bg-primary: var(--text-on-dark); /* Example value */
+    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8); /* Example gradient */
+    --radius-full: 50%; /* Define if not already defined */
+    --text-dark: #fff; /* Example value for hover */
+    --space-sm: 8px; /* Example value */
+    --space-xs: 4px; /* Example value */
+
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -116,6 +126,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     user-select:none!important;
     flex-shrink:0;
     transform: rotate(0deg)!important; /* Ensure buttons are never rotated */
+    padding: 0; /* Reset padding for icon centering */
+    position: relative; /* Needed for pseudo-element positioning */
+    overflow: hidden; /* Clip pseudo-element */
+    z-index: 1; /* Stacking context */
 }
 .new-btn:hover{
     background:rgba(52,73,94,.9)!important;
@@ -127,6 +141,66 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transform:translateY(1px)!important; /* Keep vertical active effect */
 }
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+
+/* START: TOC Button Specific Styles */
+#toc-btn {
+    width: 40px !important; /* Adjusted size for circle */
+    height: 40px !important;
+    border-radius: 50% !important; /* Circle shape */
+    border: none !important; /* Override base border */
+    background: var(--scroll) !important; /* Match time capsule base */
+    padding: 0 !important; /* Ensure no padding */
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important; /* Keep consistent transitions */
+}
+
+#toc-btn .icon {
+    width: 20px; /* Adjust icon size for the circle */
+    height: 20px;
+    color: var(--text-light-bg-primary); /* Match time capsule icon color */
+    position: relative;
+    z-index: 2; /* Icon above gradient */
+    margin: 0; /* Reset margin */
+    stroke-width: 1.5; /* Thinner lines for smaller icon */
+}
+
+#toc-btn::before {
+    content: "";
+    position: absolute;
+    z-index: 1; /* Behind the icon */
+    top: -3px; left: -3px; right: -3px; bottom: -3px; /* Slightly larger for blur effect */
+    background: var(--gradient-time-capsule); /* Use the defined gradient */
+    background-size: 300% 300%;
+    border-radius: 50%; /* Match button shape */
+    filter: blur(3px);
+    opacity: 0; /* Hidden by default */
+    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+    animation: hazyGradientAnimation 6s linear infinite; /* Use the animation */
+    pointer-events: none; /* Don't intercept clicks */
+}
+
+#toc-btn:hover {
+    transform: translateY(-3px) !important; /* Match time capsule hover lift */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important; /* Match time capsule shadow */
+    background: var(--scroll) !important; /* Keep background consistent */
+    border-color: transparent !important; /* Ensure no border on hover */
+}
+
+#toc-btn:hover::before {
+    opacity: 0.8 !important; /* Show gradient on hover */
+    filter: blur(5px) !important; /* Increase blur on hover */
+}
+
+#toc-btn:active {
+    transform: translateY(1px) !important; /* Keep active press effect */
+}
+/* END: TOC Button Specific Styles */
+
+@keyframes hazyGradientAnimation { /* Ensure animation is defined */
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 
 .page-slider-container{
     position:fixed;
@@ -219,28 +293,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 /* --- END: Toolbar & Slider Base Positioning --- */
 
 /* --- REMOVED/COMMENTED OUT: Original .rotated-mode UI repositioning --- */
-/*
-.rotated-mode #new-toolbar{top:auto!important;right:50%!important;bottom:-60px!important;transform:translateX(50%)!important;flex-direction:row!important;width:auto!important;height:58px!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:8px 8px 0 0!important;padding:5px 10px!important;box-shadow:0 -2px 10px rgba(0,0,0,.4)!important;border:1px solid rgba(255,255,255,.1);border-bottom:none}
-.rotated-mode #new-toolbar.visible{bottom:0!important;transform:translateX(50%)!important}
-.rotated-mode #new-toolbar::before{left:50%!important;transform:translateX(-50%)!important;top:-25px!important;width:40px!important;height:25px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:4px 4px 0 0!important;content:"≡";padding-bottom:5px;color:var(--text-on-dark);border:1px solid rgba(255,255,255,.1);border-bottom:none;cursor:pointer}
-.rotated-mode .toolbar-trigger-area{top:auto!important;bottom:0!important;left:0!important;transform:none!important;right:auto!important;width:100%!important;height:30px!important}
-.rotated-mode #new-toolbar .new-btn{width:40px!important;height:40px!important;font-size:20px!important;transform: rotate(90deg)}
-.rotated-mode .new-btn:hover {transform: rotate(90deg) scale(1.1);background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important}
-.rotated-mode .new-btn:active {transform: rotate(90deg) scale(0.95)}
-.rotated-mode .page-slider-container{bottom:50%!important;left:-80px!important;top:auto!important;transform:translateY(50%)!important;width:60px!important;height:70vh!important;max-width:none!important;max-height:500px;flex-direction:column-reverse!important;padding:10px 5px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-left:none;border-radius:0 12px 12px 0!important;box-shadow:2px 0 20px rgba(0,0,0,.4)!important}
-.rotated-mode .page-slider-container.visible{left:0!important}
-.rotated-mode .page-slider-track{width:100%!important;height:100%!important;margin-bottom:0!important;padding:10px 0!important;display:flex;align-items:center;flex:1}
-.rotated-mode .page-slider{width:6px!important;height:100%!important;writing-mode:vertical-lr!important;-webkit-appearance:slider-vertical!important;appearance:slider-vertical;margin:0 auto!important;padding:0!important;background:rgba(255,255,255,.1)!important;border-radius:3px}
-.rotated-mode .page-slider::-webkit-slider-runnable-track{width:6px!important;height:100%;background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important;border-radius:3px}
-.rotated-mode .page-slider::-webkit-slider-thumb{-webkit-appearance: none;appearance: none;width:20px!important;height:20px!important;border-radius: 50%;background: var(--accent);cursor: pointer;border: 3px solid rgba(28,37,54,.9)!important;box-shadow: 0 1px 6px rgba(0,0,0,.4);transition: all .2s ease;margin-top:0!important;margin-left:-7px!important}
-.rotated-mode .page-slider:hover::-webkit-slider-thumb {width: 24px !important;height: 24px !important;margin-left: -9px !important}
-.rotated-mode .page-slider::-moz-range-thumb{width: 20px;height: 20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition: all .2s ease}
-.rotated-mode .page-slider:hover::-moz-range-thumb {width: 24px;height: 24px}
-.rotated-mode .page-slider::-moz-range-progress{background-color:var(--accent)!important;width:6px!important;border-radius:3px}
-.rotated-mode .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);width:6px!important;border-radius:3px}
-.rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
-.rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
-*/
+/* ... (unchanged) ... */
 
 .main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
 .book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
@@ -333,6 +386,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
+/* Note: TOC Panel styling remains, but the button won't open it */
 .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -414,7 +468,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
 </div>
 
 <!-- Modals and Overlays -->
-<div class="toc-panel" id="toc-panel"></div>
+<div class="toc-panel" id="toc-panel"></div> <!-- TOC Panel remains in HTML but won't be shown -->
 <div class="loading-overlay" id="loading-overlay"></div>
 <div class="page-slider-container" id="page-slider-container"></div>
 <div id="page-slider-trigger-zone"></div>
@@ -426,8 +480,16 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
 </div>
 <script>
-    // --- START: HTML Population (Update Rotate Button) ---
-    document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="single-page-btn" title="Single Page View">☰</button><button class="new-btn" id="double-page-btn" title="Double Page View">◫</button><button class="new-btn" id="rotate-btn" title="Rotate Content">🔄</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
+    // --- START: HTML Population (Update Rotate Button AND TOC Button) ---
+    // Define the SVG icon string
+    const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+    // Update the toolbar HTML, replacing the TOC button content and removing 'disabled'
+    document.getElementById('new-toolbar').innerHTML = `
+        <button class="new-btn" id="single-page-btn" title="Single Page View">☰</button>
+        <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
+        <button class="new-btn" id="rotate-btn" title="Rotate Content">🔄</button>
+        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button>
+    `;
     // --- END: HTML Population ---
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
     document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
@@ -835,10 +897,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     }
     // --- END: View Modes (Updated) ---
 
-    // --- UI Toggles (Unchanged) ---
+    // --- UI Toggles (Modified for TOC) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
-    function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}}
-    function hideTableOfContents(){toggleElement('toc-panel',false)}
+    // function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // DISABLED
+    function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
@@ -863,12 +925,17 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- PDF Loading (Adjusted Default View) ---
+    // --- PDF Loading (Adjusted Default View & TOC Button State) ---
     async function loadPdf(pdfUrl) {
-        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true; let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
+        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
+        // Set toc-btn to disabled state initially (it was removed in HTML population, but let's be sure)
+        const tocBtn = document.getElementById('toc-btn');
+        // if (tocBtn) tocBtn.disabled = true; // Keep button enabled visually, just remove functionality
+
+        let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
             updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
-            showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
+            showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); } // Populate TOC still happens, but button won't open it
             const overlayLoaded = await overlayPromise;
 
             // --- Default View Logic ---
@@ -886,12 +953,15 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         } finally { hideLoading(); updateStatus("loadPdf finished."); }
     }
 
-    // --- TOC population (Unchanged) ---
+    // --- TOC population (Modified to not enable button) ---
     function populateTOC() {
-        const tocList = document.getElementById('toc-list'), tocButton = document.getElementById('toc-btn'); if (!tocList || !tocButton) return; tocList.innerHTML = ''; tocButton.disabled = true; if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
+        const tocList = document.getElementById('toc-list'); //, tocButton = document.getElementById('toc-btn'); // Don't need button ref here
+        if (!tocList) return; tocList.innerHTML = '';
+        // tocButton.disabled = true; // Keep button enabled visually
+        if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
-            s.onclick = async (e) => {
+            s.onclick = async (e) => { // Keep click functionality within the panel itself
                 e.preventDefault(); try {
                     let pageIndex = -1;
                     if (typeof item.dest === 'string') {
@@ -900,13 +970,15 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
                     } else if (Array.isArray(item.dest) && item.dest[0]) {
                          pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
                     } else { console.warn("Unknown TOC destination format:", item.dest); }
-                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
+                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); } // Still hide panel on click
                     else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
             };
             d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
         };
-        book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); }); if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
+        book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); });
+        // if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>'; // Don't enable button
+        if (!tocList.hasChildNodes()) tocList.innerHTML = '<em>Error processing TOC data.</em>';
      }
 
     // --- Popup Handling Functions (Unchanged) ---
@@ -937,7 +1009,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     }
 
 
-    // --- Event Setup (Updated for new popup logic and resize) ---
+    // --- Event Setup (Updated: Removed TOC button action) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -945,8 +1017,25 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
         // Toolbar Clicks
-        toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
-        // TOC Close
+        toolbar?.addEventListener('click', e => {
+             const btn = e.target.closest('.new-btn');
+             // if (!btn || btn.disabled) return; // Remove disabled check if we keep it enabled visually
+             if (!btn) return;
+             const id = btn.id;
+             switch (id) {
+                 case 'single-page-btn': setSinglePageView(); break;
+                 case 'double-page-btn': setDoublePageView(); break;
+                 case 'rotate-btn': setRotatedView(); break;
+                 case 'toc-btn':
+                     // DO NOTHING - Feature Disabled
+                     console.log("TOC button clicked (feature disabled).");
+                     break;
+             }
+             resetSliderHideTimer();
+             toolbarHover = false;
+             manageToolbar(false);
+        });
+        // TOC Close (Panel can still be closed if somehow opened via console, etc.)
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
         // Popup Close
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
