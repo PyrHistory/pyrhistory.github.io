@@ -1022,19 +1022,40 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             const overlayLoaded = await overlayPromise; // Wait for overlay data
 
             // --- Default View Logic ---
-            // Set initial view based on window width AFTER PDF is loaded and WAIT for it to render
+            // Set initial view state *synchronously* based on window width AFTER PDF is loaded
             if (window.innerWidth < 1000) {
-                await setSinglePageView(); // Calls updateDisplay internally and waits
+                book.isDoublePageView = false;
+                document.body.classList.remove('content-rotated-mode');
+                document.body.classList.add('fullscreen-mode');
             } else {
-                await setDoublePageView(); // Calls updateDisplay internally and waits
+                book.isDoublePageView = true;
+                document.body.classList.remove('content-rotated-mode', 'fullscreen-mode');
+                // Align to left page if starting on an even page in double view
+                if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--;
             }
-            // Initial applyCurrentViewModeStyles will happen inside updateDisplay called by setXXXPageView
+
+            // Apply necessary UI updates that depend on the view state *before* rendering
+            updateSliderTotalPages(); // Set slider max value
+            updateSliderPosition(); // Set slider current value/text
+
+            // Apply initial scaling/transform based on the determined view mode
+            applyCurrentViewModeStyles();
+
+            // *** FIX: Defer the first actual page rendering slightly ***
+            // This allows the browser to calculate layout/styles after state changes
+            // and ensures the canvases/containers have correct dimensions before rendering.
+            await new Promise(resolve => setTimeout(resolve, 0)); // Wait one event loop cycle
+
+            // Now call and await the first render AFTER the short delay
+            await updateDisplay();
 
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
         } finally {
-             hideLoading(); // Hide loading ONLY after everything, including initial render, is done or failed
+             // Hide loading ONLY after everything, including initial render, is done or failed
+             // This now correctly waits due to the 'await updateDisplay()' above.
+             hideLoading();
              updateStatus("loadPdf finished.");
         }
     }
