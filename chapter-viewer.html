@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -58,7 +59,6 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
-.fullscreen-mode:not(.rotated-mode) .book-page.left{border-right:1px solid rgba(255,255,255,.08)!important}
 .canvas-container {
     position: relative; /* Important for positioning layers */
     width: calc(100% - 2 * var(--page-padding));
@@ -81,21 +81,57 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
 .page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
 .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
-.fullscreen-mode .book-page.right{display:none!important}
-.fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:0;}
-.fullscreen-mode .canvas-container { margin: var(--page-padding); }
-.fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain; position:relative; z-index: 1; }
+
+/* --- START: Single Page Mode Styles Adjustment --- */
+
+/* Hide the right page in fullscreen mode */
+.fullscreen-mode .book-page.right {
+    display: none !important;
+}
+
+/* Ensure the left page retains its standard dimensions and border, letting .book-spread handle centering */
+.fullscreen-mode:not(.rotated-mode) .book-page.left {
+    border-right: 1px solid rgba(255, 255, 255, .08) !important; /* Match non-fullscreen right border */
+    /* Remove width/height overrides to keep default page size */
+    /* max-width, max-height, width:auto, height:auto are NOT applied */
+    border-radius: 3px 0 0 3px; /* Match default left page radius */
+    /* Styles like padding, display:flex etc. are inherited from base .book-page */
+}
+
+/* Keep inner container padding */
+.fullscreen-mode .canvas-container {
+    margin: var(--page-padding);
+}
+
+/* Ensure canvas fits within the container */
+.fullscreen-mode .pdf-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    position: absolute; /* Ensure it respects canvas-container bounds */
+    z-index: 1;
+}
+
+/* --- END: Single Page Mode Styles Adjustment --- */
+
+
 .rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
 .rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
 .rotated-mode .book-page.right{display:none!important}
-.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
+.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;} /* Position relative okay here */
+
+/* Base page size for non-fullscreen/non-rotated modes */
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
+
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
+
+/* Spread shadow effect */
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
+
 .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);} /* Use modern font */
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -138,16 +174,17 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 #page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
 .rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
 
+
 /* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
 .textLayer {
-    position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
-    opacity: 1; line-height: 1.0; color: transparent !important;
-    user-select: none; -webkit-user-select: none; pointer-events: none !important;
-    z-index: 2;
+position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
+opacity: 1; line-height: 1.0; color: transparent !important;
+user-select: none; -webkit-user-select: none; pointer-events: none !important;
+z-index: 2;
 }
 .textLayer > div {
-    position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%;
-    pointer-events: none !important; border-radius: 2px;
+position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%;
+pointer-events: none !important; border-radius: 2px;
 }
 .annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
 .annotationLayer section { position: absolute; pointer-events: auto; }
@@ -156,112 +193,113 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 
 /* --- START: Custom Keyword Overlay & Popup Styles (UPDATED) --- */
 .keyword-overlay-container {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 4; overflow: hidden;
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+pointer-events: none; z-index: 4; overflow: hidden;
 }
 
 .keyword-highlight {
-  position: absolute;
-  background: transparent;
-  /* border-bottom: 2px solid transparent; REMOVED underline */
-  transition: background 0.2s ease-out, box-shadow 0.2s ease-out; /* Added box-shadow transition */
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 5;
-  box-sizing: border-box;
-  border-radius: 3px; /* Slightly more rounding */
+position: absolute;
+background: transparent;
+/* border-bottom: 2px solid transparent; REMOVED underline /
+transition: background 0.2s ease-out, box-shadow 0.2s ease-out; / Added box-shadow transition /
+pointer-events: auto;
+cursor: pointer;
+z-index: 5;
+box-sizing: border-box;
+border-radius: 3px; / Slightly more rounding */
 }
 
 .keyword-highlight:hover {
-  /* UPDATED: Fiery orange to amber gradient background */
-  background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); /* Orange -> Amber */
-  /* border-bottom-color: var(--accent); REMOVED underline color change */
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
+/* UPDATED: Fiery orange to amber gradient background /
+background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); / Orange -> Amber /
+/ border-bottom-color: var(--accent); REMOVED underline color change /
+box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); / Subtle shadow on hover */
 }
 
-/* Definition Popup - Modern Styling */
+/* Definition Popup - Modern Styling /
 #definition-popup {
-  position: fixed;
-  background: #ffffff; /* Clean white */
-  border-radius: 8px; /* Modern rounding */
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); /* Softer shadow */
-  padding: 14px 18px; /* Adjust padding */
-  max-width: 320px; /* Slightly wider */
-  min-width: 180px;
-  font-family: var(--font-sans); /* Use modern font stack */
-  color: #2d3748; /* Darker gray text (like Tailwind's gray-800) */
-  z-index: 10002;
-  transform-origin: top center;
-  transform: translateY(6px) scale(0.97); /* Adjust start transform */
-  opacity: 0;
-  visibility: hidden;
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0.18s;
-  pointer-events: none;
+position: fixed;
+background: #ffffff; / Clean white /
+border-radius: 8px; / Modern rounding /
+box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); / Softer shadow /
+padding: 14px 18px; / Adjust padding /
+max-width: 320px; / Slightly wider /
+min-width: 180px;
+font-family: var(--font-sans); / Use modern font stack /
+color: #2d3748; / Darker gray text (like Tailwind's gray-800) /
+z-index: 10002;
+transform-origin: top center;
+transform: translateY(6px) scale(0.97); / Adjust start transform */
+opacity: 0;
+visibility: hidden;
+transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+visibility 0s linear 0.18s;
+pointer-events: none;
 }
 
 #definition-popup.visible {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-  visibility: visible;
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0s;
-   pointer-events: auto;
+transform: translateY(0) scale(1);
+opacity: 1;
+visibility: visible;
+transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+visibility 0s linear 0s;
+pointer-events: auto;
 }
 
-#popup-word { /* Title */
-  font-weight: 600; /* Semi-bold */
-  font-size: 15px; /* Adjust size */
-  margin: 0 0 10px 0; /* Adjust margin */
-  color: var(--primary);
-  border-bottom: 1px solid #e2e8f0; /* Lighter border (like Tailwind's gray-200) */
-  padding: 0 0 8px 0; /* Adjust padding */
+#popup-word { /* Title /
+font-weight: 600; / Semi-bold /
+font-size: 15px; / Adjust size /
+margin: 0 0 10px 0; / Adjust margin /
+color: var(--primary);
+border-bottom: 1px solid #e2e8f0; / Lighter border (like Tailwind's gray-200) /
+padding: 0 0 8px 0; / Adjust padding */
 }
 
-#popup-definition { /* Content */
-  font-size: 14px;
-  line-height: 1.6; /* Adjust line height */
-  max-height: 180px;
-  overflow-y: auto;
-  color: #4a5568; /* Medium gray text (like Tailwind's gray-600) */
-  padding-right: 5px;
-  margin-right: -5px;
+#popup-definition { /* Content /
+font-size: 14px;
+line-height: 1.6; / Adjust line height /
+max-height: 180px;
+overflow-y: auto;
+color: #4a5568; / Medium gray text (like Tailwind's gray-600) /
+padding-right: 5px;
+margin-right: -5px;
 }
-/* Scrollbar styling */
+/ Scrollbar styling /
 #popup-definition::-webkit-scrollbar { width: 5px; }
-#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;} /* Lighter track */
-#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;} /* Medium thumb */
-#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; } /* Darker on hover */
+#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;} / Lighter track /
+#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;} / Medium thumb /
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; } / Darker on hover */
 
-#close-popup-btn { /* Close button */
-  position: absolute;
-  top: 6px; /* Adjust position */
-  right: 6px;
-  cursor: pointer;
-  font-size: 20px; /* Make slightly larger/bolder 'x' */
-  font-weight: 300;
-  color: #a0aec0; /* Medium-light gray */
-  transition: color 0.2s, background-color 0.2s;
-  background: none;
-  border: none;
-  padding: 0;
-  width: 28px; /* Increase clickable area */
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  line-height: 1;
+#close-popup-btn { /* Close button /
+position: absolute;
+top: 6px; / Adjust position /
+right: 6px;
+cursor: pointer;
+font-size: 20px; / Make slightly larger/bolder 'x' /
+font-weight: 300;
+color: #a0aec0; / Medium-light gray /
+transition: color 0.2s, background-color 0.2s;
+background: none;
+border: none;
+padding: 0;
+width: 28px; / Increase clickable area /
+height: 28px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 50%;
+line-height: 1;
 }
 #close-popup-btn:hover {
-  color: #4a5568; /* Darker gray */
-  background-color: #edf2f7; /* Light gray background */
+color: #4a5568; / Darker gray /
+background-color: #edf2f7; / Light gray background /
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
 
-    </style>
+</style>
+
 </head>
 <body>
     <!-- Toolbar, Trigger Area, Status Indicator -->
@@ -269,53 +307,52 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
     <div id="status-indicator">Status: Initializing...</div>
 
-    <!-- Main Content Area -->
-    <div class="main-container">
-        <div class="book-spread">
-            <!-- Left Page -->
-            <div class="book-page left">
-                <div class="canvas-container">
-                    <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
-                    <div class="textLayer" id="left-text-layer"></div>
-                    <div class="annotationLayer" id="left-annotation-layer"></div>
-                    {/* *** Custom Keyword Overlay *** */}
-                    <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
-                </div>
-                <div class="page-edge-nav page-edge-left"></div>
-                <div class="page-edge-nav page-edge-right"></div>
-                <div class="page-number" id="left-page-number"></div>
-                <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
+<!-- Main Content Area -->
+<div class="main-container">
+    <div class="book-spread">
+        <!-- Left Page -->
+        <div class="book-page left">
+            <div class="canvas-container">
+                <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
+                <div class="textLayer" id="left-text-layer"></div>
+                <div class="annotationLayer" id="left-annotation-layer"></div>
+                {/* *** Custom Keyword Overlay *** */}
+                <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
             </div>
-            <!-- Right Page -->
-            <div class="book-page right placeholder-page">
-                 <div class="canvas-container">
-                    <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
-                     <div class="textLayer" id="right-text-layer"></div>
-                     <div class="annotationLayer" id="right-annotation-layer"></div>
-                     {/* *** Custom Keyword Overlay *** */}
-                     <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
-                 </div>
-                <div class="page-edge-nav page-edge-left"></div>
-                <div class="page-edge-nav page-edge-right"></div>
-                <div class="page-number" id="right-page-number"></div>
-                <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
-            </div>
+            <div class="page-edge-nav page-edge-left"></div>
+            <div class="page-edge-nav page-edge-right"></div>
+            <div class="page-number" id="left-page-number"></div>
+            <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
+        </div>
+        <!-- Right Page -->
+        <div class="book-page right placeholder-page">
+             <div class="canvas-container">
+                <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
+                 <div class="textLayer" id="right-text-layer"></div>
+                 <div class="annotationLayer" id="right-annotation-layer"></div>
+                 {/* *** Custom Keyword Overlay *** */}
+                 <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
+             </div>
+            <div class="page-edge-nav page-edge-left"></div>
+            <div class="page-edge-nav page-edge-right"></div>
+            <div class="page-number" id="right-page-number"></div>
+            <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
         </div>
     </div>
+</div>
 
-    <!-- Modals and Overlays -->
-    <div class="toc-panel" id="toc-panel"></div>
-    <div class="loading-overlay" id="loading-overlay"></div>
-    <div class="page-slider-container" id="page-slider-container"></div>
-    <div id="page-slider-trigger-zone"></div>
+<!-- Modals and Overlays -->
+<div class="toc-panel" id="toc-panel"></div>
+<div class="loading-overlay" id="loading-overlay"></div>
+<div class="page-slider-container" id="page-slider-container"></div>
+<div id="page-slider-trigger-zone"></div>
 
-    <!-- *** Custom Definition Popup Structure *** -->
-    <div class="definition-popup" id="definition-popup">
-        <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
-        <div class="definition-popup-title" id="popup-word">Keyword</div>
-        <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
-    </div>
-
+<!-- *** Custom Definition Popup Structure *** -->
+<div class="definition-popup" id="definition-popup">
+    <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
+    <div class="definition-popup-title" id="popup-word">Keyword</div>
+    <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
+</div>
 <script>
     // Populate Inner HTML directly (Toolbar, TOC, Loading, Slider) - Unchanged
     document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="single-page-btn" title="Single Page View">☰</button><button class="new-btn" id="double-page-btn" title="Double Page View">◫</button><button class="new-btn" id="rotate-btn" title="Rotate View">📱</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
@@ -323,6 +360,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
     document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
 </script>
+
 <script>
     // --- UI Elements ---
     const definitionPopup = document.getElementById('definition-popup');
@@ -536,26 +574,58 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         const leftPageDiv = document.querySelector('.book-page.left'); const rightPageDiv = document.querySelector('.book-page.right');
         const leftPageNumDisplay = document.getElementById('left-page-number'); const rightPageNumDisplay = document.getElementById('right-page-number');
         if (!leftPageDiv || !rightPageDiv || !leftPageNumDisplay || !rightPageNumDisplay) { console.error("Critical page elements missing!"); return; }
-        leftPageDiv.style.visibility = 'hidden'; rightPageDiv.style.display = 'none'; rightPageDiv.classList.remove('placeholder-page');
+
+        // Apply display styles based on view mode *before* rendering
+        const isFullscreen = document.body.classList.contains('fullscreen-mode');
+        const isRotated = document.body.classList.contains('rotated-mode');
+
+        leftPageDiv.style.visibility = 'hidden'; // Hide initially
+        rightPageDiv.style.display = 'none'; // Hide initially
+        rightPageDiv.classList.remove('placeholder-page'); // Reset placeholder
+
+        // Clear Right Page Content if it exists
         const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
         if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
+
+        // Render Left Page
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-            leftPageNumDisplay.textContent = String(leftPageNum); await renderPage(leftPageNum, 'left-page-canvas'); leftPageDiv.style.visibility = 'visible';
+            leftPageNumDisplay.textContent = String(leftPageNum);
+            await renderPage(leftPageNum, 'left-page-canvas');
+            leftPageDiv.style.visibility = 'visible'; // Show after rendering
         } else {
+            // Hide and clear left page if out of bounds
             leftPageDiv.style.visibility = 'hidden'; leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
         }
-        if (book.isDoublePageView) {
+
+        // Render Right Page (only in double page view)
+        if (book.isDoublePageView && !isFullscreen && !isRotated) {
             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
-                rightPageNumDisplay.textContent = String(rightPageNum); rightPageDiv.style.display = 'flex'; await renderPage(rightPageNum, 'right-page-canvas');
-            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) { rightPageDiv.style.display = 'flex'; rightPageDiv.classList.add('placeholder-page'); rightPageNumDisplay.textContent = ''; }
-            else { rightPageDiv.style.display = 'none'; }
+                rightPageNumDisplay.textContent = String(rightPageNum);
+                rightPageDiv.style.display = 'flex'; // Show container
+                await renderPage(rightPageNum, 'right-page-canvas');
+            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+                // Show placeholder if left page is valid but right is not
+                rightPageDiv.style.display = 'flex';
+                rightPageDiv.classList.add('placeholder-page');
+                rightPageNumDisplay.textContent = '';
+            } else {
+                 // Hide right page completely if left page is also invalid
+                rightPageDiv.style.display = 'none';
+            }
+        } else {
+            // Ensure right page is hidden in single/rotated modes
+             rightPageDiv.style.display = 'none';
         }
-        updateSliderPosition(); preloadAdjacentPages(book.currentPage); updateStatus("Display update complete.");
+
+        updateSliderPosition();
+        preloadAdjacentPages(book.currentPage);
+        updateStatus("Display update complete.");
     }
+
 
     // --- Preloading (Unchanged) ---
      function preloadAdjacentPages(currentPage) {
@@ -577,7 +647,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
     function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
 
-    // --- View Modes (Unchanged) ---
+    // --- View Modes (Unchanged - CSS handles visual change) ---
     function applyCurrentViewModeStyles() { const i=document.body.classList.contains('rotated-mode'),s=document.querySelector('.book-spread');if(!s)return; if(i){const w=window.innerWidth,h=window.innerHeight,bW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')),bH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')),sX=w/bH,sY=h/bW,sc=Math.min(sX,sY)*.95;s.style.transformOrigin='center center';s.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${sc})`}else{s.style.transformOrigin='center center';s.style.transform='translate(-50%, -50%)'} }
     function setSinglePageView(){ if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Single Page View"); book.isDoublePageView=false; document.body.classList.remove('rotated-mode'); document.body.classList.add('fullscreen-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
     function setDoublePageView(){ if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Double Page View"); book.isDoublePageView=true; document.body.classList.remove('rotated-mode','fullscreen-mode'); if(book.currentPage>1&&book.currentPage%2===0)book.currentPage--; hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
@@ -717,7 +787,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use new function
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
         document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode') || document.body.classList.contains('fullscreen-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); updateDisplay(); } manageToolbar(); }, 250); });
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode')) { /* Only update display for rotated mode on resize for now */ applyCurrentViewModeStyles(); updateDisplay(); } else { /* For single/double, just re-apply transforms/styles */ applyCurrentViewModeStyles(); /* Optionally re-render if needed, but often not required for non-rotated */ /* updateDisplay(); */ } manageToolbar(); }, 250); });
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
         document.addEventListener('click', e => { if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) { hideDefinitionPopup(); } }, true);
@@ -738,11 +808,11 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete.");
         } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
-    }
 
-    // --- Start the application ---
-    document.addEventListener('DOMContentLoaded', init);
+}
 
+// --- Start the application ---
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
