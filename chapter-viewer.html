@@ -802,7 +802,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         }
     }
 
-    // --- Update Display (Adjusted for content-rotated-mode) ---
+    // --- Update Display (Adjusted for content-rotated-mode, removed visibility flicker) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -820,18 +820,20 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
         const isContentRotated = document.body.classList.contains('content-rotated-mode'); // Use new class
 
+        let renderPromises = [];
+
         // --- Left Page Handling ---
-        leftPageDiv.style.visibility = 'hidden'; // Hide initially
+        // No longer hide/show with visibility - rely on internal loading spinner
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
-            await renderPage(leftPageNum, 'left-page-canvas');
-            leftPageDiv.style.visibility = 'visible'; // Show after rendering
+            renderPromises.push(renderPage(leftPageNum, 'left-page-canvas')); // Add promise to array
         } else {
             // Clear left page if invalid number
             leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
+            leftPageDiv.classList.add('placeholder-page'); // Maybe add placeholder if invalid? Or ensure it's cleared visually.
         }
 
         // --- Right Page Handling ---
@@ -848,17 +850,22 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                 // Valid right page number
                 rightPageNumDisplay.textContent = String(rightPageNum);
                 rightPageDiv.style.display = 'flex'; // Show the div
-                await renderPage(rightPageNum, 'right-page-canvas');
+                renderPromises.push(renderPage(rightPageNum, 'right-page-canvas')); // Add promise to array
             } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
                 // Left page is valid, but right page is beyond total -> show placeholder
                 rightPageDiv.style.display = 'flex'; // Show the div
                 rightPageDiv.classList.add('placeholder-page'); // Add placeholder class
                 rightPageNumDisplay.textContent = '';
+                // No render promise for placeholder
             }
             // No else needed: if left page is also invalid, right page remains hidden.
         }
         // If isFullscreen or isContentRotated, right page remains display: none
 
+        // --- Wait for all rendering to complete ---
+        await Promise.all(renderPromises);
+
+        // --- Final Updates ---
         updateSliderPosition();
         preloadAdjacentPages(book.currentPage);
         applyCurrentViewModeStyles(); // Ensure transform is correct after update
@@ -886,7 +893,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
     function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
 
-    // --- START: View Modes (Unchanged) ---
+    // --- START: View Modes (Made async, await updateDisplay) ---
     function applyCurrentViewModeStyles() {
         const isContentRotated = document.body.classList.contains('content-rotated-mode'); // Use new class
         const spread = document.querySelector('.book-spread');
@@ -929,49 +936,46 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         }
     }
 
-    function setSinglePageView(){
+    async function setSinglePageView(){
         if (!book.isDoublePageView && document.body.classList.contains('fullscreen-mode')) return; // Already in this mode
         updateStatus("Setting Single Page View");
         book.isDoublePageView = false;
         document.body.classList.remove('content-rotated-mode'); // Remove rotated class
         document.body.classList.add('fullscreen-mode');
         hideDefinitionPopup();
-        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
-        updateDisplay().then(()=>{
-            manageToolbar();
-            updateSliderTotalPages();
-            updateSliderPosition();
-        });
+        await updateDisplay(); // Await the display update
+        // Update UI elements after display is confirmed
+        manageToolbar();
+        updateSliderTotalPages();
+        updateSliderPosition();
     }
 
-    function setDoublePageView(){
+    async function setDoublePageView(){
         if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode')) return; // Already in this mode
         updateStatus("Setting Double Page View");
         book.isDoublePageView = true;
         document.body.classList.remove('content-rotated-mode', 'fullscreen-mode'); // Remove other modes
         if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--; // Align to left page
         hideDefinitionPopup();
-        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
-        updateDisplay().then(()=>{
-            manageToolbar();
-            updateSliderTotalPages();
-            updateSliderPosition();
-        });
+        await updateDisplay(); // Await the display update
+        // Update UI elements after display is confirmed
+        manageToolbar();
+        updateSliderTotalPages();
+        updateSliderPosition();
     }
 
-    function setRotatedView() {
+    async function setRotatedView() {
         if (document.body.classList.contains('content-rotated-mode')) return; // Already in this mode
         updateStatus("Setting Content Rotated View");
         book.isDoublePageView = false; // Rotation implies single page
         document.body.classList.remove('fullscreen-mode'); // Remove fullscreen mode
         document.body.classList.add('content-rotated-mode'); // Add specific rotation class
         hideDefinitionPopup();
-        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
-        updateDisplay().then(()=>{
-            manageToolbar(); // Toolbar itself doesn't change position
-            updateSliderTotalPages(); // Slider doesn't change position
-            updateSliderPosition();
-        });
+        await updateDisplay(); // Await the display update
+        // Update UI elements after display is confirmed
+        manageToolbar(); // Toolbar itself doesn't change position
+        updateSliderTotalPages(); // Slider doesn't change position
+        updateSliderPosition();
     }
     // --- END: View Modes (Unchanged) ---
 
@@ -1003,9 +1007,11 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- PDF Loading (Unchanged) ---
+    // --- PDF Loading (Wait for initial view set before hiding loading) ---
     async function loadPdf(pdfUrl) {
-        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
+        updateStatus(`loadPdf started for: ${pdfUrl}`);
+        showLoading("Initializing PDF..."); // Show loading immediately
+        pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
 
         // TOC functionality is disabled for the time-capsule button, so no need to manage its disabled state here
 
@@ -1013,21 +1019,24 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         try {
             updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
             showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); } // Populate TOC still happens, but button won't open it
-            const overlayLoaded = await overlayPromise;
+            const overlayLoaded = await overlayPromise; // Wait for overlay data
 
             // --- Default View Logic ---
-            // Set initial view based on window width AFTER PDF is loaded
+            // Set initial view based on window width AFTER PDF is loaded and WAIT for it to render
             if (window.innerWidth < 1000) {
-                setSinglePageView(); // Calls updateDisplay internally
+                await setSinglePageView(); // Calls updateDisplay internally and waits
             } else {
-                setDoublePageView(); // Calls updateDisplay internally
+                await setDoublePageView(); // Calls updateDisplay internally and waits
             }
             // Initial applyCurrentViewModeStyles will happen inside updateDisplay called by setXXXPageView
 
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
-        } finally { hideLoading(); updateStatus("loadPdf finished."); }
+        } finally {
+             hideLoading(); // Hide loading ONLY after everything, including initial render, is done or failed
+             updateStatus("loadPdf finished.");
+        }
     }
 
     // --- TOC population (Unchanged) ---
@@ -1103,13 +1112,13 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                      window.history.back(); // Go to previous page in browser history
                      break;
                  case 'single-page-btn':
-                     setSinglePageView();
+                     setSinglePageView(); // Now async, but click handler doesn't need await
                      break;
                  case 'double-page-btn':
-                     setDoublePageView();
+                     setDoublePageView(); // Now async
                      break;
                  case 'rotate-btn':
-                     setRotatedView();
+                     setRotatedView(); // Now async
                      break;
                  case 'time-capsule-btn':
                      // DO NOTHING - Feature Disabled (was TOC button)
@@ -1150,15 +1159,16 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         updateStatus("Initializing application...");
         try {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
-            setupEvents(); setupToolbarHover(); initPageSlider(); hideLoading();
+            setupEvents(); setupToolbarHover(); initPageSlider(); // hideLoading() moved to loadPdf finally block
             const urlParams = new URLSearchParams(window.location.search); const pdfUrlParam = urlParams.get('pdf');
             if (pdfUrlParam) { updateStatus(`PDF URL parameter found: ${pdfUrlParam}`); await loadPdf(pdfUrlParam); }
             else {
                 updateStatus("No PDF specified in URL parameter (?pdf=...)."); const sc = document.querySelector('.main-container .book-spread'); if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`; document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden'); document.querySelector('.book-page.right')?.style.setProperty('display','none'); document.getElementById('page-slider-container')?.classList.remove('visible'); document.getElementById('new-toolbar')?.classList.remove('visible');
+                 hideLoading(); // Hide loading if no PDF is specified
             }
             window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete.");
-        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
+        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; hideLoading(); } // Ensure loading hides on catastrophic init error
     }
 
 // --- Start the application ---
