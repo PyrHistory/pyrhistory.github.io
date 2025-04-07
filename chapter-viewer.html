@@ -10,205 +10,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.css">
     <style>
-:root{
-    --primary:#4a90e2;
-    --secondary:#50e3c2;
-    --accent:#f5a623; /* Amber/Orange */
-    --fiery-orange: #f97316; /* Adjusted fiery orange */
-    --lab-blue:#080e1c;
-    --page:#fff;
-    --text-on-dark:rgba(255,255,255,.9);
-    --text-on-page:#333;
-    --header-h:60px; /* Unused? */
-    --page-w:650px; /* Base Desktop Page Width */
-    --page-h:842px; /* Base Desktop Page Height */
-    --page-padding:15px;
-    /* Modern Font Stack */
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
+:root{--primary:#4a90e2;--secondary:#50e3c2;--accent:#f5a623;--lab-blue:#080e1c;--page:#fff;--text-on-dark:rgba(255,255,255,.9);--text-on-page:#333;--header-h:60px;--page-w:650px;--page-h:842px;--page-padding:15px}
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-    font-family: 'Georgia', serif; /* Keep base Georgia */
-    background-color:var(--lab-blue);
-    color:var(--text-on-dark);
-    height:100vh; width:100vw;
-    overflow:hidden; display:flex; flex-direction:column; position:fixed;
-    line-height:1.6
-}
+body{font-family:'Georgia',serif;background-color:var(--lab-blue);color:var(--text-on-dark);height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column;position:fixed;line-height:1.6}
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
 @keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
 @media (prefers-reduced-motion:reduce){body::before{animation:none!important}}
-
-/* --- Toolbar (Desktop) --- */
-#new-toolbar{
-    position:fixed!important;top:15px!important;right:-60px!important;z-index:9999!important;
-    display:flex!important;flex-direction:column!important;gap:10px!important;
-    transition:right .3s ease, transform .3s ease!important;
-    background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
-    padding:5px!important;border-radius:8px 0 0 8px!important;box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;
-    width:58px;border:1px solid rgba(255,255,255,.1);
-}
-#new-toolbar::before{
-    content:"≡";position:absolute;left:-25px;top:50%;transform:translateY(-50%);
-    background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
-    width:25px;height:40px;display:flex;align-items:center;justify-content:center;
-    border-radius:4px 0 0 4px;color:var(--text-on-dark);font-size:20px;
-    box-shadow:-2px 2px 5px rgba(0,0,0,.3);transition:all .3s ease;
-    border:1px solid rgba(255,255,255,.1);border-right:none;cursor:pointer;
-}
-.toolbar-trigger-area{
-    position:fixed;top:0;right:0;width:30px;height:100%;z-index:9998;
-    transition:all .3s ease;
-}
+#new-toolbar{position:fixed!important;top:15px!important;right:-60px!important;z-index:9999!important;display:flex!important;flex-direction:column!important;gap:10px!important;transition:right .3s ease,bottom .3s ease,transform .3s ease!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:5px!important;border-radius:8px 0 0 8px!important;box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;width:58px;border:1px solid rgba(255,255,255,.1)}
+#new-toolbar::before{content:"≡";position:absolute;left:-25px;top:50%;transform:translateY(-50%);background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);width:25px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:4px 0 0 4px;color:var(--text-on-dark);font-size:20px;box-shadow:-2px 2px 5px rgba(0,0,0,.3);transition:all .3s ease;border:1px solid rgba(255,255,255,.1);border-right:none;cursor:pointer}
+.toolbar-trigger-area{position:fixed;top:0;right:0;width:30px;height:100%;z-index:9998;transition:all .3s ease}
 #new-toolbar.visible{right:0!important;transform:none!important}
-
-/* --- Toolbar Buttons --- */
-.new-btn{
-    background:rgba(44,62,80,.8)!important;border:1px solid rgba(255,255,255,.15)!important;
-    color:var(--text-on-dark)!important;width:48px!important;height:48px!important;
-    border-radius:4px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-    font-size:25px!important;cursor:pointer!important;transition:all .2s!important;
-    box-shadow:0 2px 5px rgba(0,0,0,.2)!important;user-select:none!important;flex-shrink:0;
-}
-.new-btn:hover{
-    background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;
-    box-shadow:0 2px 8px rgba(0,0,0,.3)!important;transform:translateY(-2px)!important;
-}
+.new-btn{background:rgba(44,62,80,.8)!important;border:1px solid rgba(255,255,255,.15)!important;color:var(--text-on-dark)!important;width:48px!important;height:48px!important;border-radius:4px!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:25px!important;cursor:pointer!important;transition:all .2s!important;box-shadow:0 2px 5px rgba(0,0,0,.2)!important;user-select:none!important;flex-shrink:0}
+.new-btn:hover{background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important;transform:translateY(-2px)!important}
 .new-btn:active{transform:translateY(1px)!important}
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
-
-/* --- Mobile Specific Toolbar --- */
-body.mobile-device #new-toolbar {
-    /* Horizontal toolbar at the bottom for mobile */
-    top:auto!important; right:50%!important; bottom:-60px!important; transform:translateX(50%)!important;
-    flex-direction:row!important; width:auto!important; height:58px!important;
-    border-radius:8px 8px 0 0!important; padding:5px 10px!important;
-    box-shadow:0 -2px 10px rgba(0,0,0,.4)!important; border-bottom:none;
-}
-body.mobile-device #new-toolbar.visible {
-    bottom:0!important; transform:translateX(50%)!important;
-}
-body.mobile-device #new-toolbar::before {
-    left:50%!important; transform:translateX(-50%)!important; top:-25px!important;
-    width:40px!important; height:25px!important; border-radius:4px 4px 0 0!important;
-    content:"≡"; padding-bottom:5px; border-bottom:none;
-}
-body.mobile-device .toolbar-trigger-area {
-    top:auto!important; bottom:0!important; left:0!important; transform:none!important;
-    right:auto!important; width:100%!important; height:30px!important;
-}
-body.mobile-device #new-toolbar .new-btn {
-     width:40px!important; height:40px!important; font-size:20px!important; transform: none; /* No rotate needed */
-}
-body.mobile-device .new-btn:hover { transform: scale(1.1); background:rgba(52,73,94,.9)!important; border-color:rgba(255,255,255,.25)!important; box-shadow:0 2px 8px rgba(0,0,0,.3)!important; }
-body.mobile-device .new-btn:active { transform: scale(0.95); }
-
-
-/* --- Main Content & Book Spread --- */
+.rotated-mode #new-toolbar{top:auto!important;right:50%!important;bottom:-60px!important;transform:translateX(50%)!important;flex-direction:row!important;width:auto!important;height:58px!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:8px 8px 0 0!important;padding:5px 10px!important;box-shadow:0 -2px 10px rgba(0,0,0,.4)!important;border:1px solid rgba(255,255,255,.1);border-bottom:none}
+.rotated-mode #new-toolbar.visible{bottom:0!important;transform:translateX(50%)!important}
+.rotated-mode #new-toolbar::before{left:50%!important;transform:translateX(-50%)!important;top:-25px!important;width:40px!important;height:25px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:4px 4px 0 0!important;content:"≡";padding-bottom:5px;color:var(--text-on-dark);border:1px solid rgba(255,255,255,.1);border-bottom:none;cursor:pointer}
+.rotated-mode .toolbar-trigger-area{top:auto!important;bottom:0!important;left:0!important;transform:none!important;right:auto!important;width:100%!important;height:30px!important}
+.rotated-mode #new-toolbar .new-btn{width:40px!important;height:40px!important;font-size:20px!important;transform: rotate(90deg)}
+.rotated-mode .new-btn:hover {transform: rotate(90deg) scale(1.1);background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important}
+.rotated-mode .new-btn:active {transform: rotate(90deg) scale(0.95)}
 .main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
-.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease, width .3s ease, height .3s ease; transform: translate(-50%, -50%)}
-
-/* --- Book Page Base Styles --- */
-.book-page{
-    width:var(--page-w); height:var(--page-h); /* Desktop default */
-    background-color:var(--page); position:relative; overflow:hidden;
-    flex-shrink:0; display:flex; justify-content:center; align-items:center;
-    border:1px solid rgba(255,255,255,.08); padding:0;
-    transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
-}
-.book-page.left{border-right:1px solid rgba(255,255,255,.15); border-radius:3px 0 0 3px;}
-.book-page.right{border-left:1px solid rgba(255,255,255,.15); border-radius:0 3px 3px 0;}
-
-/* --- Double Page Specific (Desktop Only) --- */
-body:not(.fullscreen-mode) .book-page.left .canvas-container::after { /* Gutter shadow */
-    content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%;
-    background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
-    pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0;
-}
-body:not(.fullscreen-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { /* Gutter shadow */
-    content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%;
-    background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0));
-    pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px;
-}
-body:not(.fullscreen-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
-
-/* --- Single Page Mode (Fullscreen Mode) --- */
-.fullscreen-mode .book-spread {
-     /* Desktop Fullscreen: Centered, slightly smaller */
-     width: 95vw; height: 95vh;
-}
-.fullscreen-mode .book-page.right { display:none!important; } /* Hide right page */
-.fullscreen-mode .book-page.left {
-    /* Desktop Fullscreen: Takes full spread size */
-    width: 100%; height: 100%;
-    border-radius:5px!important; border:1px solid rgba(255,255,255,.08)!important;
-    border-right: none !important; padding:0;
-}
-
-/* --- Mobile View Mode (Always uses .fullscreen-mode) --- */
-body.mobile-device.fullscreen-mode .book-spread {
-    /* Mobile Fullscreen: Take entire viewport */
-    width: 100vw; height: 100vh;
-    box-shadow: none; /* No shadow needed when fullscreen */
-}
-body.mobile-device.fullscreen-mode .book-page.left {
-    /* Mobile Fullscreen: Full spread size, no border/radius */
-    width: 100%; height: 100%;
-    border-radius: 0 !important; border: none !important;
-}
-body.mobile-device.fullscreen-mode .canvas-container {
-     margin: 5px !important; /* Minimal padding on mobile */
-     width: calc(100% - 10px); height: calc(100% - 10px);
-}
-
-
-/* --- Canvas & Layers --- */
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
+.book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
+.book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
+.book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
+.fullscreen-mode:not(.rotated-mode) .book-page.left{border-right:1px solid rgba(255,255,255,.08)!important}
 .canvas-container {
     position: relative; /* Important for positioning layers */
-    width: calc(100% - 2 * var(--page-padding)); height: calc(100% - 2 * var(--page-padding));
-    margin: var(--page-padding); display: flex; justify-content: center; align-items: center;
+    width: calc(100% - 2 * var(--page-padding));
+    height: calc(100% - 2 * var(--page-padding));
+    margin: var(--page-padding);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     overflow: hidden; /* Clip layers */
 }
-.pdf-canvas{
-    max-width:100%; max-height:100%; display:block; object-fit:contain;
-    box-shadow: none; position: absolute; top: 0; left: 0; z-index: 1; /* Canvas layer */
-}
-.textLayer { /* Base text layer (hidden) */
-    position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
-    opacity: 1; line-height: 1.0; color: transparent !important;
-    user-select: none; -webkit-user-select: none; pointer-events: none !important;
-    z-index: 2;
-}
-.textLayer > div { position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%; pointer-events: none !important; border-radius: 2px; }
-.annotationLayer { /* PDF Annotations (links, etc.) */
-    position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
-    pointer-events: none; z-index: 3; /* Above text, below keywords */
-}
-.annotationLayer section { position: absolute; pointer-events: auto; /* Sections are clickable */ }
-.annotationLayer .linkAnnotation { /* Ensure links cover area */
-    width: 100%; height: 100%;
-}
-.annotationLayer .linkAnnotation > a { /* Link style */
-    position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%;
-    border: 1px solid transparent;
-    transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    cursor: pointer; /* Make it clear it's clickable */
-    /* background-color: rgba(0, 0, 255, 0.05); */ /* Optional: Subtle blue tint for debugging links */
-}
-.annotationLayer .linkAnnotation > a:hover { /* Standard link hover */
-    background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5);
-    box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5);
-}
-/* Custom: Style links detected as images differently on hover? */
-.annotationLayer .linkAnnotation.image-link > a:hover {
-     background-color: rgba(74, 144, 226, 0.2); /* Light blue hover for image links */
-     border: 1px solid rgba(74, 144, 226, 0.5);
-     box-shadow: 0px 0px 3px rgba(74, 144, 226, 0.5);
-}
-
-
-/* --- Page Elements (Loading, Nav, Numbers) --- */
-.page-number{display:none} /* Hidden by default */
+.pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; position: absolute; top: 0; left: 0; z-index: 1; } /* Canvas layer */
+.page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
 .page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -219,19 +59,22 @@ body.mobile-device.fullscreen-mode .canvas-container {
 .page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
 .page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
 .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
-
-/* Mobile edge nav tweaks */
-body.mobile-device .page-edge-nav { width: 60px; } /* Slightly larger tap target */
-body.mobile-device .page-edge-left:hover::after { left: 23px; }
-body.mobile-device .page-edge-right:hover::after { right: 23px; }
-
-/* --- Placeholder Page --- */
+.fullscreen-mode .book-page.right{display:none!important}
+.fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:0;}
+.fullscreen-mode .canvas-container { margin: var(--page-padding); }
+.fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain; position:relative; z-index: 1; }
+.rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
+.rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
+.rotated-mode .book-page.right{display:none!important}
+.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
-
-/* --- Modals & Overlays --- */
-.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);} /* Use modern font */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
+.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden}
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
@@ -245,158 +88,167 @@ body.mobile-device .page-edge-right:hover::after { right: 23px; }
 .loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
 .loading-message{font-size:16px;color:var(--text-on-dark)}
 #status-indicator{display:none}
-
-/* --- Page Slider (Common) --- */
-.page-slider-container{position:fixed; z-index:9998; background:rgba(28,37,54,.9); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); border:1px solid rgba(255,255,255,.1); transition: bottom .35s cubic-bezier(.2,.9,.3,1), left .35s cubic-bezier(.2,.9,.3,1), transform .35s cubic-bezier(.2,.9,.3,1), width .3s ease, height .3s ease; }
-.page-slider-container.visible{ bottom:0; /* Default bottom pos */ }
-.page-slider{ width:100%; height:6px; -webkit-appearance:none; appearance:none; background:rgba(255,255,255,.1); outline:none; border-radius:3px; overflow:visible; cursor:pointer; transition:height .2s; }
+.page-slider-container{position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);width:90%;max-width:700px;padding:14px 20px;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-bottom:none;box-shadow:0 -4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;z-index:9998;transition:bottom .35s cubic-bezier(.2,.9,.3,1),transform .35s cubic-bezier(.2,.9,.3,1), left .35s cubic-bezier(.2,.9,.3,1);border-radius:16px 16px 0 0}
+.page-slider-container.visible{bottom:0}
+.page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
+.page-slider{width:100%;height:6px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.1);outline:none;border-radius:3px;overflow:visible;cursor:pointer;transition:height .2s}
 .page-slider:hover{height:8px}
-.page-slider::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:50%; background:var(--accent); cursor:pointer; border:3px solid rgba(28,37,54,.9); box-shadow:0 1px 6px rgba(0,0,0,.4); transition:all .2s ease; margin-top:-7px; /* Adjust for horizontal */ }
-.page-slider::-webkit-slider-thumb:hover{width:24px;height:24px; margin-top:-8px;}
+.page-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition:all .2s ease;margin-top:-7px}
+.page-slider::-webkit-slider-thumb:hover{width:24px;height:24px;margin-top:-8px}
+.page-slider::-webkit-slider-runnable-track{height:100%;background:linear-gradient(to right,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%));border-radius:3px}
 .page-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4)}
 .page-slider::-moz-range-thumb:hover{width:24px;height:24px}
+.page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
+.page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
 .page-slider-info{font-size:12px;color:var(--text-on-dark);font-weight:500;letter-spacing:.3px;opacity:.8}
-#page-slider-trigger-zone {position: fixed; z-index: 9997; pointer-events: auto;}
+.rotated-mode .page-slider-container{bottom:50%!important;left:-80px!important;top:auto!important;transform:translateY(50%)!important;width:60px!important;height:70vh!important;max-width:none!important;max-height:500px;flex-direction:column-reverse!important;padding:10px 5px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-left:none;border-radius:0 12px 12px 0!important;box-shadow:2px 0 20px rgba(0,0,0,.4)!important}
+.rotated-mode .page-slider-container.visible{left:0!important}
+.rotated-mode .page-slider-track{width:100%!important;height:100%!important;margin-bottom:0!important;padding:10px 0!important;display:flex;align-items:center;flex:1}
+.rotated-mode .page-slider{width:6px!important;height:100%!important;writing-mode:vertical-lr!important;-webkit-appearance:slider-vertical!important;appearance:slider-vertical;margin:0 auto!important;padding:0!important;background:rgba(255,255,255,.1)!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-runnable-track{width:6px!important;height:100%;background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-thumb{-webkit-appearance: none;appearance: none;width:20px!important;height:20px!important;border-radius: 50%;background: var(--accent);cursor: pointer;border: 3px solid rgba(28,37,54,.9)!important;box-shadow: 0 1px 6px rgba(0,0,0,.4);transition: all .2s ease;margin-top:0!important;margin-left:-7px!important}
+.rotated-mode .page-slider:hover::-webkit-slider-thumb {width: 24px !important;height: 24px !important;margin-left: -9px !important}
+.rotated-mode .page-slider::-moz-range-thumb{width: 20px;height: 20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition: all .2s ease}
+.rotated-mode .page-slider:hover::-moz-range-thumb {width: 24px;height: 24px}
+.rotated-mode .page-slider::-moz-range-progress{background-color:var(--accent)!important;width:6px!important;border-radius:3px}
+.rotated-mode .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);width:6px!important;border-radius:3px}
+.rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
+#page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
+.rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
 
-/* --- Page Slider (Desktop - Horizontal Bottom) --- */
-body:not(.mobile-device) .page-slider-container{
-    bottom:-80px; left:50%; transform:translateX(-50%); width:90%; max-width:700px;
-    padding:14px 20px; border-bottom:none; box-shadow:0 -4px 20px rgba(0,0,0,.4);
-    display:flex; flex-direction:column; align-items:center; border-radius:16px 16px 0 0;
+/* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
+.textLayer {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
+    opacity: 1; /* Keep layer itself present */
+    line-height: 1.0;
+    /* Make base text invisible and non-interactive */
+    color: transparent !important;
+    user-select: none; -webkit-user-select: none;
+    pointer-events: none !important; /* Layer doesn't capture events */
+    z-index: 2; /* Below annotations and custom overlay */
 }
-body:not(.mobile-device) .page-slider-container.visible{ bottom:0; }
-body:not(.mobile-device) .page-slider-track{ width:100%; margin-bottom:8px; padding:0 10px; }
-body:not(.mobile-device) .page-slider::-webkit-slider-runnable-track{ height:100%; background:linear-gradient(to right,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%)); border-radius:3px; }
-body:not(.mobile-device) .page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
-body:not(.mobile-device) .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
-body:not(.mobile-device) #page-slider-trigger-zone { bottom: 0; left: 0; width: 100%; height: 30px; }
-
-/* --- Page Slider (Mobile - Vertical Left) --- */
-body.mobile-device .page-slider-container{
-    bottom:50%!important; left:-80px!important; top:auto!important; transform:translateY(50%)!important;
-    width:60px!important; height:70vh!important; max-width:none!important; max-height:500px;
-    flex-direction:column-reverse!important; padding:10px 5px!important; border-left:none;
-    border-radius:0 12px 12px 0!important; box-shadow:2px 0 20px rgba(0,0,0,.4)!important;
+.textLayer > div {
+    position: absolute; white-space: pre; cursor: default; /* Change cursor? */
+    transform-origin: 0% 0%;
+    pointer-events: none !important; /* Children also don't capture events */
+    border-radius: 2px;
 }
-body.mobile-device .page-slider-container.visible{ left:0!important; }
-body.mobile-device .page-slider-track{ width:100%!important; height:100%!important; margin-bottom:0!important; padding:10px 0!important; display:flex; align-items:center; flex:1; }
-body.mobile-device .page-slider{ width:6px!important; height:100%!important; writing-mode:vertical-lr!important; -webkit-appearance:slider-vertical!important; appearance:slider-vertical; margin:0 auto!important; padding:0!important; background:rgba(255,255,255,.1)!important; border-radius:3px; }
-body.mobile-device .page-slider::-webkit-slider-runnable-track{ width:6px!important; height:100%; background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important; border-radius:3px; }
-body.mobile-device .page-slider::-webkit-slider-thumb{ -webkit-appearance: none; appearance: none; width:20px!important; height:20px!important; border-radius: 50%; background: var(--accent); cursor: pointer; border: 3px solid rgba(28,37,54,.9)!important; box-shadow: 0 1px 6px rgba(0,0,0,.4); transition: all .2s ease; margin-top:0!important; margin-left:-7px!important; /* Adjust for vertical */ }
-body.mobile-device .page-slider:hover::-webkit-slider-thumb { width: 24px !important; height: 24px !important; margin-left: -9px !important; }
-body.mobile-device .page-slider::-moz-range-thumb{ width: 20px; height: 20px; border-radius:50%; background:var(--accent); cursor:pointer; border:3px solid rgba(28,37,54,.9); box-shadow:0 1px 6px rgba(0,0,0,.4); transition: all .2s ease; }
-body.mobile-device .page-slider:hover::-moz-range-thumb { width: 24px; height: 24px; }
-body.mobile-device .page-slider::-moz-range-progress{ background-color:var(--accent)!important; width:6px!important; border-radius:3px; }
-body.mobile-device .page-slider::-moz-range-track{ background-color:rgba(255,255,255,.1); width:6px!important; border-radius:3px; }
-body.mobile-device .page-slider-info{ transform:rotate(90deg); white-space:nowrap; margin-bottom:15px; padding-top:10px; color:var(--text-on-dark); }
-body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; width: 30px; height: 100%; transform: translateY(-50%); }
+.annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.annotationLayer section { position: absolute; pointer-events: auto; }
+.annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
+.annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
 
-/* --- START: Custom Keyword Overlay & Popup Styles (Unchanged) --- */
+/* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 4; overflow: hidden;
+  position: absolute;
+  /* Position relative to canvas-container */
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; /* Container doesn't block */
+  z-index: 4; /* Above text and annotation layers */
+  overflow: hidden; /* Clip highlights to container bounds */
 }
-.keyword-highlight {
-  position: absolute; background: transparent;
-  transition: background 0.2s ease-out, box-shadow 0.2s ease-out;
-  pointer-events: auto; cursor: pointer; z-index: 5;
-  box-sizing: border-box; border-radius: 3px;
-}
-.keyword-highlight:hover {
-  background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25));
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-#definition-popup {
-  position: fixed; background: #ffffff; border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1);
-  padding: 14px 18px; max-width: 320px; min-width: 180px;
-  font-family: var(--font-sans); color: #2d3748; z-index: 10002;
-  transform-origin: top center; transform: translateY(6px) scale(0.97);
-  opacity: 0; visibility: hidden;
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0.18s;
-  pointer-events: none;
-}
-#definition-popup.visible {
-  transform: translateY(0) scale(1); opacity: 1; visibility: visible;
-  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-              visibility 0s linear 0s;
-   pointer-events: auto;
-}
-#popup-word {
-  font-weight: 600; font-size: 15px; margin: 0 0 10px 0;
-  color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0;
-}
-#popup-definition {
-  font-size: 14px; line-height: 1.6; max-height: 180px; overflow-y: auto;
-  color: #4a5568; padding-right: 5px; margin-right: -5px;
-}
-#popup-definition::-webkit-scrollbar { width: 5px; }
-#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
-#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
-#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
-#close-popup-btn {
-  position: absolute; top: 6px; right: 6px; cursor: pointer;
-  font-size: 20px; font-weight: 300; color: #a0aec0;
-  transition: color 0.2s, background-color 0.2s;
-  background: none; border: none; padding: 0; width: 28px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; line-height: 1;
-}
-#close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
-/* --- END: Custom Keyword Overlay & Popup Styles --- */
 
-/* --- START: Image Lightbox Styles --- */
-#image-lightbox {
-    position: fixed; inset: 0; z-index: 10010; /* High z-index */
-    background: rgba(0, 0, 0, 0.85); /* Dark semi-transparent background */
-    display: none; /* Hidden by default */
-    align-items: center; justify-content: center;
-    padding: 20px; /* Space around the image */
-    cursor: pointer; /* Click background to close */
-    -webkit-backdrop-filter: blur(5px);
-    backdrop-filter: blur(5px);
+.keyword-highlight {
+  position: absolute;
+  background: transparent; /* Start transparent */
+  border-bottom: 2px solid transparent; /* Underline effect */
+  transition: all 0.2s ease-out;
+  pointer-events: auto; /* Highlights ARE interactive */
+  cursor: pointer;
+  z-index: 5; /* Ensure they are clickable */
+  box-sizing: border-box; /* Include border in dimensions */
+  border-radius: 2px; /* Slight rounding */
 }
-#image-lightbox.visible {
-    display: flex;
+
+.keyword-highlight:hover {
+  background: linear-gradient(to right, rgba(255, 165, 0, 0.15), rgba(255, 100, 0, 0.15));
+  border-bottom-color: var(--accent); /* Use theme color */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
-#lightbox-image {
-    display: block;
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain; /* Scale image down to fit */
-    box-shadow: 0 5px 25px rgba(0,0,0,0.4);
-    cursor: default; /* Don't show pointer cursor on image itself */
-    border-radius: 4px; /* Optional slight rounding */
+
+/* Use ID for specificity */
+#definition-popup {
+  position: fixed; /* Use fixed positioning for viewport relativity */
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.2);
+  padding: 12px 16px;
+  max-width: 300px;
+  min-width: 180px;
+  font-family: 'Georgia', serif; /* Or use sans-serif like 'Helvetica Neue', Arial, sans-serif */
+  color: #333;
+  z-index: 10002; /* Above everything */
+  transform-origin: top center; /* Default animation origin */
+  transform: translateY(8px) scale(0.98); /* Start slightly down and scaled */
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.20s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.20s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0.20s; /* Hide after transition */
+  pointer-events: none; /* Not interactive when hidden */
 }
-#close-lightbox-btn {
-    position: absolute;
-    top: 15px; right: 15px;
-    width: 40px; height: 40px;
-    background: rgba(40, 40, 40, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    color: #fff;
-    font-size: 24px;
-    font-weight: 300;
-    line-height: 38px; /* Center '×' */
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
+
+#definition-popup.visible {
+  transform: translateY(0) scale(1); /* Animate to final position/scale */
+  opacity: 1;
+  visibility: visible;
+  transition: transform 0.20s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.20s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0s linear 0s; /* Make visible immediately */
+   pointer-events: auto; /* Interactive when visible */
 }
-#close-lightbox-btn:hover {
-    background: rgba(60, 60, 60, 0.9);
-    transform: scale(1.1);
+
+#popup-word { /* Title */
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: var(--primary);
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
 }
-/* --- END: Image Lightbox Styles --- */
+
+#popup-definition { /* Content */
+  font-size: 14px;
+  line-height: 1.5;
+  max-height: 180px; /* Limit height and allow scroll */
+  overflow-y: auto;
+  padding-right: 5px; /* Space for scrollbar */
+  margin-right: -5px;
+}
+/* Add scrollbar styling (optional) */
+#popup-definition::-webkit-scrollbar { width: 5px; }
+#popup-definition::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #aaa; }
+
+#close-popup-btn { /* Close button */
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  color: #aaa;
+  transition: color 0.2s, background-color 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  line-height: 1;
+}
+#close-popup-btn:hover {
+  color: #333;
+  background-color: #f0f0f0;
+}
+/* --- END: Custom Keyword Overlay & Popup Styles --- */
 
     </style>
 </head>
 <body>
-    <!-- Device Type Class applied dynamically via JS -->
-
     <!-- Toolbar, Trigger Area, Status Indicator -->
     <div id="new-toolbar"></div>
     <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
@@ -411,6 +263,7 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
                     <div class="textLayer" id="left-text-layer"></div>
                     <div class="annotationLayer" id="left-annotation-layer"></div>
+                    {/* *** NEW: Custom Keyword Overlay *** */}
                     <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
                 </div>
                 <div class="page-edge-nav page-edge-left"></div>
@@ -424,6 +277,7 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
                     <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
                      <div class="textLayer" id="right-text-layer"></div>
                      <div class="annotationLayer" id="right-annotation-layer"></div>
+                     {/* *** NEW: Custom Keyword Overlay *** */}
                      <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
                  </div>
                 <div class="page-edge-nav page-edge-left"></div>
@@ -440,244 +294,246 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
     <div class="page-slider-container" id="page-slider-container"></div>
     <div id="page-slider-trigger-zone"></div>
 
-    <!-- Definition Popup -->
+    <!-- *** NEW: Custom Definition Popup Structure *** -->
     <div class="definition-popup" id="definition-popup">
         <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
         <div class="definition-popup-title" id="popup-word">Keyword</div>
         <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
     </div>
 
-    <!-- Image Lightbox -->
-    <div id="image-lightbox">
-        <button id="close-lightbox-btn" title="Close (Esc)">×</button>
-        <img id="lightbox-image" src="" alt="Enlarged Image">
-    </div>
-
 <script>
-    // Populate Inner HTML for static modals/toolbars first
-    // NOTE: Toolbar buttons are now conditional based on device type (see init function)
+    // Populate Inner HTML directly (Toolbar, TOC, Loading, Slider) - Unchanged
+    document.getElementById('new-toolbar').innerHTML = `<button class="new-btn" id="single-page-btn" title="Single Page View">☰</button><button class="new-btn" id="double-page-btn" title="Double Page View">◫</button><button class="new-btn" id="rotate-btn" title="Rotate View">📱</button><button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
     document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
     document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
 </script>
 <script>
     // --- UI Elements ---
-    const definitionPopup = document.getElementById('definition-popup');
+    const definitionPopup = document.getElementById('definition-popup'); // New popup structure
     const popupWord = document.getElementById('popup-word');
     const popupDefinition = document.getElementById('popup-definition');
     const closePopupBtn = document.getElementById('close-popup-btn');
     const statusIndicator = document.getElementById('status-indicator');
-    const imageLightbox = document.getElementById('image-lightbox');
-    const lightboxImage = document.getElementById('lightbox-image');
-    const closeLightboxBtn = document.getElementById('close-lightbox-btn');
 
     // --- State Variables ---
     let keywordDefinitions = {};
     let pageKeywords = {};
     let currentViewports = {};
-    let isMobile = false; // Updated in init()
 
-    // --- PDF.js Setup ---
+    // --- PDF.js Setup (Using v2.5.207) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
+    const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer']; // Still used for SimpleLinkService
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.worker.min.js';
 
     const book={title:"No Document",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]};
     const user={readingProgress:{furthestPage:1}};
 
-    // --- Timers and Cache ---
     let toolbarTimer=null;
     let toolbarHover=!1;
     const pageCache=new Map();
     const MAX_CACHE_SIZE=20;
-    let PAGE_PADDING=15; // Updated based on device type later
+    let PAGE_PADDING=15; // Read from CSS later
     let resizeTimer;
     let sliderHideTimeout=null;
 
-    // --- PDF.js Services ---
-    const linkService = new pdfjsViewer.SimpleLinkService();
-    const eventBus = new pdfjsViewer.EventBus();
+    const linkService = new pdfjsViewer.SimpleLinkService(); // Needed for AnnotationLayer
+    const eventBus = new pdfjsViewer.EventBus(); // May not be strictly needed now
 
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
     // const updateStatus = () => {}; // Production
 
-    // --- Device Detection ---
-    function isMobileDevice() {
-        // Use matchMedia for a more reliable check than screen width alone
-        // Breakpoint can be adjusted (e.g., 1024px often includes tablets)
-        return window.matchMedia("(max-width: 1024px)").matches;
-    }
+    // --- Toolbar Logic (Unchanged) ---
+    function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
+    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=false;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=true}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
 
-    // --- Toolbar Logic (Adjusted for Mobile) ---
-    function manageToolbar(s=null){
-        const t=document.getElementById('new-toolbar'); if(!t)return;
-        clearTimeout(toolbarTimer);
-        const show=s??toolbarHover;
-        if(show){t.classList.add('visible')}
-        else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}
-    }
-    function setupToolbarHover(){
-        const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area');
-        if(!t||!a){console.error("Toolbar/trigger missing");return}
-        const enter=()=>{toolbarHover=true;manageToolbar(true)};
-        const leave=()=>{toolbarHover=false;manageToolbar(false)};
-        a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);
-        a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);
-        // Toolbar Handle Click (to toggle visibility)
-        t.addEventListener('click',e=>{
-            if(e.target.closest('.new-btn')) return; // Ignore clicks on buttons
-            const trigger = t.querySelector(':scope::before'); // Get the handle pseudo-element (won't work directly)
-            // Check click position relative to the handle instead
-             const rect = t.getBoundingClientRect();
-             const handleWidth = 25, handleHeight = 40; // Desktop handle dims
-             const mobileHandleWidth = 40, mobileHandleHeight = 25; // Mobile handle dims
-
-             let clickedHandle = false;
-             if (isMobile) {
-                 if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY < rect.top && e.clientY >= rect.top - mobileHandleHeight) {
-                     clickedHandle = true;
-                 }
-             } else {
-                 if (e.clientY >= rect.top && e.clientY <= rect.bottom && e.clientX < rect.left && e.clientX >= rect.left - handleWidth) {
-                     clickedHandle = true;
-                 }
-             }
-
-             if (clickedHandle) {
-                 toolbarHover = !t.classList.contains('visible');
-                 manageToolbar();
-             }
-        });
-        updateStatus("Toolbar setup.")
-    }
-
-    // --- Caching & Page Loading ---
+    // --- Caching & Page Loading (Unchanged) ---
     function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){pageCache.delete(pageCache.keys().next().value);}}
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- Custom Keyword Overlay Creation (No changes needed here) ---
+    // --- NEW: createKeywordOverlays Function ---
+    /**
+     * Creates custom absolutely positioned overlays for keywords on a page.
+     * @param {number} pageNum - The page number (1-based).
+     * @param {HTMLElement} pageElement - The .book-page container element.
+     * @param {PDFPageViewport} viewport - The viewport used for rendering the page.
+     */
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
-        // Rotated mode check removed as rotated mode is gone
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
-        const canvasContainer = pageElement.querySelector('.canvas-container');
+        const canvasContainer = pageElement.querySelector('.canvas-container'); // Needed for positioning context
 
-        if (!book.pdfDocument || !overlayContainer || !canvasContainer) { console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return; }
-        overlayContainer.innerHTML = '';
+        if (!book.pdfDocument || !overlayContainer || !canvasContainer) {
+            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`);
+            return;
+        }
+
+        overlayContainer.innerHTML = ''; // Clear previous overlays
+
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
-        if (keywordsForPage.length === 0) return;
+        if (keywordsForPage.length === 0) {
+            // updateStatus(`No keywords defined for page ${pageNum}.`);
+            return; // No keywords for this page
+        }
+
+        // Create efficient lookup structures
         const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
         const lowerCaseDefs = {};
-        for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
+        for (const key in keywordDefinitions) {
+            lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key];
+        }
 
         try {
             const page = await book.pdfDocument.getPage(pageNum);
+            // Get text content with whitespace normalized
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
+
             textContent.items.forEach(item => {
-                const itemText = item.str; if (!itemText || itemText.trim().length === 0) return;
+                const itemText = item.str; // Use original string from item
+                if (!itemText || itemText.trim().length === 0) return; // Skip empty items
+
+                // Check if this item's text contains any keyword for the page
                 keywordsForPage.forEach((originalKeyword, index) => {
-                    const keywordLower = lowerCaseKeywords[index]; const definition = lowerCaseDefs[keywordLower]; if (!definition) return;
-                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi'); let match;
+                    const keywordLower = lowerCaseKeywords[index];
+                    const definition = lowerCaseDefs[keywordLower];
+                    if (!definition) return; // Skip if definition missing
+
+                    // Find occurrences of the keyword within the item string (case-insensitive, whole word)
+                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    // Regex: \b ensures word boundary, 'gi' for global, case-insensitive
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                    let match;
+
                     while ((match = regex.exec(itemText)) !== null) {
+                        // --- Calculate Position (Highlighting the whole text item for now) ---
+                        // item.transform includes matrix for PDF space -> device space for this item.
+                        // item.width/height are in device space (pixels after transform).
+
+                        // Calculate the transformation matrix relative to the viewport
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                        const itemWidth = item.width; const itemHeight = item.height; let left = tx[4]; let top = tx[5] - itemHeight; if (left < 0) left = 0; if (top < 0) top = 0;
-                        const highlightDiv = document.createElement('div'); highlightDiv.className = 'keyword-highlight';
-                        highlightDiv.style.cssText = `left: ${left}px; top: ${top}px; width: ${itemWidth}px; height: ${itemHeight}px;`;
-                        highlightDiv.dataset.keyword = originalKeyword; highlightDiv.dataset.definition = definition; highlightDiv.title = `Definition: ${originalKeyword}`;
-                        highlightDiv.addEventListener('click', (e) => { e.stopPropagation(); const rect = highlightDiv.getBoundingClientRect(); showDefinitionPopup(originalKeyword, definition, rect.left, rect.bottom, rect.top); });
+
+                        // Get item dimensions in device pixels
+                        const itemWidth = item.width;
+                        const itemHeight = item.height;
+
+                        // Calculate top-left corner in device pixels relative to viewport (0,0)
+                        // tx[4] is the transformed X origin (left edge for LTR text)
+                        // tx[5] is the transformed Y origin (baseline for horizontal text)
+                        let left = tx[4];
+                        let top = tx[5] - itemHeight; // Y is baseline, so subtract height for top edge
+
+                        // Position is relative to the viewport's origin (top-left of the rendered page area).
+                        // The overlayContainer is positioned absolutely within the canvasContainer,
+                        // which itself has padding. The calculated left/top should directly map
+                        // to the overlayContainer's coordinate space if it fills the canvasContainer.
+
+                        // Clamp positions to ensure they are not negative (can happen with rounding or small elements)
+                        if (left < 0) left = 0;
+                        if (top < 0) top = 0;
+
+                        // --- Create Highlight Element ---
+                        const highlightDiv = document.createElement('div');
+                        highlightDiv.className = 'keyword-highlight';
+                        highlightDiv.style.left = `${left}px`;
+                        highlightDiv.style.top = `${top}px`;
+                        highlightDiv.style.width = `${itemWidth}px`;
+                        highlightDiv.style.height = `${itemHeight}px`;
+
+                        highlightDiv.dataset.keyword = originalKeyword;
+                        highlightDiv.dataset.definition = definition;
+                        highlightDiv.title = `Definition: ${originalKeyword}`; // Tooltip
+
+                        // Attach click listener directly
+                        highlightDiv.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Prevent accidental page turns etc.
+                            // Get position relative to the VIEWPORT for fixed positioning of popup
+                            const rect = highlightDiv.getBoundingClientRect();
+                            showDefinitionPopup(originalKeyword, definition, rect.left, rect.bottom, rect.top);
+                        });
+
                         overlayContainer.appendChild(highlightDiv);
-                        return; // Highlight whole item once
-                    }
-                });
-            });
-        } catch (error) { console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error); overlayContainer.innerHTML = ''; }
+
+                        // Highlight the *entire* text item if *any* keyword is found within it.
+                        // Break the inner keyword loop to avoid adding multiple highlights for the same item.
+                        return; // Move to the next text item
+                    } // End while match
+                }); // End forEach keyword
+            }); // End forEach text item
+
+            // updateStatus(`Created custom keyword overlays for page ${pageNum}`);
+        } catch (error) {
+            console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
+            overlayContainer.innerHTML = ''; // Clear on error
+        }
     }
 
-    // --- Base Text Layer Rendering ---
+    // --- NEW: Simplified renderAndEnhanceTextLayer ---
+    /**
+     * Renders the base text layer for accessibility, but makes it invisible
+     * and non-interactive, as the custom overlay handles interactions.
+     * Uses PDF.js v2.5.207 core function.
+     */
     async function renderAndEnhanceTextLayer(page, container, viewport) {
-      if (!page || !container || !viewport) return; container.innerHTML = '';
-      container.style.pointerEvents = 'none'; container.style.color = 'transparent';
+      if (!page || !container || !viewport) return;
+      container.innerHTML = ''; // Clear previous
+
+      // Ensure the container itself is not capturing events and text is hidden via CSS
+      container.style.pointerEvents = 'none';
+      container.style.color = 'transparent';
+
       try {
         const textContent = await page.getTextContent({normalizeWhitespace: true});
-        await pdfjsLib.renderTextLayer({ textContent, container, viewport }).promise;
-      } catch (error) { console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error); container.innerHTML = ''; }
+        // Use the core rendering function (v2.5.207 API)
+        const renderTask = pdfjsLib.renderTextLayer({
+          textContent: textContent,
+          container: container,
+          viewport: viewport,
+        });
+        await renderTask.promise;
+        // updateStatus(`Rendered transparent base text layer for page ${page.pageNumber}`);
+      } catch (error) {
+        console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error);
+        container.innerHTML = ''; // Clear on error
+      }
     }
 
-    // --- Annotation Layer Rendering (MODIFIED for Image Click Handling) ---
+    // --- Annotation Layer Rendering (using v2.5.207 core function) ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
-        container.innerHTML = ''; // Clear previous
+        container.innerHTML = '';
         try {
             const annotations = await page.getAnnotations();
             if (annotations.length === 0) return;
-
-            // Use the PDF.js helper to render standard annotations
             pdfjsLib.AnnotationLayer.render({
-                viewport: viewport.clone({ dontFlip: true }), div: container,
-                annotations: annotations, page: page, linkService: linkService
+                viewport: viewport.clone({ dontFlip: true }),
+                div: container,
+                annotations: annotations,
+                page: page,
+                linkService: linkService
             });
-
-            // *** NEW: Post-render processing for image link detection ***
-            // Use event delegation on the container for efficiency
-            container.addEventListener('click', handleAnnotationClick);
-
-            // Optionally: Add a class to links that look like images for styling
-            const linkElements = container.querySelectorAll('.linkAnnotation > a');
-            linkElements.forEach(link => {
-                if (isLikelyImageURL(link.href)) {
-                    link.parentElement.classList.add('image-link'); // Add class to the section/parent
-                }
-            });
-
+            // updateStatus(`Annotation layer rendered via pdfjsLib.AnnotationLayer.render for page ${page.pageNumber}`);
         } catch (error) {
-            console.error(`Error rendering/processing annotation layer for page ${page.pageNumber}:`, error);
-            container.innerHTML = ''; // Clear on error
-            // Remove listener if added previously (though clearing innerHTML usually does this)
-            container.removeEventListener('click', handleAnnotationClick);
+            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
+            container.innerHTML = '';
         }
     }
 
-    // --- Helper for Annotation Click ---
-    function handleAnnotationClick(event) {
-         const link = event.target.closest('a'); // Find the nearest ancestor link
-         if (link && link.parentElement.classList.contains('linkAnnotation')) {
-             const url = link.href;
-             if (isLikelyImageURL(url)) {
-                 event.preventDefault(); // Stop standard link navigation
-                 event.stopPropagation(); // Stop event bubbling
-                 showLightbox(url);
-             }
-             // Allow non-image links to function normally (or handle them differently if needed)
-         }
-    }
-
-    // --- Helper to guess if a URL points to an image ---
-    function isLikelyImageURL(url) {
-        if (!url || typeof url !== 'string') return false;
-        // Simple check for common image extensions
-        return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(url.split('?')[0].split('#')[0]);
-    }
-
-
-    // --- renderPage function (Calls createKeywordOverlays & annotation layer) ---
+    // --- renderPage function (MODIFIED to call createKeywordOverlays) ---
     async function renderPage(pageNum, canvasId) {
-        const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
         const textLayerContainer = canvasContainer?.querySelector('.textLayer');
         const annotationLayerContainer = canvasContainer?.querySelector('.annotationLayer');
-        const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container');
+        const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container'); // Get overlay container
         const pageElement = canvas?.closest('.book-page');
 
-        // Clear previous state for this canvas
+        // Clear previous layers
         delete currentViewports[canvasId];
         if (textLayerContainer) textLayerContainer.innerHTML = '';
-        if (annotationLayerContainer) {
-             annotationLayerContainer.innerHTML = '';
-             // Remove old delegated listener before adding a new one in renderAnnotationLayer
-             annotationLayerContainer.removeEventListener('click', handleAnnotationClick);
-        }
-        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
+        if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
+        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = ''; // Clear custom overlay too
 
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -689,19 +545,19 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
         let page; let viewport;
 
         try {
-            if (pageCache.has(pageNum)) { // Load from cache
+            // --- Canvas Rendering (from cache or new) ---
+            if (pageCache.has(pageNum)) {
                 const cachedData = pageCache.get(pageNum);
                 canvas.width = cachedData.width; canvas.height = cachedData.height;
                 canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
                 ctx.putImageData(cachedData.imageData, 0, 0);
                 page = await book.pdfDocument.getPage(pageNum); viewport = cachedData.viewport;
-                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
+                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData);
                 hidePageLoading(canvasId);
-            } else { // Render new page
+            } else {
                 page = await book.pdfDocument.getPage(pageNum);
                 const containerStyle = getComputedStyle(canvasContainer);
-                const availableWidth = parseFloat(containerStyle.width);
-                const availableHeight = parseFloat(containerStyle.height);
+                const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
                 if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} zero dimensions.`); hidePageLoading(canvasId); return; }
                 const defaultViewport = page.getViewport({ scale: 1 });
                 const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
@@ -711,17 +567,18 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
                 canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
                 const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
                 await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
-                // Cache the rendered image data and viewport info
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 pageCache.set(pageNum, { imageData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
-                trimCache();
-                hidePageLoading(canvasId);
+                trimCache(); hidePageLoading(canvasId);
             }
 
-            // Render Layers sequentially: Base Text -> Annotations -> Custom Keywords
+            // --- Render Layers ---
+            // 1. Render TRANSPARENT base text layer (for accessibility)
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
-            await renderAnnotationLayer(page, annotationLayerContainer, viewport); // Handles image clicks now
-            await createKeywordOverlays(pageNum, pageElement, viewport);
+            // 2. Render annotation layer (links)
+            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
+            // 3. *** NEW: Create CUSTOM keyword overlays ***
+            await createKeywordOverlays(pageNum, pageElement, viewport); // Pass pageElement and viewport
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -730,691 +587,224 @@ body.mobile-device #page-slider-trigger-zone { bottom: auto; top: 50%; left: 0; 
         }
     }
 
-    // --- Update Display ---
+    // --- Update Display (Calls renderPage) - Unchanged ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
-
-        // On mobile, always ensure double page view is off
-        if (isMobile) book.isDoublePageView = false;
-
-        const leftPageNum = book.currentPage;
-        // Only calculate right page if NOT mobile AND double page view is active
-        const rightPageNum = (!isMobile && book.isDoublePageView) ? book.currentPage + 1 : 0;
-
+        const leftPageNum = book.currentPage; const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
         updateStatus(`Updating display for page(s): ${leftPageNum}${rightPageNum > 0 ? ' & ' + rightPageNum : ''}`);
-        const leftPageDiv = document.querySelector('.book-page.left');
-        const rightPageDiv = document.querySelector('.book-page.right');
-        const leftPageNumDisplay = document.getElementById('left-page-number');
-        const rightPageNumDisplay = document.getElementById('right-page-number');
-
+        const leftPageDiv = document.querySelector('.book-page.left'); const rightPageDiv = document.querySelector('.book-page.right');
+        const leftPageNumDisplay = document.getElementById('left-page-number'); const rightPageNumDisplay = document.getElementById('right-page-number');
         if (!leftPageDiv || !rightPageDiv || !leftPageNumDisplay || !rightPageNumDisplay) { console.error("Critical page elements missing!"); return; }
-
-        // --- Left Page Handling ---
-        leftPageDiv.style.visibility = 'hidden'; // Hide while rendering
+        leftPageDiv.style.visibility = 'hidden'; rightPageDiv.style.display = 'none'; rightPageDiv.classList.remove('placeholder-page');
+        const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
+        const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
+        if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-            leftPageNumDisplay.textContent = String(leftPageNum);
-            await renderPage(leftPageNum, 'left-page-canvas');
-            leftPageDiv.style.visibility = 'visible';
+            leftPageNumDisplay.textContent = String(leftPageNum); await renderPage(leftPageNum, 'left-page-canvas'); leftPageDiv.style.visibility = 'visible';
         } else {
             leftPageDiv.style.visibility = 'hidden'; leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
-             if(lTextLayer) lTextLayer.innerHTML = '';
-             if(lAnnLayer) { lAnnLayer.innerHTML = ''; lAnnLayer.removeEventListener('click', handleAnnotationClick); }
-             if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
+            if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
         }
-
-        // --- Right Page Handling (Desktop Double-Page Only) ---
-        // Always hide/clear right page if mobile or single page view
-        if (isMobile || !book.isDoublePageView) {
-            rightPageDiv.style.display = 'none';
-            rightPageDiv.classList.remove('placeholder-page');
-             const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
-             const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
-             if(rTextLayer) rTextLayer.innerHTML = '';
-             if(rAnnLayer) { rAnnLayer.innerHTML = ''; rAnnLayer.removeEventListener('click', handleAnnotationClick); }
-             if(rKeywordOverlay) rKeywordOverlay.innerHTML = '';
-             rightPageNumDisplay.textContent = '';
-        } else {
-            // Desktop, double page view active: Render or show placeholder
-             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
-                 rightPageNumDisplay.textContent = String(rightPageNum);
-                 rightPageDiv.classList.remove('placeholder-page');
-                 rightPageDiv.style.display = 'flex'; // Ensure visible
-                 await renderPage(rightPageNum, 'right-page-canvas');
-             } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-                 // Show placeholder if left page is valid but right is not
-                 rightPageDiv.style.display = 'flex';
-                 rightPageDiv.classList.add('placeholder-page');
-                 rightPageNumDisplay.textContent = '';
-                  // Clear canvas/layers for placeholder
-                  const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
-                  const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
-                   if(rTextLayer) rTextLayer.innerHTML = '';
-                   if(rAnnLayer) { rAnnLayer.innerHTML = ''; rAnnLayer.removeEventListener('click', handleAnnotationClick); }
-                   if(rKeywordOverlay) rKeywordOverlay.innerHTML = '';
-             } else {
-                 // Hide right page if left page isn't valid either
-                 rightPageDiv.style.display = 'none';
-                 rightPageDiv.classList.remove('placeholder-page');
-             }
+        if (book.isDoublePageView) {
+            if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
+                rightPageNumDisplay.textContent = String(rightPageNum); rightPageDiv.style.display = 'flex'; await renderPage(rightPageNum, 'right-page-canvas');
+            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) { rightPageDiv.style.display = 'flex'; rightPageDiv.classList.add('placeholder-page'); rightPageNumDisplay.textContent = ''; }
+            else { rightPageDiv.style.display = 'none'; }
         }
-
-        applyCurrentViewModeStyles(); // Ensure styles match state AFTER rendering might have changed sizes
-        updateSliderPosition();
-        preloadAdjacentPages(book.currentPage);
-        updateStatus("Display update complete.");
+        updateSliderPosition(); preloadAdjacentPages(book.currentPage); updateStatus("Display update complete.");
     }
 
-    // --- Preloading ---
+    // --- Preloading (Unchanged) ---
      function preloadAdjacentPages(currentPage) {
         if (!book.pdfDocument) return;
-        const pagesToPreload = [];
-        const isActuallyDouble = !isMobile && book.isDoublePageView; // Check actual double view status
-        const lookahead = isActuallyDouble ? 2 : 1;
-
-        // Preload next pages
-        for (let i = 1; i <= lookahead; i++) {
-             const nextPageOffset = isActuallyDouble ? i * 2 : i;
-             const nextPage = currentPage + nextPageOffset;
-             if (nextPage <= book.totalPages) {
-                 pagesToPreload.push(nextPage);
-                 // If double view, also preload the page next to the next *visible* page
-                 if (isActuallyDouble && (nextPage + 1) <= book.totalPages) {
-                     pagesToPreload.push(nextPage + 1);
-                 }
-             }
-        }
-        // Preload previous pages
-         for (let i = 1; i <= lookahead; i++) {
-             const prevPageOffset = isActuallyDouble ? i * 2 : i;
-             const prevPage = currentPage - prevPageOffset;
-             if (prevPage >= 1) {
-                 pagesToPreload.push(prevPage);
-                  // If double view, also preload the page next to the previous *visible* page
-                  if (isActuallyDouble && (prevPage + 1) < currentPage && (prevPage + 1) <= book.totalPages) {
-                     pagesToPreload.push(prevPage + 1);
-                 }
-             }
-         }
-
-        const uniquePages = [...new Set(pagesToPreload)].filter(p => p > 0 && p <= book.totalPages && !pageCache.has(p));
-        if (uniquePages.length === 0) return;
-        // updateStatus(`Preloading pages: ${uniquePages.join(', ')}`);
-
+        const pagesToPreload = []; const lookahead = book.isDoublePageView ? 2 : 1;
+        for (let i = 1; i <= lookahead; i++) { const nextPage = currentPage + (book.isDoublePageView ? i * 2 : i); if (nextPage <= book.totalPages) { pagesToPreload.push(nextPage); if (book.isDoublePageView && nextPage + 1 <= book.totalPages) pagesToPreload.push(nextPage + 1); } }
+        for (let i = 1; i <= lookahead; i++) { const prevPage = currentPage - (book.isDoublePageView ? i * 2 : i); if (prevPage >= 1) { pagesToPreload.push(prevPage); if (book.isDoublePageView && prevPage + 1 <= book.totalPages && prevPage + 1 < currentPage) pagesToPreload.push(prevPage + 1); } }
+        const uniquePages = [...new Set(pagesToPreload)].filter(p => p > 0 && p <= book.totalPages && !pageCache.has(p)); if (uniquePages.length === 0) return;
         uniquePages.forEach(pageNum => {
             book.pdfDocument.getPage(pageNum).then(page => {
-                // Use approximate dimensions for preloading based on current mode
-                let simWidth, simHeight;
-                if (isMobile) {
-                    simWidth = window.innerWidth - 10; // Mobile padding
-                    simHeight = window.innerHeight - 10;
-                } else if (book.isDoublePageView) {
-                    simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING);
-                    simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING);
-                } else { // Desktop Single Page
-                     const spread = document.querySelector('.book-spread');
-                     simWidth = spread ? spread.clientWidth - (2*PAGE_PADDING) : window.innerWidth * 0.9;
-                     simHeight = spread ? spread.clientHeight - (2*PAGE_PADDING) : window.innerHeight * 0.9;
-                }
-
-                const defaultViewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); // Limit scale to 1 max maybe?
-                const viewport = page.getViewport({ scale: scale });
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                const outputScale = window.devicePixelRatio || 1;
-                tempCanvas.width = Math.floor(viewport.width * outputScale);
-                tempCanvas.height = Math.floor(viewport.height * outputScale);
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-
-                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => {
-                    if (!pageCache.has(pageNum)) {
-                        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                        pageCache.set(pageNum, { imageData, width: tempCanvas.width, height: tempCanvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
-                        trimCache();
-                        // updateStatus(`Preloaded page ${pageNum}`);
-                    }
-                }).catch(err => console.warn(`Preloading render failed for page ${pageNum}: ${err.message}`));
+                const defaultViewport = page.getViewport({ scale: 1 }); const simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING); const simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING); const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); const viewport = page.getViewport({ scale: scale }); const tempCanvas = document.createElement('canvas'), tempCtx = tempCanvas.getContext('2d'); const outputScale = window.devicePixelRatio || 1; tempCanvas.width = Math.floor(viewport.width * outputScale); tempCanvas.height = Math.floor(viewport.height * outputScale); const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => { if (!pageCache.has(pageNum)) { const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height); pageCache.set(pageNum, { imageData, width: tempCanvas.width, height: tempCanvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport }); trimCache(); } }).catch(err => console.warn(`Preloading page ${pageNum} failed: ${err.message}`));
             }).catch(err => console.warn(`Failed to get page ${pageNum} for preloading: ${err.message}`));
         });
     }
 
-    // --- Navigation ---
-    function nextPage(){
-        const isActuallyDouble = !isMobile && book.isDoublePageView;
-        const inc = isActuallyDouble ? 2 : 1;
-        const targetPage = book.currentPage + inc;
-        if (targetPage <= book.totalPages) {
-            jumpToPage(targetPage);
-        } else if (!isActuallyDouble && book.currentPage < book.totalPages) {
-            // Allow going to the very last page in single view
-            jumpToPage(book.totalPages);
-        }
-    }
-    function prevPage(){
-        const isActuallyDouble = !isMobile && book.isDoublePageView;
-        const dec = isActuallyDouble ? 2 : 1;
-        const targetPage = book.currentPage - dec;
-        if (targetPage >= 1) {
-            jumpToPage(targetPage);
-        }
-    }
-    function jumpToPage(pageNum){
-        if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages){ console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`); return }
-        let targetPage = pageNum;
-        // Ensure target page is odd for double-page view (desktop only)
-        if (!isMobile && book.isDoublePageView && targetPage > 1 && targetPage % 2 === 0) {
-            targetPage--;
-        }
-        if (targetPage === book.currentPage) return; // Already on the target page
+    // --- Navigation (Unchanged) ---
+    function nextPage(){ const inc=book.isDoublePageView?2:1,t=book.currentPage+inc; if(t<=book.totalPages)jumpToPage(t); else if(!book.isDoublePageView&&book.currentPage<book.totalPages)jumpToPage(book.totalPages) }
+    function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
+    function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
 
-        updateStatus(`Jumping to page ${targetPage}`);
-        book.currentPage = targetPage;
-        if (targetPage > user.readingProgress.furthestPage) user.readingProgress.furthestPage = targetPage;
+    // --- View Modes (Unchanged) ---
+    function applyCurrentViewModeStyles() { const i=document.body.classList.contains('rotated-mode'),s=document.querySelector('.book-spread');if(!s)return; if(i){const w=window.innerWidth,h=window.innerHeight,bW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')),bH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')),sX=w/bH,sY=h/bW,sc=Math.min(sX,sY)*.95;s.style.transformOrigin='center center';s.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${sc})`}else{s.style.transformOrigin='center center';s.style.transform='translate(-50%, -50%)'} }
+    function setSinglePageView(){ if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Single Page View"); book.isDoublePageView=false; document.body.classList.remove('rotated-mode'); document.body.classList.add('fullscreen-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
+    function setDoublePageView(){ if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Double Page View"); book.isDoublePageView=true; document.body.classList.remove('rotated-mode','fullscreen-mode'); if(book.currentPage>1&&book.currentPage%2===0)book.currentPage--; hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
+    function setRotatedView() { if(document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Rotated View"); book.isDoublePageView=false; document.body.classList.remove('fullscreen-mode'); document.body.classList.add('rotated-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
 
-        hideDefinitionPopup(); // Hide popups on page turn
-        hideLightbox(); // Hide lightbox on page turn
-        updateDisplay(); // Render the new page(s)
-        showPageSlider(); // Show slider briefly
-        manageToolbar(false); // Hide toolbar
-    }
-
-    // --- View Modes ---
-    function applyCurrentViewModeStyles() {
-        const spread = document.querySelector('.book-spread'); if (!spread) return;
-        // Reset transform first
-        spread.style.transform = 'translate(-50%, -50%)';
-        spread.style.transformOrigin = 'center center';
-
-        if (isMobile) {
-             // Mobile always uses fullscreen-mode styles (applied via body class)
-             // No specific transform needed here as CSS handles the sizing
-        } else {
-             // Desktop: Apply standard fullscreen (single page centered) or default (double page)
-             if (document.body.classList.contains('fullscreen-mode')) {
-                 // Desktop fullscreen handled by CSS sizing .fullscreen-mode .book-spread
-             } else {
-                  // Desktop double page view - default CSS applies (--page-w, --page-h)
-             }
-        }
-        // We might need to trigger a re-render or viewport update after style changes affect container size
-        // updateDisplay() is usually called after view mode changes anyway
-    }
-
-    function setSinglePageView(){
-        updateStatus("Setting Single Page View");
-        book.isDoublePageView = false; // Always false in single page mode
-        document.body.classList.add('fullscreen-mode'); // Use fullscreen for styling single page on both desktop/mobile
-
-        hideDefinitionPopup();
-        hideLightbox();
-        // Apply styles *before* updating display so rendering uses correct dimensions
-        applyCurrentViewModeStyles();
-        updateDisplay().then(()=>{
-             manageToolbar();
-             updateSliderTotalPages(); // Update max value if needed (though total pages doesn't change)
-             updateSliderPosition(); // Reflect current page
-        });
-    }
-
-    function setDoublePageView(){
-        // This function should ONLY be callable on desktop
-        if (isMobile) {
-            console.warn("Double page view attempted on mobile device. Ignoring.");
-            return;
-        }
-        if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode')) return; // Already in this mode
-
-        updateStatus("Setting Double Page View (Desktop)");
-        book.isDoublePageView = true;
-        document.body.classList.remove('fullscreen-mode');
-
-        // If current page is even, go back one to show odd/even pair
-        if (book.currentPage > 1 && book.currentPage % 2 === 0) {
-            book.currentPage--;
-        }
-
-        hideDefinitionPopup();
-        hideLightbox();
-        applyCurrentViewModeStyles();
-        updateDisplay().then(()=>{
-             manageToolbar();
-             updateSliderTotalPages();
-             updateSliderPosition();
-        });
-    }
-    // Removed setRotatedView function entirely
-
-    // --- UI Toggles ---
+    // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
     function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}}
     function hideTableOfContents(){toggleElement('toc-panel',false)}
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Adjusted for Mobile Vertical) ---
-    function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.pdfDocument&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
+    // --- Slider Logic (Unchanged) ---
+    function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
     function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)}
-    function initPageSlider(){
-        const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');
-        if(!s||!sc)return;let isDragging=!1;
-        // Use pointer events for better drag handling on touch/mouse
-        s.addEventListener('pointerdown', ()=>{ isDragging = true; clearTimeout(sliderHideTimeout); }); // Keep slider open while dragging
-        s.addEventListener('pointerup', ()=>{ isDragging = false; resetSliderHideTimer(); }); // Reset timer on release
-        s.addEventListener('input',()=>{ // Fired continuously during drag
-             const pageNum=parseInt(s.value,10), d=document.getElementById('current-page-display');
-             if(d){
-                 let pageText = `Page ${pageNum}`;
-                 // Show range only if desktop double view is active
-                 if (!isMobile && book.isDoublePageView && pageNum + 1 <= book.totalPages) {
-                     pageText += `-${pageNum + 1}`;
-                 }
-                 d.textContent = pageText;
-             }
-             updateSliderStyle(s,pageNum);
-             // Don't reset timer during continuous input
-        });
-        s.addEventListener('change',()=>{ // Fired after drag/click release
-            if (!isDragging) { // Prevent double jump if pointerup fires after change
-                 jumpToPage(parseInt(s.value,10));
-                 resetSliderHideTimer(); // Reset timer after jump completes
-            }
-        });
-        sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));
-        sc.addEventListener('mouseleave',()=>{ if (!isDragging) resetSliderHideTimer() }); // Don't hide if actively dragging thumb
-        updateSliderTotalPages();updateSliderPosition();
-    }
+    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages)t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
-    function updateSliderPosition(){
-        const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');
-        if(s&&d){
-            const currentPageNum=book.currentPage>0?book.currentPage:1, total=book.totalPages>0?book.totalPages:1;
-            s.value=currentPageNum;
-            let pageText=`Page ${currentPageNum}`;
-            // Show range only if desktop double view is active
-            if (!isMobile && book.isDoublePageView && currentPageNum+1<=total) {
-                 pageText+=`-${currentPageNum+1}`;
-            }
-            d.textContent=pageText;
-            updateSliderStyle(s,currentPageNum);
-        }
-    }
-    function updateSliderStyle(slider,value){if(!slider)return;const min=parseInt(slider.min||1),max=parseInt(slider.max||1),range=max>min?max-min:1,percent=(parseInt(value)-min)/range*100;slider.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,percent))}%`)}
+    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;if(book.isDoublePageView&&c+1<=t)p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
+    function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
 
-    // --- Overlay Data Loading ---
+    // --- Overlay Data Loading (Unchanged) ---
     async function loadOverlayData(pdfUrl) {
         const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json'); updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
         try {
-            const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP ${response.status}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
-            const data = await response.json(); if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') { console.warn("Invalid overlay structure."); keywordDefinitions = {}; pageKeywords = {}; return false; }
-            const processedKeywords = {}; for (const [key, value] of Object.entries(data.keywords)) { if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; } else { console.warn(`Invalid keyword entry: Key='${key}'`) } } keywordDefinitions = processedKeywords;
-            const processedPages = {}; for (const [pageNum, pageWords] of Object.entries(data.pages)) { if (pageNum && !isNaN(parseInt(pageNum)) && Array.isArray(pageWords) && pageWords.every(w => typeof w === 'string')) { processedPages[pageNum.toString()] = pageWords; } else { console.warn(`Invalid page entry: Page='${pageNum}'`); } } pageKeywords = processedPages;
-            updateStatus(`Overlay loaded: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages.`); return true;
-        } catch (error) { console.warn(`Overlay error for ${overlayUrl}: ${error.message}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
-     }
-
-    // --- PDF Loading ---
-    async function loadPdf(pdfUrl) {
-        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF...");
-        pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF:", e)}}
-        book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[];
-        hideDefinitionPopup(); hideLightbox();
-        document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true;
-        let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
-
-        try {
-            updateStatus("Starting PDF document loading...");
-            const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            const overlayPromise = loadOverlayData(pdfUrl); // Load overlay concurrently
-            showLoading("Loading PDF document...");
-            book.pdfDocument = await loadingTask.promise;
-            book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1;
-            updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
-            document.title = `${book.title} - Heritage History™ Reader`;
-            updateSliderTotalPages(); // Set slider max value
-
-            showLoading("Processing metadata..."); updateStatus("Fetching outline...");
-            try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); }
-            catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
-
-            await overlayPromise; // Wait for overlay data loading to finish
-
-            // --- Set Initial View Mode Based on Device ---
-            if (isMobile) {
-                 setSinglePageView(); // Force single page on mobile
-            } else {
-                 // Desktop: Default to double page if window is wide enough, else single
-                 if (window.innerWidth >= 1000) { // Adjust breakpoint as needed
-                     setDoublePageView();
-                 } else {
-                     setSinglePageView();
-                 }
-            }
-             // updateDisplay() is called within setSingle/DoublePageView
-
-        } catch (error) {
-            console.error("FATAL: Error loading PDF document:", error);
-            alert(`Failed to load PDF: ${error.message || error}`);
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={};
-            document.title="Heritage History™ Reader - Error";
-            updateSliderTotalPages(); updateSliderPosition(); populateTOC();
-            const spreadContainer = document.querySelector('.main-container .book-spread');
-            if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
-        } finally {
-            hideLoading();
-            updateStatus("loadPdf finished.");
-        }
+            const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
+            const data = await response.json(); if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') { console.warn("Invalid overlay structure in JSON file."); keywordDefinitions = {}; pageKeywords = {}; return false; }
+            const processedKeywords = {}; for (const [key, value] of Object.entries(data.keywords)) { if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; } else { console.warn(`Invalid keyword entry skipped: Key='${key}'`) } } keywordDefinitions = processedKeywords;
+            const processedPages = {}; for (const [pageNum, pageWords] of Object.entries(data.pages)) { if (pageNum && !isNaN(parseInt(pageNum)) && Array.isArray(pageWords) && pageWords.every(w => typeof w === 'string')) { processedPages[pageNum.toString()] = pageWords; } else { console.warn(`Invalid page entry skipped: Page='${pageNum}'`); } } pageKeywords = processedPages;
+            updateStatus(`Overlay loaded successfully: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages defined.`); return true;
+        } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
     }
 
-    // --- TOC population ---
-    function populateTOC() {
-        const tocList = document.getElementById('toc-list'), tocButton = document.getElementById('toc-btn');
-        if (!tocList || !tocButton) return; tocList.innerHTML = ''; tocButton.disabled = true;
-        if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
+    // --- PDF Loading (Unchanged) ---
+    async function loadPdf(pdfUrl) {
+        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true; let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
+        try {
+            updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
+            showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
+            const overlayLoaded = await overlayPromise; if (window.innerWidth < 1000) { setSinglePageView(); } else { setDoublePageView(); }
+        } catch (error) {
+            console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
+            const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
+        } finally { hideLoading(); updateStatus("loadPdf finished."); }
+    }
 
+    // --- TOC population (Unchanged, using v2.x compatible logic) ---
+    function populateTOC() {
+        const tocList = document.getElementById('toc-list'), tocButton = document.getElementById('toc-btn'); if (!tocList || !tocButton) return; tocList.innerHTML = ''; tocButton.disabled = true; if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
-            const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section';
-            const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : '';
-            s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
+            const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
             s.onclick = async (e) => {
-                e.preventDefault(); try { let pageIndex = -1;
-                    if (typeof item.dest === 'string') { const destArray = await book.pdfDocument.getDestination(item.dest); if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); } }
-                    else if (Array.isArray(item.dest) && item.dest[0]) { pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]); }
-                    else { console.warn("Unknown TOC destination:", item.dest); }
-                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); } else { throw new Error(`Could not resolve page for: ${item.title}`); }
+                e.preventDefault(); try {
+                    let pageIndex = -1;
+                    if (typeof item.dest === 'string') {
+                        const destArray = await book.pdfDocument.getDestination(item.dest);
+                        if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); }
+                    } else if (Array.isArray(item.dest) && item.dest[0]) {
+                         pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
+                    } else { console.warn("Unknown TOC destination format:", item.dest); }
+                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
+                    else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
             };
             d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
         };
-        book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); });
-        if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
-     }
+        book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); }); if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
+    }
 
-    // --- Popup Handling Functions ---
+    // --- NEW: Popup Handling Functions (Using new classes/structure) ---
     function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) return;
-        // Rotated mode check removed
 
         popupWord.textContent = word;
         popupDefinition.innerHTML = definition || `<span class="error-message">Definition not available.</span>`;
-        popupDefinition.scrollTop = 0;
+        popupDefinition.scrollTop = 0; // Reset scroll
 
-        const popupRect = definitionPopup.getBoundingClientRect();
-        const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight; const margin = 10;
-        const estWidth = Math.min(popupRect.width || 320, 320); const estHeight = Math.min(popupRect.height || 250, 250);
-        const clickCenterX = clickLeft + (estWidth / 2); // Approximate center based on estimated width
-        let posX = clickCenterX - (estWidth / 2);
-        let posY = clickTop - estHeight - 10; // Try above first
+        // Calculate position based on the clicked highlight element's viewport coordinates
+        const popupRect = definitionPopup.getBoundingClientRect(); // Get dimensions (might be 0 if hidden first time)
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const margin = 10; // Viewport margin
+
+        // Estimate dimensions if needed
+        const estWidth = Math.min(popupRect.width || 300, 300);
+        const estHeight = popupRect.height || 150; // Rough estimate
+
+        // Position Strategy: Try to place centered above, fallback to below.
+        let posX = clickLeft - (estWidth / 2); // Center horizontally relative to click start
+        let posY = clickTop - estHeight - 10; // Place 10px above
         let transformOrigin = 'bottom center';
 
-        if (posX < margin) { posX = margin; }
-        else if (posX + estWidth > viewportWidth - margin) { posX = viewportWidth - estWidth - margin; }
-        if (posY < margin) { posY = clickBottom + 10; transformOrigin = 'top center'; } // Fallback below
-        if (posY + estHeight > viewportHeight - margin) { posY = viewportHeight - estHeight - margin; } // Clamp to bottom
-        if (posY < margin) { posY = margin; } // Final top clamp
+        // Adjust horizontal position to stay within viewport bounds
+        if (posX < margin) {
+            posX = margin;
+        } else if (posX + estWidth > viewportWidth - margin) {
+            posX = viewportWidth - estWidth - margin;
+        }
 
-        definitionPopup.style.left = `${posX}px`; definitionPopup.style.top = `${posY}px`;
+        // If placing above goes off-screen OR overlaps too much with top controls, place below
+        if (posY < margin /* || posY < (SOME_TOP_UI_HEIGHT) */) {
+            posY = clickBottom + 10; // Place 10px below
+            transformOrigin = 'top center'; // Animate from top
+        }
+
+        // Final check if placing below goes off-screen
+        if (posY + estHeight > viewportHeight - margin) {
+             posY = viewportHeight - estHeight - margin; // Clamp to bottom
+             // If clamped to bottom, maybe force origin to bottom?
+             // transformOrigin = 'bottom center';
+        }
+         if (posY < margin) { // Final top clamp
+             posY = margin;
+         }
+
+        definitionPopup.style.left = `${posX}px`;
+        definitionPopup.style.top = `${posY}px`;
         definitionPopup.style.transformOrigin = transformOrigin;
+
+        // Make it visible using the class for transitions
         definitionPopup.classList.add('visible');
     }
-    function hideDefinitionPopup() {
-        if (definitionPopup) { definitionPopup.classList.remove('visible'); }
-    }
 
-    // --- Image Lightbox Functions ---
-    function showLightbox(imageUrl) {
-        if (!imageLightbox || !lightboxImage) return;
-        updateStatus(`Showing lightbox for: ${imageUrl}`);
-        lightboxImage.src = imageUrl; // Set the image source
-        imageLightbox.classList.add('visible');
-        // Optional: Add body class to prevent background scroll if needed
-        // document.body.style.overflow = 'hidden';
-    }
-    function hideLightbox() {
-        if (imageLightbox && imageLightbox.classList.contains('visible')) {
-             updateStatus("Hiding lightbox");
-             imageLightbox.classList.remove('visible');
-             lightboxImage.src = ""; // Clear src to free memory/stop loading
-             // Restore body scroll if changed
-             // document.body.style.overflow = '';
+    function hideDefinitionPopup() {
+        // Use class removal for transitions
+        if (definitionPopup) { // Check if popup exists
+            definitionPopup.classList.remove('visible');
         }
     }
 
-
-    // --- Event Setup ---
+    // --- Event Setup (MODIFIED for new popup and overlay) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // --- Toolbar Button Clicks ---
-        toolbar?.addEventListener('click', e => {
-            const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return;
-            const id = btn.id;
-            switch (id) {
-                case 'single-page-btn': setSinglePageView(); break;
-                case 'double-page-btn': setDoublePageView(); break; // Will be ignored on mobile
-                // case 'rotate-btn': // Removed
-                case 'toc-btn': showTableOfContents(); break;
-            }
-            resetSliderHideTimer(); // Keep slider visible after interaction
-            toolbarHover = false; manageToolbar(false); // Hide toolbar after click
-        });
+        // --- Keyword Interactions Handled Directly on elements in createKeywordOverlays ---
+        // No delegation needed here unless preferred.
 
-        // --- Modal Closes ---
+        // --- Existing Event Listeners (Toolbar, TOC, Page Edges, Keyboard, Resize, Touch, Slider) ---
+        toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        closePopupBtn?.addEventListener('click', hideDefinitionPopup);
-        closeLightboxBtn?.addEventListener('click', hideLightbox);
-        // Click outside lightbox content (but on background) to close
-        imageLightbox?.addEventListener('click', (e) => {
-            if (e.target === imageLightbox) { // Check if click was directly on the background
-                 hideLightbox();
-            }
-        });
-
-        // --- Page Navigation (Edges) ---
-        bookSpread?.addEventListener('click', e => {
-            if (e.target.classList.contains('page-edge-nav')) {
-                const pageDiv = e.target.closest('.book-page');
-                if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
-                if (e.target.classList.contains('page-edge-left')) { prevPage(); }
-                else { nextPage(); }
-                showPageSlider(); manageToolbar(false);
-            }
-        });
-
-        // --- Keyboard Navigation ---
-        document.addEventListener('keydown', e => {
-            // Ignore if modals are open or in input fields
-            if (document.getElementById('toc-panel')?.classList.contains('visible') ||
-                imageLightbox?.classList.contains('visible') ||
-                definitionPopup?.classList.contains('visible') ||
-                (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA'))
-            {
-                 // Allow Esc for modals
-                 if (e.key === 'Escape') {
-                     if (imageLightbox?.classList.contains('visible')) { hideLightbox(); e.preventDefault(); }
-                     else if (definitionPopup?.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); }
-                     else if (document.getElementById('toc-panel')?.classList.contains('visible')) { hideTableOfContents(); e.preventDefault(); }
-                 }
-                 return;
-            }
-
-            // Ignore if modifier keys are pressed
-            if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-            let navAction = false;
-            switch(e.key){
-                case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break;
-                case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break;
-                case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break;
-                case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break;
-            }
-            if(navAction){
-                e.preventDefault(); showPageSlider(); manageToolbar(false);
-            }
-        });
-
-        // --- Resize Handling ---
-        window.addEventListener('resize', ()=>{
-            clearTimeout(resizeTimer);
-            resizeTimer=setTimeout(()=>{
-                updateStatus("Resize detected.");
-                const wasMobile = isMobile;
-                isMobile = isMobileDevice(); // Re-check device type on resize
-
-                // If device type changed, re-initialize UI layout potentially
-                if (wasMobile !== isMobile) {
-                    updateStatus(`Device type changed: ${wasMobile ? 'Mobile' : 'Desktop'} -> ${isMobile ? 'Mobile' : 'Desktop'}`);
-                    // Re-apply body class, re-render toolbar, set appropriate view mode
-                    document.body.classList.toggle('mobile-device', isMobile);
-                    buildToolbar(); // Rebuild toolbar for new device type
-                    if (isMobile) {
-                        setSinglePageView();
-                    } else {
-                         // Default to double or single based on width for desktop
-                        if (window.innerWidth >= 1000) setDoublePageView();
-                        else setSinglePageView();
-                    }
-                     // updateDisplay() is called within setSingle/DoublePageView
-                } else {
-                    // If device type same, just update layout and display
-                     hideDefinitionPopup();
-                     hideLightbox();
-                     applyCurrentViewModeStyles(); // Recalculate sizes/transforms
-                     updateDisplay(); // Re-render pages if needed
-                     manageToolbar(); // Adjust toolbar visibility if needed
-                }
-            }, 250);
-        });
-
-        // --- Touch Swipe Navigation ---
-        let touchStartX=0, touchStartY=0, touchStartTime=0;
-        const SWIPE_MIN_X = 50, SWIPE_MAX_Y = 70, SWIPE_MAX_TIME = 500;
-        document.body.addEventListener('touchstart', e => {
-             // Ignore swipes if modals open or on interactive elements
-             if (e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,#image-lightbox,.keyword-highlight,.annotationLayer section')){
-                 touchStartX=0; touchStartY=0; return;
-             }
-             if (e.touches.length === 1) {
-                 touchStartX = e.touches[0].screenX; touchStartY = e.touches[0].screenY; touchStartTime = Date.now();
-             } else { touchStartX = 0; touchStartY = 0; } // Reset if multi-touch
-         }, {passive:true});
-        document.body.addEventListener('touchend', e => {
-             if (touchStartX === 0 && touchStartY === 0) return; // No valid start
-             if (e.changedTouches.length === 1) {
-                 const touchEndX = e.changedTouches[0].screenX; const touchEndY = e.changedTouches[0].screenY;
-                 const timeElapsed = Date.now() - touchStartTime;
-                 if (timeElapsed < SWIPE_MAX_TIME) {
-                     const deltaX = touchEndX - touchStartX; const deltaY = touchEndY - touchStartY;
-                     const absX = Math.abs(deltaX); const absY = Math.abs(deltaY);
-                     if (absX > SWIPE_MIN_X && absY < SWIPE_MAX_Y) { // Horizontal swipe
-                         if (deltaX > 0) { prevPage(); } // Swipe Right -> Prev
-                         else { nextPage(); } // Swipe Left -> Next
-                         showPageSlider(); manageToolbar(false);
-                     }
-                 }
-             }
-             touchStartX = 0; touchStartY = 0; touchStartTime = 0; // Reset after touch end
-         });
-
-        // --- Slider Trigger Zone Hover ---
-        const sliderTriggerZone=document.getElementById('page-slider-trigger-zone'), sliderContainer=document.getElementById('page-slider-container');
-        if(sliderTriggerZone && sliderContainer){
-            const enterTrigger=()=>{ if(book.pdfDocument&&book.totalPages>0){ showPageSlider(); clearTimeout(sliderHideTimeout); } };
-            const leaveTrigger= e =>{ const related = e.relatedTarget; if(!sliderContainer.contains(related) && !sliderTriggerZone.contains(related)){ resetSliderHideTimer(); } };
-            sliderTriggerZone.addEventListener('mouseenter', enterTrigger);
-            sliderContainer.addEventListener('mouseenter', ()=>clearTimeout(sliderHideTimeout)); // Keep slider open if mouse enters it
-            sliderTriggerZone.addEventListener('mouseleave', leaveTrigger);
-            sliderContainer.addEventListener('mouseleave', resetSliderHideTimer); // Hide slider when mouse leaves it (unless dragging)
-        }
-
-        // --- Click Outside Definition Popup ---
-        document.addEventListener('click', e => {
-            if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) {
-                 hideDefinitionPopup();
-            }
-        }, true); // Use capture phase
-
+        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Attach to new close button
+        bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
+        document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode') || document.body.classList.contains('fullscreen-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); updateDisplay(); } manageToolbar(); }, 250); });
+        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
+        const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
+        // Outside Click for Popup Close (Updated check)
+        document.addEventListener('click', e => { if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) { hideDefinitionPopup(); } }, true);
         updateStatus("Events setup complete");
     }
 
-    // --- Build Toolbar Dynamically ---
-    function buildToolbar() {
-         const toolbarContainer = document.getElementById('new-toolbar');
-         if (!toolbarContainer) return;
-
-         let buttonsHTML = `
-            <button class="new-btn" id="single-page-btn" title="Single Page View">☰</button>
-         `;
-
-         if (!isMobile) {
-             // Add Double Page button only for Desktop
-             buttonsHTML += `<button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>`;
-         }
-
-         // TOC button is always present (but may be disabled)
-         buttonsHTML += `<button class="new-btn" id="toc-btn" title="Table of Contents" disabled>📑</button>`;
-
-         toolbarContainer.innerHTML = buttonsHTML;
-         updateStatus(`Toolbar built for ${isMobile ? 'Mobile' : 'Desktop'}`);
-    }
-
-
-    // --- Initialization ---
+    // --- Initialization (Unchanged) ---
     async function init() {
         updateStatus("Initializing application...");
         try {
-            // --- Detect Device Type and Set Body Class ---
-            isMobile = isMobileDevice();
-            document.body.classList.toggle('mobile-device', isMobile);
-            updateStatus(`Detected device type: ${isMobile ? 'Mobile' : 'Desktop'}`);
-
-            // --- Set Page Padding Based on Device ---
-            PAGE_PADDING = isMobile ? 5 : 15; // Less padding on mobile
-            // Update CSS variable if needed (though CSS might handle it better via body class)
-            // document.documentElement.style.setProperty('--page-padding', `${PAGE_PADDING}px`);
-
-            // --- Build Toolbar Based on Device ---
-            buildToolbar();
-
-            // --- Setup Core Functionality ---
-            setupEvents();
-            setupToolbarHover();
-            initPageSlider();
-            hideLoading(); // Hide initial loading overlay if any
-
-            // --- Load PDF from URL ---
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfUrlParam = urlParams.get('pdf');
-            if (pdfUrlParam) {
-                updateStatus(`PDF URL parameter found: ${pdfUrlParam}`);
-                await loadPdf(pdfUrlParam); // This now handles setting initial view mode
-            } else {
-                updateStatus("No PDF specified in URL parameter (?pdf=...). Displaying placeholder.");
-                const sc = document.querySelector('.main-container .book-spread');
-                if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
-                document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden');
-                document.querySelector('.book-page.right')?.style.setProperty('display','none');
-                document.getElementById('page-slider-container')?.classList.remove('visible');
-                document.getElementById('new-toolbar')?.classList.remove('visible');
+            try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
+            setupEvents(); setupToolbarHover(); initPageSlider(); hideLoading();
+            const urlParams = new URLSearchParams(window.location.search); const pdfUrlParam = urlParams.get('pdf');
+            if (pdfUrlParam) { updateStatus(`PDF URL parameter found: ${pdfUrlParam}`); await loadPdf(pdfUrlParam); }
+            else {
+                updateStatus("No PDF specified in URL parameter (?pdf=...)."); const sc = document.querySelector('.main-container .book-spread'); if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`; document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden'); document.querySelector('.book-page.right')?.style.setProperty('display','none'); document.getElementById('page-slider-container')?.classList.remove('visible'); document.getElementById('new-toolbar')?.classList.remove('visible');
             }
-
-            // --- Cleanup on Unload ---
-            window.addEventListener('beforeunload', () => {
-                updateStatus("Unloading - Cleanup."); pageCache.clear();
-                if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; }
-            });
+            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete.");
-
-        } catch (initError) {
-            console.error("Initialization failed:", initError);
-            document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`;
-        }
+        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
     }
 
     // --- Start the application ---
