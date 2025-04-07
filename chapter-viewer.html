@@ -430,34 +430,33 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
 
 /* Gutter shadow effect only in double page view */
-/* EXISTING inner gutter shadows */
+/* EXISTING inner gutter shadows (applied to canvas container inside page) */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
-/* --- START: UPDATED VERTICAL CREASE EFFECT --- */
+/* --- START: REALISTIC VERTICAL CREASE EFFECT --- */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
     left: 50%; /* Center horizontally */
-    width: 24px; /* Wider effect area for softer gradient falloff */
+    width: 30px; /* Width of the crease effect */
     transform: translateX(-50%); /* Precise centering */
-    /* Smoother, softer gradient simulating a crease shadow */
+    /* Gradient: Darkest in center, fading smoothly to transparent edges */
     background: linear-gradient(to right,
-        rgba(0, 0, 0, 0.15) 0%,   /* Soft shadow at outer edge (left) */
-        rgba(0, 0, 0, 0.05) 30%,  /* Fading towards center */
-        rgba(0, 0, 0, 0.20) 48%,  /* Slightly darker near center (left side) */
-        rgba(0, 0, 0, 0.20) 52%,  /* Slightly darker near center (right side) */
-        rgba(0, 0, 0, 0.05) 70%,  /* Fading away from center */
-        rgba(0, 0, 0, 0.15) 100%  /* Soft shadow at outer edge (right) */
+        rgba(0, 0, 0, 0.0) 0%,     /* Start transparent */
+        rgba(0, 0, 0, 0.12) 35%,   /* Fade in to subtle shadow */
+        rgba(0, 0, 0, 0.18) 50%,   /* Darkest point at the exact center */
+        rgba(0, 0, 0, 0.12) 65%,   /* Fade out */
+        rgba(0, 0, 0, 0.0) 100%    /* End transparent */
     );
     pointer-events: none; /* Doesn't interfere with mouse */
-    z-index: 6; /* Above page backgrounds but below edge navs/popups */
-    opacity: 0.85; /* Fine-tune overall intensity (0.7 to 0.9 range is usually good) */
+    z-index: 6; /* Position above page background, below other interactive elements */
+    opacity: 1; /* Keep opacity at 1, control darkness via RGBA alpha values */
 }
-/* --- END: UPDATED VERTICAL CREASE EFFECT --- */
+/* --- END: REALISTIC VERTICAL CREASE EFFECT --- */
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
@@ -1086,7 +1085,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     }
 
 
-    // --- Event Setup (Unchanged) ---
+    // --- Event Setup (Update Toolbar Handler) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
