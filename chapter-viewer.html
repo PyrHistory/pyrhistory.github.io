@@ -346,68 +346,13 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 /* ... (unchanged) ... */
 
 .main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
-
-/* --- START: UPDATED BOOK SPREAD & PAGE STYLES --- */
-.book-spread{
-    display:flex;
-    box-shadow:0 10px 35px rgba(0,0,0,.5);
-    position:fixed!important;
-    top:50%!important;
-    left:50%!important;
-    transform-origin:center center;
-    width:auto!important;
-    height:auto!important;
-    transition:transform .3s ease;
-    transform: translate(-50%, -50%);
-    perspective: 1500px; /* ADDED Perspective */
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%);
+    /* ADDED: Perspective for the book spread */
+    perspective: 1500px;
 }
-
 .book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
-
-/* ADDED Perspective Page Rotations for Double Page View */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left {
-    transform: rotateY(1deg);
-    transform-origin: right center;
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right {
-    transform: rotateY(-1deg);
-    transform-origin: left center;
-}
-
-/* ADDED Page curling near binding for Double Page View */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0; /* Positioned at the inner edge */
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to left,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 8; /* Above page content, below edge nav */
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0; /* Positioned at the inner edge */
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to right,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 8; /* Above page content, below edge nav */
-}
-
 .canvas-container {
     position: relative; /* Important for positioning layers */
     width: calc(100% - 2 * var(--page-padding));
@@ -423,20 +368,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right::after {
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
 .page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* Animation for subtle crease movement */
-@keyframes paper-shift {
-    0% {
-        background-position: 0% 0%;
-    }
-    100% {
-        background-position: 0% 2%;
-    }
-}
-
-/* --- END: UPDATED BOOK SPREAD & PAGE STYLES --- */
-
-
 .page-edge-nav{position:absolute;top:0;height:100%;width:50px;cursor:pointer;z-index:10;transition:background-color .2s;-webkit-tap-highlight-color:transparent}
 .page-edge-nav:hover{background-color:rgba(0,0,0,.03)}
 .page-edge-left{left:0;border-radius:3px 0 0 3px}
@@ -501,61 +432,19 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
 
-/* --- START: UPDATED BOOK SPREAD EFFECTS --- */
-
-/* Enhanced Realistic Book Crease Effect */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 30px; /* Slightly wider for more gradient detail */
-    transform: translateX(-50%);
-
-    /* Multiple layered gradients for depth */
-    background:
-        /* Main shadow gradient */
-        linear-gradient(to right,
-            rgba(0, 0, 0, 0.15) 0%,
-            rgba(0, 0, 0, 0.05) 25%,
-            rgba(0, 0, 0, 0.22) 48%,
-            rgba(0, 0, 0, 0.22) 52%,
-            rgba(0, 0, 0, 0.05) 75%,
-            rgba(0, 0, 0, 0.15) 100%
-        ),
-        /* Subtle vertical texture */
-        repeating-linear-gradient(to bottom,
-            transparent 0px,
-            transparent 4px,
-            rgba(0, 0, 0, 0.02) 4px,
-            rgba(0, 0, 0, 0.02) 5px
-        );
-
-    box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.1);
-    pointer-events: none;
-    z-index: 6; /* Above page content, below center line */
-    opacity: 0.9;
-
-    /* Very subtle animation to simulate paper movement */
-    animation: paper-shift 8s ease-in-out infinite alternate;
+/* UPDATED PERSPECTIVE EFFECT FOR PAGES */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left {
+    transform: rotateY(1deg);
+    transform-origin: right center;
 }
 
-/* Add a subtle vertical line at exact center */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    pointer-events: none;
-    z-index: 7; /* Above crease gradient, below page curl */
-    transform: translateX(-0.5px);
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right {
+    transform: rotateY(-1deg);
+    transform-origin: left center;
 }
 
-/* Enhanced Inner Gutter Shadows - adds depth to the page edges */
+/* Gutter shadow effect only in double page view */
+/* UPDATED INNER GUTTER SHADOWS */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after {
     content: '';
     position: absolute;
@@ -569,7 +458,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-co
         rgba(0, 0, 0, 0) 100%
     );
     pointer-events: none;
-    z-index: 5; /* Above keyword overlay, below crease */
+    z-index: 5;
     border-radius: 0 2px 2px 0;
 }
 
@@ -586,16 +475,109 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.plac
         rgba(0, 0, 0, 0) 100%
     );
     pointer-events: none;
-    z-index: 5; /* Above keyword overlay, below crease */
+    z-index: 5;
     border-radius: 2px 0 0 2px;
 }
 
-/* This was an orphan rule, ensuring the placeholder keeps its border */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page {
     border-left: 1px solid rgba(0,0,0,.1) !important;
 }
-/* --- END: UPDATED BOOK SPREAD EFFECTS --- */
 
+/* --- START: UPDATED VERTICAL CREASE EFFECT --- */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 30px; /* Slightly wider for more gradient detail */
+    transform: translateX(-50%);
+    
+    /* Multiple layered gradients for depth */
+    background: 
+        /* Main shadow gradient */
+        linear-gradient(to right,
+            rgba(0, 0, 0, 0.15) 0%,
+            rgba(0, 0, 0, 0.05) 25%,
+            rgba(0, 0, 0, 0.22) 48%,
+            rgba(0, 0, 0, 0.22) 52%,
+            rgba(0, 0, 0, 0.05) 75%,
+            rgba(0, 0, 0, 0.15) 100%
+        ),
+        /* Subtle vertical texture */
+        repeating-linear-gradient(to bottom,
+            transparent 0px,
+            transparent 4px,
+            rgba(0, 0, 0, 0.02) 4px,
+            rgba(0, 0, 0, 0.02) 5px
+        );
+    
+    box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 6;
+    opacity: 0.9;
+    
+    /* Very subtle animation to simulate paper movement */
+    animation: paper-shift 8s ease-in-out infinite alternate;
+}
+
+/* Paper shift animation */
+@keyframes paper-shift {
+    0% {
+        background-position: 0% 0%;
+    }
+    100% {
+        background-position: 0% 2%;
+    }
+}
+/* --- END: UPDATED VERTICAL CREASE EFFECT --- */
+
+/* --- START: VERTICAL CENTER LINE --- */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 7;
+    transform: translateX(-0.5px);
+}
+/* --- END: VERTICAL CENTER LINE --- */
+
+/* --- START: PAGE CURLING EFFECT --- */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to left, 
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 8;
+}
+
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to right, 
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    pointer-events: none;
+    z-index: 8;
+}
+/* --- END: PAGE CURLING EFFECT --- */
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
 /* Note: TOC Panel styling remains, but the button won't open it */
@@ -1304,3 +1286,12 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+</script>
+</body>
+</html>beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+            updateStatus("Initialization complete.");
+        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
+    }
+
+// --- Start the application ---
+document.addEventListener('DOMContentLoaded', init);
