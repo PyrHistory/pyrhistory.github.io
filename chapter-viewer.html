@@ -346,10 +346,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 /* ... (unchanged) ... */
 
 .main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
-.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%);
-    /* ADDED: Perspective for the book spread */
-    perspective: 1500px;
-}
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
 .book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
@@ -432,56 +429,11 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
 
-/* UPDATED PERSPECTIVE EFFECT FOR PAGES */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left {
-    transform: rotateY(1deg);
-    transform-origin: right center;
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right {
-    transform: rotateY(-1deg);
-    transform-origin: left center;
-}
-
 /* Gutter shadow effect only in double page view */
-/* UPDATED INNER GUTTER SHADOWS */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: calc(0px - var(--page-padding));
-    width: 18px; /* Slightly wider shadow */
-    height: 100%;
-    background: linear-gradient(to left,
-        rgba(0, 0, 0, 0.25) 0%,
-        rgba(0, 0, 0, 0.15) 40%,
-        rgba(0, 0, 0, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 5;
-    border-radius: 0 2px 2px 0;
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: calc(0px - var(--page-padding));
-    width: 18px; /* Slightly wider shadow */
-    height: 100%;
-    background: linear-gradient(to right,
-        rgba(0, 0, 0, 0.25) 0%,
-        rgba(0, 0, 0, 0.15) 40%,
-        rgba(0, 0, 0, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 5;
-    border-radius: 2px 0 0 2px;
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page {
-    border-left: 1px solid rgba(0,0,0,.1) !important;
-}
+/* EXISTING inner gutter shadows */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
 /* --- START: UPDATED VERTICAL CREASE EFFECT --- */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
@@ -489,95 +441,24 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 50%;
-    width: 30px; /* Slightly wider for more gradient detail */
-    transform: translateX(-50%);
-    
-    /* Multiple layered gradients for depth */
-    background: 
-        /* Main shadow gradient */
-        linear-gradient(to right,
-            rgba(0, 0, 0, 0.15) 0%,
-            rgba(0, 0, 0, 0.05) 25%,
-            rgba(0, 0, 0, 0.22) 48%,
-            rgba(0, 0, 0, 0.22) 52%,
-            rgba(0, 0, 0, 0.05) 75%,
-            rgba(0, 0, 0, 0.15) 100%
-        ),
-        /* Subtle vertical texture */
-        repeating-linear-gradient(to bottom,
-            transparent 0px,
-            transparent 4px,
-            rgba(0, 0, 0, 0.02) 4px,
-            rgba(0, 0, 0, 0.02) 5px
-        );
-    
-    box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.1);
-    pointer-events: none;
-    z-index: 6;
-    opacity: 0.9;
-    
-    /* Very subtle animation to simulate paper movement */
-    animation: paper-shift 8s ease-in-out infinite alternate;
-}
-
-/* Paper shift animation */
-@keyframes paper-shift {
-    0% {
-        background-position: 0% 0%;
-    }
-    100% {
-        background-position: 0% 2%;
-    }
+    left: 50%; /* Center horizontally */
+    width: 24px; /* Wider effect area for softer gradient falloff */
+    transform: translateX(-50%); /* Precise centering */
+    /* Smoother, softer gradient simulating a crease shadow */
+    background: linear-gradient(to right,
+        rgba(0, 0, 0, 0.15) 0%,   /* Soft shadow at outer edge (left) */
+        rgba(0, 0, 0, 0.05) 30%,  /* Fading towards center */
+        rgba(0, 0, 0, 0.20) 48%,  /* Slightly darker near center (left side) */
+        rgba(0, 0, 0, 0.20) 52%,  /* Slightly darker near center (right side) */
+        rgba(0, 0, 0, 0.05) 70%,  /* Fading away from center */
+        rgba(0, 0, 0, 0.15) 100%  /* Soft shadow at outer edge (right) */
+    );
+    pointer-events: none; /* Doesn't interfere with mouse */
+    z-index: 6; /* Above page backgrounds but below edge navs/popups */
+    opacity: 0.85; /* Fine-tune overall intensity (0.7 to 0.9 range is usually good) */
 }
 /* --- END: UPDATED VERTICAL CREASE EFFECT --- */
 
-/* --- START: VERTICAL CENTER LINE --- */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-    width: 1px;
-    background: rgba(0, 0, 0, 0.1);
-    pointer-events: none;
-    z-index: 7;
-    transform: translateX(-0.5px);
-}
-/* --- END: VERTICAL CENTER LINE --- */
-
-/* --- START: PAGE CURLING EFFECT --- */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to left, 
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 8;
-}
-
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to right, 
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0) 100%
-    );
-    pointer-events: none;
-    z-index: 8;
-}
-/* --- END: PAGE CURLING EFFECT --- */
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
 /* Note: TOC Panel styling remains, but the button won't open it */
@@ -1205,7 +1086,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right::after {
     }
 
 
-    // --- Event Setup (Update Toolbar Handler) ---
+    // --- Event Setup (Unchanged) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -1286,12 +1167,3 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
-</script>
-</body>
-</html>beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
-            updateStatus("Initialization complete.");
-        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
-    }
-
-// --- Start the application ---
-document.addEventListener('DOMContentLoaded', init);
