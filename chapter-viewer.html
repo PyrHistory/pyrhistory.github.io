@@ -60,12 +60,13 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     z-index:9999!important;
     display:flex!important;
     flex-direction:column!important; /* Vertical layout */
-    gap:10px!important;
+    gap:10px!important; /* KEEPING GAP AS IS - affects all buttons */
     transition:right .3s ease!important; /* Animate right property */
     background:rgba(28,37,54,.9)!important;
     backdrop-filter:blur(5px);
     -webkit-backdrop-filter:blur(5px);
-    padding:5px!important;
+    /* Adjusted top/bottom padding by 50% for the container (affects space above first & below last) */
+    padding: 2.5px 5px !important;
     border-radius:8px 0 0 8px!important; /* Rounded corners on the left */
     box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;
     width:58px; /* Fixed width */
@@ -155,17 +156,22 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
-/* Back Button Specific Styles */
+/* Back Button Specific Styles - MODIFIED */
 #back-btn {
     background: none !important;
     border: none !important;
     box-shadow: none !important;
-    font-size: 28px !important; /* Larger symbol */
+    font-size: 20px !important; /* Decreased font size */
     color: var(--text-on-dark) !important;
-    /* Keep width/height for layout alignment */
-    width: 48px !important;
-    height: 48px !important;
+    /* Decreased width/height for smaller size */
+    width: 36px !important;
+    height: 36px !important;
     padding: 0 !important;
+    /* Add negative margin to reduce space specifically around this button */
+    /* 50% reduction of container padding (5px -> 2.5px) + 50% reduction of gap (10px -> 5px) */
+    margin-top: -2.5px !important; /* Adjust space above */
+    margin-bottom: -5px !important; /* Adjust space below (relative to gap) */
+    /* Ensure flex alignment still works */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -424,9 +430,32 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
 
 /* Gutter shadow effect only in double page view */
+/* EXISTING inner gutter shadows */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
+
+/* ADDED: Vertical line/gradient between pages in double view */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%; /* Center horizontally between the two pages */
+    width: 16px; /* Width for the gradient effect area */
+    transform: translateX(-50%); /* Precise centering */
+    /* Creates a subtle dark line in the middle with shadows fading out */
+    background: linear-gradient(to right,
+        rgba(0, 0, 0, 0.20) 0%,  /* Left shadow edge */
+        rgba(0, 0, 0, 0) 40%,   /* Fade out before center */
+        rgba(0, 0, 0, 0.25) 49%, /* Darker line edge */
+        rgba(0, 0, 0, 0.25) 51%, /* Darker line edge */
+        rgba(0, 0, 0, 0) 60%,   /* Fade in after center */
+        rgba(0, 0, 0, 0.20) 100% /* Right shadow edge */
+    );
+    pointer-events: none; /* Doesn't interfere with mouse */
+    z-index: 6; /* Above page backgrounds (z-index 1) but below edge navs (z-index 10) */
+}
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
