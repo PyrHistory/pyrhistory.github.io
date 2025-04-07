@@ -1,595 +1,166 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Year 1: Ancient History - Pyr Learning</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Heritage History™ - Digital Book Reader</title>
+    <!-- Using PDF.js v2.5.207 as base for rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.min.js"></script>
+    <!-- Viewer script still used for SimpleLinkService and CSS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.css">
     <style>
-        /* --------------------------------
-           CSS Variables - Design System
-        -------------------------------- */
-        :root {
-            /* Color System */
-            --lab-blue: #0F172A;
-            --deep-blue: #1E293B;
-            --flame: #F97316;
-            --amber: #FBBF24;
-            --papyrus: #F8F5EF;
-            --parchment: #EFE6D5;
-            --scroll: #E0D5C0;
-            --success: #14B8A6;
-            --warning: #FBBF24;
-            --error: #F43F5E;
-            --info: #3B82F6;
-            --text-primary: rgba(255, 255, 255, 0.95);
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --text-muted: rgba(255, 255, 255, 0.5);
-            --text-dark: #1E293B;
-            --text-light-bg-primary: #1F2937;
-            --text-light-bg-secondary: #4b5563;
-            --text-light-bg-muted: #6b7280;
-            --heading-accent: #A0522D;
+:root{
+    --primary:#4a90e2;
+    --secondary:#50e3c2;
+    --accent:#f5a623; /* Amber/Orange */
+    --fiery-orange: #f97316; /* Adjusted fiery orange */
+    --lab-blue:#080e1c;
+    --page:#fff;
+    --text-on-dark:rgba(255,255,255,.9);
+    --text-on-page:#333;
+    --header-h:60px;
+    --page-w:650px;
+    --page-h:842px;
+    --page-padding:15px;
+    /* Modern Font Stack */
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-            /* New variables for the navbar */
-            --navbar-base-left: #0F172A;
-            --navbar-base-right: #111529; /* Slightly different dark shade, less green/more subtle purple */
+    /* Add these variables if not defined elsewhere, based on the time-capsule example */
+    --scroll: rgba(44,62,80,.8); /* Example value, adjust if needed */
+    --text-light-bg-primary: var(--text-on-dark); /* Example value */
+    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8); /* Example gradient */
+    --radius-full: 50%; /* Define if not already defined */
+    --text-dark: #fff; /* Example value for hover */
+    --space-sm: 8px; /* Example value */
+    --space-xs: 4px; /* Example value */
 
-            /* Gradients */
-            --gradient-flame: linear-gradient(135deg, var(--flame), var(--amber));
-            --gradient-tech: conic-gradient(at 50% 50%, #0099F7 0%, #00c2a8 15%, #9DEC3E 30%, #FFC837 45%, #FF3D7A 60%, #C353EB 75%, #5586F4 90%, #0099F7 100%);
-            --gradient-dark-nav: linear-gradient(to bottom right, #1a202c, #2d3748);
-            --gradient-dark-button: linear-gradient(90deg, #1a202c, #2d3748, #4a5568, #2d3748, #1a202c);
-            --gradient-time-capsule: linear-gradient(110deg,
-                rgba(249, 115, 22, 0.8) 0%,
-                rgba(245, 56, 160, 0.7) 20%,
-                rgba(195, 83, 235, 0.75) 40%,
-                rgba(85, 134, 244, 0.8) 60%,
-                rgba(20, 184, 166, 0.7) 80%,
-                rgba(251, 191, 36, 0.75) 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+    font-family: 'Georgia', serif; /* Keep base Georgia */
+    background-color:var(--lab-blue);
+    color:var(--text-on-dark);
+    height:100vh; width:100vw;
+    overflow:hidden; display:flex; flex-direction:column; position:fixed;
+    line-height:1.6
+}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
+@keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
+@media (prefers-reduced-motion:reduce){body::before{animation:none!important}}
 
-            /* Spacing */
-            --space-xxs: 0.125rem;
-            --space-xs: 0.25rem;
-            --space-sm: 0.5rem;
-            --space-md: 1rem;
-            --space-lg: 1.5rem;
-            --space-xl: 2rem;
-            --space-2xl: 3rem;
-            --space-3xl: 4rem;
-            --space-4xl: 6rem;
+/* --- START: Toolbar & Slider Base Positioning (Always on Right/Bottom) --- */
+#new-toolbar{
+    position:fixed!important;
+    top:15px!important; /* Position from top */
+    right:-60px!important; /* Start hidden off-screen right */
+    bottom: auto!important; /* Ensure bottom is not set */
+    left: auto!important; /* Ensure left is not set */
+    z-index:9999!important;
+    display:flex!important;
+    flex-direction:column!important; /* Vertical layout */
+    gap:10px!important;
+    transition:right .3s ease!important; /* Animate right property */
+    background:rgba(28,37,54,.9)!important;
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+    padding:5px!important;
+    border-radius:8px 0 0 8px!important; /* Rounded corners on the left */
+    box-shadow:-2px 2px 10px rgba(0,0,0,.4)!important;
+    width:58px; /* Fixed width */
+    height: auto!important; /* Height adjusts to content */
+    border:1px solid rgba(255,255,255,.1);
+    border-right: none!important; /* Border only on left/top/bottom */
+}
+#new-toolbar::before{ /* Handle "≡" */
+    content:"≡";
+    position:absolute;
+    left:-25px; /* Position handle to the left of the toolbar */
+    top:50%;
+    transform:translateY(-50%);
+    background:rgba(28,37,54,.9);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+    width:25px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:4px 0 0 4px;
+    color:var(--text-on-dark);
+    font-size:20px;
+    box-shadow:-2px 2px 5px rgba(0,0,0,.3);
+    transition:all .3s ease;
+    border:1px solid rgba(255,255,255,.1);
+    border-right:none;
+    cursor:pointer;
+}
+.toolbar-trigger-area{ /* Trigger zone for hover */
+    position:fixed;
+    top:0;
+    right:0; /* Always on the right edge */
+    width:30px;
+    height:100%;
+    z-index:9998;
+    transition:none!important; /* No transition needed */
+}
+#new-toolbar.visible{
+    right:0!important; /* Slide in from the right */
+    transform:none!important; /* No translation needed */
+}
+.new-btn{
+    background:rgba(44,62,80,.8)!important;
+    border:1px solid rgba(255,255,255,.15)!important;
+    color:var(--text-on-dark)!important;
+    width:48px!important;
+    height:48px!important;
+    border-radius:4px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    font-size:25px!important; /* Adjusted for rotate symbol */
+    cursor:pointer!important;
+    transition:all .2s!important;
+    box-shadow:0 2px 5px rgba(0,0,0,.2)!important;
+    user-select:none!important;
+    flex-shrink:0;
+    transform: rotate(0deg)!important; /* Ensure buttons are never rotated */
+    padding: 0; /* Reset padding for icon centering */
+    position: relative; /* Needed for pseudo-element positioning */
+    overflow: hidden; /* Clip pseudo-element */
+    z-index: 1; /* Stacking context */
+}
+.new-btn:hover{
+    background:rgba(52,73,94,.9)!important;
+    border-color:rgba(255,255,255,.25)!important;
+    box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
+    transform:translateY(-2px)!important; /* Keep vertical hover effect */
+}
+.new-btn:active{
+    transform:translateY(1px)!important; /* Keep vertical active effect */
+}
+.new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
-            /* Border Radius */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 1rem;
-            --radius-xl: 1.5rem;
-            --radius-2xl: 2rem;
-            --radius-full: 9999px;
+/* START: TOC Button Icon SVG Styles (only icon styling remains) */
+#toc-btn .icon {
+    width: 24px; /* Adjust icon size if needed within the standard button */
+    height: 24px;
+    color: var(--text-light-bg-primary); /* Use default text color */
+    position: relative;
+    z-index: 2;
+    margin: 0; /* Reset margin */
+    stroke-width: 1.5;
+}
+/* END: TOC Button Styles */
 
-            /* Shadows */
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-            --shadow-2xl: 0 25px 50px -12px rgba(0,0,0,0.25);
-            --shadow-inner: inset 0 2px 4px 0 rgba(0,0,0,0.06);
+@keyframes hazyGradientAnimation { /* Ensure animation is defined */
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-            /* Transitions */
-            --transition-fast: 0.15s ease-out;
-            --transition-medium: 0.3s ease-out;
-            --transition-slow: 0.5s ease-out;
-            --transition-bounce: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            --transition-spring: 0.5s cubic-bezier(0.68, -0.6, 0.32, 1.6);
-        }
-
-        /* --------------------------------
-           Reset & Global Styles
-        -------------------------------- */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--papyrus);
-            color: var(--text-light-bg-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* Background Textures */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
-            opacity: 0.5;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-        }
-
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.03;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231E293B' fill-opacity='0.3'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 var(--space-lg);
-        }
-
-        /* --------------------------------
-           Typography
-        -------------------------------- */
-        h1, h2, h3, h4, h5, h6 {
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: var(--space-md);
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-        }
-
-        h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            padding-bottom: var(--space-sm);
-            margin-bottom: var(--space-lg);
-            display: inline-block;
-        }
-
-        h3 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: var(--space-md);
-        }
-
-        p {
-            margin-bottom: var(--space-md);
-        }
-
-        .highlight {
-            background: linear-gradient(to bottom, transparent 40%, rgba(249, 115, 22, 0.2) 40%, rgba(249, 115, 22, 0.2) 80%, transparent 80%);
-            padding: 0 0.2em;
-        }
-
-        .gradient-title {
-            background: var(--gradient-flame);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            position: relative;
-        }
-
-        /* --------------------------------
-           Toast Notification
-        -------------------------------- */
-        .toast-container {
-            position: fixed;
-            top: 100px; /* Below navbar */
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .toast {
-            background: var(--deep-blue);
-            color: var(--text-primary);
-            padding: var(--space-md) var(--space-lg);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 90%;
-            width: auto;
-            pointer-events: auto; /* Allow clicks on toast if needed, but default is none */
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .toast-icon {
-            flex-shrink: 0;
-            width: 24px;
-            height: 24px;
-            color: var(--flame);
-        }
-
-        .toast-content {
-            flex-grow: 1;
-            font-size: 0.9rem;
-        }
-
-        /* --------------------------------
-           Navigation - Top Navbar Styles
-        -------------------------------- */
-        .top-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--space-lg) var(--space-2xl);
-            /* Use a subtle linear gradient */
-            background-image: linear-gradient(to right, var(--navbar-base-left), var(--navbar-base-right));
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            position: sticky;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .logo-section { display: flex; align-items: center; }
-        .logo {
-            background: var(--gradient-flame); -webkit-background-clip: text; background-clip: text; color: transparent;
-            font-size: 2rem; font-weight: 800; line-height: 1.2; padding-bottom: 0.2rem; position: relative;
-            text-shadow: 0 0 15px rgba(249, 115, 22, 0.25); transition: transform var(--transition-spring); text-decoration: none;
-        }
-        .logo:hover { transform: scale(1.05); }
-        .divider { height: 24px; width: 1px; background: rgba(255, 255, 255, 0.15); margin: 0 var(--space-md); align-self: center; }
-        .brand-name { color: var(--text-secondary); font-size: 0.9rem; font-weight: 500; white-space: nowrap; }
-        .nav-links { display: flex; align-items: center; gap: var(--space-xl); }
-        .nav-link {
-            color: var(--text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500;
-            transition: color var(--transition-fast); position: relative; padding: var(--space-xs) 0; white-space: nowrap;
-        }
-        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: 0; left: 0; background: var(--gradient-flame); transition: width var(--transition-medium); }
-        .nav-link:hover { color: var(--text-primary); }
-        .nav-link:hover::after { width: 100%; }
-
-        .notification { position: relative; display: flex; align-items: center; color: var(--text-secondary); cursor: pointer; transition: color var(--transition-fast); }
-        .notification:hover { color: var(--text-primary); }
-        .notification .icon { width: 24px; height: 24px; stroke: currentColor; }
-        .notification-badge {
-            position: absolute; top: -6px; right: -8px; background: var(--error); color: white;
-            border-radius: var(--radius-full); min-width: 18px; height: 18px; display: flex;
-            align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600;
-            padding: 0 5px; border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle light border */
-            box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); animation: pulse-badge 2s infinite;
-        }
-        @keyframes pulse-badge { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); } 70% { box-shadow: 0 0 0 7px rgba(244, 63, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); } }
-        .avatar {
-            width: 40px; height: 40px; background: linear-gradient(135deg, #475569, #64748b); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 0.9rem; color: white;
-            font-weight: 600; letter-spacing: -0.5px; border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: all var(--transition-bounce); cursor: pointer;
-        }
-        .avatar:hover { border-color: rgba(255, 255, 255, 0.3); transform: scale(1.1) rotate(5deg); box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); }
-
-        /* --------------------------------
-           Course Header
-        -------------------------------- */
-        .course-header {
-            background: var(--deep-blue);
-            background: linear-gradient(135deg, #0F172A, #1E293B, #141F31);
-            padding: var(--space-xl) 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-            color: rgba(255, 255, 255, 0.95);
-        }
-
-        /* Emoji container for the header */
-        #header-emoji-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* Individual emoji styles */
-        .floating-emoji {
-            position: absolute;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-            user-select: none;
-            animation-name: float-across;
-            animation-timing-function: linear;
-            animation-fill-mode: forwards;
-            opacity: 0; /* Start invisible */
-            will-change: transform, opacity;
-            color: rgba(255, 255, 255, 0.25);
-        }
-
-        /* Animation for emojis floating across the screen */
-        @keyframes float-across {
-            0% {
-                transform: translateX(-50px) translateY(0) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: var(--emoji-opacity, 0.25);
-                transform: translateX(calc(10vw - 50px)) translateY(calc(var(--emoji-drift) * 0.1)) rotate(calc(var(--emoji-rotation) * 0.1));
-            }
-            40% {
-                opacity: var(--emoji-opacity, 0.25);
-                transform: translateX(calc(40vw - 50px)) translateY(calc(var(--emoji-drift) * 0.4)) rotate(calc(var(--emoji-rotation) * 0.4));
-            }
-            50% {
-                opacity: calc(var(--emoji-opacity, 0.25) * 0.5);
-                transform: translateX(calc(50vw - 50px)) translateY(calc(var(--emoji-drift) * 0.5)) rotate(calc(var(--emoji-rotation) * 0.5));
-            }
-            60% {
-                opacity: var(--emoji-opacity, 0.25);
-                transform: translateX(calc(60vw - 50px)) translateY(calc(var(--emoji-drift) * 0.6)) rotate(calc(var(--emoji-rotation) * 0.6));
-            }
-            90% {
-                opacity: var(--emoji-opacity, 0.25);
-                transform: translateX(calc(90vw - 50px)) translateY(calc(var(--emoji-drift) * 0.9)) rotate(calc(var(--emoji-rotation) * 0.9));
-            }
-            95% {
-                opacity: 0;
-                transform: translateX(calc(100vw - 50px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
-            }
-            100% {
-                transform: translateX(calc(100vw + 50px)) translateY(var(--emoji-drift)) rotate(var(--emoji-rotation));
-                opacity: 0;
-            }
-        }
-
-        .course-title {
-            font-size: 2.2rem;
-            margin-bottom: var(--space-md);
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            color: var(--text-primary);
-            position: relative;
-            z-index: 1;
-        }
-
-        .course-title-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px;
-            height: 50px;
-            background: var(--flame);
-            border-radius: var(--radius-lg);
-            color: white;
-            box-shadow: 0 4px 8px rgba(249, 115, 22, 0.3);
-        }
-
-        .course-progress {
-            display: flex;
-            align-items: center;
-            gap: var(--space-md);
-            margin-bottom: var(--space-lg);
-            position: relative;
-            z-index: 1;
-        }
-
-        .progress-bar {
-            height: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
-            overflow: hidden;
-            flex-grow: 1;
-            max-width: 300px;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
-
-        .progress-value {
-            height: 100%;
-            background: var(--gradient-flame);
-            width: 35%; /* Updated based on 6/17 completion ~35% */
-            border-radius: var(--radius-full);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-value::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transform: translateX(-100%);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            100% { transform: translateX(100%); }
-        }
-
-        .progress-text {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* --------------------------------
-           Current Chapter Card
-        -------------------------------- */
-        .current-chapter {
-            margin-bottom: var(--space-2xl);
-            margin-top: var(--space-2xl);
-        }
-
-        .current-chapter-card {
-            background: var(--parchment);
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            border: 1px solid var(--scroll);
-            box-shadow: var(--shadow-lg);
-            transition: transform var(--transition-medium), box-shadow var(--transition-medium);
-            position: relative;
-        }
-
-        .current-chapter-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-xl);
-        }
-
-        .current-chapter-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: var(--gradient-flame);
-        }
-
-        .current-chapter-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .card-header {
-            padding: var(--space-lg);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .current-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: var(--space-xs) var(--space-md);
-            background: var(--flame);
-            color: white;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: var(--radius-full);
-            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
-        }
-
-        .chapter-number {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-light-bg-secondary);
-        }
-
-        .card-body {
-            padding: 0 var(--space-lg) var(--space-lg);
-        }
-
-        .chapter-title {
-            font-size: 1.6rem;
-            margin-bottom: var(--space-sm);
-            color: var(--text-light-bg-primary);
-        }
-
-        .chapter-description {
-            color: var(--text-light-bg-secondary);
-            margin-bottom: var(--space-lg);
-        }
-
-        .card-footer {
-            padding: var(--space-lg);
-            border-top: 1px solid var(--scroll);
-            display: flex;
-            justify-content: space-between;
-            align-items: center; /* Align items vertically in the footer */
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
-            gap: var(--space-md); /* Add gap between items */
-            background-color: rgba(224, 213, 192, 0.3);
-        }
-
-        /* Ensure button group stays together */
-        .card-footer > div:last-child {
-            display: flex;
-            gap: var(--space-md);
-            align-items: center;
-        }
-
-
-        /* --------------------------------
-           Buttons
-        -------------------------------- */
-        .button {
-            position: relative;
-            background: var(--gradient-flame);
-            color: white;
-            font-weight: 600;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius-full);
-            transition: all var(--transition-bounce);
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            overflow: hidden;
-            z-index: 1;
-            font-size: 0.875rem; /* Standardized button font size */
-        }
-
-        .button:hover {
-            transform: translateY(-4px) scale(1.05);
-            box-shadow: var(--shadow-md);
-        }
-
-        .button:active {
-            transform: translateY(2px);
-        }
-
-        .button-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem; /* Consistent small size */
-        }
-
-        .button-secondary {
-            background: transparent;
-            color: var(--text-light-bg-secondary);
-            border: 1px solid var(--scroll);
-        }
-
-        .button-secondary:hover {
-            background: rgba(30, 41, 59, 0.05);
-            border-color: var(--flame);
-            color: var(--text-light-bg-primary);
-        }
-
-        /* Time Capsule Button */
+/* Time Capsule Button */
         .time-capsule-btn {
             position: relative;
             background: var(--scroll);
@@ -599,16 +170,23 @@
             padding-right: 1.5rem;
             overflow: hidden;
             z-index: 1;
+            border-radius: var(--radius-full); /* Example, ensure radius is set */
+            height: 48px; /* Example height */
+            display: inline-flex; /* Align items */
+            align-items: center; /* Vertically center */
+            justify-content: center; /* Horizontally center if needed */
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .time-capsule-btn::before {
             content: "";
             position: absolute;
-            z-index: -1;
+            z-index: -1; /* Behind content */
             top: -3px; left: -3px; right: -3px; bottom: -3px;
             background: var(--gradient-time-capsule);
             background-size: 300% 300%;
-            border-radius: var(--radius-full);
+            border-radius: inherit; /* Inherit from parent */
             filter: blur(3px);
             opacity: 0.35;
             transition: opacity 0.4s ease-out, filter 0.4s ease-out;
@@ -621,38 +199,34 @@
         }
 
         .time-capsule-btn:hover {
-            background: var(--scroll);
-            color: var(--text-dark);
-            border-color: transparent;
+            /* Keep background same or change as desired */
+            background: var(--scroll); /* Example, adjust if needed */
+            /* Adjust text color if needed */
+            color: var(--text-dark); /* Example, ensure var defined */
             transform: translateY(-3px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
 
         .time-capsule-btn .icon, .time-capsule-btn span {
             position: relative;
-            z-index: 2;
+            z-index: 2; /* Above ::before pseudo-element */
         }
 
-        @keyframes hazyGradientAnimation {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        .button .icon {
+        /* General Button Icon Styling */
+        .button .icon, .time-capsule-btn .icon {
             width: 16px;
             height: 16px;
-            margin-right: var(--space-sm);
+            margin-right: var(--space-sm); /* Add space between icon and text */
         }
 
-        /* Button Group Styling */
+        /* Button Group Styling (If used) */
         .button-group {
             display: flex;
             align-items: center;
             gap: var(--space-xs);
         }
 
-        /* Circle Capsule Button */
+        /* Circle Capsule Button - APPLYING EFFECT */
         .circle-capsule-btn {
             position: relative;
             width: 30px;
@@ -665,1137 +239,924 @@
             border: none;
             padding: 0;
             cursor: pointer;
-            overflow: hidden;
+            overflow: hidden; /* Important to clip the ::before */
             transition: transform 0.3s ease;
+            z-index: 1; /* Ensure button has stacking context */
         }
 
         .circle-capsule-btn .icon {
             width: 14px;
             height: 14px;
             color: var(--text-light-bg-primary);
-            position: relative;
-            z-index: 2;
+            position: relative; /* Position relative to button */
+            z-index: 2; /* Icon above the ::before pseudo-element */
             margin: 0; /* Remove margin if icon has it */
         }
 
+        /* Apply the same ::before effect as time-capsule-btn */
         .circle-capsule-btn::before {
             content: "";
             position: absolute;
-            z-index: 1;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: var(--gradient-time-capsule);
-            background-size: 300% 300%;
-            border-radius: 50%;
-            filter: blur(2px);
-            opacity: 0.35;
-            transition: opacity 0.4s ease-out, filter 0.4s ease-out;
-            animation: hazyGradientAnimation 6s linear infinite;
+            z-index: 1; /* Place between background and icon */
+            top: -2px; left: -2px; right: -2px; bottom: -2px; /* Adjust offset as needed */
+            background: var(--gradient-time-capsule); /* Use the same gradient */
+            background-size: 300% 300%; /* Use the same size */
+            border-radius: 50%; /* Maintain circular shape */
+            filter: blur(2px); /* Keep original blur or match time-capsule's */
+            opacity: 0.35; /* Match time-capsule's opacity */
+            transition: opacity 0.4s ease-out, filter 0.4s ease-out; /* Match transition */
+            animation: hazyGradientAnimation 6s linear infinite; /* Use the same animation */
         }
 
         .circle-capsule-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px); /* Keep original hover transform */
+            /* Add other hover effects if desired, like text color change */
         }
 
+        /* Apply the same hover effect to ::before */
         .circle-capsule-btn:hover::before {
-            opacity: 0.8;
-            filter: blur(3px);
-        }
-
-        /* --------------------------------
-           Chapter Journey Timeline
-        -------------------------------- */
-        .chapter-journey {
-            position: relative;
-            padding-bottom: var(--space-4xl);
-        }
-
-        .journey-header {
-            margin-bottom: var(--space-xl);
-        }
-
-        .journey-title {
-            display: inline-block;
-            position: relative;
-            color: var(--text-light-bg-primary);
-            border-bottom: 2px solid transparent;
-        }
-
-        .journey-title::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--gradient-flame);
-            border-radius: 1px;
-        }
-
-        .journey-track {
-            position: relative;
-            padding-left: 30px;
-            margin-top: var(--space-2xl);
-        }
-
-        .journey-track::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            width: 4px;
-            background: var(--scroll);
-            border-radius: var(--radius-full);
-        }
-
-        .chapter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: var(--space-xl);
-        }
-
-        /* Base Chapter Card Style */
-        .chapter-card {
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            transition: all var(--transition-medium);
-            position: relative;
-            height: 100%;
-            box-shadow: var(--shadow-sm);
-            display: flex; /* Ensure content flex */
-            flex-direction: column; /* Stack content vertically */
+            opacity: 0.8; /* Match time-capsule's hover opacity */
+            filter: blur(3px); /* Keep original hover blur or match time-capsule's */
         }
 
 
-        .chapter-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: var(--shadow-lg);
-            z-index: 2;
-        }
+.page-slider-container{
+    position:fixed;
+    bottom:-80px; /* Start hidden below */
+    left:50%!important; /* Center horizontally */
+    transform:translateX(-50%)!important; /* Precise horizontal centering */
+    top: auto!important; /* Ensure top is not set */
+    right: auto!important; /* Ensure right is not set */
+    width:90%;
+    max-width:700px;
+    height: auto!important; /* Height adjusts */
+    padding:14px 20px;
+    background:rgba(28,37,54,.9);
+    backdrop-filter:blur(5px);
+    -webkit-backdrop-filter:blur(5px);
+    border:1px solid rgba(255,255,255,.1);
+    border-bottom:none;
+    box-shadow:0 -4px 20px rgba(0,0,0,.4);
+    display:flex;
+    flex-direction:column!important; /* Content flows vertically */
+    align-items:center;
+    z-index:9998;
+    transition:bottom .35s cubic-bezier(.2,.9,.3,1)!important; /* Animate bottom property */
+    border-radius:16px 16px 0 0; /* Rounded top corners */
+}
+.page-slider-container.visible{
+    bottom:0!important; /* Slide up from bottom */
+}
+.page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
+.page-slider{
+    width:100%!important; /* Full width */
+    height:6px!important; /* Base height */
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    background:rgba(255,255,255,.1)!important;
+    outline:none;
+    border-radius:3px!important;
+    overflow:visible;
+    cursor:pointer;
+    transition:height .2s;
+    writing-mode: horizontal-tb !important; /* Ensure horizontal */
+}
+.page-slider:hover{height:8px}
+.page-slider::-webkit-slider-thumb{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    width:20px!important;height:20px!important; /* Thumb size */
+    border-radius:50%!important;
+    background:var(--accent)!important;
+    cursor:pointer;
+    border:3px solid rgba(28,37,54,.9)!important;
+    box-shadow:0 1px 6px rgba(0,0,0,.4)!important;
+    transition:all .2s ease;
+    margin-top:-7px!important; /* Vertical centering for horizontal slider */
+    margin-left: 0 !important; /* No horizontal margin adjustment */
+}
+.page-slider:hover::-webkit-slider-thumb{width:24px!important;height:24px!important;margin-top:-8px!important}
+.page-slider::-webkit-slider-runnable-track{
+    width: 100% !important; /* Track width */
+    height:100%!important; /* Track height */
+    background:linear-gradient(to right,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important; /* Horizontal gradient */
+    border-radius:3px!important;
+}
+/* Firefox specific styles (ensure horizontal) */
+.page-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4)}
+.page-slider:hover::-moz-range-thumb{width:24px;height:24px}
+.page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
+.page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
 
-        /* Card States */
-        .chapter-card.completed {
-            background-color: var(--parchment);
-            border: 1px solid var(--scroll);
-            color: var(--text-light-bg-primary);
-        }
+.page-slider-info{
+    font-size:12px;
+    color:var(--text-on-dark);
+    font-weight:500;
+    letter-spacing:.3px;
+    opacity:.8;
+    transform: rotate(0deg)!important; /* Ensure info text is never rotated */
+    white-space: normal!important; /* Allow wrapping if needed */
+    margin-bottom: 0 !important; /* Reset margin */
+    padding-top: 0 !important; /* Reset padding */
+}
+#page-slider-trigger-zone { /* Trigger zone for slider */
+    position: fixed;
+    bottom: 0; /* At the bottom edge */
+    left: 0;
+    width: 100%;
+    height: 30px;
+    z-index: 9997;
+    pointer-events: auto;
+}
+/* --- END: Toolbar & Slider Base Positioning --- */
 
-        .chapter-card.current {
-            background: var(--papyrus);
-            border: 1px solid var(--scroll);
-            border-left: 3px solid var(--flame);
-            color: var(--text-light-bg-primary);
-        }
+/* --- REMOVED/COMMENTED OUT: Original .rotated-mode UI repositioning --- */
+/* ... (unchanged) ... */
 
-        .chapter-card.locked {
-            background-color: var(--deep-blue);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
-            opacity: 0.9;
-        }
+.main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
+.book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
+.book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
+.book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
+.canvas-container {
+    position: relative; /* Important for positioning layers */
+    width: calc(100% - 2 * var(--page-padding));
+    height: calc(100% - 2 * var(--page-padding));
+    margin: var(--page-padding);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Clip layers */
+}
+.pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; position: absolute; top: 0; left: 0; z-index: 1; } /* Canvas layer */
+.page-number{display:none}
+.page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
+.page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.page-edge-nav{position:absolute;top:0;height:100%;width:50px;cursor:pointer;z-index:10;transition:background-color .2s;-webkit-tap-highlight-color:transparent}
+.page-edge-nav:hover{background-color:rgba(0,0,0,.03)}
+.page-edge-left{left:0;border-radius:3px 0 0 3px}
+.page-edge-right{right:0;border-radius:0 3px 3px 0}
+.page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
+.page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
+.page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
 
-        /* Completed Card Styles */
-        .completed .chapter-heading { color: var(--text-light-bg-primary); }
-        .completed .chapter-info { color: var(--text-light-bg-secondary); }
-        .completed .chapter-icon {
-            background: rgba(20, 184, 166, 0.15);
-            color: var(--success);
-            box-shadow: none;
-        }
-        .completed .status-icon { stroke: var(--success); }
-        .completed .chapter-duration { color: var(--text-light-bg-muted); }
-        .completed .button-secondary.review-button { /* Specific class for review */
-            background: transparent;
-            color: var(--text-light-bg-secondary);
-            border: 1px solid var(--scroll);
-        }
-        .completed .button-secondary.review-button:hover {
-            background: rgba(30, 41, 59, 0.05);
-            border-color: var(--flame);
-            color: var(--text-light-bg-primary);
-        }
-        .completed .chapter-footer { border-top-color: var(--scroll); }
-        .completed:hover { border-color: rgba(160, 82, 45, 0.4); }
+/* --- START: Single Page Mode Styles Adjustment --- */
+.fullscreen-mode .book-page.right {
+    display: none !important;
+}
+.fullscreen-mode .book-page.left { /* Ensure border/radius looks ok in single page */
+    border-right: 1px solid rgba(255, 255, 255, .08) !important;
+    border-radius: 3px !important; /* Apply radius to all corners? Or just keep 3px 0 0 3px? Adjust if needed */
+}
+.fullscreen-mode .canvas-container {
+    margin: var(--page-padding);
+}
+.fullscreen-mode .pdf-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    position: absolute;
+    z-index: 1;
+}
+/* --- END: Single Page Mode Styles Adjustment --- */
 
-        /* Current Card Styles */
-        .current .chapter-heading { color: var(--text-light-bg-primary); }
-        .current .chapter-info { color: var(--text-light-bg-secondary); }
-        .current .chapter-icon {
-            background: rgba(249, 115, 22, 0.15);
-            color: var(--flame);
-        }
-        .current .status-icon { stroke: var(--flame); }
-        .current .chapter-duration { color: var(--text-light-bg-muted); }
-        .current .button.continue-button { /* Specific class for continue */
-            background: var(--gradient-flame);
-            color: white;
-        }
-        .current .chapter-footer { border-top-color: var(--scroll); }
-        .current:hover { border-color: rgba(249, 115, 22, 0.4); }
-
-        /* Locked Card Styles */
-        .locked .chapter-heading { color: var(--text-primary); }
-        .locked .chapter-info { color: var(--text-secondary); }
-        .locked .chapter-icon {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-secondary);
-            box-shadow: none;
-        }
-        .locked .status-icon { stroke: var(--text-muted); }
-        .locked .chapter-duration { color: var(--text-muted); }
-        .locked .duration-icon { opacity: 0.5; }
-        .locked .button-secondary[disabled] {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-muted);
-            border-color: transparent;
-            cursor: not-allowed;
-        }
-        .locked .chapter-footer { border-top-color: rgba(255, 255, 255, 0.1); }
-        .locked:hover {
-            opacity: 1;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Card Content Styling */
-        .chapter-content {
-            padding: var(--space-lg);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1; /* Allow content to grow */
-            height: 100%; /* Added for flex context */
-        }
-
-
-        /* Noise overlay for light cards */
-        .chapter-card.completed .chapter-content::after,
-        .chapter-card.current .chapter-content::after {
-            content: '';
-            position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.15' seed='0' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-            pointer-events: none;
-            z-index: 0;
-            border-radius: inherit;
-        }
-
-        .chapter-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--space-sm);
-            position: relative;
-            z-index: 1;
-        }
-
-        .chapter-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-md);
-            margin-right: var(--space-sm);
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .status-icon {
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-            position: relative;
-            z-index: 1;
-        }
-
-        .chapter-heading {
-            font-size: 1.1rem;
-            margin-bottom: var(--space-sm);
-            position: relative;
-            z-index: 1;
-            flex-grow: 1; /* Allow heading to grow */
-            color: inherit; /* Inherit color from card state */
-        }
-
-        .chapter-info {
-            font-size: 0.9rem;
-            margin-bottom: var(--space-md);
-            position: relative;
-            z-index: 1;
-            flex-grow: 1; /* Allow info to grow and push footer down */
-            color: inherit; /* Inherit color from card state */
-        }
-
-        .chapter-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto; /* Push footer to bottom */
-            padding-top: var(--space-md);
-            border-top: 1px dashed;
-            position: relative;
-            z-index: 1;
-            border-top-color: inherit; /* Inherit border color */
-            flex-wrap: wrap; /* Allow wrapping */
-            gap: var(--space-sm); /* Add gap */
-        }
+/* --- START: Content Rotated Mode Styles --- */
+/* Apply rotation transform in JS via applyCurrentViewModeStyles */
+.content-rotated-mode .book-page.left{
+    width:var(--page-w)!important; /* Use base dimensions for rotation calc */
+    height:var(--page-h)!important;
+    border-radius: 3px !important; /* Optional: Apply consistent radius */
+    border: 1px solid rgba(255, 255, 255, .08) !important; /* Consistent border */
+    padding:0 !important;
+    background-color:var(--page);
+    display:flex!important; /* Ensure it's displayed */
+    justify-content:center;align-items:center;
+}
+.content-rotated-mode .canvas-container {
+    margin: 10px !important; /* Use consistent padding/margin */
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+}
+.content-rotated-mode .book-page.right{
+    display:none!important; /* Always hide right page when content is rotated */
+}
+.content-rotated-mode .pdf-canvas{
+    box-shadow:none;
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    position: relative;
+    z-index: 1;
+}
+/* --- END: Content Rotated Mode Styles --- */
 
 
-        .chapter-duration {
-            display: flex;
-            align-items: center;
-            font-size: 0.85rem;
-            color: inherit; /* Inherit color */
-            opacity: 0.8; /* Slightly muted */
-        }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)} /* Default page size */
+.book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
+.book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
+.book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
 
-        .duration-icon {
-            width: 14px;
-            height: 14px;
-            margin-right: var(--space-xs);
-            opacity: 0.7;
-        }
-
-        /* Ensure button group in footer stays together */
-        .chapter-footer .button-group {
-             margin-left: auto; /* Push button group to the right if space allows */
-        }
+/* Gutter shadow effect only in double page view */
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
 
-        /* Journey connectors */
-        .journey-row-connector {
-            height: 4px;
-            background: var(--gradient-flame);
-            margin: var(--space-xl) 0;
-            position: relative;
-            border-radius: var(--radius-full);
-            box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
-        }
+/* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
+/* Note: TOC Panel styling remains, but the button won't open it */
+.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
+.toc-panel.visible,.loading-overlay.visible{display:flex!important}
+.toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
+.toc-content{flex:1;padding:10px 20px;overflow-y:auto}
+.toc-chapter{padding:8px 0;border-bottom:1px solid #d8dfe6}
+.toc-chapter-title{font-weight:700;color:var(--primary);cursor:pointer;padding:5px 0}
+.toc-chapter-title:hover,.toc-section:hover{color:var(--accent)}
+.toc-sections{padding-left:20px;margin-top:5px}
+.toc-section{padding:4px 0;cursor:pointer;color:#4a5568;font-size:.95em}
+.loading-overlay{position:fixed;inset:0;background:rgba(8,14,28,.85);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:10001;display:none;justify-content:center;align-items:center;flex-direction:column}
+.loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
+.loading-message{font-size:16px;color:var(--text-on-dark)}
+#status-indicator{display:none}
+/* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
+.textLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; opacity: 1; line-height: 1.0; color: transparent !important; user-select: none; -webkit-user-select: none; pointer-events: none !important; z-index: 2; }
+.textLayer > div { position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%; pointer-events: none !important; border-radius: 2px; }
+.annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.annotationLayer section { position: absolute; pointer-events: auto; }
+.annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
+.annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
+/* --- START: Custom Keyword Overlay & Popup Styles --- */
+.keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
+.keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
+.keyword-highlight:hover { background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
+#definition-popup { position: fixed; background: #ffffff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); padding: 14px 18px; max-width: 320px; min-width: 180px; font-family: var(--font-sans); color: #2d3748; z-index: 10002; transform-origin: top center; transform: translateY(6px) scale(0.98); opacity: 0; visibility: hidden; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s; pointer-events: none; }
+#definition-popup.visible { transform: translateY(0) scale(1); opacity: 1; visibility: visible; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s; pointer-events: auto; }
+#popup-word { font-weight: 600; font-size: 15px; margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0; }
+#popup-definition { font-size: 14px; line-height: 1.6; max-height: 180px; overflow-y: auto; color: #4a5568; padding-right: 5px; margin-right: -5px; }
+#popup-definition::-webkit-scrollbar { width: 5px; }
+#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+#close-popup-btn { position: absolute; top: 6px; right: 6px; cursor: pointer; font-size: 20px; font-weight: 300; color: #a0aec0; transition: color 0.2s, background-color 0.2s; background: none; border: none; padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; line-height: 1; }
+#close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
+/* --- END: Custom Keyword Overlay & Popup Styles --- */
 
-        /* Track node connecting to the row connector */
-        .journey-track .journey-row-connector::before {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: var(--papyrus);
-            border: 3px solid var(--flame);
-            border-radius: 50%;
-            left: -38px; /* Adjust based on padding-left of journey-track */
-            top: 50%;
-            transform: translateY(-50%);
-            box-shadow: 0 0 0 3px var(--papyrus), 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1;
-        }
+</style>
 
-        .journey-row-connector::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transform: translateX(-100%);
-            animation: shimmer 2s infinite;
-            border-radius: inherit;
-        }
-
-        /* --------------------------------
-           Footer - New Light Footer Styles
-        -------------------------------- */
-        .footer-light {
-            background-color: var(--papyrus);
-            /* Texture from auth-card */
-            background-image:
-                url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.2 0'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
-                radial-gradient(circle at 25% 25%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(210, 180, 140, 0.2) 0%, transparent 50%),
-                linear-gradient(to right, rgba(250, 240, 220, 0.1), rgba(226, 210, 175, 0.1), rgba(250, 240, 220, 0.1));
-            /* Default text color from login page footer */
-            color: var(--text-light-bg-secondary);
-            margin-top: auto; /* Push to bottom */
-            padding: var(--space-xl) 0;
-            /* Border from login page footer */
-            border-top: 1px solid var(--scroll);
-            position: relative; /* Needed for ::before */
-            overflow: hidden; /* Contain ::before */
-        }
-
-        /* Subtle edge darkening from auth-card */
-        .footer-light::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            box-shadow: inset 0 0 20px rgba(120, 100, 60, 0.15);
-            pointer-events: none;
-        }
-
-        .footer-light .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: var(--space-lg);
-            padding: 0 var(--space-2xl);
-        }
-
-        /* Keep logo gradient */
-        .footer-light .footer-logo {
-            background: var(--gradient-flame);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-size: 1.8rem;
-            font-weight: 800;
-        }
-
-        /* Copyright text color from login page footer */
-        .footer-light .footer-copyright {
-            color: var(--text-light-bg-secondary);
-            font-size: 0.8rem;
-            margin-top: var(--space-xs);
-        }
-
-        .footer-light .footer-links {
-            display: flex;
-            gap: var(--space-lg);
-        }
-
-        /* Link styles from login page footer */
-        .footer-light .footer-link {
-            color: var(--text-light-bg-secondary);
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: color var(--transition-fast);
-            position: relative;
-        }
-
-        .footer-light .footer-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 1px;
-            bottom: -2px;
-            left: 0;
-            background: var(--gradient-flame);
-            transition: width var(--transition-medium);
-            border-radius: var(--radius-full);
-        }
-
-        .footer-light .footer-link:hover {
-            color: var(--flame); /* Hover color from login page footer link */
-        }
-
-        .footer-light .footer-link:hover::after {
-            width: 100%;
-        }
-
-        /* --------------------------------
-           Responsive Design
-        -------------------------------- */
-        @media (max-width: 1024px) {
-            .top-navbar, .footer-content {
-                padding-left: var(--space-xl);
-                padding-right: var(--space-xl);
-            }
-
-            .chapter-grid {
-                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            }
-        }
-
-        @media (max-width: 768px) {
-            .top-navbar, .footer-content {
-                padding-left: var(--space-lg);
-                padding-right: var(--space-lg);
-            }
-
-            .course-title { font-size: 1.8rem; }
-
-            .nav-link { display: none; } /* Hide text links on mobile */
-
-             /* Adjust main card footer for smaller screens */
-            .card-footer {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .card-footer > div:last-child {
-                 width: 100%; /* Make button group take full width */
-                 justify-content: flex-end; /* Align buttons to the right */
-            }
-
-             /* Adjust chapter grid card footer */
-            .chapter-footer {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .chapter-footer .button-group {
-                width: 100%; /* Make button group take full width */
-                justify-content: flex-end; /* Align buttons to the right */
-                margin-left: 0; /* Reset margin */
-            }
-
-            .footer-light .footer-content {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .footer-light .footer-links {
-                justify-content: center;
-                margin-top: var(--space-md);
-            }
-        }
-
-        @media (max-width: 480px) {
-            .top-navbar {
-                padding-left: var(--space-lg);
-                padding-right: var(--space-lg);
-            }
-
-            .course-title {
-                font-size: 1.5rem;
-                flex-direction: column;
-                align-items: flex-start;
-                gap: var(--space-sm);
-            }
-
-            .logo-section {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
-
-            .divider { display: none; }
-            .brand-name { margin-top: var(--space-xs); }
-
-            .chapter-grid { grid-template-columns: 1fr; }
-
-             /* Stack buttons vertically in chapter card footer on smallest screens */
-             .chapter-footer .button-group {
-                 flex-direction: column;
-                 align-items: stretch;
-             }
-             .chapter-footer .button { /* Make buttons full width */
-                 width: 100%;
-             }
-        }
-
-        /* Accessibility: Reduced Motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-                scroll-behavior: auto !important;
-            }
-
-            .footer-light::after, .time-capsule-btn::before, .progress-value::after, .journey-row-connector::after, .floating-emoji {
-                animation: none !important;
-            }
-            #header-emoji-container {
-                display: none; /* Hide emojis completely */
-            }
-        }
-    </style>
 </head>
-
 <body>
-    <!-- Toast notification container -->
-    <div class="toast-container" id="toast-container"></div>
+    <!-- Toolbar, Trigger Area, Status Indicator -->
+    <div id="new-toolbar"></div>
+    <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
+    <div id="status-indicator">Status: Initializing...</div>
 
-    <!-- Navigation Bar -->
-    <nav class="top-navbar">
-        <div class="logo-section">
-            <a href="index.html" class="logo" aria-label="Pyr Home">Pyr</a>
-            <div class="divider" aria-hidden="true"></div>
-            <div class="brand-name">The Great Human Lab</div>
-        </div>
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="#" class="nav-link">Resources</a>
-            <a href="#" class="nav-link">Help</a>
-            <a href="#" class="notification" aria-label="Notifications">
-                <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <div class="notification-badge">3</div>
-            </a>
-            <div class="avatar">PY</div>
-        </div>
-    </nav>
-
-    <!-- Course Header Section -->
-    <section class="course-header">
-        <!-- Emoji container for floating emojis -->
-        <div id="header-emoji-container"></div>
-
-        <div class="container">
-            <h1 class="course-title">
-                <span class="course-title-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                    </svg>
-                </span>
-                Year 1: Ancient History
-            </h1>
-
-            <div class="course-progress">
-                <div class="progress-bar">
-                    <div class="progress-value"></div>
-                </div>
-                <span class="progress-text">6 of 17 chapters completed (35%)</span>
+<!-- Main Content Area -->
+<div class="main-container">
+    <div class="book-spread">
+        <!-- Left Page -->
+        <div class="book-page left">
+            <div class="canvas-container">
+                <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
+                <div class="textLayer" id="left-text-layer"></div>
+                <div class="annotationLayer" id="left-annotation-layer"></div>
+                {/* *** Custom Keyword Overlay *** */}
+                <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
             </div>
+            <div class="page-edge-nav page-edge-left"></div>
+            <div class="page-edge-nav page-edge-right"></div>
+            <div class="page-number" id="left-page-number"></div>
+            <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
         </div>
-    </section>
-
-    <!-- Main Content -->
-    <main>
-        <div class="container">
-            <!-- Current Chapter Card -->
-            <section class="current-chapter">
-                <div class="current-chapter-card">
-                    <div class="card-header">
-                        <span class="current-badge">Currently Studying</span>
-                        <span class="chapter-number">Chapter 7 of 17</span>
-                    </div>
-                    <div class="card-body">
-                        <h2 class="chapter-title">Rise of Ancient Greece</h2>
-                        <p class="chapter-description">Explore the birth of democracy, philosophy, and the classical Greek city-states that shaped Western civilization. Learn about key figures like Socrates, Plato, and Aristotle.</p>
-                    </div>
-                    <div class="card-footer">
-                        <div>
-                            <span class="chapter-duration">
-                                <svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                45 mins remaining
-                            </span>
-                        </div>
-                        <div>
-                            <button class="button button-secondary button-small time-capsule-btn">
-                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                <span>Time Capsule</span>
-                            </button>
-                            <button class="button" onclick="openChapter('chapter7.pdf')"> <!-- MODIFIED -->
-                                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                Continue Learning
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Chapter Journey Timeline -->
-            <section class="chapter-journey">
-                <div class="journey-header">
-                    <h2 class="journey-title">Full Course Journey</h2>
-                </div>
-
-                <div class="journey-track">
-                    <!-- First Row -->
-                    <div class="chapter-grid">
-                        <!-- Chapter 1 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">1</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Dawn of Civilization</h3>
-                                <p class="chapter-info">The earliest human settlements and the birth of agriculture in Mesopotamia.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter1.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 2 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">2</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Ancient Sumer</h3>
-                                <p class="chapter-info">The world's first urban civilization and the invention of writing.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter2.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 3 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">3</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Babylonian Empire</h3>
-                                <p class="chapter-info">Hammurabi's code of laws and the development of mathematics and astronomy.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter3.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="journey-row-connector"></div>
-
-                    <!-- Second Row -->
-                    <div class="chapter-grid">
-                        <!-- Chapter 4 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">4</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Ancient Egypt</h3>
-                                <p class="chapter-info">The pharaohs, pyramids, and the Nile River civilization.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3.5 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter4.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 5 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">5</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Indus Valley</h3>
-                                <p class="chapter-info">The forgotten civilization of Harappa and Mohenjo-daro.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter5.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 6 (Completed) -->
-                        <div class="chapter-card completed">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">6</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Ancient China</h3>
-                                <p class="chapter-info">Early dynasties, Confucianism, and technological innovations.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
-                                    <div class="button-group">
-                                        <button class="circle-capsule-btn">
-                                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                        </button>
-                                        <button class="button button-secondary button-small review-button" onclick="openChapter('chapter6.pdf')">Review</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="journey-row-connector"></div>
-
-                    <!-- Third Row -->
-                    <div class="chapter-grid">
-                        <!-- Chapter 7 (Current) -->
-                        <div class="chapter-card current">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">7</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                                </div>
-                                <h3 class="chapter-heading">Rise of Ancient Greece</h3>
-                                <p class="chapter-info">Birth of democracy, philosophy, and the classical Greek city-states.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper for consistency -->
-                                        <button class="button button-small continue-button" onclick="openChapter('chapter7.pdf')">Continue</button> <!-- MODIFIED -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 8 (Locked) -->
-                        <div class="chapter-card locked">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">8</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                </div>
-                                <h3 class="chapter-heading">Classical Athens</h3>
-                                <p class="chapter-info">Golden Age of Athens, Socrates, Plato, and Aristotle.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper -->
-                                        <button class="button button-secondary button-small" disabled>Locked</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 9 (Locked) -->
-                        <div class="chapter-card locked">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">9</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                </div>
-                                <h3 class="chapter-heading">Alexander the Great</h3>
-                                <p class="chapter-info">The conquest of the Persian Empire and spread of Hellenistic culture.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper -->
-                                        <button class="button button-secondary button-small" disabled>Locked</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="journey-row-connector"></div>
-
-                    <!-- Fourth Row -->
-                    <div class="chapter-grid">
-                        <!-- Chapter 10 (Locked) -->
-                        <div class="chapter-card locked">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">10</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                </div>
-                                <h3 class="chapter-heading">Early Rome</h3>
-                                <p class="chapter-info">From monarchy to republic and the Punic Wars.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper -->
-                                        <button class="button button-secondary button-small" disabled>Locked</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 11 (Locked) -->
-                        <div class="chapter-card locked">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">11</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                </div>
-                                <h3 class="chapter-heading">Roman Empire</h3>
-                                <p class="chapter-info">Augustus, Pax Romana, and engineering achievements.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>3.5 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper -->
-                                        <button class="button button-secondary button-small" disabled>Locked</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Chapter 12 (Locked) -->
-                        <div class="chapter-card locked">
-                            <div class="chapter-content">
-                                <div class="chapter-meta">
-                                    <div class="chapter-icon">12</div>
-                                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                </div>
-                                <h3 class="chapter-heading">Rise of Christianity</h3>
-                                <p class="chapter-info">From Jesus to Constantine and the early church.</p>
-                                <div class="chapter-footer">
-                                    <span class="chapter-duration"><svg class="duration-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>2.5 hours</span>
-                                    <div class="button-group"> <!-- Added wrapper -->
-                                        <button class="button button-secondary button-small" disabled>Locked</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Add more locked chapters as needed -->
-                    </div>
-                </div>
-            </section>
+        <!-- Right Page -->
+        <div class="book-page right placeholder-page">
+             <div class="canvas-container">
+                <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
+                 <div class="textLayer" id="right-text-layer"></div>
+                 <div class="annotationLayer" id="right-annotation-layer"></div>
+                 {/* *** Custom Keyword Overlay *** */}
+                 <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
+             </div>
+            <div class="page-edge-nav page-edge-left"></div>
+            <div class="page-edge-nav page-edge-right"></div>
+            <div class="page-number" id="right-page-number"></div>
+            <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
         </div>
-    </main>
+    </div>
+</div>
 
-    <!-- Footer -->
-    <footer class="footer-light">
-        <div class="container">
-            <div class="footer-content">
-                <div>
-                    <div class="footer-logo">Pyr</div>
-                    <div class="footer-copyright">© 2025 The Great Human Lab</div>
-                </div>
-                <div class="footer-links">
-                    <a href="#" class="footer-link">Help Center</a>
-                    <a href="#" class="footer-link">Privacy</a>
-                    <a href="#" class="footer-link">Terms</a>
-                    <a href="#" class="footer-link">Contact Support</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+<!-- Modals and Overlays -->
+<div class="toc-panel" id="toc-panel"></div> <!-- TOC Panel remains in HTML but won't be shown -->
+<div class="loading-overlay" id="loading-overlay"></div>
+<div class="page-slider-container" id="page-slider-container"></div>
+<div id="page-slider-trigger-zone"></div>
 
-    <!-- JavaScript for emojis, interaction, and chapter opening -->
-    <script>
-        // Function to open the chapter viewer with the specified PDF
-        function openChapter(chapterFileName) {
-          // Construct the URL for the chapter viewer page
-          // Assumes chapter PDFs are in 'chapters/ancient-history/' relative to the viewer page
-          // Pass the relative path as a URL parameter named 'pdf'
-          const viewerUrl = `chapter-viewer.html?pdf=chapters/ancient-history/${encodeURIComponent(chapterFileName)}`;
-          window.location.href = viewerUrl;
+<!-- *** Custom Definition Popup Structure *** -->
+<div class="definition-popup" id="definition-popup">
+    <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
+    <div class="definition-popup-title" id="popup-word">Keyword</div>
+    <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
+</div>
+<script>
+    // --- START: HTML Population (Update Icons) ---
+    // Define the SVG icon string (unchanged)
+    const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+    // Update the toolbar HTML with new icons for single page and rotate buttons
+    document.getElementById('new-toolbar').innerHTML = `
+        <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button> 
+        <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
+        <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button> 
+        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button> 
+    `;
+    // --- END: HTML Population ---
+    document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
+    document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
+    document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
+</script>
+
+<script>
+    // --- UI Elements ---
+    const definitionPopup = document.getElementById('definition-popup');
+    const popupWord = document.getElementById('popup-word');
+    const popupDefinition = document.getElementById('popup-definition');
+    const closePopupBtn = document.getElementById('close-popup-btn');
+    const statusIndicator = document.getElementById('status-indicator');
+
+    // --- State Variables ---
+    let keywordDefinitions = {};
+    let pageKeywords = {};
+    let currentViewports = {};
+
+    // --- PDF.js Setup (Using v2.5.207) ---
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.worker.min.js';
+
+    const book={title:"No Document",totalPages:0,currentPage:1,isDoublePageView:true,pdfDocument:null,outline:[]};
+    const user={readingProgress:{furthestPage:1}};
+
+    let toolbarTimer=null;
+    let toolbarHover=!1;
+    const pageCache=new Map();
+    const MAX_CACHE_SIZE=20;
+    let PAGE_PADDING=15;
+    let resizeTimer;
+    let sliderHideTimeout=null;
+
+    const linkService = new pdfjsViewer.SimpleLinkService();
+    const eventBus = new pdfjsViewer.EventBus();
+
+    const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
+    // const updateStatus = () => {}; // Production
+
+    // --- Toolbar Logic (Unchanged) ---
+    function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
+    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;/* Removed rotated check as handle is always vertical now */ if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true; if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
+
+    // --- Caching & Page Loading (Unchanged) ---
+    function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){pageCache.delete(pageCache.keys().next().value);}}
+    function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
+    function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
+
+    // --- Custom Keyword Overlay Creation (Unchanged) ---
+    async function createKeywordOverlays(pageNum, pageElement, viewport) {
+        const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
+        const overlayContainer = document.getElementById(overlayContainerId);
+        const canvasContainer = pageElement.querySelector('.canvas-container');
+
+        if (!book.pdfDocument || !overlayContainer || !canvasContainer) {
+            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
+        }
+        overlayContainer.innerHTML = ''; // Clear previous highlights
+
+        const keywordsForPage = pageKeywords[pageNum.toString()] || [];
+        if (keywordsForPage.length === 0) {
+             // updateStatus(`No keywords defined for page ${pageNum}`); // Less verbose
+             return; // No keywords for this page
         }
 
-        // Toast notification functionality
-        function showToast(message) {
-            const toastContainer = document.getElementById('toast-container');
+        const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
+        const lowerCaseDefs = {};
+        for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
 
-            // Remove existing toasts to prevent overlap
-            while (toastContainer.firstChild) {
-                toastContainer.removeChild(toastContainer.firstChild);
-            }
+        try {
+            const page = await book.pdfDocument.getPage(pageNum);
+            const textContent = await page.getTextContent({ normalizeWhitespace: true });
+            let foundKeywordOnPage = false; // Flag to check if any highlights were added
 
-            // Create toast element
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `
-                <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <div class="toast-content">${message}</div>
-            `;
+            textContent.items.forEach(item => {
+                const itemText = item.str;
+                if (!itemText || itemText.trim().length === 0) return;
+                keywordsForPage.forEach((originalKeyword, index) => {
+                    const keywordLower = lowerCaseKeywords[index];
+                    const definition = lowerCaseDefs[keywordLower];
+                    if (!definition) return;
+                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                    let match;
+                    while ((match = regex.exec(itemText)) !== null) {
+                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                        const itemWidth = item.width;
+                        const itemHeight = item.height;
+                        let left = tx[4];
+                        let top = tx[5] - itemHeight; // Adjust top based on PDF coordinate system
+                        if (left < 0) left = 0; if (top < 0) top = 0;
 
-            // Add to container
-            toastContainer.appendChild(toast);
-
-            // Show with animation
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-
-            // Remove after 3 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                     // Check if toast is still in the DOM before removing
-                     if (toast.parentNode === toastContainer) {
-                        toastContainer.removeChild(toast);
-                     }
-                }, 300);
-            }, 3000);
-        }
-
-        // Add demo functionality to non-chapter-opening interactive elements
-        const demoElements = document.querySelectorAll('.nav-link, .notification, .avatar, .time-capsule-btn, .circle-capsule-btn, .footer-link');
-        demoElements.forEach(el => {
-            // Add listener only to elements meant for demo toast
-             if (el.classList.contains('time-capsule-btn') || el.classList.contains('circle-capsule-btn') || el.classList.contains('nav-link') || el.classList.contains('notification') || el.classList.contains('avatar') || el.classList.contains('footer-link')) {
-                el.addEventListener('click', function(e) {
-                    e.preventDefault(); // Prevent default link behavior
-                    showToast('This feature is not available in the demo.');
+                        const highlightDiv = document.createElement('div');
+                        highlightDiv.className = 'keyword-highlight';
+                        highlightDiv.style.left = `${left}px`;
+                        highlightDiv.style.top = `${top}px`;
+                        highlightDiv.style.width = `${itemWidth}px`;
+                        highlightDiv.style.height = `${itemHeight}px`;
+                        highlightDiv.dataset.keyword = originalKeyword;
+                        highlightDiv.dataset.definition = definition;
+                        highlightDiv.title = `Definition: ${originalKeyword}`;
+                        highlightDiv.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const currentHighlight = e.currentTarget;
+                            const word = currentHighlight.dataset.keyword;
+                            const def = currentHighlight.dataset.definition;
+                            const rect = currentHighlight.getBoundingClientRect();
+                            showDefinitionPopup(word, def, rect);
+                        });
+                        overlayContainer.appendChild(highlightDiv);
+                        foundKeywordOnPage = true;
+                        return; // Highlight only first match per item
+                    }
                 });
-            }
-        });
-
-        // --- Emoji Animation Script ---
-        const historyEmojis = [
-            "📜", "🏛️", "⚔️", "🛡️", "👑", "🏺", "🗿", "⚱️", "🔥", "🧠",
-            "🗣️", "📚", "⚓", "🌍", "🧭", "🔍", "🏹", "🔱", "🪶", "⏳",
-            "🕰️", "🖋️", "🦉", "🏆", "🎭", "🗡️", "🦅", "🐺", "🐂", "🏇"
-        ];
-        let activeEmojis = 0;
-        const maxEmojis = 15;
-        const minTimeBetweenEmojis = 2500;
-        let lastEmojiTime = 0;
-        let animationFrameId = null;
-        const emojiContainer = document.getElementById('header-emoji-container');
-        const numVerticalSections = 8;
-        let sectionHeight = emojiContainer ? emojiContainer.offsetHeight / numVerticalSections : 0;
-        const occupiedSections = new Set();
-
-        function createEmoji(initialX = -100) {
-            if (activeEmojis >= maxEmojis || !emojiContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-            let attempts = 0;
-            let sectionIndex;
-            do {
-                sectionIndex = Math.floor(Math.random() * numVerticalSections);
-                attempts++;
-            } while (occupiedSections.has(sectionIndex) && attempts < numVerticalSections * 2);
-
-            if (occupiedSections.has(sectionIndex)) return;
-
-            activeEmojis++;
-            occupiedSections.add(sectionIndex);
-
-            const emoji = document.createElement('div');
-            emoji.className = 'floating-emoji';
-            emoji.textContent = historyEmojis[Math.floor(Math.random() * historyEmojis.length)];
-
-            const size = Math.random() * 12 + 14;
-            emoji.style.fontSize = `${size}px`;
-
-            const topPadding = 0.1 * sectionHeight;
-            const bottomPadding = 0.1 * sectionHeight;
-            const availableHeight = Math.max(0, sectionHeight - topPadding - bottomPadding); // Ensure non-negative
-            const verticalPosition = (sectionIndex * sectionHeight) + topPadding + (Math.random() * availableHeight);
-            emoji.style.top = `${verticalPosition}px`;
-
-            const duration = (26 - size) / 12 * 15 + 20;
-            emoji.style.animationDuration = `${duration}s`;
-
-            const baseOpacity = Math.max(0.1, ((26 - size) / 12 * 0.1 + 0.2)).toFixed(2); // Ensure minimum opacity
-            emoji.style.setProperty('--emoji-opacity', baseOpacity);
-
-            const drift = (Math.random() - 0.5) * 25;
-            emoji.style.setProperty('--emoji-drift', `${drift}px`);
-
-            const rotation = (Math.random() - 0.5) * 60;
-            emoji.style.setProperty('--emoji-rotation', `${rotation}deg`);
-
-            if (initialX > -100 && window.innerWidth > 0) { // Avoid division by zero
-                 const animationDelay = -(initialX / window.innerWidth) * duration;
-                 emoji.style.animationDelay = `${animationDelay}s`;
-                 // Set initial opacity slightly differently to avoid instant pop-in
-                 emoji.style.opacity = '0';
-                 // Force reflow to apply initial styles before animation starts
-                 void emoji.offsetWidth;
-                 // Add class to trigger fade-in if needed, or let animation handle it
-            }
-
-
-            emoji.addEventListener('animationend', () => {
-                 if (emoji.parentNode === emojiContainer) emojiContainer.removeChild(emoji);
-                 activeEmojis--;
-                 occupiedSections.delete(sectionIndex);
-            }, { once: true });
-
-             emojiContainer.appendChild(emoji);
-
-             // Trigger initial fade-in or visibility if not handled by delay
-             if (initialX <= -100) {
-                 setTimeout(() => { emoji.style.opacity = baseOpacity; }, 50); // Small delay for transition
-             }
-
-        }
-
-        function populateInitialEmojis() {
-            if (!emojiContainer || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-             // Clear any existing emojis first
-            while (emojiContainer.firstChild) {
-                emojiContainer.removeChild(emojiContainer.firstChild);
-            }
-            activeEmojis = 0;
-            occupiedSections.clear();
-
-            const initialCount = Math.floor(maxEmojis * 0.6);
-            for (let i = 0; i < initialCount; i++) {
-                const initialX = Math.random() * window.innerWidth;
-                createEmoji(initialX);
-            }
-            lastEmojiTime = Date.now(); // Reset timer
-        }
-
-        function manageEmojis() {
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                if (animationFrameId) {
-                    cancelAnimationFrame(animationFrameId);
-                    animationFrameId = null;
-                }
-                return;
-            }
-
-            const now = Date.now();
-            if (now - lastEmojiTime >= minTimeBetweenEmojis && activeEmojis < maxEmojis) {
-                lastEmojiTime = now;
-                createEmoji();
-            }
-            animationFrameId = requestAnimationFrame(manageEmojis);
-        }
-
-        function handleMotionChange(e) {
-             if (e.matches) {
-                 if (animationFrameId) {
-                     cancelAnimationFrame(animationFrameId);
-                     animationFrameId = null;
-                 }
-                 if(emojiContainer) {
-                    // Clear existing emojis immediately
-                    while (emojiContainer.firstChild) {
-                       emojiContainer.removeChild(emojiContainer.firstChild);
-                    }
-                    activeEmojis = 0;
-                    occupiedSections.clear();
-                    emojiContainer.style.display = 'none';
-                 }
+            });
+             if (foundKeywordOnPage) {
+                 // updateStatus(`Added keyword highlights for page ${pageNum}`); // Less verbose
              } else {
-                 if(emojiContainer) {
-                    emojiContainer.style.display = '';
-                    if (!animationFrameId) {
-                        sectionHeight = emojiContainer.offsetHeight / numVerticalSections; // Recalculate height
-                        populateInitialEmojis(); // Repopulate
-                        manageEmojis();
-                    }
-                 }
+                 // updateStatus(`Processed page ${pageNum}, no matching keyword text found.`); // Less verbose
              }
-         }
+        } catch (error) {
+            console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
+            overlayContainer.innerHTML = ''; // Clear on error
+        }
+    }
 
-        // Initial setup and listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            if (emojiContainer) {
-                sectionHeight = emojiContainer.offsetHeight / numVerticalSections;
-                 const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-                 handleMotionChange(mediaQuery); // Initial check
-                 mediaQuery.addEventListener('change', handleMotionChange); // Listen for changes
+    // --- Simplified Base Text Layer Rendering (Unchanged) ---
+    async function renderAndEnhanceTextLayer(page, container, viewport) {
+      if (!page || !container || !viewport) return;
+      container.innerHTML = '';
+      container.style.pointerEvents = 'none'; container.style.color = 'transparent';
+      try {
+        const textContent = await page.getTextContent({normalizeWhitespace: true});
+        const renderTask = pdfjsLib.renderTextLayer({ textContent, container, viewport });
+        await renderTask.promise;
+      } catch (error) {
+        console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error);
+        container.innerHTML = '';
+      }
+    }
 
-                 // Start animation loop only if motion is not reduced
-                 if (!mediaQuery.matches && !animationFrameId) {
-                     manageEmojis();
-                 }
+    // --- Annotation Layer Rendering (Unchanged) ---
+    async function renderAnnotationLayer(page, container, viewport) {
+        if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
+        container.innerHTML = '';
+        try {
+            const annotations = await page.getAnnotations();
+            if (annotations.length === 0) return;
+            pdfjsLib.AnnotationLayer.render({
+                viewport: viewport.clone({ dontFlip: true }), div: container,
+                annotations: annotations, page: page, linkService: linkService
+            });
+        } catch (error) {
+            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
+            container.innerHTML = '';
+        }
+    }
+
+    // --- renderPage function (Calls createKeywordOverlays - Unchanged internally) ---
+    async function renderPage(pageNum, canvasId) {
+        const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
+        const canvasContainer = canvas?.closest('.canvas-container');
+        const textLayerContainer = canvasContainer?.querySelector('.textLayer');
+        const annotationLayerContainer = canvasContainer?.querySelector('.annotationLayer');
+        const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container');
+        const pageElement = canvas?.closest('.book-page');
+
+        delete currentViewports[canvasId];
+        if (textLayerContainer) textLayerContainer.innerHTML = '';
+        if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
+        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
+
+        if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
+            if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (pageElement) pageElement.classList.add('placeholder-page');
+            hidePageLoading(canvasId); return;
+        }
+
+        showPageLoading(canvasId); pageElement.classList.remove('placeholder-page');
+        let page; let viewport;
+
+        try {
+            if (pageCache.has(pageNum)) {
+                const cachedData = pageCache.get(pageNum);
+                canvas.width = cachedData.width; canvas.height = cachedData.height;
+                canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
+                ctx.putImageData(cachedData.imageData, 0, 0);
+                page = await book.pdfDocument.getPage(pageNum); // Still need page object for layers
+                viewport = cachedData.viewport;
+                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
+                hidePageLoading(canvasId);
+                // updateStatus(`Page ${pageNum} loaded from cache.`); // Less verbose
+            } else {
+                page = await book.pdfDocument.getPage(pageNum);
+                const containerStyle = getComputedStyle(canvasContainer);
+                const availableWidth = parseFloat(containerStyle.width);
+                const availableHeight = parseFloat(containerStyle.height);
+                if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} has zero dimensions.`); hidePageLoading(canvasId); return; }
+
+                const defaultViewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+                viewport = page.getViewport({ scale: scale });
+                currentViewports[canvasId] = viewport;
+
+                const outputScale = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                canvas.style.width = `${Math.floor(viewport.width)}px`;
+                canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                await page.render({ canvasContext: ctx, transform, viewport }).promise;
+                // updateStatus(`Page ${pageNum} rendered to canvas.`); // Less verbose
+
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                pageCache.set(pageNum, { imageData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
+                trimCache();
+                hidePageLoading(canvasId);
             }
-        });
 
-        window.addEventListener('resize', function() {
-             if (emojiContainer && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                 sectionHeight = emojiContainer.offsetHeight / numVerticalSections;
-                 // Optional: Could clear and repopulate on resize for better distribution,
-                 // but might be visually jarring. Let's skip for now.
+            // Render Layers AFTER canvas is ready
+            // updateStatus(`Rendering layers for page ${pageNum}`); // Less verbose
+            await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
+            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
+            await createKeywordOverlays(pageNum, pageElement, viewport); // Create keyword overlays using the final viewport
+
+        } catch (error) {
+            console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hidePageLoading(canvasId);
+            pageElement?.classList.add('placeholder-page'); // Indicate error state
+        }
+    }
+
+    // --- Update Display (Adjusted for content-rotated-mode) ---
+    async function updateDisplay() {
+        if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
+        const leftPageNum = book.currentPage;
+        const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0; // Determine right page only if double view
+        updateStatus(`Updating display for page(s): ${leftPageNum}${rightPageNum > 0 ? ' & ' + rightPageNum : ''}`);
+
+        const leftPageDiv = document.querySelector('.book-page.left');
+        const rightPageDiv = document.querySelector('.book-page.right');
+        const leftPageNumDisplay = document.getElementById('left-page-number');
+        const rightPageNumDisplay = document.getElementById('right-page-number');
+        if (!leftPageDiv || !rightPageDiv || !leftPageNumDisplay || !rightPageNumDisplay) {
+            console.error("Critical page elements missing!"); return;
+        }
+
+        const isFullscreen = document.body.classList.contains('fullscreen-mode');
+        const isContentRotated = document.body.classList.contains('content-rotated-mode'); // Use new class
+
+        // --- Left Page Handling ---
+        leftPageDiv.style.visibility = 'hidden'; // Hide initially
+        if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+            leftPageNumDisplay.textContent = String(leftPageNum);
+            await renderPage(leftPageNum, 'left-page-canvas');
+            leftPageDiv.style.visibility = 'visible'; // Show after rendering
+        } else {
+            // Clear left page if invalid number
+            leftPageNumDisplay.textContent = '';
+            const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
+            const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
+            if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
+        }
+
+        // --- Right Page Handling ---
+        rightPageDiv.style.display = 'none'; // Default to hidden
+        rightPageDiv.classList.remove('placeholder-page'); // Reset placeholder state
+        // Clear right page canvas and layers regardless
+        const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
+        const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
+        if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
+
+        // Show right page ONLY if in Double Page View AND NOT fullscreen AND NOT content rotated
+        if (book.isDoublePageView && !isFullscreen && !isContentRotated) {
+            if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
+                // Valid right page number
+                rightPageNumDisplay.textContent = String(rightPageNum);
+                rightPageDiv.style.display = 'flex'; // Show the div
+                await renderPage(rightPageNum, 'right-page-canvas');
+            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+                // Left page is valid, but right page is beyond total -> show placeholder
+                rightPageDiv.style.display = 'flex'; // Show the div
+                rightPageDiv.classList.add('placeholder-page'); // Add placeholder class
+                rightPageNumDisplay.textContent = '';
+            }
+            // No else needed: if left page is also invalid, right page remains hidden.
+        }
+        // If isFullscreen or isContentRotated, right page remains display: none
+
+        updateSliderPosition();
+        preloadAdjacentPages(book.currentPage);
+        applyCurrentViewModeStyles(); // Ensure transform is correct after update
+        updateStatus("Display update complete.");
+    }
+
+
+    // --- Preloading (Unchanged) ---
+     function preloadAdjacentPages(currentPage) {
+        if (!book.pdfDocument) return;
+        const pagesToPreload = []; const lookahead = book.isDoublePageView ? 2 : 1;
+        for (let i = 1; i <= lookahead; i++) { const nextPage = currentPage + (book.isDoublePageView ? i * 2 : i); if (nextPage <= book.totalPages) { pagesToPreload.push(nextPage); if (book.isDoublePageView && nextPage + 1 <= book.totalPages) pagesToPreload.push(nextPage + 1); } }
+        for (let i = 1; i <= lookahead; i++) { const prevPage = currentPage - (book.isDoublePageView ? i * 2 : i); if (prevPage >= 1) { pagesToPreload.push(prevPage); if (book.isDoublePageView && prevPage + 1 <= book.totalPages && prevPage + 1 < currentPage) pagesToPreload.push(prevPage + 1); } }
+        const uniquePages = [...new Set(pagesToPreload)].filter(p => p > 0 && p <= book.totalPages && !pageCache.has(p)); if (uniquePages.length === 0) return;
+        uniquePages.forEach(pageNum => {
+            book.pdfDocument.getPage(pageNum).then(page => {
+                const defaultViewport = page.getViewport({ scale: 1 }); const simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING); const simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING); const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); const viewport = page.getViewport({ scale: scale }); const tempCanvas = document.createElement('canvas'), tempCtx = tempCanvas.getContext('2d'); const outputScale = window.devicePixelRatio || 1; tempCanvas.width = Math.floor(viewport.width * outputScale); tempCanvas.height = Math.floor(viewport.height * outputScale); const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => { if (!pageCache.has(pageNum)) { const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height); pageCache.set(pageNum, { imageData, width: tempCanvas.width, height: tempCanvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport }); trimCache(); } }).catch(err => console.warn(`Preloading page ${pageNum} failed: ${err.message}`));
+            }).catch(err => console.warn(`Failed to get page ${pageNum} for preloading: ${err.message}`));
+        });
+    }
+
+    // --- Navigation (Unchanged) ---
+    function nextPage(){ const inc=book.isDoublePageView?2:1,t=book.currentPage+inc; if(t<=book.totalPages)jumpToPage(t); else if(!book.isDoublePageView&&book.currentPage<book.totalPages)jumpToPage(book.totalPages) }
+    function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
+    function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
+
+    // --- START: View Modes (Unchanged) ---
+    function applyCurrentViewModeStyles() {
+        const isContentRotated = document.body.classList.contains('content-rotated-mode'); // Use new class
+        const spread = document.querySelector('.book-spread');
+        if (!spread) return;
+
+        if (isContentRotated) {
+            // Calculate scale for rotated content
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            // Get the *original* page dimensions (before rotation)
+            const bookWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
+            const bookHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
+
+            // When rotated, bookHeight becomes the visual width, bookWidth becomes the visual height
+            const scaleX = viewportWidth / bookHeight;
+            const scaleY = viewportHeight / bookWidth;
+            // MODIFIED LINE: Changed 0.95 to 0.98 to reduce whitespace (make content slightly larger)
+            const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor (was 0.95)
+
+            spread.style.transformOrigin = 'center center';
+            spread.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
+            // updateStatus(`Applied rotated transform: scale=${scale}`);
+        } else {
+             // Apply standard scale/position for single or double page view
+             const isFullscreen = document.body.classList.contains('fullscreen-mode');
+             const viewportWidth = window.innerWidth;
+             const viewportHeight = window.innerHeight;
+             const bookWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
+             const bookHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
+             const totalWidth = (isFullscreen || !book.isDoublePageView) ? bookWidth : bookWidth * 2; // Use single or double width
+
+             const scaleX = viewportWidth / totalWidth;
+             const scaleY = viewportHeight / bookHeight;
+             // MODIFIED LINE: Changed 0.95 to 0.98 to reduce whitespace (make content slightly larger)
+             const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor (was 0.95)
+
+             spread.style.transformOrigin = 'center center';
+             spread.style.transform = `translate(-50%, -50%) scale(${scale})`;
+             // updateStatus(`Applied normal transform: scale=${scale}`);
+        }
+    }
+
+    function setSinglePageView(){
+        if (!book.isDoublePageView && document.body.classList.contains('fullscreen-mode')) return; // Already in this mode
+        updateStatus("Setting Single Page View");
+        book.isDoublePageView = false;
+        document.body.classList.remove('content-rotated-mode'); // Remove rotated class
+        document.body.classList.add('fullscreen-mode');
+        hideDefinitionPopup();
+        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
+        updateDisplay().then(()=>{
+            manageToolbar();
+            updateSliderTotalPages();
+            updateSliderPosition();
+        });
+    }
+
+    function setDoublePageView(){
+        if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode')) return; // Already in this mode
+        updateStatus("Setting Double Page View");
+        book.isDoublePageView = true;
+        document.body.classList.remove('content-rotated-mode', 'fullscreen-mode'); // Remove other modes
+        if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--; // Align to left page
+        hideDefinitionPopup();
+        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
+        updateDisplay().then(()=>{
+            manageToolbar();
+            updateSliderTotalPages();
+            updateSliderPosition();
+        });
+    }
+
+    function setRotatedView() {
+        if (document.body.classList.contains('content-rotated-mode')) return; // Already in this mode
+        updateStatus("Setting Content Rotated View");
+        book.isDoublePageView = false; // Rotation implies single page
+        document.body.classList.remove('fullscreen-mode'); // Remove fullscreen mode
+        document.body.classList.add('content-rotated-mode'); // Add specific rotation class
+        hideDefinitionPopup();
+        // applyCurrentViewModeStyles(); // apply happens in updateDisplay
+        updateDisplay().then(()=>{
+            manageToolbar(); // Toolbar itself doesn't change position
+            updateSliderTotalPages(); // Slider doesn't change position
+            updateSliderPosition();
+        });
+    }
+    // --- END: View Modes (Unchanged) ---
+
+    // --- UI Toggles (Unchanged) ---
+    function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
+    // function showTableOfContents(){if(!document.getElementById('toc-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // DISABLED
+    function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
+    function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
+    function hideLoading(){toggleElement('loading-overlay',false)}
+
+    // --- Slider Logic (Unchanged) ---
+    function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
+    function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
+    function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)}
+    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
+    function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
+    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;if(book.isDoublePageView&&c+1<=t && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
+    function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
+
+    // --- Overlay Data Loading (Unchanged) ---
+    async function loadOverlayData(pdfUrl) {
+        const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json'); updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
+        try {
+            const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
+            const data = await response.json(); if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') { console.warn("Invalid overlay structure in JSON file."); keywordDefinitions = {}; pageKeywords = {}; return false; }
+            const processedKeywords = {}; for (const [key, value] of Object.entries(data.keywords)) { if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; } else { console.warn(`Invalid keyword entry skipped: Key='${key}'`) } } keywordDefinitions = processedKeywords;
+            const processedPages = {}; for (const [pageNum, pageWords] of Object.entries(data.pages)) { if (pageNum && !isNaN(parseInt(pageNum)) && Array.isArray(pageWords) && pageWords.every(w => typeof w === 'string')) { processedPages[pageNum.toString()] = pageWords; } else { console.warn(`Invalid page entry skipped: Page='${pageNum}'`); } } pageKeywords = processedPages;
+            updateStatus(`Overlay loaded successfully: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages defined.`); return true;
+        } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
+     }
+
+    // --- PDF Loading (Unchanged) ---
+    async function loadPdf(pdfUrl) {
+        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
+        // Set toc-btn to disabled state initially (it was removed in HTML population, but let's be sure)
+        const tocBtn = document.getElementById('toc-btn');
+        // if (tocBtn) tocBtn.disabled = true; // Keep button enabled visually, just remove functionality
+
+        let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
+        try {
+            updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
+            showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); } // Populate TOC still happens, but button won't open it
+            const overlayLoaded = await overlayPromise;
+
+            // --- Default View Logic ---
+            // Set initial view based on window width AFTER PDF is loaded
+            if (window.innerWidth < 1000) {
+                setSinglePageView(); // Calls updateDisplay internally
+            } else {
+                setDoublePageView(); // Calls updateDisplay internally
+            }
+            // Initial applyCurrentViewModeStyles will happen inside updateDisplay called by setXXXPageView
+
+        } catch (error) {
+            console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
+            const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
+        } finally { hideLoading(); updateStatus("loadPdf finished."); }
+    }
+
+    // --- TOC population (Unchanged) ---
+    function populateTOC() {
+        const tocList = document.getElementById('toc-list'); //, tocButton = document.getElementById('toc-btn'); // Don't need button ref here
+        if (!tocList) return; tocList.innerHTML = '';
+        // tocButton.disabled = true; // Keep button enabled visually
+        if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
+        const createTocItem = (item, level = 0) => {
+            const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
+            s.onclick = async (e) => { // Keep click functionality within the panel itself
+                e.preventDefault(); try {
+                    let pageIndex = -1;
+                    if (typeof item.dest === 'string') {
+                        const destArray = await book.pdfDocument.getDestination(item.dest);
+                        if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); }
+                    } else if (Array.isArray(item.dest) && item.dest[0]) {
+                         pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
+                    } else { console.warn("Unknown TOC destination format:", item.dest); }
+                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); } // Still hide panel on click
+                    else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
+                } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
+            };
+            d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
+        };
+        book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); });
+        // if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>'; // Don't enable button
+        if (!tocList.hasChildNodes()) tocList.innerHTML = '<em>Error processing TOC data.</em>';
+     }
+
+    // --- Popup Handling Functions (Unchanged) ---
+    function showDefinitionPopup(word, definition, rect) {
+        if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
+        popupWord.textContent = word || "Keyword";
+        popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
+        popupDefinition.scrollTop = 0;
+        const popupStyle = window.getComputedStyle(definitionPopup);
+        const popupMaxWidth = parseFloat(popupStyle.maxWidth) || 320;
+        const estPopupHeight = 250; // Max estimated height
+        const margin = 10; const verticalOffset = 10;
+        const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight;
+        const highlightCenterX = rect.left + rect.width / 2;
+        let targetLeft = highlightCenterX - (popupMaxWidth / 2);
+        let targetTop = rect.top - estPopupHeight - verticalOffset;
+        let transformOrigin = 'bottom center';
+        if (targetTop < margin) { targetTop = rect.bottom + verticalOffset; transformOrigin = 'top center'; }
+        if (targetLeft < margin) { targetLeft = margin; } else if (targetLeft + popupMaxWidth > viewportWidth - margin) { targetLeft = viewportWidth - popupMaxWidth - margin; }
+        if (targetTop < margin) { targetTop = margin; } else if (targetTop + estPopupHeight > viewportHeight - margin) { targetTop = viewportHeight - estPopupHeight - margin; }
+        definitionPopup.style.left = `${Math.round(targetLeft)}px`;
+        definitionPopup.style.top = `${Math.round(targetTop)}px`;
+        definitionPopup.style.transformOrigin = transformOrigin;
+        definitionPopup.classList.add('visible');
+    }
+    function hideDefinitionPopup() {
+        if (definitionPopup) { definitionPopup.classList.remove('visible'); }
+    }
+
+
+    // --- Event Setup (Unchanged) ---
+    function setupEvents() {
+        updateStatus("Setting up events");
+        const toolbar = document.getElementById('new-toolbar');
+        const mainContainer = document.querySelector('.main-container');
+        const bookSpread = mainContainer?.querySelector('.book-spread');
+
+        // Toolbar Clicks
+        toolbar?.addEventListener('click', e => {
+             const btn = e.target.closest('.new-btn');
+             // if (!btn || btn.disabled) return; // Remove disabled check if we keep it enabled visually
+             if (!btn) return;
+             const id = btn.id;
+             switch (id) {
+                 case 'single-page-btn': setSinglePageView(); break;
+                 case 'double-page-btn': setDoublePageView(); break;
+                 case 'rotate-btn': setRotatedView(); break;
+                 case 'toc-btn':
+                     // DO NOTHING - Feature Disabled
+                     console.log("TOC button clicked (feature disabled).");
+                     break;
              }
+             resetSliderHideTimer();
+             toolbarHover = false;
+             manageToolbar(false);
         });
+        // TOC Close (Panel can still be closed if somehow opened via console, etc.)
+        document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
+        // Popup Close
+        closePopupBtn?.addEventListener('click', hideDefinitionPopup);
+        // Page Edge Clicks
+        bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
+        // Keyboard Navigation
+        document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
+        // Resize Handling
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); /* Re-apply scaling/rotation */ updateDisplay(); /* Re-render pages for new size */ manageToolbar(); }, 250); });
+        // Touch Swipes
+        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
+        // Slider Trigger Zone
+        const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
+        // Global Click Listener for Popup Dismissal
+        document.addEventListener('click', e => {
+             if (definitionPopup.classList.contains('visible')
+                 && !definitionPopup.contains(e.target)
+                 && !e.target.closest('.keyword-highlight'))
+             { hideDefinitionPopup(); }
+        }, true);
+        updateStatus("Events setup complete");
+    }
 
+    // --- Initialization (Unchanged) ---
+    async function init() {
+        updateStatus("Initializing application...");
+        try {
+            try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
+            setupEvents(); setupToolbarHover(); initPageSlider(); hideLoading();
+            const urlParams = new URLSearchParams(window.location.search); const pdfUrlParam = urlParams.get('pdf');
+            if (pdfUrlParam) { updateStatus(`PDF URL parameter found: ${pdfUrlParam}`); await loadPdf(pdfUrlParam); }
+            else {
+                updateStatus("No PDF specified in URL parameter (?pdf=...)."); const sc = document.querySelector('.main-container .book-spread'); if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`; document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden'); document.querySelector('.book-page.right')?.style.setProperty('display','none'); document.getElementById('page-slider-container')?.classList.remove('visible'); document.getElementById('new-toolbar')?.classList.remove('visible');
+            }
+            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+            updateStatus("Initialization complete.");
+        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
+    }
 
-    </script>
+// --- Start the application ---
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
