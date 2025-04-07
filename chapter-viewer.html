@@ -25,6 +25,8 @@
     --page-padding:15px;
     /* Modern Font Stack */
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    /* Mobile detection breakpoint */
+    --mobile-breakpoint: 1024px; /* Changed from 768 to include tablets */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -46,6 +48,8 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .new-btn:hover{background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important;transform:translateY(-2px)!important}
 .new-btn:active{transform:translateY(1px)!important}
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
+
+/* Rotated Mode Styles - Kept for reference but button hidden on desktop/mobile */
 .rotated-mode #new-toolbar{top:auto!important;right:50%!important;bottom:-60px!important;transform:translateX(50%)!important;flex-direction:row!important;width:auto!important;height:58px!important;background:rgba(28,37,54,.9)!important;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:8px 8px 0 0!important;padding:5px 10px!important;box-shadow:0 -2px 10px rgba(0,0,0,.4)!important;border:1px solid rgba(255,255,255,.1);border-bottom:none}
 .rotated-mode #new-toolbar.visible{bottom:0!important;transform:translateX(50%)!important}
 .rotated-mode #new-toolbar::before{left:50%!important;transform:translateX(-50%)!important;top:-25px!important;width:40px!important;height:25px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border-radius:4px 4px 0 0!important;content:"≡";padding-bottom:5px;color:var(--text-on-dark);border:1px solid rgba(255,255,255,.1);border-bottom:none;cursor:pointer}
@@ -53,12 +57,36 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .rotated-mode #new-toolbar .new-btn{width:40px!important;height:40px!important;font-size:20px!important;transform: rotate(90deg)}
 .rotated-mode .new-btn:hover {transform: rotate(90deg) scale(1.1);background:rgba(52,73,94,.9)!important;border-color:rgba(255,255,255,.25)!important;box-shadow:0 2px 8px rgba(0,0,0,.3)!important}
 .rotated-mode .new-btn:active {transform: rotate(90deg) scale(0.95)}
+.rotated-mode .page-slider-container{bottom:50%!important;left:-80px!important;top:auto!important;transform:translateY(50%)!important;width:60px!important;height:70vh!important;max-width:none!important;max-height:500px;flex-direction:column-reverse!important;padding:10px 5px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-left:none;border-radius:0 12px 12px 0!important;box-shadow:2px 0 20px rgba(0,0,0,.4)!important}
+.rotated-mode .page-slider-container.visible{left:0!important}
+.rotated-mode .page-slider-track{width:100%!important;height:100%!important;margin-bottom:0!important;padding:10px 0!important;display:flex;align-items:center;flex:1}
+.rotated-mode .page-slider{width:6px!important;height:100%!important;writing-mode:vertical-lr!important;-webkit-appearance:slider-vertical!important;appearance:slider-vertical;margin:0 auto!important;padding:0!important;background:rgba(255,255,255,.1)!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-runnable-track{width:6px!important;height:100%;background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important;border-radius:3px}
+.rotated-mode .page-slider::-webkit-slider-thumb{-webkit-appearance: none;appearance: none;width:20px!important;height:20px!important;border-radius: 50%;background: var(--accent);cursor: pointer;border: 3px solid rgba(28,37,54,.9)!important;box-shadow: 0 1px 6px rgba(0,0,0,.4);transition: all .2s ease;margin-top:0!important;margin-left:-7px!important}
+.rotated-mode .page-slider:hover::-webkit-slider-thumb {width: 24px !important;height: 24px !important;margin-left: -9px !important}
+.rotated-mode .page-slider::-moz-range-thumb{width: 20px;height: 20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition: all .2s ease}
+.rotated-mode .page-slider:hover::-moz-range-thumb {width: 24px;height: 24px}
+.rotated-mode .page-slider::-moz-range-progress{background-color:var(--accent)!important;width:6px!important;border-radius:3px}
+.rotated-mode .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);width:6px!important;border-radius:3px}
+.rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
+.rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
+.rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
+.rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
+.rotated-mode .book-page.right{display:none!important}
+.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
+.rotated-mode .keyword-overlay-container, /* Disable keyword overlays in rotated mode */
+.rotated-mode #definition-popup {        /* Disable definition popup in rotated mode */
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 .main-container{flex:1;display:flex;justify-content:center!important;align-items:center!important;padding:0;height:100%;width:100%;overflow:hidden;position:relative;background:transparent}
 .book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
 .book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
-.fullscreen-mode:not(.rotated-mode) .book-page.left{border-right:1px solid rgba(255,255,255,.08)!important}
+
 .canvas-container {
     position: relative; /* Important for positioning layers */
     width: calc(100% - 2 * var(--page-padding));
@@ -68,7 +96,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     justify-content: center;
     align-items: center;
     overflow: hidden; /* Clip layers */
+    cursor: default; /* Default cursor for canvas container */
 }
+/* Add cursor: pointer specifically to detected image areas later if implemented */
+
 .pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; position: absolute; top: 0; left: 0; z-index: 1; } /* Canvas layer */
 .page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
@@ -81,14 +112,41 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
 .page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
 .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
+
+/* Fullscreen / Mobile Single Page Mode */
 .fullscreen-mode .book-page.right{display:none!important}
-.fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:0;}
-.fullscreen-mode .canvas-container { margin: var(--page-padding); }
-.fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain; position:relative; z-index: 1; }
-.rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
-.rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
-.rotated-mode .book-page.right{display:none!important}
-.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
+.fullscreen-mode .book-page.left{
+    max-width:95vw; /* Use viewport width */
+    max-height:95vh; /* Use viewport height */
+    width:auto; /* Let aspect ratio determine actual size */
+    height:auto;
+    border-radius:5px!important;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border:1px solid rgba(255,255,255,.08)!important;
+    padding:0;
+    /* Ensure spread transform is still centered */
+    /* transform-origin remains center from .book-spread */
+}
+.fullscreen-mode .canvas-container {
+    margin: var(--page-padding); /* Keep padding inside the maximized page */
+    width: calc(100% - 2 * var(--page-padding));
+    height: calc(100% - 2 * var(--page-padding));
+}
+.fullscreen-mode .pdf-canvas{
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    position:relative; /* Allow z-index */
+    z-index: 1;
+}
+/* Ensure no rotation transform is applied by default in fullscreen */
+.fullscreen-mode .book-spread {
+    transform: translate(-50%, -50%) scale(1); /* Explicitly no rotation or scaling here */
+}
+
+
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
@@ -96,6 +154,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);hei
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
+
 .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);} /* Use modern font */
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
@@ -110,6 +169,8 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 .loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
 .loading-message{font-size:16px;color:var(--text-on-dark)}
 #status-indicator{display:none}
+
+/* Page Slider - Unchanged Base */
 .page-slider-container{position:fixed;bottom:-80px;left:50%;transform:translateX(-50%);width:90%;max-width:700px;padding:14px 20px;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-bottom:none;box-shadow:0 -4px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;z-index:9998;transition:bottom .35s cubic-bezier(.2,.9,.3,1),transform .35s cubic-bezier(.2,.9,.3,1), left .35s cubic-bezier(.2,.9,.3,1);border-radius:16px 16px 0 0}
 .page-slider-container.visible{bottom:0}
 .page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
@@ -123,20 +184,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 .page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
 .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
 .page-slider-info{font-size:12px;color:var(--text-on-dark);font-weight:500;letter-spacing:.3px;opacity:.8}
-.rotated-mode .page-slider-container{bottom:50%!important;left:-80px!important;top:auto!important;transform:translateY(50%)!important;width:60px!important;height:70vh!important;max-width:none!important;max-height:500px;flex-direction:column-reverse!important;padding:10px 5px!important;background:rgba(28,37,54,.9);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);border:1px solid rgba(255,255,255,.1);border-left:none;border-radius:0 12px 12px 0!important;box-shadow:2px 0 20px rgba(0,0,0,.4)!important}
-.rotated-mode .page-slider-container.visible{left:0!important}
-.rotated-mode .page-slider-track{width:100%!important;height:100%!important;margin-bottom:0!important;padding:10px 0!important;display:flex;align-items:center;flex:1}
-.rotated-mode .page-slider{width:6px!important;height:100%!important;writing-mode:vertical-lr!important;-webkit-appearance:slider-vertical!important;appearance:slider-vertical;margin:0 auto!important;padding:0!important;background:rgba(255,255,255,.1)!important;border-radius:3px}
-.rotated-mode .page-slider::-webkit-slider-runnable-track{width:6px!important;height:100%;background:linear-gradient(to top,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important;border-radius:3px}
-.rotated-mode .page-slider::-webkit-slider-thumb{-webkit-appearance: none;appearance: none;width:20px!important;height:20px!important;border-radius: 50%;background: var(--accent);cursor: pointer;border: 3px solid rgba(28,37,54,.9)!important;box-shadow: 0 1px 6px rgba(0,0,0,.4);transition: all .2s ease;margin-top:0!important;margin-left:-7px!important}
-.rotated-mode .page-slider:hover::-webkit-slider-thumb {width: 24px !important;height: 24px !important;margin-left: -9px !important}
-.rotated-mode .page-slider::-moz-range-thumb{width: 20px;height: 20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4);transition: all .2s ease}
-.rotated-mode .page-slider:hover::-moz-range-thumb {width: 24px;height: 24px}
-.rotated-mode .page-slider::-moz-range-progress{background-color:var(--accent)!important;width:6px!important;border-radius:3px}
-.rotated-mode .page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);width:6px!important;border-radius:3px}
-.rotated-mode .page-slider-info{transform:rotate(90deg);white-space:nowrap;margin-bottom:15px;padding-top:10px;color:var(--text-on-dark)}
 #page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
-.rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
 
 /* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
 .textLayer {
@@ -154,45 +202,38 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 .annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
 .annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
 
-/* --- START: Custom Keyword Overlay & Popup Styles (UPDATED) --- */
+/* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 4; overflow: hidden;
 }
-
 .keyword-highlight {
   position: absolute;
   background: transparent;
-  /* border-bottom: 2px solid transparent; REMOVED underline */
-  transition: background 0.2s ease-out, box-shadow 0.2s ease-out; /* Added box-shadow transition */
+  transition: background 0.2s ease-out, box-shadow 0.2s ease-out;
   pointer-events: auto;
   cursor: pointer;
   z-index: 5;
   box-sizing: border-box;
-  border-radius: 3px; /* Slightly more rounding */
+  border-radius: 3px;
 }
-
 .keyword-highlight:hover {
-  /* UPDATED: Fiery orange to amber gradient background */
-  background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); /* Orange -> Amber */
-  /* border-bottom-color: var(--accent); REMOVED underline color change */
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow on hover */
+  background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
-
-/* Definition Popup - Modern Styling */
 #definition-popup {
   position: fixed;
-  background: #ffffff; /* Clean white */
-  border-radius: 8px; /* Modern rounding */
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); /* Softer shadow */
-  padding: 14px 18px; /* Adjust padding */
-  max-width: 320px; /* Slightly wider */
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 14px 18px;
+  max-width: 320px;
   min-width: 180px;
-  font-family: var(--font-sans); /* Use modern font stack */
-  color: #2d3748; /* Darker gray text (like Tailwind's gray-800) */
+  font-family: var(--font-sans);
+  color: #2d3748;
   z-index: 10002;
   transform-origin: top center;
-  transform: translateY(6px) scale(0.97); /* Adjust start transform */
+  transform: translateY(6px) scale(0.97);
   opacity: 0;
   visibility: hidden;
   transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
@@ -200,7 +241,6 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
               visibility 0s linear 0.18s;
   pointer-events: none;
 }
-
 #definition-popup.visible {
   transform: translateY(0) scale(1);
   opacity: 1;
@@ -210,44 +250,40 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
               visibility 0s linear 0s;
    pointer-events: auto;
 }
-
-#popup-word { /* Title */
-  font-weight: 600; /* Semi-bold */
-  font-size: 15px; /* Adjust size */
-  margin: 0 0 10px 0; /* Adjust margin */
+#popup-word {
+  font-weight: 600;
+  font-size: 15px;
+  margin: 0 0 10px 0;
   color: var(--primary);
-  border-bottom: 1px solid #e2e8f0; /* Lighter border (like Tailwind's gray-200) */
-  padding: 0 0 8px 0; /* Adjust padding */
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 0 8px 0;
 }
-
-#popup-definition { /* Content */
+#popup-definition {
   font-size: 14px;
-  line-height: 1.6; /* Adjust line height */
+  line-height: 1.6;
   max-height: 180px;
   overflow-y: auto;
-  color: #4a5568; /* Medium gray text (like Tailwind's gray-600) */
+  color: #4a5568;
   padding-right: 5px;
   margin-right: -5px;
 }
-/* Scrollbar styling */
 #popup-definition::-webkit-scrollbar { width: 5px; }
-#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;} /* Lighter track */
-#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;} /* Medium thumb */
-#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; } /* Darker on hover */
-
-#close-popup-btn { /* Close button */
+#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+#close-popup-btn {
   position: absolute;
-  top: 6px; /* Adjust position */
+  top: 6px;
   right: 6px;
   cursor: pointer;
-  font-size: 20px; /* Make slightly larger/bolder 'x' */
+  font-size: 20px;
   font-weight: 300;
-  color: #a0aec0; /* Medium-light gray */
+  color: #a0aec0;
   transition: color 0.2s, background-color 0.2s;
   background: none;
   border: none;
   padding: 0;
-  width: 28px; /* Increase clickable area */
+  width: 28px;
   height: 28px;
   display: flex;
   align-items: center;
@@ -256,10 +292,83 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
   line-height: 1;
 }
 #close-popup-btn:hover {
-  color: #4a5568; /* Darker gray */
-  background-color: #edf2f7; /* Light gray background */
+  color: #4a5568;
+  background-color: #edf2f7;
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
+
+/* --- START: Image Viewer Modal Styles --- */
+#image-viewer-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.85); /* Dark overlay */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10003; /* Higher than definition popup */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  cursor: pointer; /* Click background to close */
+}
+#image-viewer-modal.visible {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0s linear 0s;
+}
+#image-viewer-content {
+  max-width: 95%;
+  max-height: 95%;
+  display: flex; /* Use flex to allow image to determine size */
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: default; /* Don't close when clicking image itself */
+}
+#image-viewer-img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Scale image down if needed */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  background-color: #333; /* Background for transparent images */
+}
+#close-image-viewer-btn {
+  position: absolute;
+  top: -10px; /* Position relative to content box */
+  right: -10px;
+  width: 36px;
+  height: 36px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #333;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  line-height: 36px; /* Center the '×' */
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.2s, transform 0.2s;
+  z-index: 10004;
+}
+#close-image-viewer-btn:hover {
+  background-color: #fff;
+  transform: scale(1.1);
+}
+/* Hide image viewer on mobile/tablet if desired, or keep it */
+/* Example: Hide on mobile */
+/*
+@media (max-width: var(--mobile-breakpoint)) {
+  #image-viewer-modal {
+    display: none !important;
+  }
+}
+*/
+/* --- END: Image Viewer Modal Styles --- */
 
     </style>
 </head>
@@ -274,12 +383,12 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         <div class="book-spread">
             <!-- Left Page -->
             <div class="book-page left">
-                <div class="canvas-container">
+                <div class="canvas-container" id="left-canvas-container"> {/* Added ID */}
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
                     <div class="textLayer" id="left-text-layer"></div>
                     <div class="annotationLayer" id="left-annotation-layer"></div>
-                    {/* *** Custom Keyword Overlay *** */}
                     <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
+                    {/* Image overlay container could go here if implementing precise detection */}
                 </div>
                 <div class="page-edge-nav page-edge-left"></div>
                 <div class="page-edge-nav page-edge-right"></div>
@@ -288,12 +397,12 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             </div>
             <!-- Right Page -->
             <div class="book-page right placeholder-page">
-                 <div class="canvas-container">
+                 <div class="canvas-container" id="right-canvas-container"> {/* Added ID */}
                     <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
                      <div class="textLayer" id="right-text-layer"></div>
                      <div class="annotationLayer" id="right-annotation-layer"></div>
-                     {/* *** Custom Keyword Overlay *** */}
                      <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
+                     {/* Image overlay container could go here */}
                  </div>
                 <div class="page-edge-nav page-edge-left"></div>
                 <div class="page-edge-nav page-edge-right"></div>
@@ -309,12 +418,21 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     <div class="page-slider-container" id="page-slider-container"></div>
     <div id="page-slider-trigger-zone"></div>
 
-    <!-- *** Custom Definition Popup Structure *** -->
+    <!-- Custom Definition Popup -->
     <div class="definition-popup" id="definition-popup">
         <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
         <div class="definition-popup-title" id="popup-word">Keyword</div>
         <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
     </div>
+
+    <!-- *** Image Viewer Modal *** -->
+    <div id="image-viewer-modal">
+        <div id="image-viewer-content">
+            <img id="image-viewer-img" src="" alt="Full Resolution Image" />
+            <button id="close-image-viewer-btn" title="Close Image Viewer (Esc)">×</button>
+        </div>
+    </div>
+
 
 <script>
     // Populate Inner HTML directly (Toolbar, TOC, Loading, Slider) - Unchanged
@@ -330,6 +448,9 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     const popupDefinition = document.getElementById('popup-definition');
     const closePopupBtn = document.getElementById('close-popup-btn');
     const statusIndicator = document.getElementById('status-indicator');
+    const imageViewerModal = document.getElementById('image-viewer-modal');
+    const imageViewerImg = document.getElementById('image-viewer-img');
+    const closeImageViewerBtn = document.getElementById('close-image-viewer-btn');
 
     // --- State Variables ---
     let keywordDefinitions = {};
@@ -358,6 +479,14 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
     // const updateStatus = () => {}; // Production
 
+    // --- Device Detection ---
+    function isMobileDevice() {
+        // Use the CSS variable for breakpoint consistency, fallback to 1024
+        const breakpointVar = getComputedStyle(document.documentElement).getPropertyValue('--mobile-breakpoint');
+        const breakpoint = parseInt(breakpointVar, 10) || 1024;
+        return window.innerWidth < breakpoint;
+    }
+
     // --- Toolbar Logic (Unchanged) ---
     function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t)return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
     function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect(),i=document.body.classList.contains('rotated-mode');let c=false;const w=25,rh=25;if(i){if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY<r.top&&e.clientY>=r.top-rh)c=true}else{if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true}if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
@@ -367,118 +496,80 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- Custom Keyword Overlay Creation (MODIFIED) ---
+    // --- Custom Keyword Overlay Creation (Unchanged from previous version - respects rotated mode) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
-        // *** ADDED CHECK FOR ROTATED MODE ***
         if (document.body.classList.contains('rotated-mode')) {
-            // In rotated mode, disable keyword highlighting and popups
             const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
             const overlayContainer = document.getElementById(overlayContainerId);
-            if (overlayContainer) overlayContainer.innerHTML = ''; // Clear any existing overlays just in case
-            return; // Exit function, no highlights will be created
+            if (overlayContainer) overlayContainer.innerHTML = '';
+            return;
         }
-        // *** END OF ADDED CHECK ***
-
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
         const canvasContainer = pageElement.querySelector('.canvas-container');
-
-        if (!book.pdfDocument || !overlayContainer || !canvasContainer) {
-            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
-        }
+        if (!book.pdfDocument || !overlayContainer || !canvasContainer) { console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return; }
         overlayContainer.innerHTML = '';
-
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
         if (keywordsForPage.length === 0) return;
-
         const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
         const lowerCaseDefs = {};
         for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
-
         try {
             const page = await book.pdfDocument.getPage(pageNum);
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
-
             textContent.items.forEach(item => {
                 const itemText = item.str;
                 if (!itemText || itemText.trim().length === 0) return;
-
                 keywordsForPage.forEach((originalKeyword, index) => {
                     const keywordLower = lowerCaseKeywords[index];
                     const definition = lowerCaseDefs[keywordLower];
                     if (!definition) return;
-
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                     const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                     let match;
-
                     while ((match = regex.exec(itemText)) !== null) {
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                        const itemWidth = item.width;
-                        const itemHeight = item.height;
-                        let left = tx[4];
-                        let top = tx[5] - itemHeight;
+                        const itemWidth = item.width; const itemHeight = item.height;
+                        let left = tx[4]; let top = tx[5] - itemHeight;
                         if (left < 0) left = 0; if (top < 0) top = 0;
-
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
-                        highlightDiv.style.left = `${left}px`;
-                        highlightDiv.style.top = `${top}px`;
-                        highlightDiv.style.width = `${itemWidth}px`;
-                        highlightDiv.style.height = `${itemHeight}px`;
-                        highlightDiv.dataset.keyword = originalKeyword;
-                        highlightDiv.dataset.definition = definition;
+                        highlightDiv.style.left = `${left}px`; highlightDiv.style.top = `${top}px`;
+                        highlightDiv.style.width = `${itemWidth}px`; highlightDiv.style.height = `${itemHeight}px`;
+                        highlightDiv.dataset.keyword = originalKeyword; highlightDiv.dataset.definition = definition;
                         highlightDiv.title = `Definition: ${originalKeyword}`;
-
                         highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const rect = highlightDiv.getBoundingClientRect();
+                            e.stopPropagation(); const rect = highlightDiv.getBoundingClientRect();
                             showDefinitionPopup(originalKeyword, definition, rect.left, rect.bottom, rect.top);
                         });
-
                         overlayContainer.appendChild(highlightDiv);
-                        return; // Highlight whole item once if any keyword matches
+                        return;
                     }
                 });
             });
-        } catch (error) {
-            console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = '';
-        }
+        } catch (error) { console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error); overlayContainer.innerHTML = ''; }
     }
 
-    // --- Simplified Base Text Layer Rendering (for accessibility) ---
+    // --- Simplified Base Text Layer Rendering (Unchanged) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
       if (!page || !container || !viewport) return;
       container.innerHTML = '';
-      container.style.pointerEvents = 'none'; container.style.color = 'transparent'; // Ensure hidden via CSS
+      container.style.pointerEvents = 'none'; container.style.color = 'transparent';
       try {
         const textContent = await page.getTextContent({normalizeWhitespace: true});
-        const renderTask = pdfjsLib.renderTextLayer({
-          textContent: textContent, container: container, viewport: viewport,
-        });
-        await renderTask.promise;
-      } catch (error) {
-        console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error);
-        container.innerHTML = '';
-      }
+        await pdfjsLib.renderTextLayer({ textContent: textContent, container: container, viewport: viewport }).promise;
+      } catch (error) { console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error); container.innerHTML = ''; }
     }
 
-    // --- Annotation Layer Rendering (Unchanged from previous) ---
+    // --- Annotation Layer Rendering (Unchanged) ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
         container.innerHTML = '';
         try {
             const annotations = await page.getAnnotations();
             if (annotations.length === 0) return;
-            pdfjsLib.AnnotationLayer.render({
-                viewport: viewport.clone({ dontFlip: true }), div: container,
-                annotations: annotations, page: page, linkService: linkService
-            });
-        } catch (error) {
-            console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
-            container.innerHTML = '';
-        }
+            pdfjsLib.AnnotationLayer.render({ viewport: viewport.clone({ dontFlip: true }), div: container, annotations: annotations, page: page, linkService: linkService });
+        } catch (error) { console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error); container.innerHTML = ''; }
     }
 
     // --- renderPage function (Calls createKeywordOverlays) ---
@@ -494,6 +585,10 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         if (textLayerContainer) textLayerContainer.innerHTML = '';
         if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
         if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
+        // Clear any potential image overlays if they existed
+        // const imageOverlayContainer = canvasContainer?.querySelector('.image-overlay-container');
+        // if (imageOverlayContainer) imageOverlayContainer.innerHTML = '';
+
 
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -505,15 +600,15 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         let page; let viewport;
 
         try {
-            if (pageCache.has(pageNum)) { /* ... load from cache ... */
+            if (pageCache.has(pageNum)) { // Load from cache
                 const cachedData = pageCache.get(pageNum);
                 canvas.width = cachedData.width; canvas.height = cachedData.height;
                 canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
                 ctx.putImageData(cachedData.imageData, 0, 0);
                 page = await book.pdfDocument.getPage(pageNum); viewport = cachedData.viewport;
-                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData);
+                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
                 hidePageLoading(canvasId);
-            } else { /* ... render new ... */
+            } else { // Render new
                 page = await book.pdfDocument.getPage(pageNum);
                 const containerStyle = getComputedStyle(canvasContainer); const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
                 if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} zero dimensions.`); hidePageLoading(canvasId); return; }
@@ -529,7 +624,13 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             // Render Layers: Base Text -> Annotations -> Custom Keywords
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            await createKeywordOverlays(pageNum, pageElement, viewport); // This will now respect rotated mode
+            await createKeywordOverlays(pageNum, pageElement, viewport);
+
+            // --- Image Detection/Overlay (Placeholder) ---
+            // NOTE: Robust image detection requires parsing page.getOperatorList(),
+            // tracking the CTM, and identifying image drawing operators (e.g., Do).
+            // This is complex and not implemented here.
+            // The current click listener is on the whole canvas container (see setupEvents).
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -541,57 +642,239 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     // --- Update Display (Unchanged) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
-        const leftPageNum = book.currentPage; const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
+        const leftPageNum = book.currentPage;
+        // Force right page num to 0 if not in double page view (desktop only possibility now)
+        const rightPageNum = book.isDoublePageView && !isMobileDevice() ? book.currentPage + 1 : 0;
         updateStatus(`Updating display for page(s): ${leftPageNum}${rightPageNum > 0 ? ' & ' + rightPageNum : ''}`);
         const leftPageDiv = document.querySelector('.book-page.left'); const rightPageDiv = document.querySelector('.book-page.right');
         const leftPageNumDisplay = document.getElementById('left-page-number'); const rightPageNumDisplay = document.getElementById('right-page-number');
         if (!leftPageDiv || !rightPageDiv || !leftPageNumDisplay || !rightPageNumDisplay) { console.error("Critical page elements missing!"); return; }
-        leftPageDiv.style.visibility = 'hidden'; rightPageDiv.style.display = 'none'; rightPageDiv.classList.remove('placeholder-page');
+
+        leftPageDiv.style.visibility = 'hidden'; // Hide left initially
+        rightPageDiv.style.display = 'none'; // Always hide right initially
+        rightPageDiv.classList.remove('placeholder-page');
+        // Clear right canvas and overlays
         const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
         if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
+
+        // Render Left Page
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-            leftPageNumDisplay.textContent = String(leftPageNum); await renderPage(leftPageNum, 'left-page-canvas'); leftPageDiv.style.visibility = 'visible';
+            leftPageNumDisplay.textContent = String(leftPageNum);
+            await renderPage(leftPageNum, 'left-page-canvas');
+            leftPageDiv.style.visibility = 'visible'; // Show left page after rendering
         } else {
-            leftPageDiv.style.visibility = 'hidden'; leftPageNumDisplay.textContent = '';
+            leftPageDiv.style.visibility = 'hidden'; // Keep hidden if invalid
+            leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
         }
-        if (book.isDoublePageView) {
+
+        // Render Right Page (Only if in double page view on desktop)
+        if (book.isDoublePageView && !isMobileDevice()) {
             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
-                rightPageNumDisplay.textContent = String(rightPageNum); rightPageDiv.style.display = 'flex'; await renderPage(rightPageNum, 'right-page-canvas');
-            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) { rightPageDiv.style.display = 'flex'; rightPageDiv.classList.add('placeholder-page'); rightPageNumDisplay.textContent = ''; }
-            else { rightPageDiv.style.display = 'none'; }
+                rightPageNumDisplay.textContent = String(rightPageNum);
+                rightPageDiv.style.display = 'flex'; // Show right page container
+                await renderPage(rightPageNum, 'right-page-canvas');
+            } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) { // Show placeholder if left is valid but right is not
+                rightPageDiv.style.display = 'flex';
+                rightPageDiv.classList.add('placeholder-page');
+                rightPageNumDisplay.textContent = '';
+            }
+             // If left is also invalid, right remains hidden (display: none)
         }
-        updateSliderPosition(); preloadAdjacentPages(book.currentPage); updateStatus("Display update complete.");
+
+        updateSliderPosition();
+        preloadAdjacentPages(book.currentPage);
+        updateStatus("Display update complete.");
     }
 
-    // --- Preloading (Unchanged) ---
+    // --- Preloading (Adjusted for mobile single view) ---
      function preloadAdjacentPages(currentPage) {
         if (!book.pdfDocument) return;
-        const pagesToPreload = []; const lookahead = book.isDoublePageView ? 2 : 1;
-        for (let i = 1; i <= lookahead; i++) { const nextPage = currentPage + (book.isDoublePageView ? i * 2 : i); if (nextPage <= book.totalPages) { pagesToPreload.push(nextPage); if (book.isDoublePageView && nextPage + 1 <= book.totalPages) pagesToPreload.push(nextPage + 1); } }
-        for (let i = 1; i <= lookahead; i++) { const prevPage = currentPage - (book.isDoublePageView ? i * 2 : i); if (prevPage >= 1) { pagesToPreload.push(prevPage); if (book.isDoublePageView && prevPage + 1 <= book.totalPages && prevPage + 1 < currentPage) pagesToPreload.push(prevPage + 1); } }
-        const uniquePages = [...new Set(pagesToPreload)].filter(p => p > 0 && p <= book.totalPages && !pageCache.has(p)); if (uniquePages.length === 0) return;
+        const isSingle = isMobileDevice() || !book.isDoublePageView;
+        const pagesToPreload = [];
+        const lookahead = isSingle ? 1 : 2; // Look ahead further in double view
+
+        // Preload next pages
+        for (let i = 1; i <= lookahead; i++) {
+            const nextPage = currentPage + (isSingle ? i : i * 2);
+            if (nextPage <= book.totalPages) {
+                pagesToPreload.push(nextPage);
+                // Add the page next to the next one in double view mode
+                if (!isSingle && nextPage + 1 <= book.totalPages) {
+                    pagesToPreload.push(nextPage + 1);
+                }
+            }
+        }
+        // Preload previous pages
+        for (let i = 1; i <= lookahead; i++) {
+            const prevPage = currentPage - (isSingle ? i : i * 2);
+            if (prevPage >= 1) {
+                pagesToPreload.push(prevPage);
+                 // Add the page next to the previous one in double view mode (if not current page or its partner)
+                if (!isSingle && prevPage + 1 <= book.totalPages && prevPage + 1 < currentPage) {
+                    pagesToPreload.push(prevPage + 1);
+                }
+            }
+        }
+
+        const uniquePages = [...new Set(pagesToPreload)].filter(p => p > 0 && p <= book.totalPages && !pageCache.has(p));
+        if (uniquePages.length === 0) return;
+        updateStatus(`Preloading pages: ${uniquePages.join(', ')}`);
+
         uniquePages.forEach(pageNum => {
             book.pdfDocument.getPage(pageNum).then(page => {
-                const defaultViewport = page.getViewport({ scale: 1 }); const simWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING); const simHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING); const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); const viewport = page.getViewport({ scale: scale }); const tempCanvas = document.createElement('canvas'), tempCtx = tempCanvas.getContext('2d'); const outputScale = window.devicePixelRatio || 1; tempCanvas.width = Math.floor(viewport.width * outputScale); tempCanvas.height = Math.floor(viewport.height * outputScale); const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => { if (!pageCache.has(pageNum)) { const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height); pageCache.set(pageNum, { imageData, width: tempCanvas.width, height: tempCanvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport }); trimCache(); } }).catch(err => console.warn(`Preloading page ${pageNum} failed: ${err.message}`));
+                // Simulate viewport calculation for preloading
+                const isCurrentlyFullscreen = document.body.classList.contains('fullscreen-mode');
+                const simWidth = isCurrentlyFullscreen
+                    ? window.innerWidth * 0.9 // Approximate fullscreen available width
+                    : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')) - (2 * PAGE_PADDING);
+                const simHeight = isCurrentlyFullscreen
+                    ? window.innerHeight * 0.9 // Approximate fullscreen available height
+                    : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')) - (2 * PAGE_PADDING);
+
+                const defaultViewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(simWidth / defaultViewport.width, simHeight / defaultViewport.height, 1); // Max scale 1
+                const viewport = page.getViewport({ scale: scale });
+
+                const tempCanvas = document.createElement('canvas'), tempCtx = tempCanvas.getContext('2d');
+                const outputScale = window.devicePixelRatio || 1;
+                tempCanvas.width = Math.floor(viewport.width * outputScale);
+                tempCanvas.height = Math.floor(viewport.height * outputScale);
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+                page.render({ canvasContext: tempCtx, transform: transform, viewport: viewport }).promise.then(() => {
+                    if (!pageCache.has(pageNum)) {
+                        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                        pageCache.set(pageNum, { imageData, width: tempCanvas.width, height: tempCanvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
+                        trimCache();
+                        updateStatus(`Preloaded page ${pageNum}`);
+                    }
+                }).catch(err => console.warn(`Preloading page ${pageNum} render failed: ${err.message}`));
             }).catch(err => console.warn(`Failed to get page ${pageNum} for preloading: ${err.message}`));
         });
     }
 
-    // --- Navigation (Unchanged) ---
-    function nextPage(){ const inc=book.isDoublePageView?2:1,t=book.currentPage+inc; if(t<=book.totalPages)jumpToPage(t); else if(!book.isDoublePageView&&book.currentPage<book.totalPages)jumpToPage(book.totalPages) }
-    function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
-    function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
+    // --- Navigation (Adjusted step for mobile) ---
+    function nextPage(){
+        const isSingle = isMobileDevice() || !book.isDoublePageView;
+        const inc = isSingle ? 1 : 2;
+        const targetPage = book.currentPage + inc;
+        if (targetPage <= book.totalPages) {
+            jumpToPage(targetPage);
+        } else if (isSingle && book.currentPage < book.totalPages) { // Go to last page if single view and not already there
+            jumpToPage(book.totalPages);
+        }
+    }
+    function prevPage(){
+        const isSingle = isMobileDevice() || !book.isDoublePageView;
+        const dec = isSingle ? 1 : 2;
+        const targetPage = book.currentPage - dec;
+        if (targetPage >= 1) {
+            jumpToPage(targetPage);
+        } else if (isSingle && book.currentPage > 1) { // Go to first page if single view and not already there
+             jumpToPage(1);
+        }
+    }
+    function jumpToPage(pageNum){
+        if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages) {
+            console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`); return;
+        }
+        let targetPage = pageNum;
+        // Ensure targetPage is odd for double-page view start, except page 1
+        if (book.isDoublePageView && !isMobileDevice() && targetPage > 1 && targetPage % 2 === 0) {
+            targetPage--;
+        }
+        if (targetPage === book.currentPage) return; // Already on the target page
 
-    // --- View Modes (Unchanged) ---
-    function applyCurrentViewModeStyles() { const i=document.body.classList.contains('rotated-mode'),s=document.querySelector('.book-spread');if(!s)return; if(i){const w=window.innerWidth,h=window.innerHeight,bW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')),bH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')),sX=w/bH,sY=h/bW,sc=Math.min(sX,sY)*.95;s.style.transformOrigin='center center';s.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${sc})`}else{s.style.transformOrigin='center center';s.style.transform='translate(-50%, -50%)'} }
-    function setSinglePageView(){ if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Single Page View"); book.isDoublePageView=false; document.body.classList.remove('rotated-mode'); document.body.classList.add('fullscreen-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
-    function setDoublePageView(){ if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Double Page View"); book.isDoublePageView=true; document.body.classList.remove('rotated-mode','fullscreen-mode'); if(book.currentPage>1&&book.currentPage%2===0)book.currentPage--; hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
-    function setRotatedView() { if(document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Rotated View"); book.isDoublePageView=false; document.body.classList.remove('fullscreen-mode'); document.body.classList.add('rotated-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
+        updateStatus(`Jumping to page ${targetPage}`);
+        book.currentPage = targetPage;
+        if (targetPage > user.readingProgress.furthestPage) { user.readingProgress.furthestPage = targetPage; }
+
+        hideDefinitionPopup(); // Close popups on page turn
+        hideImageViewer(); // Close image viewer on page turn
+        updateDisplay(); // Render the new page(s)
+        showPageSlider(); // Briefly show the slider
+        manageToolbar(false); // Hide toolbar
+    }
+
+    // --- View Modes (Adjusted) ---
+    function applyCurrentViewModeStyles() {
+        // Rotated mode is effectively removed for user interaction via button hiding
+        // This function now primarily handles standard vs fullscreen scaling.
+        const isFullscreen = document.body.classList.contains('fullscreen-mode');
+        const s = document.querySelector('.book-spread');
+        if (!s) return;
+
+        if (isFullscreen) {
+             // Styles applied by .fullscreen-mode class in CSS
+             // We might need to recalculate scale if window size changes significantly?
+             // updateDisplay already handles rerendering with new dimensions.
+             // Let CSS handle the max-width/height scaling.
+             s.style.transform = 'translate(-50%, -50%) scale(1)'; // Ensure no leftover scale/rotate
+        } else { // Standard double page desktop view
+            s.style.transformOrigin = 'center center';
+            s.style.transform = 'translate(-50%, -50%)'; // Reset any potential scaling/rotation
+        }
+    }
+
+    function setSinglePageView(){
+        // This is now the standard mobile view AND the desktop single-page view.
+        updateStatus("Setting Single Page View (Fullscreen)");
+        book.isDoublePageView = false;
+        document.body.classList.remove('rotated-mode'); // Remove just in case
+        document.body.classList.add('fullscreen-mode'); // Add fullscreen styles
+        hideDefinitionPopup();
+        hideImageViewer();
+        applyCurrentViewModeStyles(); // Apply basic transform
+        updateDisplay().then(()=>{
+            manageToolbar();
+            updateSliderTotalPages(); // Update max value if needed (though total pages doesn't change)
+            updateSliderPosition(); // Update current value display
+        });
+    }
+
+    function setDoublePageView(){
+        // Only applicable/callable on desktop now
+        if (isMobileDevice()) return; // Should not be callable on mobile
+        if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode')) return; // Already in this mode
+
+        updateStatus("Setting Double Page View");
+        book.isDoublePageView = true;
+        document.body.classList.remove('rotated-mode', 'fullscreen-mode');
+        // Ensure current page is odd for double view start (except page 1)
+        if (book.currentPage > 1 && book.currentPage % 2 === 0) {
+            book.currentPage--;
+        }
+        hideDefinitionPopup();
+        hideImageViewer();
+        applyCurrentViewModeStyles();
+        updateDisplay().then(()=>{
+            manageToolbar();
+            updateSliderTotalPages();
+            updateSliderPosition();
+        });
+    }
+
+    // Rotated view function remains but button is hidden
+    function setRotatedView() {
+        // This function is unlikely to be called now, but kept for completeness
+        if (document.body.classList.contains('rotated-mode')) return;
+        updateStatus("Setting Rotated View");
+        book.isDoublePageView = false;
+        document.body.classList.remove('fullscreen-mode');
+        document.body.classList.add('rotated-mode');
+        hideDefinitionPopup();
+        hideImageViewer();
+        applyCurrentViewModeStyles(); // Applies the rotation transform
+        updateDisplay().then(()=>{
+            manageToolbar();
+            updateSliderTotalPages();
+            updateSliderPosition();
+        });
+    }
 
     // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
@@ -600,17 +883,17 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Unchanged) ---
+    // --- Slider Logic (Adjusted display for mobile) ---
     function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
     function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)}
-    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages)t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
+    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;const isSingle = isMobileDevice() || !book.isDoublePageView;if(!isSingle&&n+1<=book.totalPages)t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
-    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;if(book.isDoublePageView&&c+1<=t)p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
+    function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;const isSingle = isMobileDevice() || !book.isDoublePageView; if(!isSingle&&c+1<=t)p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
     function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
 
     // --- Overlay Data Loading (Unchanged) ---
-    async function loadOverlayData(pdfUrl) { /* ... unchanged ... */
+    async function loadOverlayData(pdfUrl) {
         const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json'); updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
         try {
             const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
@@ -621,13 +904,22 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- PDF Loading (Unchanged) ---
-    async function loadPdf(pdfUrl) { /* ... unchanged ... */
-        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true; let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
+    // --- PDF Loading (MODIFIED view setting logic) ---
+    async function loadPdf(pdfUrl) {
+        updateStatus(`loadPdf started for: ${pdfUrl}`); showLoading("Initializing PDF..."); pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={}; if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); hideImageViewer(); document.title = "Heritage History™ Reader"; document.getElementById('toc-btn').disabled = true; let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
             updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
             showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
-            const overlayLoaded = await overlayPromise; if (window.innerWidth < 1000) { setSinglePageView(); } else { setDoublePageView(); }
+            const overlayLoaded = await overlayPromise;
+
+            // *** MODIFIED: Set view based on device type ***
+            if (isMobileDevice()) {
+                setSinglePageView(); // Force single page on mobile
+            } else {
+                setDoublePageView(); // Default to double page on desktop
+            }
+            // Initial updateDisplay is called within setSingle/DoublePageView
+
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
@@ -635,21 +927,17 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     }
 
     // --- TOC population (Unchanged) ---
-    function populateTOC() { /* ... unchanged ... */
+    function populateTOC() {
         const tocList = document.getElementById('toc-list'), tocButton = document.getElementById('toc-btn'); if (!tocList || !tocButton) return; tocList.innerHTML = ''; tocButton.disabled = true; if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
             s.onclick = async (e) => {
                 e.preventDefault(); try {
                     let pageIndex = -1;
-                    if (typeof item.dest === 'string') {
-                        const destArray = await book.pdfDocument.getDestination(item.dest);
-                        if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); }
-                    } else if (Array.isArray(item.dest) && item.dest[0]) {
-                         pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
-                    } else { console.warn("Unknown TOC destination format:", item.dest); }
-                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
-                    else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
+                    if (typeof item.dest === 'string') { const destArray = await book.pdfDocument.getDestination(item.dest); if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); } }
+                    else if (Array.isArray(item.dest) && item.dest[0]) { pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]); }
+                    else { console.warn("Unknown TOC destination format:", item.dest); }
+                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); } else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
             };
             d.appendChild(s); if (item.items && item.items.length > 0) { const sub = document.createElement('div'); if (level === 0) sub.className = 'toc-sections'; else sub.style.paddingLeft = '15px'; item.items.forEach(subItem => { const subEl = createTocItem(subItem, level + 1); if (subEl) sub.appendChild(subEl); }); if (sub.hasChildNodes()) d.appendChild(sub); } return d;
@@ -657,102 +945,231 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); }); if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
      }
 
-    // --- Popup Handling Functions (Updated Positioning Logic) ---
+    // --- Popup Handling Functions (Unchanged - respects rotated mode check) ---
     function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) return;
-
-        // *** ADDED CHECK FOR ROTATED MODE - Prevents showing popup even if somehow triggered ***
-        if (document.body.classList.contains('rotated-mode')) {
-             return;
-        }
+        if (document.body.classList.contains('rotated-mode')) return; // Check remains just in case
 
         popupWord.textContent = word;
         popupDefinition.innerHTML = definition || `<span class="error-message">Definition not available.</span>`;
-        popupDefinition.scrollTop = 0; // Reset scroll
+        popupDefinition.scrollTop = 0;
 
-        const popupRect = definitionPopup.getBoundingClientRect(); // Get dimensions (might be 0 if hidden first time)
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const margin = 10; // Viewport margin
-
-        // Estimate dimensions if needed
-        const estWidth = Math.min(popupRect.width || 320, 320); // Use max-width
-        const estHeight = Math.min(popupRect.height || 250, 250); // Estimate height for calc
-
-        // Position Strategy: Try to place centered above, fallback to below.
-        // Horizontal: Center on the clicked element's approximate middle
-        const clickCenterX = clickLeft + ( (definitionPopup.style.width ? parseFloat(definitionPopup.style.width) : estWidth) / 2); // Use known width if possible
-        let posX = clickCenterX - (estWidth / 2);
-        let posY = clickTop - estHeight - 10; // Place 10px above
+        const popupRect = definitionPopup.getBoundingClientRect();
+        const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight; const margin = 10;
+        const estWidth = Math.min(popupRect.width || 320, 320); const estHeight = Math.min(popupRect.height || 250, 250);
+        const clickCenterX = clickLeft + ( (definitionPopup.style.width ? parseFloat(definitionPopup.style.width) : estWidth) / 2);
+        let posX = clickCenterX - (estWidth / 2); let posY = clickTop - estHeight - 10;
         let transformOrigin = 'bottom center';
-
-        // Adjust horizontal position to stay within viewport bounds
-        if (posX < margin) { posX = margin; }
-        else if (posX + estWidth > viewportWidth - margin) { posX = viewportWidth - estWidth - margin; }
-
-        // If placing above goes off-screen OR overlaps too much with top controls, place below
-        if (posY < margin) {
-            posY = clickBottom + 10; // Place 10px below
-            transformOrigin = 'top center'; // Animate from top
-        }
-
-        // Final check if placing below goes off-screen
-        if (posY + estHeight > viewportHeight - margin) {
-             posY = viewportHeight - estHeight - margin; // Clamp to bottom
-             // Keep origin as 'top center' if we clamped at bottom after trying below
-        }
-         if (posY < margin) { // Final top clamp (if somehow still needed)
-             posY = margin;
-         }
-
-        definitionPopup.style.left = `${posX}px`;
-        definitionPopup.style.top = `${posY}px`;
+        if (posX < margin) { posX = margin; } else if (posX + estWidth > viewportWidth - margin) { posX = viewportWidth - estWidth - margin; }
+        if (posY < margin) { posY = clickBottom + 10; transformOrigin = 'top center'; }
+        if (posY + estHeight > viewportHeight - margin) { posY = viewportHeight - estHeight - margin; }
+        if (posY < margin) { posY = margin; }
+        definitionPopup.style.left = `${posX}px`; definitionPopup.style.top = `${posY}px`;
         definitionPopup.style.transformOrigin = transformOrigin;
-
-        // Make it visible using the class for transitions
         definitionPopup.classList.add('visible');
     }
+    function hideDefinitionPopup() { if (definitionPopup) { definitionPopup.classList.remove('visible'); } }
 
-    function hideDefinitionPopup() {
-        if (definitionPopup) { definitionPopup.classList.remove('visible'); }
+    // --- Image Viewer Modal Functions ---
+    function showImageViewer(imageDataUrl) {
+        if (!imageViewerModal || !imageViewerImg) return;
+        if (!imageDataUrl) {
+             console.warn("showImageViewer called with no image data URL.");
+             // Optionally show a placeholder or error in the modal
+             imageViewerImg.src = ''; // Clear previous image
+             // imageViewerImg.alt = "Image data unavailable";
+             return; // Or just don't show the modal
+        }
+        imageViewerImg.src = imageDataUrl;
+        imageViewerImg.alt = "Full Resolution Image"; // Reset alt text
+        imageViewerModal.classList.add('visible');
+        // Add key listener for Esc specific to the image viewer
+        document.addEventListener('keydown', handleImageViewerEsc);
+    }
+    function hideImageViewer() {
+        if (imageViewerModal) {
+            imageViewerModal.classList.remove('visible');
+            imageViewerImg.src = ''; // Clear image src to free memory
+        }
+        // Remove the specific Esc listener
+        document.removeEventListener('keydown', handleImageViewerEsc);
+    }
+    function handleImageViewerEsc(e) {
+        if (e.key === 'Escape') {
+            hideImageViewer();
+            e.preventDefault(); // Prevent other Esc actions
+        }
+    }
+    function handleCanvasClick(event) {
+        // This is the placeholder for image detection logic.
+        // It currently doesn't extract the image.
+
+        // We need the click coordinates relative to the canvas viewport
+        const canvasContainer = event.currentTarget; // The element the listener is attached to
+        const canvas = canvasContainer.querySelector('.pdf-canvas');
+        if (!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for X
+        const scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for Y
+
+        const canvasX = (event.clientX - rect.left) * scaleX; // scale mouse coordinates after they have
+        const canvasY = (event.clientY - rect.top) * scaleY;  // been adjusted to be relative to element
+
+        console.log(`Canvas clicked at viewport coordinates: X=${event.clientX}, Y=${event.clientY}. Scaled canvas coordinates: X=${canvasX.toFixed(2)}, Y=${canvasY.toFixed(2)}`);
+        updateStatus(`Canvas clicked at (${canvasX.toFixed(0)}, ${canvasY.toFixed(0)}). Image detection/extraction not implemented.`);
+
+        // ** Placeholder / Demo **
+        // To test the modal, you could temporarily call showImageViewer here
+        // with a sample image URL, or retrieve a known image from the PDF
+        // if you knew its object reference.
+        // Example (replace with actual data if available):
+        // const sampleImageUrl = 'https://via.placeholder.com/800x600.png?text=Sample+Image';
+        // showImageViewer(sampleImageUrl);
+
+        // NOTE: To implement properly:
+        // 1. In renderPage, parse page.getOperatorList().
+        // 2. Identify image drawing operators and their bounding boxes in PDF coordinates.
+        // 3. Store these boxes and the image object reference (e.g., in a Map keyed by pageNum).
+        // 4. Convert PDF coordinates to canvas viewport coordinates using the current viewport.
+        // 5. In this click handler, check if the click coordinates fall within any stored image box for the current page.
+        // 6. If a match is found, retrieve the image object using its reference.
+        // 7. Use PDF.js methods (possibly involving page.objs.get and creating a blob/DataURL) to get the image data.
+        // 8. Call showImageViewer(imageDataUrl).
     }
 
-    // --- Event Setup (Updated for new popup logic) ---
+
+    // --- Event Setup (MODIFIED) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
+        const leftCanvasContainer = document.getElementById('left-canvas-container');
+        const rightCanvasContainer = document.getElementById('right-canvas-container');
 
         // --- Keyword Interactions Handled Directly on elements in createKeywordOverlays ---
 
-        // --- Other Event Listeners ---
-        toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
+        // --- Toolbar & TOC ---
+        toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; // Rotate button might be hidden
+            case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use new function
+
+        // --- Popups ---
+        closePopupBtn?.addEventListener('click', hideDefinitionPopup);
+        closeImageViewerBtn?.addEventListener('click', hideImageViewer);
+        imageViewerModal?.addEventListener('click', (e) => { // Click background to close image viewer
+            if (e.target === imageViewerModal) { hideImageViewer(); }
+        });
+
+        // --- Page Navigation ---
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
-        document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode') || document.body.classList.contains('fullscreen-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); updateDisplay(); } manageToolbar(); }, 250); });
-        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
+        document.addEventListener('keydown', e => {
+            if (document.getElementById('toc-panel')?.classList.contains('visible') ||
+                document.getElementById('image-viewer-modal')?.classList.contains('visible') || // Don't navigate if image viewer is open (Esc handled separately)
+                (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; }
+            if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return;
+            let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; }
+            if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); }
+        });
+
+        // --- Resize ---
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); hideImageViewer(); setupDeviceSpecificUI(); // Re-check device type and adjust UI
+            // Re-apply view mode logic based on new size/device type
+            if (isMobileDevice()) { setSinglePageView(); } else { // Desktop
+                if (document.body.classList.contains('fullscreen-mode')) { setSinglePageView(); // Stay in single if already fullscreen
+                } else { setDoublePageView(); /* Default to double otherwise */ }
+            }
+            // updateDisplay() is called within setSingle/DoublePageView
+            manageToolbar();
+        }, 250); });
+
+        // --- Touch Swipes ---
+        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,#image-viewer-modal,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
+
+        // --- Slider Hover/Trigger ---
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
+
+        // --- Global Click (for hiding definition popup) ---
         document.addEventListener('click', e => { if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) { hideDefinitionPopup(); } }, true);
+
+        // --- Canvas Click Listener (for Image Viewer - Desktop Only) ---
+        if (!isMobileDevice()) {
+            if(leftCanvasContainer) leftCanvasContainer.addEventListener('click', handleCanvasClick);
+            if(rightCanvasContainer) rightCanvasContainer.addEventListener('click', handleCanvasClick);
+            updateStatus("Image click listener added to canvas containers (desktop).");
+        } else {
+            updateStatus("Image click listener NOT added (mobile device).");
+        }
+
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (Unchanged) ---
+     // --- Device Specific UI Setup ---
+    function setupDeviceSpecificUI() {
+        const isMobile = isMobileDevice();
+        const doublePageBtn = document.getElementById('double-page-btn');
+        const rotateBtn = document.getElementById('rotate-btn');
+        const singlePageBtn = document.getElementById('single-page-btn');
+
+        if (isMobile) {
+            updateStatus("Device detected as Mobile/Tablet.");
+            if (doublePageBtn) doublePageBtn.style.display = 'none';
+            if (rotateBtn) rotateBtn.style.display = 'none';
+            // Optionally hide single page button too if it's the only mode
+             // if (singlePageBtn) singlePageBtn.style.display = 'none';
+        } else {
+            updateStatus("Device detected as Desktop.");
+            if (doublePageBtn) doublePageBtn.style.display = 'flex'; // Ensure visible
+            if (singlePageBtn) singlePageBtn.style.display = 'flex'; // Ensure visible
+            if (rotateBtn) rotateBtn.style.display = 'none'; // Hide rotate on desktop
+        }
+        // Adjust toolbar positioning if needed based on device, though CSS usually handles this
+    }
+
+    // --- Initialization (MODIFIED) ---
     async function init() {
         updateStatus("Initializing application...");
         try {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
-            setupEvents(); setupToolbarHover(); initPageSlider(); hideLoading();
+
+            // Setup core UI elements first
+            setupToolbarHover();
+            initPageSlider();
+
+            // *** Setup device-specific UI elements (like hiding buttons) ***
+            setupDeviceSpecificUI();
+
+            // Setup event listeners (including conditional image click)
+            setupEvents();
+
+            hideLoading(); // Hide initial loading message if any
+
             const urlParams = new URLSearchParams(window.location.search); const pdfUrlParam = urlParams.get('pdf');
-            if (pdfUrlParam) { updateStatus(`PDF URL parameter found: ${pdfUrlParam}`); await loadPdf(pdfUrlParam); }
-            else {
-                updateStatus("No PDF specified in URL parameter (?pdf=...)."); const sc = document.querySelector('.main-container .book-spread'); if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`; document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden'); document.querySelector('.book-page.right')?.style.setProperty('display','none'); document.getElementById('page-slider-container')?.classList.remove('visible'); document.getElementById('new-toolbar')?.classList.remove('visible');
+            if (pdfUrlParam) {
+                updateStatus(`PDF URL parameter found: ${pdfUrlParam}`);
+                await loadPdf(pdfUrlParam); // loadPdf now handles setting the initial view mode
+            } else {
+                updateStatus("No PDF specified in URL parameter (?pdf=...).");
+                const sc = document.querySelector('.main-container .book-spread');
+                if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
+                document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden');
+                document.querySelector('.book-page.right')?.style.setProperty('display','none');
+                document.getElementById('page-slider-container')?.classList.remove('visible');
+                document.getElementById('new-toolbar')?.classList.remove('visible');
             }
-            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+
+            window.addEventListener('beforeunload', () => {
+                updateStatus("Unloading - Cleanup.");
+                pageCache.clear();
+                if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; }
+            });
             updateStatus("Initialization complete.");
-        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
+        } catch (initError) {
+            console.error("Initialization failed:", initError);
+            document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`;
+        }
     }
 
     // --- Start the application ---
