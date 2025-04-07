@@ -81,15 +81,87 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .page-edge-left:hover::after,.page-edge-right:hover::after{content:"";position:absolute;top:50%;width:12px;height:12px;border-style:solid;border-color:rgba(0,0,0,.6);border-width:2px 2px 0 0;opacity:.8}
 .page-edge-left:hover::after{left:18px;transform:translateY(-50%) rotate(-135deg)}
 .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
+
+/* --- START: View Mode Specific Styles --- */
+
+/* Single Page (Fullscreen) Mode */
 .fullscreen-mode .book-page.right{display:none!important}
-.fullscreen-mode .book-page.left{max-width:95vw;max-height:95vh;width:auto;height:auto;border-radius:5px!important;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08)!important;padding:0;}
-.fullscreen-mode .canvas-container { margin: var(--page-padding); }
-.fullscreen-mode .pdf-canvas{max-width:100%;max-height:100%;object-fit:contain; position:relative; z-index: 1; }
-.rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
-.rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
+.fullscreen-mode .book-page.left{
+    max-width:95vw;
+    max-height:95vh;
+    width:auto; /* Auto width for responsive scaling */
+    height:auto; /* Auto height for responsive scaling */
+    border-radius:5px!important;
+    display:flex; /* Center canvas container inside */
+    justify-content:center;
+    align-items:center;
+    border:1px solid rgba(255,255,255,.08)!important; /* Simple border */
+    padding:0; /* Padding handled by canvas-container */
+    /* Remove fixed width/height */
+    /* width:var(--page-w) !important; */
+    /* height:var(--page-h) !important; */
+}
+.fullscreen-mode .canvas-container {
+    margin: var(--page-padding); /* Maintain internal padding */
+    /* Let the canvas scale within this */
+    width: auto;
+    height: auto;
+    max-width: calc(95vw - 2 * var(--page-padding)); /* Constrain canvas */
+    max-height: calc(95vh - 2 * var(--page-padding));
+}
+.fullscreen-mode .pdf-canvas{
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    position:relative; /* Relative position within canvas-container */
+    z-index: 1;
+    box-shadow: none; /* Remove shadow from canvas itself */
+}
+/* FIX: Center the book-spread container in fullscreen mode */
+.fullscreen-mode .book-spread {
+    transform: translate(-25%, -50%); /* Shift left by half a page width */
+}
+
+/* Rotated Mode */
+.rotated-mode .book-page.left{
+    width:var(--page-w)!important; /* Maintain original dimensions for rotation */
+    height:var(--page-h)!important;
+    border-radius:0!important;
+    border:none!important;
+    padding:0 !important;
+    background-color:var(--page);
+    display:flex; /* Center canvas container inside */
+    justify-content:center;
+    align-items:center;
+}
+.rotated-mode .canvas-container {
+    margin: 10px !important; /* Small margin in rotated view */
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+}
 .rotated-mode .book-page.right{display:none!important}
-.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
-body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
+.rotated-mode .pdf-canvas{
+    box-shadow:none;
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+    position: relative; /* Relative position */
+    z-index: 1;
+}
+/* Rotated mode transform is handled by applyCurrentViewModeStyles JS */
+
+/* Double Page (Default) Mode */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-page{
+    width:var(--page-w); /* Fixed dimensions for double page */
+    height:var(--page-h);
+}
+/* Default centering for double page */
+body:not(.fullscreen-mode):not(.rotated-mode) .book-spread {
+    transform: translate(-50%, -50%);
+}
+
+/* --- END: View Mode Specific Styles --- */
+
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
@@ -505,15 +577,47 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
                 hidePageLoading(canvasId);
             } else { /* ... render new ... */
                 page = await book.pdfDocument.getPage(pageNum);
-                const containerStyle = getComputedStyle(canvasContainer); const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
-                if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} zero dimensions.`); hidePageLoading(canvasId); return; }
-                const defaultViewport = page.getViewport({ scale: 1 }); const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height); viewport = page.getViewport({ scale: scale }); currentViewports[canvasId] = viewport;
-                const outputScale = window.devicePixelRatio || 1; canvas.width = Math.floor(viewport.width * outputScale); canvas.height = Math.floor(viewport.height * outputScale); canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
+                // Get available space from canvas-container's parent (book-page) or its explicit styles
+                const containerStyle = getComputedStyle(canvasContainer);
+                const availableWidth = parseFloat(containerStyle.width);
+                const availableHeight = parseFloat(containerStyle.height);
+                // const availableWidth = canvasContainer.clientWidth; // Use clientWidth/Height for actual rendered size
+                // const availableHeight = canvasContainer.clientHeight;
+
+                if (availableWidth <= 0 || availableHeight <= 0) {
+                    console.warn(`Canvas container ${canvasId} zero/invalid dimensions: W=${availableWidth}, H=${availableHeight}. Using fallback.`);
+                     // Fallback: Estimate based on view mode
+                    let estWidth = 600, estHeight = 800; // Approx defaults
+                    if (document.body.classList.contains('fullscreen-mode')) {
+                        estWidth = window.innerWidth * 0.9;
+                        estHeight = window.innerHeight * 0.9;
+                    } else if (document.body.classList.contains('rotated-mode')) {
+                         estWidth = window.innerHeight * 0.9; // Swapped for rotate
+                         estHeight = window.innerWidth * 0.9;
+                     }
+                     // Use fallback if still needed
+                     if (availableWidth <= 0) availableWidth = estWidth;
+                     if (availableHeight <= 0) availableHeight = estHeight;
+                     if (availableWidth <= 0 || availableHeight <= 0) { // Final check
+                         console.error(`Could not determine rendering dimensions for ${canvasId}. Aborting render.`);
+                         hidePageLoading(canvasId); return;
+                     }
+                }
+                const defaultViewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+                viewport = page.getViewport({ scale: scale });
+                currentViewports[canvasId] = viewport;
+                const outputScale = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                canvas.style.width = `${Math.floor(viewport.width)}px`;
+                canvas.style.height = `${Math.floor(viewport.height)}px`;
                 const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
                 await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 pageCache.set(pageNum, { imageData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
-                trimCache(); hidePageLoading(canvasId);
+                trimCache();
+                hidePageLoading(canvasId);
             }
 
             // Render Layers: Base Text -> Annotations -> Custom Keywords
@@ -527,6 +631,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             hidePageLoading(canvasId); pageElement?.classList.add('placeholder-page');
         }
     }
+
 
     // --- Update Display (Unchanged) ---
     async function updateDisplay() {
@@ -577,8 +682,30 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
     function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
 
-    // --- View Modes (Unchanged) ---
-    function applyCurrentViewModeStyles() { const i=document.body.classList.contains('rotated-mode'),s=document.querySelector('.book-spread');if(!s)return; if(i){const w=window.innerWidth,h=window.innerHeight,bW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w')),bH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h')),sX=w/bH,sY=h/bW,sc=Math.min(sX,sY)*.95;s.style.transformOrigin='center center';s.style.transform=`translate(-50%, -50%) rotate(90deg) scale(${sc})`}else{s.style.transformOrigin='center center';s.style.transform='translate(-50%, -50%)'} }
+    // --- View Modes (Slight adjustment to applyCurrentViewModeStyles) ---
+    function applyCurrentViewModeStyles() {
+        const isRotated = document.body.classList.contains('rotated-mode');
+        const isFullscreen = document.body.classList.contains('fullscreen-mode');
+        const spread = document.querySelector('.book-spread');
+        if (!spread) return;
+
+        spread.style.transformOrigin = 'center center'; // Always center origin
+
+        if (isRotated) {
+            const w = window.innerWidth; const h = window.innerHeight;
+            const bW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
+            const bH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
+            const sX = w / bH; const sY = h / bW; // Scale based on rotated dimensions
+            const scale = Math.min(sX, sY) * 0.95; // Scale factor
+            spread.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
+        } else if (isFullscreen) {
+            // Let CSS handle the transform: translate(-25%, -50%)
+            spread.style.transform = ''; // Clear JS transform override if switching TO fullscreen
+        } else { // Double Page View
+             // Let CSS handle the transform: translate(-50%, -50%)
+             spread.style.transform = ''; // Clear JS transform override if switching TO doublepage
+        }
+    }
     function setSinglePageView(){ if(!book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Single Page View"); book.isDoublePageView=false; document.body.classList.remove('rotated-mode'); document.body.classList.add('fullscreen-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
     function setDoublePageView(){ if(book.isDoublePageView&&!document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Double Page View"); book.isDoublePageView=true; document.body.classList.remove('rotated-mode','fullscreen-mode'); if(book.currentPage>1&&book.currentPage%2===0)book.currentPage--; hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
     function setRotatedView() { if(document.body.classList.contains('rotated-mode'))return; updateStatus("Setting Rotated View"); book.isDoublePageView=false; document.body.classList.remove('fullscreen-mode'); document.body.classList.add('rotated-mode'); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(()=>{manageToolbar();updateSliderTotalPages();updateSliderPosition()}); }
@@ -717,7 +844,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
         closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use new function
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
         document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode') || document.body.classList.contains('fullscreen-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); updateDisplay(); } manageToolbar(); }, 250); });
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay().then(() => { manageToolbar(); }); }, 250); }); // Combined logic for resize
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
         document.addEventListener('click', e => { if (definitionPopup.classList.contains('visible') && !definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) { hideDefinitionPopup(); } }, true);
