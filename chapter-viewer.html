@@ -435,27 +435,29 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-co
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
-/* ADDED: Vertical line/gradient between pages in double view */
+/* --- START: UPDATED VERTICAL CREASE EFFECT --- */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 50%; /* Center horizontally between the two pages */
-    width: 16px; /* Width for the gradient effect area */
+    left: 50%; /* Center horizontally */
+    width: 24px; /* Wider effect area */
     transform: translateX(-50%); /* Precise centering */
-    /* Creates a subtle dark line in the middle with shadows fading out */
+    /* Smoother, softer gradient simulating a crease shadow */
     background: linear-gradient(to right,
-        rgba(0, 0, 0, 0.20) 0%,  /* Left shadow edge */
-        rgba(0, 0, 0, 0) 40%,   /* Fade out before center */
-        rgba(0, 0, 0, 0.25) 49%, /* Darker line edge */
-        rgba(0, 0, 0, 0.25) 51%, /* Darker line edge */
-        rgba(0, 0, 0, 0) 60%,   /* Fade in after center */
-        rgba(0, 0, 0, 0.20) 100% /* Right shadow edge */
+        rgba(0, 0, 0, 0.15) 0%,   /* Left outer edge shadow */
+        rgba(0, 0, 0, 0.05) 30%,  /* Fading towards center */
+        rgba(0, 0, 0, 0.20) 48%,  /* Darkest part near center left */
+        rgba(0, 0, 0, 0.20) 52%,  /* Darkest part near center right */
+        rgba(0, 0, 0, 0.05) 70%,  /* Fading away from center */
+        rgba(0, 0, 0, 0.15) 100%  /* Right outer edge shadow */
     );
     pointer-events: none; /* Doesn't interfere with mouse */
-    z-index: 6; /* Above page backgrounds (z-index 1) but below edge navs (z-index 10) */
+    z-index: 6; /* Above page backgrounds but below edge navs/popups */
+    opacity: 0.85; /* Optional: Slightly reduce intensity if needed */
 }
+/* --- END: UPDATED VERTICAL CREASE EFFECT --- */
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged) --- */
