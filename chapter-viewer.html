@@ -83,56 +83,38 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 .page-edge-right:hover::after{right:18px;transform:translateY(-50%) rotate(45deg)}
 
 /* --- START: Single Page Mode Styles Adjustment --- */
-
-/* Hide the right page in fullscreen mode */
 .fullscreen-mode .book-page.right {
     display: none !important;
 }
-
-/* Ensure the left page retains its standard dimensions and border, letting .book-spread handle centering */
 .fullscreen-mode:not(.rotated-mode) .book-page.left {
-    border-right: 1px solid rgba(255, 255, 255, .08) !important; /* Match non-fullscreen right border */
-    /* Remove width/height overrides to keep default page size */
-    /* max-width, max-height, width:auto, height:auto are NOT applied */
-    border-radius: 3px 0 0 3px; /* Match default left page radius */
-    /* Styles like padding, display:flex etc. are inherited from base .book-page */
+    border-right: 1px solid rgba(255, 255, 255, .08) !important;
+    border-radius: 3px 0 0 3px;
 }
-
-/* Keep inner container padding */
 .fullscreen-mode .canvas-container {
     margin: var(--page-padding);
 }
-
-/* Ensure canvas fits within the container */
 .fullscreen-mode .pdf-canvas {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    position: absolute; /* Ensure it respects canvas-container bounds */
+    position: absolute;
     z-index: 1;
 }
-
 /* --- END: Single Page Mode Styles Adjustment --- */
-
 
 .rotated-mode .book-page.left{width:var(--page-w)!important;height:var(--page-h)!important;border-radius:0!important;border:none!important;padding:0 !important;background-color:var(--page);display:flex;justify-content:center;align-items:center}
 .rotated-mode .canvas-container { margin: 10px !important; width: calc(100% - 20px); height: calc(100% - 20px); }
 .rotated-mode .book-page.right{display:none!important}
-.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;} /* Position relative okay here */
+.rotated-mode .pdf-canvas{box-shadow:none;max-width:100%;max-height:100%;object-fit:contain; position: relative; z-index: 1;}
 
-/* Base page size for non-fullscreen/non-rotated modes */
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)}
-
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
-
-/* Spread shadow effect */
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
 body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
-
-.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);} /* Use modern font */
+.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
 .toc-panel.visible,.loading-overlay.visible{display:flex!important}
 .toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
@@ -174,7 +156,6 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
 #page-slider-trigger-zone {position: fixed;bottom: 0;left: 0;width: 100%;height: 30px;z-index: 9997;pointer-events: auto}
 .rotated-mode #page-slider-trigger-zone {bottom: auto;top: 50%;left: 0;width: 30px;height: 100%;transform: translateY(-50%);pointer-events: auto;}
 
-
 /* --- Base Text Layer (Hidden) & Annotation Layer Styles --- */
 .textLayer {
 position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
@@ -191,45 +172,38 @@ pointer-events: none !important; border-radius: 2px;
 .annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
 .annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
 
-/* --- START: Custom Keyword Overlay & Popup Styles (UPDATED) --- */
+/* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container {
 position: absolute; top: 0; left: 0; width: 100%; height: 100%;
 pointer-events: none; z-index: 4; overflow: hidden;
 }
-
 .keyword-highlight {
 position: absolute;
 background: transparent;
-/* border-bottom: 2px solid transparent; REMOVED underline /
-transition: background 0.2s ease-out, box-shadow 0.2s ease-out; / Added box-shadow transition /
+transition: background 0.2s ease-out, box-shadow 0.2s ease-out;
 pointer-events: auto;
 cursor: pointer;
 z-index: 5;
 box-sizing: border-box;
-border-radius: 3px; / Slightly more rounding */
+border-radius: 3px;
 }
-
 .keyword-highlight:hover {
-/* UPDATED: Fiery orange to amber gradient background /
-background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); / Orange -> Amber /
-/ border-bottom-color: var(--accent); REMOVED underline color change /
-box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); / Subtle shadow on hover */
+background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25));
+box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
-
-/* Definition Popup - Modern Styling /
 #definition-popup {
 position: fixed;
-background: #ffffff; / Clean white /
-border-radius: 8px; / Modern rounding /
-box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); / Softer shadow /
-padding: 14px 18px; / Adjust padding /
-max-width: 320px; / Slightly wider /
+background: #ffffff;
+border-radius: 8px;
+box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1);
+padding: 14px 18px;
+max-width: 320px;
 min-width: 180px;
-font-family: var(--font-sans); / Use modern font stack /
-color: #2d3748; / Darker gray text (like Tailwind's gray-800) /
+font-family: var(--font-sans);
+color: #2d3748;
 z-index: 10002;
-transform-origin: top center;
-transform: translateY(6px) scale(0.97); / Adjust start transform */
+transform-origin: top center; /* Default origin */
+transform: translateY(6px) scale(0.97);
 opacity: 0;
 visibility: hidden;
 transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
@@ -237,7 +211,6 @@ opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
 visibility 0s linear 0.18s;
 pointer-events: none;
 }
-
 #definition-popup.visible {
 transform: translateY(0) scale(1);
 opacity: 1;
@@ -247,50 +220,40 @@ opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1),
 visibility 0s linear 0s;
 pointer-events: auto;
 }
-
-#popup-word { /* Title /
-font-weight: 600; / Semi-bold /
-font-size: 15px; / Adjust size /
-margin: 0 0 10px 0; / Adjust margin /
+#popup-word {
+font-weight: 600;
+font-size: 15px;
+margin: 0 0 10px 0;
 color: var(--primary);
-border-bottom: 1px solid #e2e8f0; / Lighter border (like Tailwind's gray-200) /
-padding: 0 0 8px 0; / Adjust padding */
+border-bottom: 1px solid #e2e8f0;
+padding: 0 0 8px 0;
 }
-
-#popup-definition { /* Content /
+#popup-definition {
 font-size: 14px;
-line-height: 1.6; / Adjust line height /
+line-height: 1.6;
 max-height: 180px;
 overflow-y: auto;
-color: #4a5568; / Medium gray text (like Tailwind's gray-600) /
+color: #4a5568;
 padding-right: 5px;
 margin-right: -5px;
 }
-/* Definition content error message style */
-#popup-definition .error-message {
-    color: #e74c3c; /* Red color for errors */
-    font-style: italic;
-}
-
-/ Scrollbar styling /
 #popup-definition::-webkit-scrollbar { width: 5px; }
-#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;} / Lighter track /
-#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;} / Medium thumb /
-#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; } / Darker on hover */
-
-#close-popup-btn { /* Close button /
+#popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
+#popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+#close-popup-btn {
 position: absolute;
-top: 6px; / Adjust position /
+top: 6px;
 right: 6px;
 cursor: pointer;
-font-size: 20px; / Make slightly larger/bolder 'x' /
+font-size: 20px;
 font-weight: 300;
-color: #a0aec0; / Medium-light gray /
+color: #a0aec0;
 transition: color 0.2s, background-color 0.2s;
 background: none;
 border: none;
 padding: 0;
-width: 28px; / Increase clickable area /
+width: 28px;
 height: 28px;
 display: flex;
 align-items: center;
@@ -299,8 +262,8 @@ border-radius: 50%;
 line-height: 1;
 }
 #close-popup-btn:hover {
-color: #4a5568; / Darker gray /
-background-color: #edf2f7; / Light gray background /
+color: #4a5568;
+background-color: #edf2f7;
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
 
@@ -357,8 +320,7 @@ background-color: #edf2f7; / Light gray background /
 <div class="definition-popup" id="definition-popup">
     <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
     <div class="definition-popup-title" id="popup-word">Keyword</div>
-    <!-- Changed default text for clarity -->
-    <div class="definition-popup-content" id="popup-definition"><i>Definition will appear here...</i></div>
+    <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
 </div>
 <script>
     // Populate Inner HTML directly (Toolbar, TOC, Loading, Slider) - Unchanged
@@ -424,85 +386,87 @@ background-color: #edf2f7; / Light gray background /
         overlayContainer.innerHTML = ''; // Clear previous highlights
 
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
-        if (keywordsForPage.length === 0) return; // No keywords defined for this page
+        if (keywordsForPage.length === 0) {
+             updateStatus(`No keywords defined for page ${pageNum}`);
+             return; // No keywords for this page
+        }
 
         const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
         const lowerCaseDefs = {};
-        // Ensure keywordDefinitions is populated before accessing
-        for (const key in keywordDefinitions) {
-             // Defensive check: Ensure the key is lowercase for lookup consistency
-            lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key];
-        }
+        for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
 
         try {
             const page = await book.pdfDocument.getPage(pageNum);
-            // Use normalizeWhitespace: true for potentially better matching
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
+            let foundKeywordOnPage = false; // Flag to check if any highlights were added
 
             textContent.items.forEach(item => {
                 const itemText = item.str;
-                if (!itemText || itemText.trim().length === 0) return; // Skip empty text items
+                if (!itemText || itemText.trim().length === 0) return;
 
+                // Check each defined keyword against the current text item
                 keywordsForPage.forEach((originalKeyword, index) => {
                     const keywordLower = lowerCaseKeywords[index];
-                    // Lookup definition using the lowercase version
                     const definition = lowerCaseDefs[keywordLower];
-
-                    // IMPORTANT: Only create highlight if definition exists
-                    if (!definition && definition !== "") { // Allow empty string as a valid (though perhaps useless) definition
-                         // console.log(`No definition found for '${originalKeyword}' (lowercase: '${keywordLower}')`);
-                         return; // Skip this keyword if no definition found
+                    if (!definition) {
+                        // console.warn(`Definition missing for keyword: ${originalKeyword}`);
+                        return; // Skip if definition missing
                     }
 
-                    // Use word boundaries (\b) and ignore case (i) for matching
-                    // Escape special regex characters in the keyword itself
+                    // Use regex to find whole word matches (case-insensitive)
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                     const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                     let match;
 
-                    // Find matches within the current text item
+                    // Iterate over matches within the single text item
                     while ((match = regex.exec(itemText)) !== null) {
-                        // Calculate position using viewport transform
+                        // Calculate position based on viewport transform and item transform
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                         const itemWidth = item.width;
                         const itemHeight = item.height;
-
-                        // Calculate bounding box based on transformed coordinates
-                        // Note: tx[5] is the bottom-left y, adjust by height for top-left y
                         let left = tx[4];
-                        let top = tx[5] - itemHeight; // Adjust for top coordinate
-                        if (left < 0) left = 0; // Clamp coordinates
+                        let top = tx[5] - itemHeight; // Adjust top based on PDF coordinate system
+
+                        // Basic bounds check (relative to canvas container)
+                        if (left < 0) left = 0;
                         if (top < 0) top = 0;
 
-                        // Create the highlight div
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
                         highlightDiv.style.left = `${left}px`;
                         highlightDiv.style.top = `${top}px`;
                         highlightDiv.style.width = `${itemWidth}px`;
                         highlightDiv.style.height = `${itemHeight}px`;
-                        highlightDiv.dataset.keyword = originalKeyword;
-                        // Store definition in dataset for potential future use (though not currently used by listener)
+                        highlightDiv.dataset.keyword = originalKeyword; // Store original case
                         highlightDiv.dataset.definition = definition;
                         highlightDiv.title = `Definition: ${originalKeyword}`; // Tooltip
 
-                        // Add click listener to show popup
+                        // --- MODIFIED Event Listener ---
                         highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation(); // Prevent clicks bubbling to page turn etc.
-                            const rect = highlightDiv.getBoundingClientRect(); // Get coords relative to viewport
-                            // Pass the original keyword (for display) and the found definition
-                            showDefinitionPopup(originalKeyword, definition, rect.left, rect.bottom, rect.top);
+                            e.stopPropagation(); // Prevent clicks bubbling up
+                            const currentHighlight = e.currentTarget;
+                            const word = currentHighlight.dataset.keyword;
+                            const def = currentHighlight.dataset.definition;
+                            const rect = currentHighlight.getBoundingClientRect(); // Get viewport coordinates
+                            // console.log('Highlight clicked:', word, rect); // Debugging
+                            showDefinitionPopup(word, def, rect); // Pass the rect object
                         });
+                        // --- END MODIFICATION ---
 
                         overlayContainer.appendChild(highlightDiv);
-
-                        // Optimization: If we highlight the whole text item for one keyword match,
-                        // we can stop checking other keywords for this *same* text item.
-                        // Remove 'return;' if you want multiple distinct keyword highlights potentially overlapping on one item.
+                        foundKeywordOnPage = true;
+                        // Important: Only highlight the *first* matching keyword for a given text item span
+                        // to avoid overlapping highlights if multiple keywords are in the same span.
                         return;
                     }
                 });
             });
+             if (foundKeywordOnPage) {
+                 updateStatus(`Added keyword highlights for page ${pageNum}`);
+             } else {
+                 updateStatus(`Processed page ${pageNum}, no matching keyword text found.`);
+             }
+
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
             overlayContainer.innerHTML = ''; // Clear on error
@@ -553,10 +517,11 @@ background-color: #edf2f7; / Light gray background /
         const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container');
         const pageElement = canvas?.closest('.book-page');
 
+        // Clear previous state for this page/canvas
         delete currentViewports[canvasId];
         if (textLayerContainer) textLayerContainer.innerHTML = '';
         if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
-        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
+        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = ''; // Clear old highlights
 
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -568,46 +533,65 @@ background-color: #edf2f7; / Light gray background /
         let page; let viewport;
 
         try {
-            if (pageCache.has(pageNum)) { /* ... load from cache ... */
+            if (pageCache.has(pageNum)) {
                 const cachedData = pageCache.get(pageNum);
                 canvas.width = cachedData.width; canvas.height = cachedData.height;
                 canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
                 ctx.putImageData(cachedData.imageData, 0, 0);
-                page = await book.pdfDocument.getPage(pageNum); viewport = cachedData.viewport;
-                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Move to end of cache access
+                page = await book.pdfDocument.getPage(pageNum); // Still need page object for layers
+                viewport = cachedData.viewport;
+                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
                 hidePageLoading(canvasId);
-            } else { /* ... render new ... */
+                updateStatus(`Page ${pageNum} loaded from cache.`);
+            } else {
                 page = await book.pdfDocument.getPage(pageNum);
-                const containerStyle = getComputedStyle(canvasContainer); const availableWidth = parseFloat(containerStyle.width); const availableHeight = parseFloat(containerStyle.height);
-                if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} zero dimensions.`); hidePageLoading(canvasId); return; }
-                const defaultViewport = page.getViewport({ scale: 1 }); const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height); viewport = page.getViewport({ scale: scale }); currentViewports[canvasId] = viewport;
-                const outputScale = window.devicePixelRatio || 1; canvas.width = Math.floor(viewport.width * outputScale); canvas.height = Math.floor(viewport.height * outputScale); canvas.style.width = `${Math.floor(viewport.width)}px`; canvas.style.height = `${Math.floor(viewport.height)}px`;
+                const containerStyle = getComputedStyle(canvasContainer);
+                const availableWidth = parseFloat(containerStyle.width);
+                const availableHeight = parseFloat(containerStyle.height);
+                if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} has zero dimensions.`); hidePageLoading(canvasId); return; }
+
+                const defaultViewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+                viewport = page.getViewport({ scale: scale });
+                currentViewports[canvasId] = viewport;
+
+                const outputScale = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                canvas.style.width = `${Math.floor(viewport.width)}px`;
+                canvas.style.height = `${Math.floor(viewport.height)}px`;
+
                 const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-                await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
+                const renderContext = { canvasContext: ctx, transform: transform, viewport: viewport };
+
+                await page.render(renderContext).promise;
+                updateStatus(`Page ${pageNum} rendered to canvas.`);
+
+                // Cache the rendered image data and viewport
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 pageCache.set(pageNum, { imageData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
-                trimCache(); hidePageLoading(canvasId);
+                trimCache();
+                hidePageLoading(canvasId);
             }
 
-             // Ensure page and viewport are valid before proceeding
-            if (!page || !viewport) {
-                 throw new Error(`Page or viewport became invalid for page ${pageNum}`);
-            }
-
-            // Render Layers: Base Text -> Annotations -> Custom Keywords
+            // Render Layers AFTER canvas is ready (whether from cache or new render)
+            updateStatus(`Rendering layers for page ${pageNum}`);
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-             // Pass pageElement to know if it's left/right, and viewport for coordinates
+            // Create keyword overlays using the final viewport
             await createKeywordOverlays(pageNum, pageElement, viewport);
+
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
             if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hidePageLoading(canvasId); pageElement?.classList.add('placeholder-page');
+            hidePageLoading(canvasId);
+            pageElement?.classList.add('placeholder-page'); // Indicate error state
         }
     }
 
-    // --- Update Display (Unchanged from previous fix) ---
+
+    // --- Update Display (Unchanged) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage; const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
@@ -616,49 +600,41 @@ background-color: #edf2f7; / Light gray background /
         const leftPageNumDisplay = document.getElementById('left-page-number'); const rightPageNumDisplay = document.getElementById('right-page-number');
         if (!leftPageDiv || !rightPageDiv || !leftPageNumDisplay || !rightPageNumDisplay) { console.error("Critical page elements missing!"); return; }
 
-        // Apply display styles based on view mode *before* rendering
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
         const isRotated = document.body.classList.contains('rotated-mode');
 
-        leftPageDiv.style.visibility = 'hidden'; // Hide initially
-        rightPageDiv.style.display = 'none'; // Hide initially
-        rightPageDiv.classList.remove('placeholder-page'); // Reset placeholder
+        leftPageDiv.style.visibility = 'hidden';
+        rightPageDiv.style.display = 'none';
+        rightPageDiv.classList.remove('placeholder-page');
 
-        // Clear Right Page Content if it exists
         const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
         if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
 
-        // Render Left Page
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
             await renderPage(leftPageNum, 'left-page-canvas');
-            leftPageDiv.style.visibility = 'visible'; // Show after rendering
+            leftPageDiv.style.visibility = 'visible';
         } else {
-            // Hide and clear left page if out of bounds
             leftPageDiv.style.visibility = 'hidden'; leftPageNumDisplay.textContent = '';
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
         }
 
-        // Render Right Page (only in double page view)
         if (book.isDoublePageView && !isFullscreen && !isRotated) {
             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
                 rightPageNumDisplay.textContent = String(rightPageNum);
-                rightPageDiv.style.display = 'flex'; // Show container
+                rightPageDiv.style.display = 'flex';
                 await renderPage(rightPageNum, 'right-page-canvas');
             } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-                // Show placeholder if left page is valid but right is not
                 rightPageDiv.style.display = 'flex';
                 rightPageDiv.classList.add('placeholder-page');
                 rightPageNumDisplay.textContent = '';
             } else {
-                 // Hide right page completely if left page is also invalid
-                rightPageDiv.style.display = 'none';
+                 rightPageDiv.style.display = 'none';
             }
         } else {
-            // Ensure right page is hidden in single/rotated modes
              rightPageDiv.style.display = 'none';
         }
 
@@ -728,21 +704,11 @@ background-color: #edf2f7; / Light gray background /
         try {
             updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
             showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
-            const overlayLoaded = await overlayPromise; // Wait for overlay data
-             updateStatus(`Overlay data loaded: ${overlayLoaded}`);
-             // Determine initial view AFTER pdf and overlay are loaded
-            if (window.innerWidth < 1000) {
-                setSinglePageView();
-            } else {
-                setDoublePageView();
-            }
-             // Initial display call is handled by setSingle/DoublePageView
+            const overlayLoaded = await overlayPromise; if (window.innerWidth < 1000) { setSinglePageView(); } else { setDoublePageView(); }
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
-        } finally {
-            hideLoading(); updateStatus("loadPdf finished.");
-        }
+        } finally { hideLoading(); updateStatus("loadPdf finished."); }
     }
 
     // --- TOC population (Unchanged) ---
@@ -753,18 +719,12 @@ background-color: #edf2f7; / Light gray background /
             s.onclick = async (e) => {
                 e.preventDefault(); try {
                     let pageIndex = -1;
-                     // Standard way to handle destinations in PDF.js
-                    if (item.dest) {
-                         const explicitDest = (typeof item.dest === "string") ?
-                             await book.pdfDocument.getDestination(item.dest) : item.dest;
-                         if (Array.isArray(explicitDest)) {
-                             const destRef = explicitDest[0];
-                             if (destRef) {
-                                 // getPageIndex expects the ref object
-                                 pageIndex = await book.pdfDocument.getPageIndex(destRef);
-                             }
-                         }
-                    }
+                    if (typeof item.dest === 'string') {
+                        const destArray = await book.pdfDocument.getDestination(item.dest);
+                        if (destArray && destArray[0]) { pageIndex = await book.pdfDocument.getPageIndex(destArray[0]); }
+                    } else if (Array.isArray(item.dest) && item.dest[0]) {
+                         pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
+                    } else { console.warn("Unknown TOC destination format:", item.dest); }
                     if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
                     else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
@@ -774,72 +734,81 @@ background-color: #edf2f7; / Light gray background /
         book.outline.forEach(topItem => { const tocEl = createTocItem(topItem); if (tocEl) tocList.appendChild(tocEl); }); if (tocList.hasChildNodes()) tocButton.disabled = false; else tocList.innerHTML = '<em>Error processing TOC data.</em>';
      }
 
-    // --- Popup Handling Functions (Updated Positioning Logic + Content Fallback) ---
-    function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
-        if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) {
-             console.error("Popup elements not found!"); return;
-        }
-
-        popupWord.textContent = word;
-        // Use fallback message if definition is null, undefined, or empty string
-        const definitionHTML = definition || `<span class="error-message">Definition not available for this term.</span>`;
-        popupDefinition.innerHTML = definitionHTML;
-        popupDefinition.scrollTop = 0; // Reset scroll
-
-        const popupRect = definitionPopup.getBoundingClientRect(); // Get dimensions (might be 0 if hidden first time)
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const margin = 10; // Viewport margin
-
-        // Estimate dimensions if needed (use CSS max-width as a fallback)
-        const estWidth = Math.min(popupRect.width || 320, 320);
-        // Height estimation is harder, might need adjustment or a max-height assumption
-        const estHeight = Math.min(popupRect.height || 250, 250);
-
-        // Position Strategy: Try to place centered above, fallback to below.
-        // Horizontal: Center popup relative to the start of the clicked element
-        let posX = clickLeft - (estWidth / 2);
-        // Vertical: Place popup top edge 'estHeight + 10px' above the clicked element's top edge
-        let posY = clickTop - estHeight - 10;
-        let transformOrigin = 'bottom center'; // Default animation origin
-
-        // Adjust horizontal position to stay within viewport bounds
-        if (posX < margin) { posX = margin; }
-        else if (posX + estWidth > viewportWidth - margin) { posX = viewportWidth - estWidth - margin; }
-
-        // If placing above goes off-screen OR overlaps too much with top controls, place below
-        if (posY < margin || clickTop < (estHeight + margin + 30) /* Avoid overlap with potential top controls */) {
-            posY = clickBottom + 10; // Place 10px below the bottom of the clicked element
-            transformOrigin = 'top center'; // Animate from top
-        }
-
-        // Final check if placing below goes off-screen height
-        if (posY + estHeight > viewportHeight - margin) {
-             posY = viewportHeight - estHeight - margin; // Clamp to bottom
-             // If clamped at bottom after trying below, keep origin as 'top center'
-             if (transformOrigin !== 'top center') {
-                  transformOrigin = 'top center'; // Ensure correct origin if clamped low
-             }
-        }
-         // Final clamp if somehow still too high after adjustments
-         if (posY < margin) {
-             posY = margin;
+    // --- Popup Handling Functions (REVISED Positioning Logic) ---
+    function showDefinitionPopup(word, definition, rect) { // Accept rect object
+        if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) {
+             console.error("Cannot show popup: Missing element or rect.", { definitionPopup, popupWord, popupDefinition, closePopupBtn, rect });
+            return;
          }
 
-        definitionPopup.style.left = `${posX}px`;
-        definitionPopup.style.top = `${posY}px`;
-        definitionPopup.style.transformOrigin = transformOrigin;
+        // --- Content Update ---
+        popupWord.textContent = word || "Keyword"; // Use default if word is missing
+        popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`; // Provide feedback if definition missing
+        popupDefinition.scrollTop = 0; // Reset scroll for new definition
 
-        // Make it visible using the class for transitions
+        // --- Positioning Calculation (using fixed position popup and viewport rect) ---
+        const popupStyle = window.getComputedStyle(definitionPopup); // Use computed style if possible
+        const popupMaxWidth = parseFloat(popupStyle.maxWidth) || 320;
+        // We need to *estimate* the height before rendering. Let's use a reasonable max.
+        // A better way would be to render off-screen, measure, then position, but this is simpler.
+        const estPopupHeight = 250; // Max estimated height
+        const margin = 10; // Space from viewport edges
+        const verticalOffset = 10; // Space between highlight and popup
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Calculate desired center X based on the highlight's rect
+        const highlightCenterX = rect.left + rect.width / 2;
+        let targetLeft = highlightCenterX - (popupMaxWidth / 2); // Try to center popup over highlight
+
+        // Calculate desired top: Prefer above the highlight
+        let targetTop = rect.top - estPopupHeight - verticalOffset;
+        let transformOrigin = 'bottom center'; // Animate from bottom if placed above
+
+        // If placing above goes off-screen top, try placing below
+        if (targetTop < margin) {
+            targetTop = rect.bottom + verticalOffset; // Place below
+            transformOrigin = 'top center'; // Animate from top if placed below
+        }
+
+        // Clamp horizontal position within viewport bounds
+        if (targetLeft < margin) {
+            targetLeft = margin;
+        } else if (targetLeft + popupMaxWidth > viewportWidth - margin) {
+            targetLeft = viewportWidth - popupMaxWidth - margin;
+        }
+
+        // Clamp vertical position within viewport bounds (after deciding above/below)
+        if (targetTop < margin) { // Should not happen if placed below, but good failsafe
+            targetTop = margin;
+        } else if (targetTop + estPopupHeight > viewportHeight - margin) {
+            // If it overflows bottom *after* being placed below, adjust upwards
+            // If it overflows bottom *while trying* to be above, this clamp is fine
+             targetTop = viewportHeight - estPopupHeight - margin;
+             // If clamped to bottom, keep the origin determined by the *initial* placement attempt
+             // (So if it tried to go above, failed, went below, and *still* overflowed, origin remains 'top center')
+        }
+
+        // Apply calculated styles
+        definitionPopup.style.left = `${Math.round(targetLeft)}px`;
+        definitionPopup.style.top = `${Math.round(targetTop)}px`;
+        definitionPopup.style.transformOrigin = transformOrigin; // Set origin for transition
+
+        // Make visible using the class (triggers CSS transition)
         definitionPopup.classList.add('visible');
+        // console.log(`Popup shown for '${word}' at T: ${targetTop}, L: ${targetLeft}`); // Debugging
     }
-
 
     function hideDefinitionPopup() {
-        if (definitionPopup) { definitionPopup.classList.remove('visible'); }
+        if (definitionPopup) {
+             definitionPopup.classList.remove('visible');
+             // console.log("Popup hidden"); // Debugging
+        }
     }
 
-    // --- Event Setup (Unchanged) ---
+
+    // --- Event Setup (Updated for new popup logic) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -851,20 +820,19 @@ background-color: #edf2f7; / Light gray background /
         // --- Other Event Listeners ---
         toolbar?.addEventListener('click', e => { const btn = e.target.closest('.new-btn'); if (!btn || btn.disabled) return; const id = btn.id; switch (id) { case 'single-page-btn': setSinglePageView(); break; case 'double-page-btn': setDoublePageView(); break; case 'rotate-btn': setRotatedView(); break; case 'toc-btn': showTableOfContents(); break; } resetSliderHideTimer(); toolbarHover = false; manageToolbar(false); });
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use new function
+        closePopupBtn?.addEventListener('click', hideDefinitionPopup); // Use specific function
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
         document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode')) { /* Rotated mode needs scale adjust + re-render */ applyCurrentViewModeStyles(); updateDisplay(); } else { /* Non-rotated usually just needs transform adjust */ applyCurrentViewModeStyles(); /* Optional: updateDisplay() if content reflow is needed */ } manageToolbar(); }, 250); });
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); if(document.body.classList.contains('rotated-mode')) { applyCurrentViewModeStyles(); updateDisplay(); } else { applyCurrentViewModeStyles(); /* Optional: updateDisplay(); */ } manageToolbar(); }, 250); });
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
-        // Close popup if clicking outside of it or its trigger
+        // Global click listener to hide popup if clicking outside
         document.addEventListener('click', e => {
-             if (definitionPopup.classList.contains('visible')) {
-                 const isClickInsidePopup = definitionPopup.contains(e.target);
-                 const isClickOnHighlight = e.target.closest('.keyword-highlight');
-                 if (!isClickInsidePopup && !isClickOnHighlight) {
-                     hideDefinitionPopup();
-                 }
+             if (definitionPopup.classList.contains('visible') // Is popup visible?
+                 && !definitionPopup.contains(e.target) // Was the click *outside* the popup element?
+                 && !e.target.closest('.keyword-highlight')) // Was the click *not* on a keyword highlight itself?
+             {
+                 hideDefinitionPopup();
              }
         }, true); // Use capture phase to catch clicks early
         updateStatus("Events setup complete");
@@ -884,8 +852,7 @@ background-color: #edf2f7; / Light gray background /
             window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete.");
         } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; }
-
-}
+    }
 
 // --- Start the application ---
 document.addEventListener('DOMContentLoaded', init);
