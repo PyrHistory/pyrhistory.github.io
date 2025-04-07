@@ -367,8 +367,18 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- Custom Keyword Overlay Creation ---
+    // --- Custom Keyword Overlay Creation (MODIFIED) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
+        // *** ADDED CHECK FOR ROTATED MODE ***
+        if (document.body.classList.contains('rotated-mode')) {
+            // In rotated mode, disable keyword highlighting and popups
+            const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
+            const overlayContainer = document.getElementById(overlayContainerId);
+            if (overlayContainer) overlayContainer.innerHTML = ''; // Clear any existing overlays just in case
+            return; // Exit function, no highlights will be created
+        }
+        // *** END OF ADDED CHECK ***
+
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
         const canvasContainer = pageElement.querySelector('.canvas-container');
@@ -519,7 +529,7 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
             // Render Layers: Base Text -> Annotations -> Custom Keywords
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            await createKeywordOverlays(pageNum, pageElement, viewport);
+            await createKeywordOverlays(pageNum, pageElement, viewport); // This will now respect rotated mode
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -650,6 +660,11 @@ body:not(.fullscreen-mode):not(.rotated-mode) .book-page.right.placeholder-page 
     // --- Popup Handling Functions (Updated Positioning Logic) ---
     function showDefinitionPopup(word, definition, clickLeft, clickBottom, clickTop) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn) return;
+
+        // *** ADDED CHECK FOR ROTATED MODE - Prevents showing popup even if somehow triggered ***
+        if (document.body.classList.contains('rotated-mode')) {
+             return;
+        }
 
         popupWord.textContent = word;
         popupDefinition.innerHTML = definition || `<span class="error-message">Definition not available.</span>`;
