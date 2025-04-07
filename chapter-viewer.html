@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,14 +26,16 @@
     /* Modern Font Stack */
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-    /* Add these variables if not defined elsewhere, based on the time-capsule example */
-    --scroll: rgba(44,62,80,.8); /* Example value, adjust if needed */
-    --text-light-bg-primary: var(--text-on-dark); /* Example value */
-    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8); /* Example gradient */
-    --radius-full: 50%; /* Define if not already defined */
-    --text-dark: #fff; /* Example value for hover */
-    --space-sm: 8px; /* Example value */
-    --space-xs: 4px; /* Example value */
+    /* Gradient and related variables needed for button effect */
+    --scroll: rgba(44,62,80,.8); /* Base button background */
+    --text-light-bg-primary: var(--text-on-dark); /* Button text color */
+    /* Ensure this gradient is defined appropriately */
+    --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8);
+    --radius-full: 50%; /* Used in original example, adapt if needed */
+    --text-dark: var(--text-on-dark); /* Hover text color (seems same as base) */
+    --space-sm: 8px; /* Spacing if needed */
+    --space-xs: 4px; /* Spacing if needed */
+    --button-radius: 4px; /* Specific radius for .new-btn */
 
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -109,56 +110,92 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     right:0!important; /* Slide in from the right */
     transform:none!important; /* No translation needed */
 }
+
+/* --- START: Updated .new-btn with Time Capsule Effect --- */
 .new-btn{
-    background:rgba(44,62,80,.8)!important;
+    /* Base Styles (mostly kept, added position/overflow/z-index) */
+    background: var(--scroll)!important; /* Use variable for base */
     border:1px solid rgba(255,255,255,.15)!important;
-    color:var(--text-on-dark)!important;
+    color: var(--text-light-bg-primary)!important; /* Use variable */
     width:48px!important;
     height:48px!important;
-    border-radius:4px!important;
+    border-radius: var(--button-radius) !important; /* Use variable */
     display:flex!important;
     align-items:center!important;
     justify-content:center!important;
-    font-size:25px!important; /* Adjusted for rotate symbol */
+    font-size:25px!important; /* Base size for symbols */
     cursor:pointer!important;
     transition:all .2s!important;
     box-shadow:0 2px 5px rgba(0,0,0,.2)!important;
     user-select:none!important;
     flex-shrink:0;
-    transform: rotate(0deg)!important; /* Ensure buttons are never rotated */
-    padding: 0; /* Reset padding for icon centering */
-    position: relative; /* Needed for pseudo-element positioning */
-    overflow: hidden; /* Clip pseudo-element */
-    z-index: 1; /* Stacking context */
+    transform: rotate(0deg)!important;
+    padding: 0; /* Reset padding for icon/text centering */
+    position: relative; /* Crucial for pseudo-element */
+    overflow: hidden; /* Crucial to contain the effect */
+    z-index: 1; /* Button layer */
 }
-.new-btn:hover{
-    background:rgba(52,73,94,.9)!important;
+
+.new-btn::before {
+    content: "";
+    position: absolute;
+    z-index: -1; /* Behind the button content */
+    top: -3px; left: -3px; right: -3px; bottom: -3px; /* Slightly larger */
+    background: var(--gradient-time-capsule); /* Apply the gradient */
+    background-size: 300% 300%; /* For animation movement */
+    border-radius: var(--button-radius); /* Match button radius */
+    filter: blur(3px); /* Initial blur */
+    opacity: 0.35; /* Initial opacity */
+    transition: opacity 0.4s ease-out, filter 0.4s ease-out;
+    animation: hazyGradientAnimation 6s linear infinite; /* The animation */
+}
+
+.new-btn:hover {
+    /* Keep existing hover effects */
+    background: var(--scroll)!important; /* Maintain base background */
+    color: var(--text-dark)!important; /* Use variable for hover text */
     border-color:rgba(255,255,255,.25)!important;
-    box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
+    box-shadow:0 2px 8px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.15)!important; /* Enhanced shadow maybe? */
     transform:translateY(-2px)!important; /* Keep vertical hover effect */
 }
+
+.new-btn:hover::before {
+    opacity: 0.8; /* Increase opacity on hover */
+    filter: blur(5px); /* Increase blur on hover */
+}
+
 .new-btn:active{
     transform:translateY(1px)!important; /* Keep vertical active effect */
 }
 .new-btn[disabled]{opacity:.5;cursor:not-allowed;pointer-events:none}
 
-/* START: TOC Button Icon SVG Styles (only icon styling remains) */
-#toc-btn .icon {
-    width: 24px; /* Adjust icon size if needed within the standard button */
-    height: 24px;
-    color: var(--text-light-bg-primary); /* Use default text color */
-    position: relative;
-    z-index: 2;
-    margin: 0; /* Reset margin */
-    stroke-width: 1.5;
+/* Ensure button content (icon or text) is above the pseudo-element */
+.new-btn .icon,
+.new-btn span {
+    position: relative; /* Needed for z-index */
+    z-index: 2; /* Above the ::before pseudo-element */
+    margin: 0; /* Reset margin if any */
 }
-/* END: TOC Button Styles */
 
-@keyframes hazyGradientAnimation { /* Ensure animation is defined */
+/* Adjust icon-specific styles if needed */
+#toc-btn .icon {
+    width: 24px; /* Adjust icon size if needed */
+    height: 24px;
+    stroke-width: 1.5;
+    /* z-index and position handled by the rule above */
+}
+
+/* Adjust specific button font sizes if needed */
+#single-page-btn span { font-size: 28px; line-height: 1; }
+#back-to-start-btn span { font-size: 28px; line-height: 1; }
+
+
+@keyframes hazyGradientAnimation { /* Gradient animation */
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
+/* --- END: Updated .new-btn --- */
 
 
 .page-slider-container{
@@ -439,15 +476,16 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
 </div>
 <script>
-    // --- START: HTML Population (Update Icons) ---
+    // --- START: HTML Population (Update Icons & Add New Button) ---
     // Define the SVG icon string (unchanged)
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-    // Update the toolbar HTML with new icons for single page and rotate buttons
+    // Update the toolbar HTML: Add new button, wrap symbols in <span> for z-index control
     document.getElementById('new-toolbar').innerHTML = `
-        <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button> 
-        <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
-        <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button> 
-        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button> 
+        <button class="new-btn" id="back-to-start-btn" title="Go to First Page"><span>↤</span></button>
+        <button class="new-btn" id="single-page-btn" title="Single Page View"><span>▯</span></button>
+        <button class="new-btn" id="double-page-btn" title="Double Page View"><span>◫</span></button>
+        <button class="new-btn" id="rotate-btn" title="Rotate Content"><span>↷</span></button>
+        <button class="new-btn" id="toc-btn" title="Outline (Disabled)">${boxIconSVG}</button>
     `;
     // --- END: HTML Population ---
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
@@ -970,7 +1008,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
     }
 
 
-    // --- Event Setup (Unchanged) ---
+    // --- Event Setup (Add Case for New Button) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -984,6 +1022,9 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placehold
              if (!btn) return;
              const id = btn.id;
              switch (id) {
+                 case 'back-to-start-btn': // *** NEW CASE ***
+                     if (book.totalPages > 0) jumpToPage(1);
+                     break;
                  case 'single-page-btn': setSinglePageView(); break;
                  case 'double-page-btn': setDoublePageView(); break;
                  case 'rotate-btn': setRotatedView(); break;
