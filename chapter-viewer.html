@@ -629,7 +629,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     let keywordDefinitions = {};
     let pageKeywords = {};
     let currentViewports = {};
-    let firstInstanceKeywordsFound = new Set(); // Tracks keywords already underlined
+    let firstInstanceKeywordsFound = new Set(); // Tracks keywords already underlined GLOBALLY for the current PDF
 
     // --- PDF.js Setup (Using v2.5.207) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -663,7 +663,11 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- START: *** MODIFIED createKeywordOverlays FUNCTION *** ---
+    // --- START: *** createKeywordOverlays FUNCTION (Verified) *** ---
+    // This function finds keywords on the page, creates highlight elements,
+    // and applies the 'first-keyword-instance' class ONLY if the keyword
+    // hasn't been encountered before in the *entire document* (tracked by firstInstanceKeywordsFound).
+    // The use of `\b` word boundaries in the regex ensures adjacent punctuation/dashes are excluded.
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -672,103 +676,111 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         if (!book.pdfDocument || !overlayContainer || !canvasContainer) {
             console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
         }
-        overlayContainer.innerHTML = ''; // Clear previous highlights
+        overlayContainer.innerHTML = ''; // Clear previous highlights for this specific page render
 
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
         if (keywordsForPage.length === 0) {
              return; // No keywords for this page
         }
 
+        // Prepare lowercase lookups for efficiency
         const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
         const lowerCaseDefs = {};
         for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
 
         try {
             const page = await book.pdfDocument.getPage(pageNum);
+            // Use normalizeWhitespace: true for better text matching consistency
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
             let foundKeywordOnPage = false; // Flag to check if any highlights were added
 
             textContent.items.forEach(item => {
                 const itemText = item.str;
                 const itemTextLength = itemText.length;
-                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) return; // Skip empty or zero-width items
+                // Skip items with no text, empty strings, or zero width (potential rendering artifacts)
+                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) return;
 
                 keywordsForPage.forEach((originalKeyword, index) => {
-                    const keywordLower = lowerCaseKeywords[index]; // Use pre-lowercased version
+                    const keywordLower = lowerCaseKeywords[index]; // Use pre-lowercased version for tracking/lookup
                     const definition = lowerCaseDefs[keywordLower];
-                    if (!definition) return;
+                    if (!definition) return; // Skip if no definition found
 
-                    // Use originalKeyword for regex matching to preserve case in the displayed text if needed,
-                    // but use keywordLower for definition lookup and first-instance tracking.
+                    // Escape the keyword for safe use in regex
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    // IMPORTANT: The regex must find the keyword exactly. \b ensures word boundaries.
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                    // *** CRITICAL: Use word boundaries (\b) to match the keyword exactly ***
+                    // This prevents matching parts of words or including adjacent punctuation/dashes in the match.
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi'); // g=global (in item), i=case-insensitive
                     let match;
 
+                    // Find all occurrences of the keyword within this text item
                     while ((match = regex.exec(itemText)) !== null) {
                         const matchedString = match[1]; // The actual text that matched (case preserved from originalKeyword)
-                        const matchIndex = match.index;
-                        const matchLength = matchedString.length;
+                        const matchIndex = match.index; // Start index within item.str
+                        const matchLength = matchedString.length; // Length of the keyword itself
 
-                        // Calculate precise bounding box for the matched keyword within the item
+                        // Calculate precise bounding box using PDF coordinates and item transform
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                         const itemWidth = item.width;
                         const itemHeight = item.height;
                         const itemLeft = tx[4];
-                        const itemTop = tx[5] - itemHeight; // Adjust top based on PDF coordinate system
+                        const itemTop = tx[5] - itemHeight; // PDF Y-coordinate is often bottom-up
 
-                        // Calculate offset and width based on character position within the item string
-                        // This assumes near-uniform character width within the item, which is a reasonable approximation.
+                        // Calculate highlight position and size based on character position within the item string.
+                        // This assumes near-uniform character width within this specific text item.
                         const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
                         const highlightWidth = (matchLength / itemTextLength) * itemWidth;
                         const highlightLeft = itemLeft + highlightOffsetX;
-                        const highlightTop = itemTop; // Top remains the same as the item's top
+                        const highlightTop = itemTop;
 
-                        // Create the highlight div with the calculated dimensions
+                        // Create the highlight div
                         const highlightDiv = document.createElement('div');
-                        highlightDiv.className = 'keyword-highlight'; // Base class for hover/click
-                        highlightDiv.style.left = `${Math.max(0, highlightLeft)}px`; // Ensure not negative
-                        highlightDiv.style.top = `${Math.max(0, highlightTop)}px`;   // Ensure not negative
+                        highlightDiv.className = 'keyword-highlight'; // Base class for hover/click styling
+                        // Apply calculated position and size
+                        highlightDiv.style.left = `${Math.max(0, highlightLeft)}px`; // Ensure non-negative
+                        highlightDiv.style.top = `${Math.max(0, highlightTop)}px`;   // Ensure non-negative
                         highlightDiv.style.width = `${Math.max(1, highlightWidth)}px`; // Ensure minimum width 1px
                         highlightDiv.style.height = `${itemHeight}px`;
-                        highlightDiv.dataset.keyword = originalKeyword; // Store the canonical keyword
+                        // Store data for popup
+                        highlightDiv.dataset.keyword = originalKeyword; // Use original case for display
                         highlightDiv.dataset.definition = definition;
-                        highlightDiv.title = `Definition: ${originalKeyword}`;
+                        highlightDiv.title = `Definition: ${originalKeyword}`; // Tooltip
 
-                        // Check if this is the first instance globally (using lower case for tracking)
+                        // *** CRITICAL: Persistence Check ***
+                        // Check the *global* set. Add underline class only if this keyword (lowercase)
+                        // hasn't been marked as "first found" anywhere in the document yet.
                         if (!firstInstanceKeywordsFound.has(keywordLower)) {
-                            highlightDiv.classList.add('first-keyword-instance'); // Add class for underlining
-                            firstInstanceKeywordsFound.add(keywordLower); // Mark this keyword as found/underlined
+                            highlightDiv.classList.add('first-keyword-instance'); // Add class for underlining CSS
+                            firstInstanceKeywordsFound.add(keywordLower); // Mark this keyword as found globally
                         }
 
+                        // Add click listener for the definition popup
                         highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
+                            e.stopPropagation(); // Prevent page turn clicks
                             const currentHighlight = e.currentTarget;
                             const word = currentHighlight.dataset.keyword;
                             const def = currentHighlight.dataset.definition;
-                            const rect = currentHighlight.getBoundingClientRect();
+                            const rect = currentHighlight.getBoundingClientRect(); // Get screen position
                             showDefinitionPopup(word, def, rect);
                         });
+
                         overlayContainer.appendChild(highlightDiv);
                         foundKeywordOnPage = true;
 
-                        // Important: Reset lastIndex if the match length is zero (shouldn't happen with \b keyword \b)
-                        // or to prevent infinite loops in complex regex cases (though unlikely here).
+                        // Prevent potential infinite loops with zero-length matches (shouldn't happen with \b...\b)
                         if (matchLength === 0) {
                             regex.lastIndex++;
                         }
                     }
                 });
             });
-             // Optional: Add status logging back if desired
+             // Optional logging
              // if (foundKeywordOnPage) { updateStatus(`Added keyword highlights for page ${pageNum}`); }
-             // else { updateStatus(`Processed page ${pageNum}, no matching keyword text found.`); }
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = ''; // Clear on error
+            overlayContainer.innerHTML = ''; // Clear overlay on error
         }
     }
-    // --- END: *** MODIFIED createKeywordOverlays FUNCTION *** ---
+    // --- END: *** createKeywordOverlays FUNCTION (Verified) *** ---
 
 
     // --- Simplified Base Text Layer Rendering (Unchanged) ---
@@ -803,7 +815,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         }
     }
 
-    // --- renderPage function (Calls MODIFIED createKeywordOverlays) ---
+    // --- renderPage function (Calls Verified createKeywordOverlays) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -812,21 +824,25 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         const keywordOverlayContainer = canvasContainer?.querySelector('.keyword-overlay-container');
         const pageElement = canvas?.closest('.book-page');
 
+        // Clear previous state for this canvas/page side
         delete currentViewports[canvasId];
         if (textLayerContainer) textLayerContainer.innerHTML = '';
         if (annotationLayerContainer) annotationLayerContainer.innerHTML = '';
-        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = '';
+        if (keywordOverlayContainer) keywordOverlayContainer.innerHTML = ''; // Clear keyword overlays specifically
 
+        // Basic validation
         if (!book.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > book.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (pageElement) pageElement.classList.add('placeholder-page');
+            if (pageElement) pageElement.classList.add('placeholder-page'); // Show as placeholder if invalid
             hidePageLoading(canvasId); return;
         }
 
-        showPageLoading(canvasId); pageElement.classList.remove('placeholder-page');
+        showPageLoading(canvasId);
+        pageElement.classList.remove('placeholder-page'); // Ensure not marked as placeholder
         let page; let viewport;
 
         try {
+            // --- Cache Handling (Unchanged) ---
             if (pageCache.has(pageNum)) {
                 const cachedData = pageCache.get(pageNum);
                 canvas.width = cachedData.width; canvas.height = cachedData.height;
@@ -834,17 +850,17 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                 ctx.putImageData(cachedData.imageData, 0, 0);
                 page = await book.pdfDocument.getPage(pageNum); // Still need page object for layers
                 viewport = cachedData.viewport;
-                currentViewports[canvasId] = viewport; pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
+                currentViewports[canvasId] = viewport;
+                pageCache.delete(pageNum); pageCache.set(pageNum, cachedData); // Refresh cache order
                 hidePageLoading(canvasId);
-                // updateStatus(`Page ${pageNum} loaded from cache.`); // Less verbose
             } else {
+            // --- Rendering Logic (Unchanged) ---
                 page = await book.pdfDocument.getPage(pageNum);
                 const containerStyle = getComputedStyle(canvasContainer);
                 const availableWidth = parseFloat(containerStyle.width);
                 const availableHeight = parseFloat(containerStyle.height);
                 if (availableWidth <= 0 || availableHeight <= 0) {
-                    // If dimensions are zero, likely a layout issue, log warning and skip render to avoid errors
-                    console.warn(`Canvas container ${canvasId} has zero dimensions during renderPage call for page ${pageNum}. Skipping render.`);
+                    console.warn(`Canvas container ${canvasId} has zero dimensions for page ${pageNum}. Skipping render.`);
                     hidePageLoading(canvasId);
                     return;
                 }
@@ -862,19 +878,20 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
                 const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
                 await page.render({ canvasContext: ctx, transform, viewport }).promise;
-                // updateStatus(`Page ${pageNum} rendered to canvas.`); // Less verbose
 
+                // Cache the rendered data (Unchanged)
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 pageCache.set(pageNum, { imageData, width: canvas.width, height: canvas.height, styleWidth: Math.floor(viewport.width), styleHeight: Math.floor(viewport.height), viewport });
                 trimCache();
                 hidePageLoading(canvasId);
             }
 
-            // Render Layers AFTER canvas is ready
-            // updateStatus(`Rendering layers for page ${pageNum}`); // Less verbose
+            // --- Layer Rendering (AFTER canvas is ready) ---
+            // Render Base Text Layer (Hidden, for structure)
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
+            // Render Annotation Layer (for PDF links)
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            // *** Call the MODIFIED function here ***
+            // *** Render Keyword Overlays (Uses the verified function) ***
             await createKeywordOverlays(pageNum, pageElement, viewport);
 
         } catch (error) {
@@ -906,7 +923,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         let renderPromises = [];
 
         // --- Left Page Handling ---
-        // No longer hide/show with visibility - rely on internal loading spinner
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
             renderPromises.push(renderPage(leftPageNum, 'left-page-canvas')); // Add promise to array
@@ -916,7 +932,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             const lCanvas = document.getElementById('left-page-canvas'), lCtx = lCanvas?.getContext('2d'); if (lCtx) lCtx.clearRect(0, 0, lCanvas.width, lCanvas.height);
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
-            leftPageDiv.classList.add('placeholder-page'); // Maybe add placeholder if invalid? Or ensure it's cleared visually.
+            leftPageDiv.classList.add('placeholder-page');
         }
 
         // --- Right Page Handling ---
@@ -939,9 +955,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                 rightPageDiv.style.display = 'flex'; // Show the div
                 rightPageDiv.classList.add('placeholder-page'); // Add placeholder class
                 rightPageNumDisplay.textContent = '';
-                // No render promise for placeholder
             }
-            // No else needed: if left page is also invalid, right page remains hidden.
         }
         // If isFullscreen or isContentRotated, right page remains display: none
 
@@ -993,12 +1007,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             // When rotated, bookHeight becomes the visual width, bookWidth becomes the visual height
             const scaleX = viewportWidth / bookHeight;
             const scaleY = viewportHeight / bookWidth;
-            // MODIFIED LINE: Changed 0.95 to 0.98 to reduce whitespace (make content slightly larger)
-            const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor (was 0.95)
+            const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor
 
             spread.style.transformOrigin = 'center center';
             spread.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
-            // updateStatus(`Applied rotated transform: scale=${scale}`);
         } else {
              // Apply standard scale/position for single or double page view
              const isFullscreen = document.body.classList.contains('fullscreen-mode');
@@ -1010,12 +1022,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
              const scaleX = viewportWidth / totalWidth;
              const scaleY = viewportHeight / bookHeight;
-             // MODIFIED LINE: Changed 0.95 to 0.98 to reduce whitespace (make content slightly larger)
-             const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor (was 0.95)
+             const scale = Math.min(scaleX, scaleY) * 0.98; // Apply reduced padding factor
 
              spread.style.transformOrigin = 'center center';
              spread.style.transform = `translate(-50%, -50%) scale(${scale})`;
-             // updateStatus(`Applied normal transform: scale=${scale}`);
         }
     }
     async function setSinglePageView(){
@@ -1026,7 +1036,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         document.body.classList.add('fullscreen-mode');
         hideDefinitionPopup();
         await updateDisplay(); // Await the display update
-        // Update UI elements after display is confirmed
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1039,7 +1048,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--; // Align to left page
         hideDefinitionPopup();
         await updateDisplay(); // Await the display update
-        // Update UI elements after display is confirmed
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1052,15 +1060,13 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         document.body.classList.add('content-rotated-mode'); // Add specific rotation class
         hideDefinitionPopup();
         await updateDisplay(); // Await the display update
-        // Update UI elements after display is confirmed
-        manageToolbar(); // Toolbar itself doesn't change position
-        updateSliderTotalPages(); // Slider doesn't change position
+        manageToolbar();
+        updateSliderTotalPages();
         updateSliderPosition();
     }
 
     // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
-    // function showTableOfContents(){if(!document.getElementById('time-capsule-btn')?.disabled){toggleElement('toc-panel',true);manageToolbar(false)}} // Functionality removed from this button
     function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
@@ -1070,8 +1076,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
     function resetSliderHideTimer(){
         clearTimeout(sliderHideTimeout);
-        // MODIFICATION: Halved the timeout duration from 3500ms to 1750ms
-        sliderHideTimeout = setTimeout(hidePageSlider, 1750);
+        sliderHideTimeout = setTimeout(hidePageSlider, 1750); // Using the shorter timeout
     }
     function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
@@ -1090,22 +1095,50 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- PDF Loading (Reset firstInstanceKeywordsFound set) ---
+    // --- PDF Loading (Verified: Resets firstInstanceKeywordsFound set) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
-        showLoading("Initializing PDF..."); // Show loading immediately
-        pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        // *** Reset the tracking set for first instances on new PDF load ***
+        showLoading("Initializing PDF...");
+        // Clear state for the new PDF
+        pageCache.clear();
+        currentViewports={};
+        keywordDefinitions={};
+        pageKeywords={};
+        // *** CRITICAL: Reset the tracking set for first instances when a new PDF loads ***
         firstInstanceKeywordsFound.clear();
-        if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
-
-        // TOC functionality is disabled for the time-capsule button, so no need to manage its disabled state here
+        // Destroy previous PDF document instance if exists
+        if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}}
+        // Reset book state
+        book.pdfDocument=null;
+        book.totalPages=0;
+        book.currentPage=1;
+        book.title="No Document";
+        book.outline=[];
+        hideDefinitionPopup(); // Hide any open popups
+        document.title = "Heritage History™ Reader"; // Reset title
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
+
         try {
-            updateStatus("Starting PDF document loading..."); const loadingTask = pdfjsLib.getDocument(pdfUrl); const overlayPromise = loadOverlayData(pdfUrl); showLoading("Loading PDF document..."); book.pdfDocument = await loadingTask.promise; book.totalPages = book.pdfDocument.numPages; book.currentPage = 1; user.readingProgress.furthestPage = 1; updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`); document.title = `${book.title} - Heritage History™ Reader`; updateSliderTotalPages();
-            showLoading("Processing metadata..."); updateStatus("Fetching outline..."); try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); } // Populate TOC still happens, but button won't open it
-            const overlayLoaded = await overlayPromise; // Wait for overlay data
+            updateStatus("Starting PDF document loading...");
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            const overlayPromise = loadOverlayData(pdfUrl); // Start loading overlay data concurrently
+
+            showLoading("Loading PDF document...");
+            book.pdfDocument = await loadingTask.promise;
+            book.totalPages = book.pdfDocument.numPages;
+            book.currentPage = 1;
+            user.readingProgress.furthestPage = 1; // Reset furthest page
+            updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
+            document.title = `${book.title} - Heritage History™ Reader`;
+            updateSliderTotalPages(); // Update slider max value
+
+            showLoading("Processing metadata...");
+            updateStatus("Fetching outline...");
+            try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); }
+            catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
+
+            await overlayPromise; // Wait for overlay data to finish loading
 
             // --- Default View Logic (Unchanged) ---
             if (window.innerWidth < 1000) {
@@ -1115,25 +1148,32 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             } else {
                 book.isDoublePageView = true;
                 document.body.classList.remove('content-rotated-mode', 'fullscreen-mode');
-                if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--;
+                if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--; // Align double view
             }
 
-            // Apply necessary UI updates that depend on the view state *before* rendering (Unchanged)
+            // Apply UI updates before first render
             updateSliderTotalPages();
             updateSliderPosition();
-            applyCurrentViewModeStyles(); // Apply styles based on view mode
+            applyCurrentViewModeStyles();
 
-            // --- Robust First Page Display Fix (Unchanged) ---
+            // Wait for next frame before rendering (helps prevent layout issues)
             await new Promise(resolve => requestAnimationFrame(resolve));
 
-            // Call and await the first render AFTER the short delay/frame wait
+            // Render the initial view
             await updateDisplay();
 
         } catch (error) {
-            console.error("FATAL: Error loading PDF document:", error); alert(`Failed to load PDF: ${error.message || error}`); book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; firstInstanceKeywordsFound.clear(); /* Ensure reset on error too */ document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
-            const spreadContainer = document.querySelector('.main-container .book-spread'); if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
+            console.error("FATAL: Error loading PDF document:", error);
+            alert(`Failed to load PDF: ${error.message || error}`);
+            // Reset state on critical error
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; firstInstanceKeywordsFound.clear(); // Ensure reset on error
+            document.title="Heritage History™ Reader - Error";
+            updateSliderTotalPages(); updateSliderPosition(); populateTOC(); // Update UI to reflect error state
+            // Display error message in the main area
+            const spreadContainer = document.querySelector('.main-container .book-spread');
+            if (spreadContainer) { spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
         } finally {
-             // Hide loading ONLY after everything is done or failed (Unchanged)
+             // Always hide loading overlay
              hideLoading();
              updateStatus("loadPdf finished.");
         }
@@ -1143,11 +1183,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
-        // Time capsule button doesn't open TOC, so no button state to manage here
         if (!book.outline || book.outline.length === 0) { tocList.innerHTML = '<em>No table of contents found.</em>'; return; }
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
-            s.onclick = async (e) => { // Keep click functionality within the panel itself
+            s.onclick = async (e) => {
                 e.preventDefault(); try {
                     let pageIndex = -1;
                     if (typeof item.dest === 'string') {
@@ -1156,7 +1195,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                     } else if (Array.isArray(item.dest) && item.dest[0]) {
                          pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
                     } else { console.warn("Unknown TOC destination format:", item.dest); }
-                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); } // Still hide panel on click
+                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
                     else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
             };
@@ -1171,22 +1210,29 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
         popupWord.textContent = word || "Keyword";
         popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
-        popupDefinition.scrollTop = 0;
+        popupDefinition.scrollTop = 0; // Scroll to top
+        // Position calculation logic (unchanged)
         const popupStyle = window.getComputedStyle(definitionPopup);
         const popupMaxWidth = parseFloat(popupStyle.maxWidth) || 320;
-        const estPopupHeight = 250; // Max estimated height
-        const margin = 10; const verticalOffset = 10;
+        const estPopupHeight = 250; // Estimate max height for positioning
+        const margin = 10; const verticalOffset = 10; // Space from highlight
         const viewportWidth = window.innerWidth; const viewportHeight = window.innerHeight;
         const highlightCenterX = rect.left + rect.width / 2;
         let targetLeft = highlightCenterX - (popupMaxWidth / 2);
-        let targetTop = rect.top - estPopupHeight - verticalOffset;
-        let transformOrigin = 'bottom center';
-        if (targetTop < margin) { targetTop = rect.bottom + verticalOffset; transformOrigin = 'top center'; }
-        if (targetLeft < margin) { targetLeft = margin; } else if (targetLeft + popupMaxWidth > viewportWidth - margin) { targetLeft = viewportWidth - popupMaxWidth - margin; }
-        if (targetTop < margin) { targetTop = margin; } else if (targetTop + estPopupHeight > viewportHeight - margin) { targetTop = viewportHeight - estPopupHeight - margin; }
+        let targetTop = rect.top - estPopupHeight - verticalOffset; // Try above first
+        let transformOrigin = 'bottom center'; // Assume arrow points up
+        // Adjust if too high
+        if (targetTop < margin) { targetTop = rect.bottom + verticalOffset; transformOrigin = 'top center'; } // Move below, arrow points down
+        // Adjust horizontal position if outside viewport
+        if (targetLeft < margin) { targetLeft = margin; }
+        else if (targetLeft + popupMaxWidth > viewportWidth - margin) { targetLeft = viewportWidth - popupMaxWidth - margin; }
+        // Adjust vertical position if still outside viewport (less likely after above check)
+        if (targetTop < margin) { targetTop = margin; }
+        else if (targetTop + estPopupHeight > viewportHeight - margin) { targetTop = viewportHeight - estPopupHeight - margin; }
+
         definitionPopup.style.left = `${Math.round(targetLeft)}px`;
         definitionPopup.style.top = `${Math.round(targetTop)}px`;
-        definitionPopup.style.transformOrigin = transformOrigin;
+        definitionPopup.style.transformOrigin = transformOrigin; // For animation entrance
         definitionPopup.classList.add('visible');
     }
     function hideDefinitionPopup() {
@@ -1204,53 +1250,39 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         // Toolbar Clicks
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
-             if (!btn) return; // Ignore clicks not on a button
-             // const id = btn.id; // No longer need disabled check
-
+             if (!btn) return;
              switch (btn.id) {
-                 case 'back-btn':
-                     window.history.back(); // Go to previous page in browser history
-                     break;
-                 case 'single-page-btn':
-                     setSinglePageView(); // Now async, but click handler doesn't need await
-                     break;
-                 case 'double-page-btn':
-                     setDoublePageView(); // Now async
-                     break;
-                 case 'rotate-btn':
-                     setRotatedView(); // Now async
-                     break;
-                 case 'time-capsule-btn':
-                     // DO NOTHING - Feature Disabled (was TOC button)
-                     console.log("Time Capsule button clicked (feature disabled).");
-                     // Could add different functionality here later if needed
-                     break;
+                 case 'back-btn': window.history.back(); break;
+                 case 'single-page-btn': setSinglePageView(); break;
+                 case 'double-page-btn': setDoublePageView(); break;
+                 case 'rotate-btn': setRotatedView(); break;
+                 case 'time-capsule-btn': console.log("Time Capsule button clicked (feature disabled)."); break;
              }
              resetSliderHideTimer();
              toolbarHover = false;
              manageToolbar(false);
         });
-        // TOC Close (Panel can still be closed if somehow opened via console, etc.)
+        // TOC Close Button (inside panel)
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        // Popup Close
+        // Popup Close Button
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
-        // Page Edge Clicks
+        // Page Edge Clicks for Navigation
         bookSpread?.addEventListener('click', e => { if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
         // Keyboard Navigation
         document.addEventListener('keydown', e => { if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        // Resize Handling
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); /* Re-apply scaling/rotation */ updateDisplay(); /* Re-render pages for new size */ manageToolbar(); }, 250); });
-        // Touch Swipes
+        // Window Resize Handling
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); updateDisplay(); manageToolbar(); }, 250); });
+        // Touch Swipes for Navigation
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(tX===0&&tY===0)return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
-        // Slider Trigger Zone
+        // Slider Trigger Zone Hover
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
         // Global Click Listener for Popup Dismissal
         document.addEventListener('click', e => {
              if (definitionPopup.classList.contains('visible')
-                 && !definitionPopup.contains(e.target)
-                 && !e.target.closest('.keyword-highlight'))
+                 && !definitionPopup.contains(e.target) // Click was outside popup
+                 && !e.target.closest('.keyword-highlight')) // And not on a keyword highlight
              { hideDefinitionPopup(); }
-        }, true);
+        }, true); // Use capture phase to catch clicks early
         updateStatus("Events setup complete");
     }
 
@@ -1259,16 +1291,31 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         updateStatus("Initializing application...");
         try {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
-            setupEvents(); setupToolbarHover(); initPageSlider(); // hideLoading() moved to loadPdf finally block
+            setupEvents(); setupToolbarHover(); initPageSlider();
             const urlParams = new URLSearchParams(window.location.search); const pdfUrlParam = urlParams.get('pdf');
-            if (pdfUrlParam) { updateStatus(`PDF URL parameter found: ${pdfUrlParam}`); await loadPdf(pdfUrlParam); }
-            else {
-                updateStatus("No PDF specified in URL parameter (?pdf=...)."); const sc = document.querySelector('.main-container .book-spread'); if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`; document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden'); document.querySelector('.book-page.right')?.style.setProperty('display','none'); document.getElementById('page-slider-container')?.classList.remove('visible'); document.getElementById('new-toolbar')?.classList.remove('visible');
-                 hideLoading(); // Hide loading if no PDF is specified
+            if (pdfUrlParam) {
+                updateStatus(`PDF URL parameter found: ${pdfUrlParam}`);
+                await loadPdf(pdfUrlParam); // loadPdf now handles showing/hiding loading indicator
             }
+            else {
+                updateStatus("No PDF specified in URL parameter (?pdf=...).");
+                const sc = document.querySelector('.main-container .book-spread');
+                if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
+                // Hide elements that require a loaded PDF
+                document.querySelector('.book-page.left')?.style.setProperty('visibility','hidden');
+                document.querySelector('.book-page.right')?.style.setProperty('display','none');
+                document.getElementById('page-slider-container')?.classList.remove('visible');
+                document.getElementById('new-toolbar')?.classList.remove('visible');
+                hideLoading(); // Hide loading if no PDF is specified
+            }
+            // Cleanup on unload
             window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete.");
-        } catch (initError) { console.error("Initialization failed:", initError); document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`; hideLoading(); } // Ensure loading hides on catastrophic init error
+        } catch (initError) {
+            console.error("Initialization failed:", initError);
+            document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`;
+            hideLoading(); // Ensure loading hides on catastrophic init error
+        }
     }
 
 // --- Start the application ---
