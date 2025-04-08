@@ -822,7 +822,14 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                 const containerStyle = getComputedStyle(canvasContainer);
                 const availableWidth = parseFloat(containerStyle.width);
                 const availableHeight = parseFloat(containerStyle.height);
-                if (availableWidth <= 0 || availableHeight <= 0) { console.warn(`Canvas container ${canvasId} has zero dimensions.`); hidePageLoading(canvasId); return; }
+                if (availableWidth <= 0 || availableHeight <= 0) {
+                    // If dimensions are zero, likely a layout issue, log warning and skip render to avoid errors
+                    console.warn(`Canvas container ${canvasId} has zero dimensions during renderPage call for page ${pageNum}. Skipping render.`);
+                    hidePageLoading(canvasId);
+                    // Optionally, could try to force a layout recalc here, but it's complex.
+                    // The fix in loadPdf using requestAnimationFrame should prevent this case.
+                    return;
+                }
 
                 const defaultViewport = page.getViewport({ scale: 1 });
                 const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
@@ -1094,12 +1101,19 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             // Apply necessary UI updates that depend on the view state *before* rendering (Unchanged)
             updateSliderTotalPages();
             updateSliderPosition();
-            applyCurrentViewModeStyles();
+            applyCurrentViewModeStyles(); // Apply styles based on view mode
 
-            // Defer first render slightly (Unchanged)
-            await new Promise(resolve => setTimeout(resolve, 0));
+            // --- START FIX: Robust First Page Display ---
+            // Instead of setTimeout(0), use requestAnimationFrame. This ensures that the browser
+            // has had a chance to process layout and style changes triggered by setting the
+            // body classes and calling applyCurrentViewModeStyles() *before* we attempt
+            // the initial render in updateDisplay(). This makes it much more likely that
+            // getComputedStyle() inside renderPage() will return the correct dimensions
+            // for the canvas container on the very first load.
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            // --- END FIX ---
 
-            // Call and await the first render AFTER the short delay (Unchanged)
+            // Call and await the first render AFTER the short delay/frame wait
             await updateDisplay();
 
         } catch (error) {
