@@ -660,7 +660,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- Custom Keyword Overlay Creation (Unchanged) ---
+    // --- Custom Keyword Overlay Creation (MODIFIED FOR FIRST INSTANCE ONLY) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -673,7 +673,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
         if (keywordsForPage.length === 0) {
-             // updateStatus(`No keywords defined for page ${pageNum}`); // Less verbose
              return; // No keywords for this page
         }
 
@@ -681,22 +680,39 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         const lowerCaseDefs = {};
         for (const key in keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = keywordDefinitions[key]; }
 
+        // *** MODIFICATION START: Track keywords already highlighted on this specific page ***
+        const highlightedKeywordsOnPage = new Set();
+        // *** MODIFICATION END ***
+
         try {
             const page = await book.pdfDocument.getPage(pageNum);
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
             let foundKeywordOnPage = false; // Flag to check if any highlights were added
 
+            // Iterate through text items on the page
             textContent.items.forEach(item => {
                 const itemText = item.str;
-                if (!itemText || itemText.trim().length === 0) return;
+                if (!itemText || itemText.trim().length === 0) return; // Skip empty items
+
+                // Iterate through the keywords defined for this page
                 keywordsForPage.forEach((originalKeyword, index) => {
                     const keywordLower = lowerCaseKeywords[index];
                     const definition = lowerCaseDefs[keywordLower];
-                    if (!definition) return;
+
+                    // *** MODIFICATION START: Check if this keyword has ALREADY been highlighted on this page ***
+                    if (!definition || highlightedKeywordsOnPage.has(keywordLower)) {
+                        return; // Skip if no definition OR if the first instance was already found and highlighted
+                    }
+                    // *** MODIFICATION END ***
+
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
-                    let match;
-                    while ((match = regex.exec(itemText)) !== null) {
+                    // Use case-insensitive ('i') but NOT global ('g') flag, we only need the first match in the item
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'i');
+                    const match = regex.exec(itemText); // Attempt to find the keyword in this text item
+
+                    if (match) {
+                        // Found a match in this text item, AND we know it's the first instance on the page
+                        // because of the Set check above. Now create the highlight.
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                         const itemWidth = item.width;
                         const itemHeight = item.height;
@@ -708,8 +724,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                         highlightDiv.className = 'keyword-highlight';
                         highlightDiv.style.left = `${left}px`;
                         highlightDiv.style.top = `${top}px`;
-                        highlightDiv.style.width = `${itemWidth}px`;
-                        highlightDiv.style.height = `${itemHeight}px`;
+                        highlightDiv.style.width = `${itemWidth}px`; // Use item width for highlight width
+                        highlightDiv.style.height = `${itemHeight}px`; // Use item height
                         highlightDiv.dataset.keyword = originalKeyword;
                         highlightDiv.dataset.definition = definition;
                         highlightDiv.title = `Definition: ${originalKeyword}`;
@@ -723,20 +739,29 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                         });
                         overlayContainer.appendChild(highlightDiv);
                         foundKeywordOnPage = true;
-                        return; // Highlight only first match per item
+
+                        // *** MODIFICATION START: Mark this keyword as highlighted for this page ***
+                        highlightedKeywordsOnPage.add(keywordLower);
+                        // *** MODIFICATION END ***
+
+                        // No need to continue searching for THIS keyword in THIS text item or subsequent items.
+                        // The outer loop (`keywordsForPage.forEach`) will continue to check for OTHER keywords.
+                        // The `highlightedKeywordsOnPage.has(keywordLower)` check at the top of the loop
+                        // will prevent this keyword from being highlighted again on this page.
                     }
-                });
-            });
-             if (foundKeywordOnPage) {
-                 // updateStatus(`Added keyword highlights for page ${pageNum}`); // Less verbose
-             } else {
-                 // updateStatus(`Processed page ${pageNum}, no matching keyword text found.`); // Less verbose
-             }
+                }); // End of iterating through keywords for this item
+            }); // End of iterating through text items
+
+             // Optional: Logging based on whether any highlights were added
+             // if (foundKeywordOnPage) { updateStatus(`Added first keyword highlights for page ${pageNum}`); }
+             // else { updateStatus(`Processed page ${pageNum}, no first instance keyword text found.`); }
+
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
             overlayContainer.innerHTML = ''; // Clear on error
         }
     }
+
 
     // --- Simplified Base Text Layer Rendering (Unchanged) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
