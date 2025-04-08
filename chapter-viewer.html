@@ -371,6 +371,93 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 /* --- END: Toolbar & Slider Base Positioning --- */
 
+/* --- START: Left Toolbar for Timelock --- */
+#left-toolbar {
+    position: fixed !important;
+    top: 15px !important; /* Align with right toolbar */
+    left: -60px !important; /* Start hidden off-screen left */
+    bottom: auto !important; /* Ensure bottom is not set */
+    right: auto !important; /* Ensure right is not set */
+    z-index: 9999 !important;
+    display: flex !important;
+    flex-direction: column !important; /* Vertical layout */
+    gap: 10px !important; /* Standard gap */
+    transition: left .3s ease !important; /* Animate left property */
+    background: rgba(28, 37, 54, .9) !important;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: 2.5px 5px !important; /* Consistent padding */
+    border-radius: 0 8px 8px 0 !important; /* Rounded corners on the right */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, .4) !important;
+    width: 58px; /* Fixed width */
+    height: auto !important; /* Height adjusts to content */
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-left: none !important; /* Border only on right/top/bottom */
+}
+
+#left-toolbar::before { /* Handle "≡" */
+    content: "≡";
+    position: absolute;
+    right: -25px; /* Position handle to the right of the toolbar */
+    left: auto; /* Ensure left is not set */
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(28, 37, 54, .9);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    width: 25px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 4px 4px 0;
+    color: var(--text-on-dark);
+    font-size: 20px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, .3);
+    transition: all .3s ease;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-left: none;
+    cursor: pointer;
+}
+
+.left-toolbar-trigger-area { /* Trigger zone for hover */
+    position: fixed;
+    top: 0;
+    left: 0; /* Always on the left edge */
+    width: 30px;
+    height: 100%;
+    z-index: 9998;
+    transition: none !important; /* No transition needed */
+}
+
+#left-toolbar.visible {
+    left: 0 !important; /* Slide in from the left */
+    transform: none !important; /* No translation needed */
+}
+
+/* Specific styling for the timelock button */
+#timelock-toggle-btn {
+    /* Inherits .new-btn styles */
+}
+#timelock-toggle-btn.timelock-on .icon-clock-on {
+    display: block; /* Show the 'on' icon */
+    stroke: var(--secondary); /* Greenish tint for 'on' */
+}
+#timelock-toggle-btn.timelock-on .icon-clock-off {
+    display: none; /* Hide the 'off' icon */
+}
+
+#timelock-toggle-btn.timelock-off .icon-clock-on {
+    display: none; /* Hide the 'on' icon */
+}
+#timelock-toggle-btn.timelock-off .icon-clock-off {
+    display: block; /* Show the 'off' icon */
+    stroke: var(--accent); /* Orange tint for 'off' */
+}
+
+/* --- END: Left Toolbar for Timelock --- */
+
+
 /* --- REMOVED/COMMENTED OUT: Original .rotated-mode UI repositioning --- */
 /* ... (unchanged) ... */
 
@@ -654,6 +741,8 @@ body:not(.loading-game-active) #loading-game-container {
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
 body.loading-game-active .toolbar-trigger-area,
+body.loading-game-active #left-toolbar, /* Hide left toolbar too */
+body.loading-game-active .left-toolbar-trigger-area, /* Hide left trigger too */
 body.loading-game-active #page-slider-container,
 body.loading-game-active #page-slider-trigger-zone,
 body.loading-game-active #definition-popup {
@@ -708,8 +797,14 @@ body.loading-game-active #definition-popup {
     <button id="go-to-chapter-btn">Go to Chapter</button>
 
 
+    <!-- Left Toolbar (Timelock) -->
+    <div id="left-toolbar"></div>
+    <div class="left-toolbar-trigger-area" id="left-toolbar-trigger-area"></div>
+
+    <!-- Right Toolbar (Existing) -->
     <div id="new-toolbar"></div>
     <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
+
     <div id="status-indicator">Status: Initializing...</div>
 
     <div class="main-container">
@@ -756,14 +851,24 @@ body.loading-game-active #definition-popup {
     <div id="reading-time-alert"></div>
 
 <script>
-    // --- START: HTML Population (Unchanged) ---
+    // --- START: HTML Population ---
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+    // Timelock Icons
+    const clockOnIconSVG = `<svg class="icon icon-clock-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+    const clockOffIconSVG = `<svg class="icon icon-clock-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
+
     document.getElementById('new-toolbar').innerHTML = `
         <button class="new-btn" id="back-btn" title="Go Back">↤</button>
         <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button>
         <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
         <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button>
         <button class="new-btn" id="time-capsule-btn" title="Time Capsule (TOC Disabled)">${boxIconSVG}</button>
+    `;
+    document.getElementById('left-toolbar').innerHTML = `
+        <button class="new-btn" id="timelock-toggle-btn" title="Toggle Reading Time Lock (On)">
+            ${clockOnIconSVG}
+            ${clockOffIconSVG}
+        </button>
     `;
     document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
     document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`; // Kept structure
@@ -781,6 +886,8 @@ body.loading-game-active #definition-popup {
     const gameIframe = document.getElementById('game-iframe');
     const goToChapterBtn = document.getElementById('go-to-chapter-btn');
     const iframeLoadingText = document.getElementById('iframe-loading-text');
+    // --- Timelock UI Elements ---
+    const timelockToggleButton = document.getElementById('timelock-toggle-btn');
 
 
     // --- State Variables ---
@@ -793,6 +900,7 @@ body.loading-game-active #definition-popup {
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
 
     // --- Reading Time Lock State ---
+    let isTimelockGloballyEnabled = true; // *** NEW: Master switch for timelock ***
     let currentPageLockStartTime = 0; // Renamed: Start time for the current lock
     let requiredReadingTime = 0; // Stores required time for current lock (pair or single even page)
     let isTimeLockActive = false; // Tracks if ANY lock is currently active
@@ -814,6 +922,8 @@ body.loading-game-active #definition-popup {
 
     let toolbarTimer=null;
     let toolbarHover=!1;
+    let leftToolbarTimer=null; // Timer for left toolbar
+    let leftToolbarHover=!1;  // Hover state for left toolbar
     const pageCache=new Map();
     const MAX_CACHE_SIZE=20;
     let PAGE_PADDING=15;
@@ -826,9 +936,14 @@ body.loading-game-active #definition-popup {
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
     // const updateStatus = () => {}; // Production
 
-    // --- Toolbar Logic (Unchanged) ---
+    // --- Toolbar Logic ---
     function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
-    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;/* Removed rotated check as handle is always vertical now */ if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true; if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Toolbar setup.")}
+    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Right Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;/* Removed rotated check as handle is always vertical now */ if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true; if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Right Toolbar setup.")}
+
+    // --- NEW: Left Toolbar Logic ---
+    function manageLeftToolbar(s=null){const t=document.getElementById('left-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(leftToolbarTimer);const show=s??leftToolbarHover;if(show){t.classList.add('visible')}else{leftToolbarTimer=setTimeout(()=>{if(!leftToolbarHover)t.classList.remove('visible')},500)}}
+    function setupLeftToolbarHover(){const t=document.getElementById('left-toolbar'),a=document.getElementById('left-toolbar-trigger-area'),h=t;if(!t||!a){console.error("Left Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; leftToolbarHover=true;manageLeftToolbar(true)};const leave=()=>{leftToolbarHover=false;manageLeftToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX>r.right&&e.clientX<=r.right+w)c=true; if(c){leftToolbarHover=!t.classList.contains('visible');manageLeftToolbar()}});updateStatus("Left Toolbar setup.")}
+    // --- END: Left Toolbar Logic ---
 
     // --- Caching & Page Loading (Unchanged) ---
     function trimCache(){while(pageCache.size>MAX_CACHE_SIZE){pageCache.delete(pageCache.keys().next().value);}}
@@ -1124,7 +1239,7 @@ body.loading-game-active #definition-popup {
         }
     }
 
-    // --- Update Display (MODIFIED - Implements new time lock logic) ---
+    // --- Update Display (MODIFIED - Respects isTimelockGloballyEnabled) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1221,71 +1336,80 @@ body.loading-game-active #definition-popup {
 
 
         // *** Calculate and set reading time lock based on EFFECTIVE view mode ***
-        if (isEffectiveDoublePageView) {
-            // --- Double Page View Lock Logic ---
-            const leftViewport = currentViewports['left-page-canvas'];
-            const rightViewport = currentViewports['right-page-canvas']; // Will be null if right page isn't rendered
+        // *** ONLY if timelock is globally enabled ***
+        if (isTimelockGloballyEnabled) {
+            if (isEffectiveDoublePageView) {
+                // --- Double Page View Lock Logic ---
+                const leftViewport = currentViewports['left-page-canvas'];
+                const rightViewport = currentViewports['right-page-canvas']; // Will be null if right page isn't rendered
 
-            let timeLeft = 0;
-            if (leftPageNum >= 1 && leftPageNum <= book.totalPages && leftViewport) {
-                timeLeft = await calculatePageReadingTime(leftPageNum, leftViewport);
-            }
-            let timeRight = 0;
-            // Only add right page time if it was actually rendered (not placeholder)
-            if (actualRightPageNum > 0 && rightViewport) {
-                timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
-            }
-
-            const timeForPair = timeLeft + timeRight;
-            const firstPageOfCurrentPair = leftPageNum; // Lock associated with the ODD starting page
-
-            if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
-                updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
-                // isTimeLockActive remains false
-            } else if (timeForPair > 0) {
-                requiredReadingTime = timeForPair; // Set required time for the pair
-                currentPageLockStartTime = Date.now();
-                isTimeLockActive = true; // Activate lock for the PAIR
-                updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
-            } else {
-                updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
-                // isTimeLockActive remains false
-            }
-            // --- End Double Page View Lock Logic ---
-
-        } else {
-            // --- Single Page / Rotated View Lock Logic ---
-            const currentPageNum = leftPageNum; // The single page being displayed
-            const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
-
-            if (isEvenPage) {
-                // Only potentially lock if the *current* page is EVEN
-                if (completedTimeLockPages.has(currentPageNum)) {
-                    updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
-                    // isTimeLockActive remains false
-                } else {
-                    const singlePageViewPort = currentViewports['left-page-canvas'];
-                    let timeSingle = 0;
-                    if (currentPageNum >= 1 && currentPageNum <= book.totalPages && singlePageViewPort) {
-                        timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
-                    }
-
-                    if (timeSingle > 0) {
-                        requiredReadingTime = timeSingle; // Store single EVEN page time
-                        currentPageLockStartTime = Date.now();
-                        isTimeLockActive = true; // Activate lock for this EVEN page
-                        updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
-                    } else {
-                        updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
-                         // isTimeLockActive remains false
-                    }
+                let timeLeft = 0;
+                if (leftPageNum >= 1 && leftPageNum <= book.totalPages && leftViewport) {
+                    timeLeft = await calculatePageReadingTime(leftPageNum, leftViewport);
                 }
+                let timeRight = 0;
+                // Only add right page time if it was actually rendered (not placeholder)
+                if (actualRightPageNum > 0 && rightViewport) {
+                    timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
+                }
+
+                const timeForPair = timeLeft + timeRight;
+                const firstPageOfCurrentPair = leftPageNum; // Lock associated with the ODD starting page
+
+                if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
+                    updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
+                    // isTimeLockActive remains false
+                } else if (timeForPair > 0) {
+                    requiredReadingTime = timeForPair; // Set required time for the pair
+                    currentPageLockStartTime = Date.now();
+                    isTimeLockActive = true; // Activate lock for the PAIR
+                    updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
+                } else {
+                    updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
+                    // isTimeLockActive remains false
+                }
+                // --- End Double Page View Lock Logic ---
+
             } else {
-                // Current page is odd or invalid, no lock needed when viewing it in single view
-                updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
-                // isTimeLockActive remains false
+                // --- Single Page / Rotated View Lock Logic ---
+                const currentPageNum = leftPageNum; // The single page being displayed
+                const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
+
+                if (isEvenPage) {
+                    // Only potentially lock if the *current* page is EVEN
+                    if (completedTimeLockPages.has(currentPageNum)) {
+                        updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
+                        // isTimeLockActive remains false
+                    } else {
+                        const singlePageViewPort = currentViewports['left-page-canvas'];
+                        let timeSingle = 0;
+                        if (currentPageNum >= 1 && currentPageNum <= book.totalPages && singlePageViewPort) {
+                            timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
+                        }
+
+                        if (timeSingle > 0) {
+                            requiredReadingTime = timeSingle; // Store single EVEN page time
+                            currentPageLockStartTime = Date.now();
+                            isTimeLockActive = true; // Activate lock for this EVEN page
+                            updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
+                        } else {
+                            updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
+                            // isTimeLockActive remains false
+                        }
+                    }
+                } else {
+                    // Current page is odd or invalid, no lock needed when viewing it in single view
+                    updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
+                    // isTimeLockActive remains false
+                }
+                // --- End Single Page / Rotated View Lock Logic ---
             }
-            // --- End Single Page / Rotated View Lock Logic ---
+        } else {
+            // Timelock is globally disabled, ensure no lock is set
+            isTimeLockActive = false;
+            requiredReadingTime = 0;
+            currentPageLockStartTime = 0;
+            updateStatus("Time lock globally DISABLED. Skipping lock calculation/set.");
         }
         // --- End Reading Time Logic ---
 
@@ -1313,8 +1437,11 @@ body.loading-game-active #definition-popup {
         });
     }
 
-    // --- Reading Time Alert (Unchanged) ---
+    // --- Reading Time Alert (MODIFIED: Checks global enabled state) ---
     function showReadingTimeAlert() {
+        // Only show alert if timelock is globally enabled and blocking
+        if (!isTimelockGloballyEnabled) return;
+
         clearTimeout(alertTimeout);
         let alertDiv = document.getElementById('reading-time-alert');
         if (!alertDiv) { return; } // Should exist after init
@@ -1327,9 +1454,15 @@ body.loading-game-active #definition-popup {
         }, 2500); // Show for 2.5 seconds
     }
 
-    // --- Reading Time Lock Check (MODIFIED: Handles completion correctly) ---
+    // --- Reading Time Lock Check (MODIFIED: Checks global enabled state first) ---
     function checkReadingTimeLock() {
         // Called by jumpToPage only when moving forward.
+
+        // *** FIRST: Check if timelock is globally enabled ***
+        if (!isTimelockGloballyEnabled) {
+            updateStatus(`Time lock check: Globally DISABLED. Allowing navigation.`);
+            return false; // Not blocking
+        }
 
         if (!isTimeLockActive) {
             // No lock is currently active (either pair or single even page), so allow navigation.
@@ -1345,9 +1478,8 @@ body.loading-game-active #definition-popup {
 
         if (elapsedSeconds < requiredReadingTime) {
             // Time is NOT up. Block navigation.
-             // We don't strictly need to know the *current* view mode here, just that a lock is active.
             updateStatus(`Time lock ACTIVE (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Blocking forward nav.`);
-            showReadingTimeAlert();
+            showReadingTimeAlert(); // Alert will only show if globally enabled due to its own check
             return true; // Indicate lock IS preventing navigation
         } else {
             // Time IS up. Allow navigation and handle completion.
@@ -1369,7 +1501,7 @@ body.loading-game-active #definition-popup {
     }
 
 
-    // --- Navigation (MODIFIED nextPage/prevPage/jumpToPage logic) ---
+    // --- Navigation (Uses modified checkReadingTimeLock) ---
     function nextPage() {
         // Determine increment based on *effective* view mode at the moment of click/keypress
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
@@ -1408,7 +1540,7 @@ body.loading-game-active #definition-popup {
         else if (book.currentPage > 1) jumpToPage(1); // Go to first page if decrement goes below 1
     }
 
-    // MODIFIED jumpToPage to simplify lock check call and handle slider reset
+    // MODIFIED jumpToPage to use modified lock check
     function jumpToPage(pageNum){
         if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages){
             console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);
@@ -1435,7 +1567,7 @@ body.loading-game-active #definition-popup {
         // --- Refined Lock Check Logic ---
         const isMovingForward = targetStartPage > currentStartPage;
 
-        // Check lock ONLY if moving forward. checkReadingTimeLock handles view mode specifics internally.
+        // Check lock ONLY if moving forward. checkReadingTimeLock handles global enable state and view mode specifics internally.
         if (isMovingForward) {
             updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
             if (checkReadingTimeLock()) {
@@ -1448,8 +1580,8 @@ body.loading-game-active #definition-popup {
                 }
                 return; // Stop navigation
             }
-            // If checkReadingTimeLock() returned false, the lock is passed OR was completed for this attempt.
-            updateStatus(`Time lock passed or completed. Proceeding with jump.`);
+            // If checkReadingTimeLock() returned false, the lock is passed OR was completed OR is globally disabled.
+            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
         } else {
             updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
             // Clear any active lock if moving backward, as it's no longer relevant
@@ -1472,13 +1604,14 @@ body.loading-game-active #definition-popup {
         }
 
         hideDefinitionPopup();
-        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s)
+        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting
         showPageSlider(); // Show slider briefly after navigation
-        manageToolbar(false); // Hide toolbar after navigation
+        manageToolbar(false); // Hide right toolbar after navigation
+        manageLeftToolbar(false); // Hide left toolbar after navigation
     }
 
 
-    // --- View Modes (MODIFIED to use updateDisplay which now handles locks) ---
+    // --- View Modes (Uses modified updateDisplay) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -1531,7 +1664,8 @@ body.loading-game-active #definition-popup {
         hideDefinitionPopup();
         // updateDisplay will calculate lock based on the new effective single-page mode
         await updateDisplay();
-        manageToolbar(false); // Hide toolbar after action
+        manageToolbar(false); // Hide right toolbar after action
+        manageLeftToolbar(false); // Hide left toolbar after action
         updateSliderTotalPages(); // Update max pages (doesn't change, but good practice)
         updateSliderPosition(); // Update slider value and text based on new effective mode
     }
@@ -1555,7 +1689,8 @@ body.loading-game-active #definition-popup {
         hideDefinitionPopup();
          // updateDisplay will calculate lock based on the new effective double-page mode
         await updateDisplay();
-        manageToolbar(false); // Hide toolbar after action
+        manageToolbar(false); // Hide right toolbar after action
+        manageLeftToolbar(false); // Hide left toolbar after action
         updateSliderTotalPages();
         updateSliderPosition(); // Update slider value and text
     }
@@ -1572,7 +1707,8 @@ body.loading-game-active #definition-popup {
         hideDefinitionPopup();
         // updateDisplay will calculate lock based on the new effective single-page (rotated) mode
         await updateDisplay();
-        manageToolbar(false); // Hide toolbar after action
+        manageToolbar(false); // Hide right toolbar after action
+        manageLeftToolbar(false); // Hide left toolbar after action
         updateSliderTotalPages();
         updateSliderPosition(); // Update slider value and text
     }
@@ -1583,7 +1719,7 @@ body.loading-game-active #definition-popup {
     function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (MODIFIED - relies on jumpToPage & new updateSliderPosition) ---
+    // --- Slider Logic (Unchanged - uses modified jumpToPage) ---
     function showPageSlider(){
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
@@ -1767,7 +1903,7 @@ body.loading-game-active #definition-popup {
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED to reset time lock state completely) ---
+    // --- PDF Loading (MODIFIED to reset global timelock state) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
@@ -1775,6 +1911,8 @@ body.loading-game-active #definition-popup {
 
         // *** Reset time lock state completely on new PDF load ***
         updateStatus("Resetting time lock state for new PDF.");
+        isTimeLockGloballyEnabled = true; // *** Reset global toggle to ON ***
+        updateTimelockButtonVisuals(); // Ensure button reflects the default ON state
         isTimeLockActive = false;
         completedTimeLockPages.clear(); // Clear the set of completed pages/pairs
         currentPageLockStartTime = 0;   // Reset timer start
@@ -1831,7 +1969,7 @@ body.loading-game-active #definition-popup {
             // Wait for potential style changes from classes to apply before the first render
             await new Promise(resolve => requestAnimationFrame(resolve));
 
-            // Perform the initial display render and calculate/set the first time lock (if applicable)
+            // Perform the initial display render and calculate/set the first time lock (if applicable and enabled)
             await updateDisplay();
 
             // --- *** READER IS READY *** ---
@@ -1857,7 +1995,7 @@ body.loading-game-active #definition-popup {
             console.error("FATAL: Error loading PDF document:", error);
             isReaderReady = false;
             // Reset state on error
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0;
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC(); // Update UI to reflect error state
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
@@ -1870,7 +2008,7 @@ body.loading-game-active #definition-popup {
     }
 
 
-    // --- TOC population (MODIFIED to bypass time lock by directly calling updateDisplay) ---
+    // --- TOC population (MODIFIED - Respects global timelock state when jumping) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
@@ -1899,6 +2037,7 @@ body.loading-game-active #definition-popup {
                          }
 
                         // Clear any currently active lock since we are jumping potentially far
+                        // (This is independent of the global setting, as it's clearing a *potential* current lock)
                         if (isTimeLockActive) {
                             updateStatus("Clearing active time lock due to TOC navigation.");
                             isTimeLockActive = false;
@@ -1913,9 +2052,11 @@ body.loading-game-active #definition-popup {
 
                         hideDefinitionPopup();
                         hideTableOfContents();
-                        await updateDisplay(); // Update display for the new page, resets lock state based on new view
+                        // Update display: This will apply the global timelock setting when determining if a *new* lock should be set
+                        await updateDisplay();
                         showPageSlider();
-                        manageToolbar(false);
+                        manageToolbar(false); // Hide right toolbar
+                        manageLeftToolbar(false); // Hide left toolbar
                     }
                     else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
@@ -2004,15 +2145,53 @@ body.loading-game-active #definition-popup {
     }
     // --- END: Game Transition Logic ---
 
+    // --- NEW: Update Timelock Button Visuals ---
+    function updateTimelockButtonVisuals() {
+        if (!timelockToggleButton) return;
+        if (isTimelockGloballyEnabled) {
+            timelockToggleButton.classList.remove('timelock-off');
+            timelockToggleButton.classList.add('timelock-on');
+            timelockToggleButton.title = "Toggle Reading Time Lock (On)";
+        } else {
+            timelockToggleButton.classList.remove('timelock-on');
+            timelockToggleButton.classList.add('timelock-off');
+            timelockToggleButton.title = "Toggle Reading Time Lock (Off)";
+        }
+    }
 
-    // --- Event Setup (MODIFIED - uses updated nav functions) ---
+    // --- NEW: Toggle Timelock Functionality ---
+    function toggleTimelock() {
+        isTimelockGloballyEnabled = !isTimelockGloballyEnabled;
+        updateStatus(`Timelock globally ${isTimelockGloballyEnabled ? 'ENABLED' : 'DISABLED'}`);
+        updateTimelockButtonVisuals();
+
+        // If turning the timelock OFF, immediately deactivate any *current* lock.
+        if (!isTimelockGloballyEnabled && isTimeLockActive) {
+            updateStatus("Timelock globally disabled, clearing current active lock.");
+            isTimeLockActive = false;
+            requiredReadingTime = 0;
+            currentPageLockStartTime = 0;
+            clearTimeout(alertTimeout); // Hide any active alert
+            const alertDiv = document.getElementById('reading-time-alert');
+            if (alertDiv) alertDiv.classList.remove('visible');
+        } else if (isTimelockGloballyEnabled) {
+            // If turning the timelock ON, re-evaluate the lock state for the current view immediately.
+            // This might set a new lock if one is applicable and wasn't active before.
+            updateStatus("Timelock globally enabled, re-evaluating lock state for current view.");
+            updateDisplay(); // Re-run updateDisplay to potentially set a lock based on current page/view
+        }
+        manageLeftToolbar(false); // Hide toolbar after action
+    }
+
+    // --- Event Setup (MODIFIED - Adds listeners for left toolbar and timelock button) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
+        const leftToolbar = document.getElementById('left-toolbar'); // Get left toolbar
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // Toolbar Clicks (Calls updated view functions)
+        // Right Toolbar Clicks (Calls updated view functions)
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
              if (!btn) return;
@@ -2023,9 +2202,16 @@ body.loading-game-active #definition-popup {
                  case 'rotate-btn': setRotatedView(); break;     // Calls updateDisplay internally
                  case 'time-capsule-btn': console.log("Time Capsule button clicked (feature disabled)."); break;
              }
-             // resetSliderHideTimer(); // Handled within jumpToPage/showPageSlider now
              // Toolbar hiding is handled within the view change functions
         });
+
+        // *** NEW: Left Toolbar Click (Timelock Toggle) ***
+        leftToolbar?.addEventListener('click', e => {
+            const btn = e.target.closest('.new-btn');
+            if (!btn || btn.id !== 'timelock-toggle-btn') return;
+            toggleTimelock();
+        });
+
         // TOC Close (No change)
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
         // Popup Close (No change)
@@ -2076,10 +2262,10 @@ body.loading-game-active #definition-popup {
                      if(book.totalPages > 0) jumpToPage(book.totalPages); // Handles lock check internally
                      navAction = true; break;
             }
-            if(navAction){ e.preventDefault(); /* Slider/Toolbar managed by jumpToPage/showPageSlider */ }
+            if(navAction){ e.preventDefault(); /* Slider/Toolbars managed by jumpToPage/showPageSlider */ }
         });
 
-        // Resize Handling (MODIFIED to call updateDisplay correctly)
+        // Resize Handling (Uses modified updateDisplay)
         window.addEventListener('resize', ()=>{
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
@@ -2090,13 +2276,14 @@ body.loading-game-active #definition-popup {
                     // Re-render and re-evaluate locks based on potentially new effective view mode
                     updateDisplay();
                 }
-                 manageToolbar(); // Adjust toolbar visibility if needed
+                 manageToolbar(); // Adjust right toolbar visibility if needed
+                 manageLeftToolbar(); // Adjust left toolbar visibility if needed
              }, 250);
         });
 
         // Touch Swipes (Uses updated nextPage/prevPage)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
-        document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true});
+        document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true});
         document.body.addEventListener('touchend',e=>{
              if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;
              if(e.changedTouches.length===1){
@@ -2110,7 +2297,7 @@ body.loading-game-active #definition-popup {
                          } else { // Swipe Left (Next Page)
                              nextPage(); // Handles lock check internally
                          }
-                         // Slider/Toolbar managed by jumpToPage/showPageSlider
+                         // Slider/Toolbars managed by jumpToPage/showPageSlider
                      }
                  }
              }
@@ -2154,7 +2341,7 @@ body.loading-game-active #definition-popup {
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (Unchanged) ---
+    // --- Initialization (MODIFIED - Sets up left toolbar hover) ---
     async function init() {
         updateStatus("Initializing application...");
         document.body.classList.add('loading-game-active');
@@ -2163,7 +2350,9 @@ body.loading-game-active #definition-popup {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
 
             setupEvents();
-            setupToolbarHover();
+            setupToolbarHover(); // Setup right toolbar
+            setupLeftToolbarHover(); // *** Setup left toolbar ***
+            updateTimelockButtonVisuals(); // Set initial button state
             initPageSlider();
 
             const urlParams = new URLSearchParams(window.location.search);
