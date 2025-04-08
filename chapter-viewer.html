@@ -520,12 +520,13 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
 /* --- START: MODIFIED UNDERLINE RULE --- */
 /* Underline now ONLY applies if the 'first-keyword-instance' class is present */
+/* The underline effect is applied to the keyword-highlight div itself, which is now correctly sized */
 .keyword-highlight.first-keyword-instance::after {
     content: '';
     position: absolute;
     left: 0;
     bottom: -2px; /* Position 2px below the highlight box */
-    width: 100%;
+    width: 100%; /* Takes the width of the correctly sized highlight box */
     height: 1.5px;  /* Make it slightly thicker but still subtle */
     background: linear-gradient(to right, var(--fiery-orange), var(--accent)); /* This is the target gradient */
     pointer-events: none; /* Prevent interaction with the line itself */
@@ -628,7 +629,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     let keywordDefinitions = {};
     let pageKeywords = {};
     let currentViewports = {};
-    let firstInstanceKeywordsFound = new Set(); // *** NEW: Tracks keywords already underlined
+    let firstInstanceKeywordsFound = new Set(); // Tracks keywords already underlined
 
     // --- PDF.js Setup (Using v2.5.207) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -661,7 +662,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function showPageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='flex';}
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
-    // --- *** MODIFIED: Custom Keyword Overlay Creation *** ---
+
+    // --- START: *** MODIFIED createKeywordOverlays FUNCTION *** ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -674,7 +676,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
         const keywordsForPage = pageKeywords[pageNum.toString()] || [];
         if (keywordsForPage.length === 0) {
-             // updateStatus(`No keywords defined for page ${pageNum}`); // Less verbose
              return; // No keywords for this page
         }
 
@@ -689,40 +690,56 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 
             textContent.items.forEach(item => {
                 const itemText = item.str;
-                if (!itemText || itemText.trim().length === 0) return;
+                const itemTextLength = itemText.length;
+                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) return; // Skip empty or zero-width items
+
                 keywordsForPage.forEach((originalKeyword, index) => {
                     const keywordLower = lowerCaseKeywords[index]; // Use pre-lowercased version
                     const definition = lowerCaseDefs[keywordLower];
                     if (!definition) return;
+
                     // Use originalKeyword for regex matching to preserve case in the displayed text if needed,
                     // but use keywordLower for definition lookup and first-instance tracking.
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    // IMPORTANT: The regex must find the keyword exactly. \b ensures word boundaries.
                     const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                     let match;
+
                     while ((match = regex.exec(itemText)) !== null) {
+                        const matchedString = match[1]; // The actual text that matched (case preserved from originalKeyword)
+                        const matchIndex = match.index;
+                        const matchLength = matchedString.length;
+
+                        // Calculate precise bounding box for the matched keyword within the item
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                         const itemWidth = item.width;
                         const itemHeight = item.height;
-                        let left = tx[4];
-                        let top = tx[5] - itemHeight; // Adjust top based on PDF coordinate system
-                        if (left < 0) left = 0; if (top < 0) top = 0;
+                        const itemLeft = tx[4];
+                        const itemTop = tx[5] - itemHeight; // Adjust top based on PDF coordinate system
 
+                        // Calculate offset and width based on character position within the item string
+                        // This assumes near-uniform character width within the item, which is a reasonable approximation.
+                        const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
+                        const highlightWidth = (matchLength / itemTextLength) * itemWidth;
+                        const highlightLeft = itemLeft + highlightOffsetX;
+                        const highlightTop = itemTop; // Top remains the same as the item's top
+
+                        // Create the highlight div with the calculated dimensions
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight'; // Base class for hover/click
-                        highlightDiv.style.left = `${left}px`;
-                        highlightDiv.style.top = `${top}px`;
-                        highlightDiv.style.width = `${itemWidth}px`;
+                        highlightDiv.style.left = `${Math.max(0, highlightLeft)}px`; // Ensure not negative
+                        highlightDiv.style.top = `${Math.max(0, highlightTop)}px`;   // Ensure not negative
+                        highlightDiv.style.width = `${Math.max(1, highlightWidth)}px`; // Ensure minimum width 1px
                         highlightDiv.style.height = `${itemHeight}px`;
-                        highlightDiv.dataset.keyword = originalKeyword;
+                        highlightDiv.dataset.keyword = originalKeyword; // Store the canonical keyword
                         highlightDiv.dataset.definition = definition;
                         highlightDiv.title = `Definition: ${originalKeyword}`;
 
-                        // *** NEW LOGIC: Check if this is the first instance globally ***
+                        // Check if this is the first instance globally (using lower case for tracking)
                         if (!firstInstanceKeywordsFound.has(keywordLower)) {
                             highlightDiv.classList.add('first-keyword-instance'); // Add class for underlining
                             firstInstanceKeywordsFound.add(keywordLower); // Mark this keyword as found/underlined
                         }
-                        // *** END NEW LOGIC ***
 
                         highlightDiv.addEventListener('click', (e) => {
                             e.stopPropagation();
@@ -734,22 +751,25 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                         });
                         overlayContainer.appendChild(highlightDiv);
                         foundKeywordOnPage = true;
-                        // Do NOT return here if multiple instances of the same keyword could be in one text item
-                        // regex.lastIndex = match.index + 1; // Advance regex if needed, but usually okay with \b
+
+                        // Important: Reset lastIndex if the match length is zero (shouldn't happen with \b keyword \b)
+                        // or to prevent infinite loops in complex regex cases (though unlikely here).
+                        if (matchLength === 0) {
+                            regex.lastIndex++;
+                        }
                     }
                 });
             });
-             if (foundKeywordOnPage) {
-                 // updateStatus(`Added keyword highlights for page ${pageNum}`); // Less verbose
-             } else {
-                 // updateStatus(`Processed page ${pageNum}, no matching keyword text found.`); // Less verbose
-             }
+             // Optional: Add status logging back if desired
+             // if (foundKeywordOnPage) { updateStatus(`Added keyword highlights for page ${pageNum}`); }
+             // else { updateStatus(`Processed page ${pageNum}, no matching keyword text found.`); }
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
             overlayContainer.innerHTML = ''; // Clear on error
         }
     }
-    // --- END MODIFIED Custom Keyword Overlay Creation ---
+    // --- END: *** MODIFIED createKeywordOverlays FUNCTION *** ---
+
 
     // --- Simplified Base Text Layer Rendering (Unchanged) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
@@ -783,7 +803,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         }
     }
 
-    // --- renderPage function (Calls createKeywordOverlays - Unchanged internally) ---
+    // --- renderPage function (Calls MODIFIED createKeywordOverlays) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -826,8 +846,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
                     // If dimensions are zero, likely a layout issue, log warning and skip render to avoid errors
                     console.warn(`Canvas container ${canvasId} has zero dimensions during renderPage call for page ${pageNum}. Skipping render.`);
                     hidePageLoading(canvasId);
-                    // Optionally, could try to force a layout recalc here, but it's complex.
-                    // The fix in loadPdf using requestAnimationFrame should prevent this case.
                     return;
                 }
 
@@ -856,7 +874,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             // updateStatus(`Rendering layers for page ${pageNum}`); // Less verbose
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            await createKeywordOverlays(pageNum, pageElement, viewport); // Create keyword overlays using the final viewport
+            // *** Call the MODIFIED function here ***
+            await createKeywordOverlays(pageNum, pageElement, viewport);
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -1071,12 +1090,13 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- *** MODIFIED: PDF Loading *** ---
+    // --- PDF Loading (Reset firstInstanceKeywordsFound set) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         showLoading("Initializing PDF..."); // Show loading immediately
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        firstInstanceKeywordsFound.clear(); // *** NEW: Reset the tracking set for first instances ***
+        // *** Reset the tracking set for first instances on new PDF load ***
+        firstInstanceKeywordsFound.clear();
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
 
         // TOC functionality is disabled for the time-capsule button, so no need to manage its disabled state here
@@ -1103,15 +1123,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
             updateSliderPosition();
             applyCurrentViewModeStyles(); // Apply styles based on view mode
 
-            // --- START FIX: Robust First Page Display ---
-            // Instead of setTimeout(0), use requestAnimationFrame. This ensures that the browser
-            // has had a chance to process layout and style changes triggered by setting the
-            // body classes and calling applyCurrentViewModeStyles() *before* we attempt
-            // the initial render in updateDisplay(). This makes it much more likely that
-            // getComputedStyle() inside renderPage() will return the correct dimensions
-            // for the canvas container on the very first load.
+            // --- Robust First Page Display Fix (Unchanged) ---
             await new Promise(resolve => requestAnimationFrame(resolve));
-            // --- END FIX ---
 
             // Call and await the first render AFTER the short delay/frame wait
             await updateDisplay();
@@ -1125,7 +1138,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
              updateStatus("loadPdf finished.");
         }
     }
-    // --- END MODIFIED PDF Loading ---
 
     // --- TOC population (Unchanged) ---
     function populateTOC() {
