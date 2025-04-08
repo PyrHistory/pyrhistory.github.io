@@ -285,7 +285,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     height:6px!important; /* Base height */
     -webkit-appearance:none!important;
     appearance:none!important;
-    background:rgba(255,255,255,.1)!important;
+    background:rgba(255,255,255,.1)!important; /* Base track color */
     outline:none;
     border-radius:3px!important;
     overflow:visible;
@@ -299,7 +299,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     appearance:none!important;
     width:20px!important;height:20px!important; /* Thumb size */
     border-radius:50%!important;
-    background:var(--accent)!important;
+    background:var(--accent)!important; /* Keep thumb the accent color for now */
     cursor:pointer;
     border:3px solid rgba(28,37,54,.9)!important;
     box-shadow:0 1px 6px rgba(0,0,0,.4)!important;
@@ -308,17 +308,47 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     margin-left: 0 !important; /* No horizontal margin adjustment */
 }
 .page-slider:hover::-webkit-slider-thumb{width:24px!important;height:24px!important;margin-top:-8px!important}
-.page-slider::-webkit-slider-runnable-track{
-    width: 100% !important; /* Track width */
-    height:100%!important; /* Track height */
-    background:linear-gradient(to right,var(--accent) var(--slider-percent,0%),rgba(255,255,255,.1) var(--slider-percent,0%))!important; /* Horizontal gradient */
-    border-radius:3px!important;
+
+/* --- START: MODIFIED SLIDER TRACK COLORS --- */
+.page-slider::-webkit-slider-runnable-track {
+    width: 100% !important;
+    height: 100% !important;
+    /* Use multiple backgrounds for WebKit:
+       1. The desired gradient for the filled portion, sized by --slider-percent.
+       2. The standard empty track color underneath. */
+    background-image: linear-gradient(to right, var(--fiery-orange), var(--accent)), /* Filled part gradient */
+                      linear-gradient(to right, rgba(255, 255, 255, .1), rgba(255, 255, 255, .1)); /* Empty part color */
+    background-size: var(--slider-percent, 0%) 100%, 100% 100%; /* Size gradient based on percent */
+    background-repeat: no-repeat;
+    border-radius: 3px !important;
+    /* Explicitly set background color to transparent to avoid clash with background-image */
+    background-color: transparent !important;
 }
-/* Firefox specific styles (ensure horizontal) */
-.page-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid rgba(28,37,54,.9);box-shadow:0 1px 6px rgba(0,0,0,.4)}
-.page-slider:hover::-moz-range-thumb{width:24px;height:24px}
-.page-slider::-moz-range-progress{background-color:var(--accent);height:100%;border-radius:3px}
-.page-slider::-moz-range-track{background-color:rgba(255,255,255,.1);height:100%;border-radius:3px}
+
+/* Firefox specific styles */
+.page-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent); /* Keep thumb the accent color */
+    cursor: pointer;
+    border: 3px solid rgba(28, 37, 54, .9);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .4);
+}
+.page-slider:hover::-moz-range-thumb {width: 24px; height: 24px;}
+.page-slider::-moz-range-progress {
+    /* Apply the desired gradient to the progress bar */
+    background: linear-gradient(to right, var(--fiery-orange), var(--accent)) !important;
+    height: 100%;
+    border-radius: 3px;
+}
+.page-slider::-moz-range-track {
+    /* Ensure the empty part of the track is the standard light color */
+    background-color: rgba(255, 255, 255, .1) !important;
+    height: 100%;
+    border-radius: 3px;
+}
+/* --- END: MODIFIED SLIDER TRACK COLORS --- */
 
 .page-slider-info{
     font-size:12px;
@@ -494,7 +524,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     bottom: -2px; /* Position 2px below the highlight box */
     width: 100%;
     height: 1.5px;  /* Make it slightly thicker but still subtle */
-    background: linear-gradient(to right, var(--fiery-orange), var(--accent));
+    background: linear-gradient(to right, var(--fiery-orange), var(--accent)); /* This is the target gradient */
     pointer-events: none; /* Prevent interaction with the line itself */
     border-radius: 1px; /* Slightly rounded ends */
     opacity: 0.54; /* UPDATED: Was 0.9, now 60% of that (0.9 * 0.6) */
@@ -1000,14 +1030,19 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     function showLoading(msg='Processing...'){const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Unchanged) ---
+    // --- START: MODIFIED SLIDER LOGIC ---
     function showPageSlider(){const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}}
     function hidePageSlider(){document.getElementById('page-slider-container')?.classList.remove('visible')}
-    function resetSliderHideTimer(){clearTimeout(sliderHideTimeout);sliderHideTimeout=setTimeout(hidePageSlider,3500)}
+    function resetSliderHideTimer(){
+        clearTimeout(sliderHideTimeout);
+        // MODIFICATION: Halved the timeout duration from 3500ms to 1750ms
+        sliderHideTimeout = setTimeout(hidePageSlider, 1750);
+    }
     function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>clearTimeout(sliderHideTimeout));sc.addEventListener('mouseleave',resetSliderHideTimer);updateSliderTotalPages();updateSliderPosition()}
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
     function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;if(book.isDoublePageView&&c+1<=t && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
     function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
+    // --- END: MODIFIED SLIDER LOGIC ---
 
     // --- Overlay Data Loading (Unchanged) ---
     async function loadOverlayData(pdfUrl) {
