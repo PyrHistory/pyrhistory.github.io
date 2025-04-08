@@ -115,6 +115,9 @@
             transition: all 0.2s ease;
             width: 80%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            /* Default display state */
+            display: block; /* Ensure it's visible by default */
+            margin: 0 auto; /* Center button */
         }
         
         #game-over button:hover {
@@ -127,6 +130,14 @@
             transform: translateY(0);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
+
+        /* Style for disabled button (includes hiding) */
+         #game-over button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            /* Hide the button when disabled */
+            display: none !important;
+         }
         
         #instructions {
             color: var(--text-light);
@@ -210,8 +221,8 @@
         
         // Call resize on load and window resize
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        
+        // resizeCanvas(); // Called later in window.onload
+
         // Game variables
         let score = 0;
         let gameSpeed = 6;
@@ -221,7 +232,7 @@
         
         // Ground
         const ground = {
-            y: canvas.height - 30,
+            y: canvas.height - 30, // Initial value, updated later
             draw: function() {
                 ctx.fillStyle = '#8B4513';
                 ctx.fillRect(0, this.y, canvas.width, canvas.height - this.y);
@@ -235,7 +246,7 @@
         // Player
         const player = {
             x: 50,
-            y: ground.y - 40,
+            y: ground.y - 40, // Initial value, updated later
             width: 30,
             height: 40,
             jumping: false,
@@ -262,15 +273,12 @@
             draw: function() {
                 // Draw caveman (simple representation)
                 ctx.fillStyle = '#8B5A2B';
-                
                 // Body
                 ctx.fillRect(this.x, this.y + 10, this.width, this.height - 10);
-                
                 // Head
                 ctx.beginPath();
                 ctx.arc(this.x + this.width / 2, this.y + 5, 10, 0, Math.PI * 2);
                 ctx.fill();
-                
                 // Eyes
                 ctx.fillStyle = 'white';
                 ctx.beginPath();
@@ -279,7 +287,6 @@
                 ctx.beginPath();
                 ctx.arc(this.x + this.width / 2 + 3, this.y + 3, 2, 0, Math.PI * 2);
                 ctx.fill();
-                
                 // Spear when running
                 if (!this.jumping) {
                     ctx.strokeStyle = '#8B5A2B';
@@ -312,49 +319,37 @@
             const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
             return {
                 x: canvas.width,
-                y: ground.y - type.height,
+                y: ground.y - type.height, // Use current ground.y
                 width: type.width,
                 height: type.height,
                 type: type.name,
                 passed: false,
                 draw: function() {
                     if (this.type === 'rock') {
-                        // Draw rock
                         ctx.fillStyle = '#A9A9A9';
                         ctx.beginPath();
                         ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
                         ctx.fill();
                     } else if (this.type === 'cactus') {
-                        // Draw cactus
                         ctx.fillStyle = '#2E8B57';
                         ctx.fillRect(this.x + this.width / 2 - 5, this.y, 10, this.height);
                         ctx.fillRect(this.x, this.y + this.height / 3, this.width / 2, 10);
                         ctx.fillRect(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 10);
                     } else if (this.type === 'dino') {
-                        // Draw small dino
                         ctx.fillStyle = '#006400';
-                        
-                        // Body
                         ctx.fillRect(this.x, this.y + 10, this.width, this.height - 20);
-                        
-                        // Head
                         ctx.fillRect(this.x + this.width - 15, this.y, 15, 20);
-                        
-                        // Legs
                         ctx.fillRect(this.x + 5, this.y + this.height - 10, 8, 10);
                         ctx.fillRect(this.x + this.width - 15, this.y + this.height - 10, 8, 10);
-                        
-                        // Tail
                         ctx.fillRect(this.x - 10, this.y + 15, 15, 10);
                     }
                 }
             };
         }
         
-        // Function to generate a random obstacle interval
         function getRandomObstacleInterval() {
-            const minGap = 1000 - gameSpeed * 50; // Minimum gap time (milliseconds)
-            const maxGap = 2500 - gameSpeed * 70; // Maximum gap time (milliseconds)
+            const minGap = 1000 - gameSpeed * 50;
+            const maxGap = 2500 - gameSpeed * 70;
             return Math.random() * (maxGap - minGap) + minGap;
         }
         
@@ -363,7 +358,7 @@
         function createCloud() {
             return {
                 x: canvas.width,
-                y: Math.random() * (ground.y / 2),
+                y: Math.random() * (ground.y / 2), // Use current ground.y
                 width: 40 + Math.random() * 60,
                 height: 20 + Math.random() * 30,
                 speed: gameSpeed * (0.2 + Math.random() * 0.2),
@@ -390,70 +385,40 @@
             const type = elementTypes[Math.floor(Math.random() * elementTypes.length)];
             return {
                 x: canvas.width,
-                y: ground.y - type.height,
+                y: ground.y - type.height, // Use current ground.y
                 width: type.width,
                 height: type.height,
                 type: type.name,
                 speed: gameSpeed * 0.5,
                 draw: function() {
                     if (this.type === 'mountain') {
-                        // Draw mountain
                         ctx.fillStyle = '#A9A9A9';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y + this.height);
-                        ctx.lineTo(this.x + this.width / 2, this.y);
-                        ctx.lineTo(this.x + this.width, this.y + this.height);
-                        ctx.fill();
-                        
-                        // Snow cap
+                        ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.fill();
                         ctx.fillStyle = 'white';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x + this.width / 2 - 10, this.y + 20);
-                        ctx.lineTo(this.x + this.width / 2, this.y);
-                        ctx.lineTo(this.x + this.width / 2 + 10, this.y + 20);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(this.x + this.width / 2 - 10, this.y + 20); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width / 2 + 10, this.y + 20); ctx.fill();
                     } else if (this.type === 'tree') {
-                        // Draw tree
-                        // Trunk
-                        ctx.fillStyle = '#8B4513';
-                        ctx.fillRect(this.x + this.width / 2 - 5, this.y + this.height / 2, 10, this.height / 2);
-                        
-                        // Leaves
+                        ctx.fillStyle = '#8B4513'; ctx.fillRect(this.x + this.width / 2 - 5, this.y + this.height / 2, 10, this.height / 2);
                         ctx.fillStyle = '#006400';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y + this.height / 2);
-                        ctx.lineTo(this.x + this.width / 2, this.y);
-                        ctx.lineTo(this.x + this.width, this.y + this.height / 2);
-                        ctx.fill();
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y + this.height / 3);
-                        ctx.lineTo(this.x + this.width / 2, this.y - this.height / 4);
-                        ctx.lineTo(this.x + this.width, this.y + this.height / 3);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height / 2); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width, this.y + this.height / 2); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height / 3); ctx.lineTo(this.x + this.width / 2, this.y - this.height / 4); ctx.lineTo(this.x + this.width, this.y + this.height / 3); ctx.fill();
                     } else if (this.type === 'volcano') {
-                        // Draw volcano
                         ctx.fillStyle = '#8B4513';
-                        ctx.beginPath();
-                        ctx.moveTo(this.x, this.y + this.height);
-                        ctx.lineTo(this.x + this.width / 2, this.y);
-                        ctx.lineTo(this.x + this.width, this.y + this.height);
-                        ctx.fill();
-                        
-                        // Crater
+                        ctx.beginPath(); ctx.moveTo(this.x, this.y + this.height); ctx.lineTo(this.x + this.width / 2, this.y); ctx.lineTo(this.x + this.width, this.y + this.height); ctx.fill();
                         ctx.fillStyle = '#FF4500';
-                        ctx.beginPath();
-                        ctx.arc(this.x + this.width / 2, this.y + 15, 10, 0, Math.PI * 2);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.arc(this.x + this.width / 2, this.y + 15, 10, 0, Math.PI * 2); ctx.fill();
                     }
                 }
             };
         }
         
-        // Update ground position when canvas size changes
+        // Update ground/player y when canvas resizes
         function updateGameDimensions() {
             ground.y = canvas.height - 30;
-            player.y = ground.y - player.height;
+            // Adjust player Y only if not currently jumping mid-air
+            if (!player.jumping) {
+                player.y = ground.y - player.height;
+            }
+            // Obstacles/background elements created subsequently will use the new ground.y
         }
         
         // Game loop
@@ -463,141 +428,157 @@
         let backgroundTimer = 0;
         
         function gameLoop(timestamp) {
-            // Calculate delta time
-            const deltaTime = timestamp - lastTime;
-            lastTime = timestamp;
-            
-            // Check if canvas dimensions have changed
-            if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
-                resizeCanvas();
-                updateGameDimensions();
-            }
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw sky gradient
-            const gradient = ctx.createLinearGradient(0, 0, 0, ground.y);
-            gradient.addColorStop(0, '#87CEEB');
-            gradient.addColorStop(1, '#E0F7FF');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, ground.y);
-            
-            // Update and draw background elements
-            backgroundTimer += deltaTime;
-            if (backgroundTimer > 2000) {
-                backgroundElements.push(createBackgroundElement());
-                backgroundTimer = 0;
-            }
-            
-            for (let i = backgroundElements.length - 1; i >= 0; i--) {
-                const element = backgroundElements[i];
-                element.x -= element.speed;
-                element.draw();
-                
-                if (element.x + element.width < 0) {
-                    backgroundElements.splice(i, 1);
-                }
-            }
-            
-            // Update and draw clouds
-            cloudTimer += deltaTime;
-            if (cloudTimer > 3000) {
-                clouds.push(createCloud());
-                cloudTimer = 0;
-            }
-            
-            for (let i = clouds.length - 1; i >= 0; i--) {
-                const cloud = clouds[i];
-                cloud.x -= cloud.speed;
-                cloud.draw();
-                
-                if (cloud.x + cloud.width < 0) {
-                    clouds.splice(i, 1);
-                }
-            }
-            
-            // Draw ground
-            ground.draw();
-            
-            // Update and draw player
-            player.update();
-            player.draw();
-            
-            // Update and draw obstacles with variable gaps
-            obstacleTimer += deltaTime;
-            if (obstacleTimer > obstacleInterval) {
-                obstacles.push(createObstacle());
-                obstacleTimer = 0;
-                // Set a new random interval for the next obstacle
-                obstacleInterval = getRandomObstacleInterval();
-            }
-            
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obstacle = obstacles[i];
-                obstacle.x -= gameSpeed;
-                obstacle.draw();
-                
-                // Check collision
-                if (player.checkCollision(obstacle)) {
-                    gameOver();
-                }
-                
-                // Score points when passing obstacle
-                if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
-                    score++;
-                    scoreElement.textContent = `Score: ${score}`;
-                    obstacle.passed = true;
-                    
-                    // Increase game speed
-                    if (score % 5 === 0) {
-                        gameSpeed += 0.5;
-                    }
-                }
-                
-                if (obstacle.x + obstacle.width < 0) {
-                    obstacles.splice(i, 1);
-                }
-            }
-            
-            // Continue game loop
-            if (playing) {
-                requestAnimationFrame(gameLoop);
-            }
+             // Calculate delta time
+             const deltaTime = (timestamp - lastTime) || 16.67; // Use fallback delta for first frame
+             lastTime = timestamp;
+
+             // Check if canvas dimensions have changed (robust check)
+             if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
+                 resizeCanvas();
+                 updateGameDimensions();
+             }
+
+             // Clear canvas
+             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+             // Draw sky gradient
+             const gradient = ctx.createLinearGradient(0, 0, 0, ground.y);
+             gradient.addColorStop(0, '#87CEEB');
+             gradient.addColorStop(1, '#E0F7FF');
+             ctx.fillStyle = gradient;
+             ctx.fillRect(0, 0, canvas.width, ground.y);
+
+             // Update and draw background elements
+             backgroundTimer += deltaTime;
+             if (backgroundTimer > 2000 && backgroundElements.length < 5) { // Limit number of elements
+                 backgroundElements.push(createBackgroundElement());
+                 backgroundTimer = 0;
+             }
+             for (let i = backgroundElements.length - 1; i >= 0; i--) {
+                 const element = backgroundElements[i];
+                 element.x -= element.speed; element.draw();
+                 if (element.x + element.width < 0) { backgroundElements.splice(i, 1); }
+             }
+
+             // Update and draw clouds
+             cloudTimer += deltaTime;
+             if (cloudTimer > 3000 && clouds.length < 8) { // Limit number of clouds
+                 clouds.push(createCloud());
+                 cloudTimer = 0;
+             }
+             for (let i = clouds.length - 1; i >= 0; i--) {
+                 const cloud = clouds[i];
+                 cloud.x -= cloud.speed; cloud.draw();
+                 if (cloud.x + cloud.width < 0) { clouds.splice(i, 1); }
+             }
+
+             // Draw ground
+             ground.draw();
+
+             // Update and draw player
+             player.update();
+             player.draw();
+
+             // Update and draw obstacles
+             obstacleTimer += deltaTime;
+             if (obstacleTimer > obstacleInterval) {
+                 obstacles.push(createObstacle());
+                 obstacleTimer = 0;
+                 obstacleInterval = getRandomObstacleInterval();
+             }
+             for (let i = obstacles.length - 1; i >= 0; i--) {
+                 const obstacle = obstacles[i];
+                 obstacle.x -= gameSpeed;
+                 obstacle.draw();
+
+                 // Check collision
+                 if (player.checkCollision(obstacle)) {
+                     gameOver();
+                     return; // Stop loop immediately on game over
+                 }
+
+                 // Score points
+                 if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
+                     score++; scoreElement.textContent = `Score: ${score}`; obstacle.passed = true;
+                     if (score > 0 && score % 5 === 0) { gameSpeed += 0.5; }
+                 }
+
+                 if (obstacle.x + obstacle.width < 0) { obstacles.splice(i, 1); }
+             }
+
+             // Continue game loop
+             if (playing) {
+                 requestAnimationFrame(gameLoop);
+             }
         }
         
-        // Game over function
+        // --- NEW/MODIFIED: Function to disable AND HIDE the restart button ---
+        function disableRestartButton() {
+            if (restartButton) {
+                restartButton.disabled = true; // Disables functionality + triggers CSS rule
+                // Optional: Change text if needed, although it will be hidden
+                // restartButton.textContent = 'Chapter Ready';
+                console.log('Game restart button disabled and hidden.');
+            }
+        }
+
+        // --- MODIFIED: gameOver function ---
         function gameOver() {
             playing = false;
             finalScoreElement.textContent = score;
             gameOverElement.style.display = 'block';
+            // No need to explicitly hide/show button here,
+            // its state (disabled/hidden or enabled/visible)
+            // is determined by whether disableRestartButton() has been called.
+
+            // --- Send message to parent window ---
+            try {
+                window.parent.postMessage({ type: 'gameOver', score: score }, '*');
+                console.log("Sent gameOver message to parent.");
+            } catch (e) {
+                console.error("Error sending gameOver message:", e);
+            }
+            // --- End Send message ---
         }
         
-        // Restart game
+        // --- MODIFIED: Restart game function ---
         function restartGame() {
+            // --- Re-enable and SHOW button ---
+            if (restartButton) {
+                restartButton.disabled = false; // Re-enables + makes visible via CSS
+                restartButton.textContent = 'Play Again';
+                // Explicitly ensure display is block in case CSS wasn't enough
+                restartButton.style.display = 'block';
+            }
+            // --- End Re-enable ---
+
             score = 0;
             gameSpeed = 6;
             playing = true;
             obstacles.length = 0;
             clouds.length = 0;
             backgroundElements.length = 0;
+            // Ensure dimensions are correct before resetting player
+            // resizeCanvas(); // Already happens in loop check
             updateGameDimensions();
+            player.y = ground.y - player.height; // Reset player position exactly
             player.velocity = 0;
             player.jumping = false;
             scoreElement.textContent = `Score: ${score}`;
             gameOverElement.style.display = 'none';
-            // Reset obstacle interval
             obstacleInterval = getRandomObstacleInterval();
             
+            // Clear any pending frames and start fresh
+            cancelAnimationFrame(gameLoop); // Ensure no old loops are running
             requestAnimationFrame(gameLoop);
         }
         
-        // Event listeners
+        // --- Event listeners ---
         document.addEventListener('keydown', function(event) {
             if (event.code === 'Space') {
                 if (playing) {
                     player.jump();
-                } else {
+                } else if (!restartButton.disabled) { // Only restart if button isn't disabled
                     restartGame();
                 }
                 event.preventDefault();
@@ -605,20 +586,58 @@
         });
         
         document.addEventListener('touchstart', function(event) {
-            if (playing) {
-                player.jump();
-            } else {
-                restartGame();
+             // Prevent touch actions if the button is disabled and was the target
+             const isButtonTarget = event.target.closest('#restart');
+             if (isButtonTarget && restartButton.disabled) {
+                 event.preventDefault(); // Prevent potential click trigger on disabled button
+                 return;
+             }
+
+             if (playing) {
+                 player.jump();
+                 event.preventDefault();
+             } else if (!restartButton.disabled) { // Only restart if button isn't disabled
+                 restartGame();
+                 event.preventDefault();
+             }
+             // No preventDefault if game over and button is disabled
+        }, { passive: false }); // Need passive: false to call preventDefault
+
+        // Button click listener inherently respects disabled state
+        restartButton.addEventListener('click', restartGame);
+
+        // --- NEW: Listen for messages from parent ---
+        window.addEventListener('message', (event) => {
+            // Optional: Add origin check for security
+            // const expectedParentOrigin = "http://your-reader-domain.com"; // Replace
+            // if (event.origin !== expectedParentOrigin) {
+            //     console.warn(`Game received message from unexpected origin: ${event.origin}`);
+            //     return;
+            // }
+
+            if (event.data && event.data.type === 'disableRestart') {
+                console.log("Game received disableRestart message.");
+                disableRestartButton(); // Call the function that disables and hides
             }
-            event.preventDefault();
         });
         
-        restartButton.addEventListener('click', restartGame);
-        
-        // Start game
+        // --- MODIFIED: Start game / Send loaded message ---
         window.onload = function() {
-            restartGame();
+            resizeCanvas(); // Ensure canvas is sized initially
+            updateGameDimensions(); // Set initial ground/player y based on size
+            restartGame(); // Start the game loop
+
+            // --- Send message indicating the game *itself* is ready ---
+            setTimeout(() => {
+                try {
+                    window.parent.postMessage({ type: 'gameLoaded' }, '*');
+                    console.log("Sent gameLoaded message to parent.");
+                } catch (e) {
+                    console.error("Error sending gameLoaded message:", e);
+                }
+            }, 150); // Small delay
         };
+        
     </script>
 </body>
 </html>
