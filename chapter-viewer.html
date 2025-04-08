@@ -739,12 +739,12 @@ body.loading-game-active #definition-popup {
     let keywordDefinitions = {};
     let pageKeywords = {};
     let currentViewports = {};
-    let globalFirstInstanceLocation = {}; // Stores { keywordLower: { pageNum: number, itemIndex: number, matchIndex: number } }
+    let globalFirstInstanceLocation = {};
     // --- NEW State Variables ---
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
 
-    // --- PDF.js Setup (Using v2.5.207) ---
+    // --- PDF.js Setup (Unchanged) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf.worker.min.js';
@@ -776,7 +776,7 @@ body.loading-game-active #definition-popup {
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- START: *** MODIFIED createKeywordOverlays FUNCTION *** (Unchanged from previous step) ---
+    // --- createKeywordOverlays FUNCTION (Unchanged from previous step) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -798,39 +798,34 @@ body.loading-game-active #definition-popup {
 
         try {
             const page = await book.pdfDocument.getPage(pageNum);
-            // Use { normalizeWhitespace: true } for better matching consistency
             const textContent = await page.getTextContent({ normalizeWhitespace: true });
-            let foundKeywordOnPage = false; // Flag to check if any highlights were added
+            let foundKeywordOnPage = false;
 
-            // Use a standard for loop to get itemIndex easily
             const items = textContent.items;
             for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
                 const item = items[itemIndex];
                 const itemText = item.str;
                 const itemTextLength = itemText.length;
-                // Skip empty items, items with only whitespace, or zero-width items which cause issues
                 if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
 
                 keywordsForPage.forEach((originalKeyword, keywordIndex) => {
-                    const keywordLower = lowerCaseKeywords[keywordIndex]; // Use pre-lowercased version from pageKeywords
+                    const keywordLower = lowerCaseKeywords[keywordIndex];
                     const definition = lowerCaseDefs[keywordLower];
-                    if (!definition) return; // Skip if no definition exists for this keyword
+                    if (!definition) return;
 
-                    // Escape keyword for regex. Use originalKeyword to preserve case if needed, though matching is case-insensitive later.
                     const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                     const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                     let match;
 
                     while ((match = regex.exec(itemText)) !== null) {
-                        const matchedString = match[1]; // The actual text that matched
-                        const matchIndex = match.index; // Start index within itemText
-                        const matchLength = matchedString.length; // Length of the matched keyword
+                        const matchedString = match[1];
+                        const matchIndex = match.index;
+                        const matchLength = matchedString.length;
 
                         if (matchLength === 0) {
                             regex.lastIndex++; continue;
                         }
 
-                        // --- Calculate Highlight Box ---
                         const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
                         const itemWidth = item.width;
                         const itemHeight = item.height;
@@ -845,7 +840,6 @@ body.loading-game-active #definition-popup {
                         const finalWidth = Math.max(1, highlightWidth);
                         const finalHeight = itemHeight;
 
-                        // --- Create Highlight Element ---
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
                         highlightDiv.style.left = `${finalLeft}px`;
@@ -856,7 +850,6 @@ body.loading-game-active #definition-popup {
                         highlightDiv.dataset.definition = definition;
                         highlightDiv.title = `Definition: ${originalKeyword}`;
 
-                        // --- Check if this is the *Globally* First Instance ---
                         const firstLoc = globalFirstInstanceLocation[keywordLower];
                         let isTheFirstInstance = false;
                         if (firstLoc &&
@@ -881,14 +874,14 @@ body.loading-game-active #definition-popup {
                         overlayContainer.appendChild(highlightDiv);
                         foundKeywordOnPage = true;
                     }
-                }); // End keywordsForPage.forEach
-            } // End for loop over items
+                });
+            }
         } catch (error) {
             console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = ''; // Clear on error
+            overlayContainer.innerHTML = '';
         }
     }
-    // --- END: *** MODIFIED createKeywordOverlays FUNCTION *** ---
+    // --- END: createKeywordOverlays FUNCTION ---
 
 
     // --- Simplified Base Text Layer Rendering (Unchanged) ---
@@ -987,7 +980,6 @@ body.loading-game-active #definition-popup {
                 hidePageLoading(canvasId);
             }
 
-            // Render Layers AFTER canvas is ready
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
             await createKeywordOverlays(pageNum, pageElement, viewport);
@@ -1004,7 +996,7 @@ body.loading-game-active #definition-popup {
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
-        const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0; // Determine right page only if double view
+        const rightPageNum = book.isDoublePageView ? book.currentPage + 1 : 0;
         updateStatus(`Updating display for page(s): ${leftPageNum}${rightPageNum > 0 ? ' & ' + rightPageNum : ''}`);
 
         const leftPageDiv = document.querySelector('.book-page.left');
@@ -1020,7 +1012,6 @@ body.loading-game-active #definition-popup {
 
         let renderPromises = [];
 
-        // Left Page Handling
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
             renderPromises.push(renderPage(leftPageNum, 'left-page-canvas'));
@@ -1032,7 +1023,6 @@ body.loading-game-active #definition-popup {
             leftPageDiv.classList.add('placeholder-page');
         }
 
-        // Right Page Handling
         rightPageDiv.style.display = 'none';
         rightPageDiv.classList.remove('placeholder-page');
         const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
@@ -1082,13 +1072,10 @@ body.loading-game-active #definition-popup {
 
     // --- View Modes (Unchanged) ---
     function applyCurrentViewModeStyles() {
-        // Don't apply if game is active
         if (document.body.classList.contains('loading-game-active')) return;
-
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
         const spread = document.querySelector('.book-spread');
         if (!spread) return;
-
         if (isContentRotated) {
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
@@ -1097,7 +1084,6 @@ body.loading-game-active #definition-popup {
             const scaleX = viewportWidth / bookHeight;
             const scaleY = viewportHeight / bookWidth;
             const scale = Math.min(scaleX, scaleY) * 0.98;
-
             spread.style.transformOrigin = 'center center';
             spread.style.transform = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
         } else {
@@ -1110,7 +1096,6 @@ body.loading-game-active #definition-popup {
              const scaleX = viewportWidth / totalWidth;
              const scaleY = viewportHeight / bookHeight;
              const scale = Math.min(scaleX, scaleY) * 0.98;
-
              spread.style.transformOrigin = 'center center';
              spread.style.transform = `translate(-50%, -50%) scale(${scale})`;
         }
@@ -1152,15 +1137,14 @@ body.loading-game-active #definition-popup {
         updateSliderPosition();
     }
 
-    // --- UI Toggles (Minor Modification) ---
+    // --- UI Toggles (Minor Modification - Unchanged from prev) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
-    function hideTableOfContents(){toggleElement('toc-panel',false)} // Keep hide function for close button
-    function showLoading(msg='Processing...'){ /* No longer used for initial load */ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
+    function hideTableOfContents(){toggleElement('toc-panel',false)}
+    function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Modification to check game state) ---
+    // --- Slider Logic (Modification to check game state - Unchanged from prev) ---
     function showPageSlider(){
-        // Don't show slider if game is active
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
     }
@@ -1180,42 +1164,36 @@ body.loading-game-active #definition-popup {
         try {
             const response = await fetch(overlayUrl); if (!response.ok) { console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`); keywordDefinitions = {}; pageKeywords = {}; return false; }
             const data = await response.json(); if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') { console.warn("Invalid overlay structure in JSON file."); keywordDefinitions = {}; pageKeywords = {}; return false; }
-            const processedKeywords = {}; for (const [key, value] of Object.entries(data.keywords)) { if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; /* Store definitions with lowercase keys */ } else { console.warn(`Invalid keyword entry skipped: Key='${key}'`) } } keywordDefinitions = processedKeywords;
-            // pageKeywords stores the original casing from the JSON, as provided
+            const processedKeywords = {}; for (const [key, value] of Object.entries(data.keywords)) { if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; } else { console.warn(`Invalid keyword entry skipped: Key='${key}'`) } } keywordDefinitions = processedKeywords;
             const processedPages = {}; for (const [pageNum, pageWords] of Object.entries(data.pages)) { if (pageNum && !isNaN(parseInt(pageNum)) && Array.isArray(pageWords) && pageWords.every(w => typeof w === 'string')) { processedPages[pageNum.toString()] = pageWords; } else { console.warn(`Invalid page entry skipped: Page='${pageNum}'`); } } pageKeywords = processedPages;
             updateStatus(`Overlay loaded successfully: ${Object.keys(keywordDefinitions).length} keywords, ${Object.keys(pageKeywords).length} pages defined.`); return true;
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- START: *** NEW Pre-scan Function for First Keyword Instances *** (Unchanged from previous step) ---
+    // --- Pre-scan Function (Unchanged from previous step) ---
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
-        globalFirstInstanceLocation = {}; // Reset
-        const keywordsToFind = new Set(Object.keys(keywordDefinitions)); // Use lowercase keys
+        globalFirstInstanceLocation = {};
+        const keywordsToFind = new Set(Object.keys(keywordDefinitions));
         if (keywordsToFind.size === 0) {
             updateStatus("Pre-scan skipped: No keywords defined.");
             return;
         }
-
         const totalPages = book.pdfDocument.numPages;
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
             if (keywordsToFind.size === 0) {
                 updateStatus("Pre-scan finished early: All first instances found.");
-                break; // Stop scanning if all keywords found
+                break;
             }
-
             try {
                 const page = await book.pdfDocument.getPage(pageNum);
                 const textContent = await page.getTextContent({ normalizeWhitespace: true });
                 const items = textContent.items;
-
                 for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
                     const item = items[itemIndex];
                     const itemText = item.str;
                     if (!itemText || itemText.trim().length === 0) continue;
-
                     const keywordsToCheckInItem = Array.from(keywordsToFind);
-
                     for (const keywordLower of keywordsToCheckInItem) {
                         let originalKeywordForRegex = keywordLower;
                         const pageKwList = pageKeywords[pageNum.toString()] || [];
@@ -1223,11 +1201,9 @@ body.loading-game-active #definition-popup {
                         if (foundOriginal) {
                             originalKeywordForRegex = foundOriginal;
                         }
-
                         const escapedKeyword = originalKeywordForRegex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
                         const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
                         const match = regex.exec(itemText);
-
                         if (match !== null) {
                             const matchIndex = match.index;
                             globalFirstInstanceLocation[keywordLower] = { pageNum, itemIndex, matchIndex };
@@ -1241,16 +1217,14 @@ body.loading-game-active #definition-popup {
                 console.warn(`Error processing page ${pageNum} during keyword pre-scan:`, error);
             }
         }
-
         updateStatus(`Pre-scan complete. Found first instances for ${Object.keys(globalFirstInstanceLocation).length} keywords.`);
     }
-    // --- END: *** NEW Pre-scan Function *** ---
+    // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (Modified to handle game state) ---
+    // --- PDF Loading (MODIFIED: Sends disableRestart message) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
-        // DO NOT show main loading overlay here - game is the indicator
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
         globalFirstInstanceLocation = {};
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
@@ -1258,10 +1232,9 @@ body.loading-game-active #definition-popup {
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
             updateStatus("Starting background PDF document loading...");
-            // Log internal status steps instead of showing overlay
             console.log("Internal Status: Loading PDF document...");
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            const overlayPromise = loadOverlayData(pdfUrl); // Start concurrently
+            const overlayPromise = loadOverlayData(pdfUrl);
 
             book.pdfDocument = await loadingTask.promise;
             book.totalPages = book.pdfDocument.numPages;
@@ -1269,7 +1242,7 @@ body.loading-game-active #definition-popup {
             user.readingProgress.furthestPage = 1;
             updateStatus(`PDF loaded: ${book.title}, Pages: ${book.totalPages}`);
             document.title = `${book.title} - Heritage History™ Reader`;
-            updateSliderTotalPages(); // Update slider max value
+            updateSliderTotalPages();
 
             console.log("Internal Status: Processing metadata...");
             updateStatus("Fetching outline...");
@@ -1283,7 +1256,6 @@ body.loading-game-active #definition-popup {
                 await findFirstKeywordInstances();
             }
 
-            // --- Default View Logic (Unchanged) ---
             if (window.innerWidth < 1000) {
                 book.isDoublePageView = false;
                 document.body.classList.remove('content-rotated-mode');
@@ -1296,34 +1268,40 @@ body.loading-game-active #definition-popup {
 
             updateSliderTotalPages();
             updateSliderPosition();
-            // applyCurrentViewModeStyles(); // Don't apply styles yet, reader is hidden
 
             await new Promise(resolve => requestAnimationFrame(resolve));
-
-            // Render first display *before* showing button/making ready
-            await updateDisplay();
+            await updateDisplay(); // Render first display
 
             // --- *** READER IS READY *** ---
             isReaderReady = true;
             updateStatus("Reader is ready!");
-            // Show the "Go to Chapter" button
-            goToChapterBtn.classList.add('visible');
+            goToChapterBtn.classList.add('visible'); // Show the button
+
+            // --- *** FIX: Immediately disable restart in game *** ---
+            if (gameIframe && gameIframe.contentWindow) {
+                try {
+                    // Use specific origin in production if possible
+                    gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
+                    updateStatus("Sent disableRestart message to game iframe because reader is ready.");
+                } catch (e) {
+                    console.error("Error posting disableRestart message to iframe:", e);
+                }
+            } else {
+                 console.warn("Cannot send disableRestart message: iframe or contentWindow not accessible when reader became ready.");
+            }
+            // --- *** END FIX *** ---
 
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error);
-            // Display error state *within* the reader area, but don't transition yet
-            // User might still be playing the game. Button won't appear.
-            isReaderReady = false; // Ensure it's false on error
+            isReaderReady = false;
             book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {};
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
                 spreadContainer.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
             }
-            // Consider showing an error message near the game? Or just log it.
             updateStatus("loadPdf failed. Reader will not be available.");
         } finally {
-             // No main loading overlay to hide
              updateStatus("loadPdf finished (background process).");
         }
     }
@@ -1386,68 +1364,60 @@ body.loading-game-active #definition-popup {
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- START: NEW Game Transition Logic ---
+    // --- Game Transition Logic (Unchanged from previous step) ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
 
-        // 1. Hide game container and button
         document.body.classList.remove('loading-game-active');
         goToChapterBtn.classList.remove('visible');
 
-        // 2. Focus might be trapped in iframe, move it out
-         window.focus();
+         window.focus(); // Move focus back to main window
 
-        // 3. Ensure reader styles (like scaling) are applied now that it's visible
-        // Use setTimeout to allow CSS transitions for hiding game to start
         setTimeout(() => {
             applyCurrentViewModeStyles();
-            // Optionally force a redraw/reflow if scaling issues persist
-             window.dispatchEvent(new Event('resize')); // Trigger resize logic which includes updateDisplay
+            // Trigger resize logic which includes updateDisplay
+             window.dispatchEvent(new Event('resize'));
              updateStatus("Reader should be visible and scaled.");
-        }, 50); // Small delay (adjust if needed)
-
+        }, 50);
     }
 
+    // --- Handle Game Over Message (Safeguard disableRestart call) ---
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
         if (isReaderReady) {
             updateStatus("Reader is ready, handling automatic transition after game over.");
-            // 1. Disable restart button in iframe
+            // Safeguard: Ensure restart is disabled (might be redundant but safe)
             if (gameIframe && gameIframe.contentWindow) {
                 try {
-                    // Use specific origin in production if possible
                     gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
-                    updateStatus("Sent disableRestart message to game iframe.");
+                    // updateStatus("Sent safeguard disableRestart message to game iframe.");
                 } catch (e) {
-                    console.error("Error posting disableRestart message to iframe:", e);
+                    console.error("Error posting safeguard disableRestart message:", e);
                 }
-            } else {
-                console.warn("Cannot send disableRestart message: iframe or contentWindow not accessible.");
             }
-
-            // 2. Start timer for transition
-            clearTimeout(gameOverTimeoutId); // Clear previous timer if any
+            // Start timer for transition
+            clearTimeout(gameOverTimeoutId);
             gameOverTimeoutId = setTimeout(() => {
                 updateStatus("Game over timeout finished, transitioning now.");
                 transitionToChapter();
             }, 3000); // 3 seconds delay
         } else {
             updateStatus("Game over occurred, but reader is not ready yet. No automatic transition.");
-            // User can just click "Play Again" in the game as normal.
+            // Button in game should still be enabled at this point.
         }
     }
-    // --- END: NEW Game Transition Logic ---
+    // --- END: Game Transition Logic ---
 
 
-    // --- Event Setup (Modified for game interaction) ---
+    // --- Event Setup (MODIFIED for focus and message handling) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // Toolbar Clicks (No change needed here, already checks game state implicitly via manageToolbar)
+        // Toolbar Clicks (No change)
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
              if (!btn) return;
@@ -1462,21 +1432,21 @@ body.loading-game-active #definition-popup {
              toolbarHover = false;
              manageToolbar(false);
         });
-        // TOC Close
+        // TOC Close (No change)
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        // Popup Close
+        // Popup Close (No change)
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
-        // Page Edge Clicks (Only work when reader is visible)
+        // Page Edge Clicks (No change)
         bookSpread?.addEventListener('click', e => { if (document.body.classList.contains('loading-game-active')) return; if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
-        // Keyboard Navigation (Only work when reader is visible and popup isn't)
+        // Keyboard Navigation (No change)
         document.addEventListener('keydown', e => { if (document.body.classList.contains('loading-game-active')) return; if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
-        // Resize Handling
-        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); /* Re-apply scaling/rotation if reader visible */ if (!document.body.classList.contains('loading-game-active')) { updateDisplay(); /* Re-render pages if reader visible */ } manageToolbar(); }, 250); });
-        // Touch Swipes (Only work when reader is visible)
+        // Resize Handling (No change)
+        window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); if (!document.body.classList.contains('loading-game-active')) { updateDisplay(); } manageToolbar(); }, 250); });
+        // Touch Swipes (No change)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
-        // Slider Trigger Zone (Only work when reader is visible)
+        // Slider Trigger Zone (No change)
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(document.body.classList.contains('loading-game-active')) return; if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{if(document.body.classList.contains('loading-game-active')) return; const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
-        // Global Click Listener for Popup Dismissal
+        // Global Click Listener for Popup Dismissal (No change)
         document.addEventListener('click', e => {
              if (definitionPopup.classList.contains('visible')
                  && !definitionPopup.contains(e.target)
@@ -1490,67 +1460,63 @@ body.loading-game-active #definition-popup {
 
         // Listen for messages from the game iframe
         window.addEventListener('message', (event) => {
-            // Basic security check: ensure message is from the iframe
-            if (event.source !== gameIframe.contentWindow) {
-                // console.warn("Received message from unexpected source:", event.origin);
-                return;
-            }
-             // More specific origin check in production:
+            if (event.source !== gameIframe.contentWindow) { return; }
+             // Optional: Origin check for production
              // const expectedOrigin = new URL(gameIframe.src).origin;
-             // if (event.origin !== expectedOrigin) {
-             //    console.warn(`Message rejected from origin ${event.origin}. Expected ${expectedOrigin}.`);
-             //    return;
-             // }
+             // if (event.origin !== expectedOrigin) { return; }
 
             if (event.data && event.data.type === 'gameOver') {
                 handleGameOverFromGame(event.data.score);
             }
-            // Optional: Handle message indicating iframe content has loaded
             if (event.data && event.data.type === 'gameLoaded') {
                  if(iframeLoadingText) iframeLoadingText.style.display = 'none';
-                 updateStatus("Game iframe reported content loaded.");
+                 updateStatus("Game iframe reported *itself* loaded.");
+                 // --- *** FIX: Attempt to focus iframe *** ---
+                 try {
+                     if (gameIframe && gameIframe.contentWindow) {
+                         gameIframe.contentWindow.focus();
+                         updateStatus("Attempted to focus game iframe.");
+                     }
+                 } catch (focusError) {
+                     // Focusing cross-origin iframes can sometimes fail silently or throw errors
+                     // depending on browser policies and iframe sandbox attributes.
+                     console.warn("Could not focus game iframe:", focusError.message);
+                 }
+                 // --- *** END FIX *** ---
              }
         });
 
-        // Hide iframe loading text when the iframe actually loads its document
+        // Hide iframe loading text when the iframe *document* loads
         gameIframe.addEventListener('load', () => {
             if(iframeLoadingText) iframeLoadingText.style.display = 'none';
-            updateStatus("Game iframe document loaded (may not be fully initialized yet).");
-             // You might want the *game* to send a 'gameLoaded' message when *its* JS is ready.
+            updateStatus("Game iframe document structure loaded (waiting for gameLoaded message).");
         });
-
 
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (Modified) ---
+    // --- Initialization (Unchanged from previous step) ---
     async function init() {
         updateStatus("Initializing application...");
-        // Ensure game is visible initially (CSS class handles this)
         document.body.classList.add('loading-game-active');
 
         try {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
 
-            // Setup base events and UI that *don't* depend on PDF loaded state yet
             setupEvents();
-            setupToolbarHover(); // Toolbar itself is hidden, but setup hover logic
-            initPageSlider();    // Slider is hidden, but setup logic
+            setupToolbarHover();
+            initPageSlider();
 
-            // Start loading the PDF in the background
             const urlParams = new URLSearchParams(window.location.search);
             const pdfUrlParam = urlParams.get('pdf');
 
             if (pdfUrlParam) {
                 updateStatus(`PDF URL parameter found: ${pdfUrlParam}. Starting background load...`);
-                // Don't await here - let it run in the background
-                loadPdf(pdfUrlParam);
+                loadPdf(pdfUrlParam); // Run in background
             } else {
                 updateStatus("No PDF specified in URL parameter (?pdf=...). Reader content will not load.");
-                // Show message within the reader area (which is hidden)
                 const sc = document.querySelector('.main-container .book-spread');
                 if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
-                 // No Go To Chapter button will appear in this case.
             }
 
             window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); clearTimeout(gameOverTimeoutId); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
@@ -1558,12 +1524,9 @@ body.loading-game-active #definition-popup {
 
         } catch (initError) {
             console.error("Initialization failed:", initError);
-            // Show error, maybe hide game? Or let game continue but show error fixed over it?
-            // For now, just log it and maybe show error in body.
             document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace; position: fixed; top: 10px; left: 10px; z-index: 11000;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`;
-            // Ensure reader isn't shown
-             document.body.classList.add('loading-game-active');
-             goToChapterBtn.classList.remove('visible');
+            document.body.classList.add('loading-game-active');
+            goToChapterBtn.classList.remove('visible');
         }
     }
 
