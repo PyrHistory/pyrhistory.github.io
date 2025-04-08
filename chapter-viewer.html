@@ -502,7 +502,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 /* --- END: REALISTIC VERTICAL CREASE EFFECT --- */
 
 
-/* --- TOC, Loading, Text/Annotation Layers, Keywords (Unchanged Structure, CSS Rule Modified) --- */
+/* --- TOC, Loading, Text/Annotation Layers, Keywords --- */
 /* Note: TOC Panel styling remains, but the button won't open it */
 .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
 /* .toc-panel.visible,.loading-overlay.visible{display:flex!important} */ /* Original loading overlay no longer used this way */
@@ -530,7 +530,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 /* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
-/* Hover effect still applies to ALL keyword highlights */
+/* Hover effect still applies to ALL keyword highlights (when not in rotated mode) */
 .keyword-highlight:hover { background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
 
 /* --- START: MODIFIED UNDERLINE RULE --- */
@@ -546,8 +546,22 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     pointer-events: none; /* Prevent interaction with the line itself */
     border-radius: 1px; /* Slightly rounded ends */
     opacity: 0.54; /* UPDATED: Was 0.9, now 60% of that (0.9 * 0.6) */
+    transition: opacity 0.2s ease-out; /* Allow transition if needed */
 }
 /* --- END: MODIFIED UNDERLINE RULE --- */
+
+/* --- START: Disable Keyword Effects in Rotated Mode --- */
+body.content-rotated-mode .keyword-highlight {
+    pointer-events: none !important; /* Disable click and hover interactions */
+    cursor: default; /* Remove pointer cursor */
+    /* Hover effects are implicitly disabled by pointer-events: none */
+}
+
+body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
+    display: none; /* Hide the underline */
+    opacity: 0; /* Optionally transition out */
+}
+/* --- END: Disable Keyword Effects in Rotated Mode --- */
 
 #definition-popup { position: fixed; background: #ffffff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); padding: 14px 18px; max-width: 320px; min-width: 180px; font-family: var(--font-sans); color: #2d3748; z-index: 10002; transform-origin: top center; transform: translateY(6px) scale(0.98); opacity: 0; visibility: hidden; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s; pointer-events: none; }
 #definition-popup.visible { transform: translateY(0) scale(1); opacity: 1; visibility: visible; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s; pointer-events: auto; }
@@ -823,7 +837,7 @@ body.loading-game-active #definition-popup {
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- createKeywordOverlays FUNCTION (Unchanged) ---
+    // --- createKeywordOverlays FUNCTION (Unchanged - Click logic remains, but CSS will disable it in rotated mode) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -912,7 +926,9 @@ body.loading-game-active #definition-popup {
                             highlightDiv.classList.add('first-keyword-instance');
                         }
 
+                        // Click listener is still added, but CSS will prevent interaction in rotated mode
                         highlightDiv.addEventListener('click', (e) => {
+                            // Note: This event might not fire in rotated mode due to CSS pointer-events: none
                             e.stopPropagation();
                             const currentHighlight = e.currentTarget;
                             const word = currentHighlight.dataset.keyword;
@@ -1799,6 +1815,11 @@ body.loading-game-active #definition-popup {
     // --- Popup Handling Functions (Unchanged) ---
     function showDefinitionPopup(word, definition, rect) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
+        // Added check: Don't show if in rotated mode
+        if (document.body.classList.contains('content-rotated-mode')) {
+             updateStatus("Popup suppressed in rotated mode.");
+             return;
+        }
         popupWord.textContent = word || "Keyword";
         popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
         popupDefinition.scrollTop = 0;
@@ -1970,7 +1991,9 @@ body.loading-game-active #definition-popup {
         document.addEventListener('click', e => {
              if (definitionPopup.classList.contains('visible')
                  && !definitionPopup.contains(e.target)
-                 && !e.target.closest('.keyword-highlight'))
+                 // Check if the click originated on a keyword highlight *that is interactive*
+                 // (CSS pointer-events: none will prevent clicks in rotated mode anyway)
+                 && !e.target.closest('.keyword-highlight[style*="pointer-events: auto"], .keyword-highlight:not([style*="pointer-events"])'))
              { hideDefinitionPopup(); }
         }, true);
 
