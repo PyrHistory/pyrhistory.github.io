@@ -643,10 +643,36 @@ body.loading-game-active #definition-popup {
 }
 /* --- END: Loading Game Styles --- */
 
+/* --- START: Reading Time Alert --- */
+#reading-time-alert {
+    position: fixed;
+    bottom: 80px; /* Adjust as needed, above slider */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(249, 115, 22, 0.9); /* Fiery orange, slightly transparent */
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    z-index: 10005; /* Above most elements but potentially below modals */
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    pointer-events: none; /* Prevent interaction */
+    white-space: nowrap;
+}
+#reading-time-alert.visible { /* Class added by JS for fade-in */
+    opacity: 1;
+}
+/* --- END: Reading Time Alert --- */
+
+
 </style>
 
 </head>
-<body class="loading-game-active"> 
+<body class="loading-game-active">
 
     <div id="loading-game-container">
         <iframe id="game-iframe" src="/chapter2-loading-game.html" title="Loading Game"></iframe>
@@ -689,7 +715,7 @@ body.loading-game-active #definition-popup {
     </div>
 
     <div class="toc-panel" id="toc-panel"></div>
-    <div class="loading-overlay" id="loading-overlay"></div> 
+    <div class="loading-overlay" id="loading-overlay"></div>
     <div class="page-slider-container" id="page-slider-container"></div>
     <div id="page-slider-trigger-zone"></div>
 
@@ -736,6 +762,13 @@ body.loading-game-active #definition-popup {
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
 
+    // --- Reading Time Lock State ---
+    let currentPagePairStartTime = 0;
+    let requiredReadingTimeForPair = 0;
+    let isTimeLockActive = false;
+    let alertTimeout = null; // For the alert message
+
+
     // --- PDF.js Setup (Unchanged) ---
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     const pdfjsViewer = window['pdfjs-dist/web/pdf_viewer'];
@@ -768,7 +801,7 @@ body.loading-game-active #definition-popup {
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- createKeywordOverlays FUNCTION (Unchanged from previous step) ---
+    // --- createKeywordOverlays FUNCTION (Unchanged) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -822,7 +855,7 @@ body.loading-game-active #definition-popup {
                         const itemWidth = item.width;
                         const itemHeight = item.height;
                         const itemLeft = tx[4];
-                        const itemTop = tx[5] - itemHeight;
+                        const itemTop = tx[5] - itemHeight; // Adjust based on baseline
 
                         const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
                         const highlightWidth = (matchLength / itemTextLength) * itemWidth;
@@ -830,7 +863,9 @@ body.loading-game-active #definition-popup {
                         const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
                         const finalTop = Math.max(0, itemTop);
                         const finalWidth = Math.max(1, highlightWidth);
-                        const finalHeight = itemHeight;
+                        // Height calculation needs care, use item.height or font size if available
+                        const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
+
 
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
@@ -908,7 +943,7 @@ body.loading-game-active #definition-popup {
         }
     }
 
-    // --- renderPage function (Unchanged from previous step) ---
+    // --- renderPage function (Unchanged) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -972,9 +1007,10 @@ body.loading-game-active #definition-popup {
                 hidePageLoading(canvasId);
             }
 
+            // Render layers after canvas is ready
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
             await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            await createKeywordOverlays(pageNum, pageElement, viewport);
+            await createKeywordOverlays(pageNum, pageElement, viewport); // Ensure this uses the final viewport
 
         } catch (error) {
             console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -984,7 +1020,74 @@ body.loading-game-active #definition-popup {
         }
     }
 
-    // --- Update Display (Unchanged) ---
+    // --- Reading Time Calculation ---
+    async function calculatePageReadingTime(pageNum, viewport) {
+        if (!book.pdfDocument || !viewport || pageNum < 1 || pageNum > book.totalPages) {
+            return 0;
+        }
+        try {
+            const page = await book.pdfDocument.getPage(pageNum);
+            // Fetch text content and annotations concurrently
+            const [textContent, annotations] = await Promise.all([
+                page.getTextContent({ normalizeWhitespace: true }),
+                page.getAnnotations()
+            ]);
+
+            const linkAnnotations = annotations.filter(annot => annot.subtype === 'Link' && annot.rect);
+            // Convert annotation rects (PDF points) to viewport rects (CSS pixels)
+            const linkRectsInViewport = linkAnnotations.map(annot => viewport.convertToViewportRectangle(annot.rect));
+            // convertToViewportRectangle returns [x1, y1, x2, y2] in CSS pixels, y increases downwards
+
+            let wordCount = 0;
+            for (const item of textContent.items) {
+                const itemText = item.str;
+                if (!itemText || itemText.trim().length === 0 || item.width === 0) continue;
+
+                // Calculate item's bounding box in CSS pixels using its transform and the viewport transform
+                const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                // item.transform gives [scaleX, skewY, skewX, scaleY, translateX, translateY]
+                // origin is usually bottom-left in PDF space? Viewport transform converts to CSS space.
+                const itemWidth = item.width;
+                 // item.height is often ascent+descent, use it if available, otherwise estimate
+                const itemHeight = item.height > 0 ? item.height : 12; // Default guess if height invalid
+                const itemLeft = tx[4];
+                const itemTop = tx[5] - itemHeight; // Approximate top edge in CSS space (y increases down)
+                // CSS Bbox: [left, top, right, bottom]
+                const itemRect = [itemLeft, itemTop, itemLeft + itemWidth, itemTop + itemHeight];
+
+                let isInsideLink = false;
+                for (const linkRect of linkRectsInViewport) {
+                    // linkRect is [x1, y1, x2, y2] in CSS pixels (from convertToViewportRectangle)
+                    // Check if the center of the item falls within the link rectangle
+                    const itemCenterX = itemRect[0] + (itemRect[2] - itemRect[0]) / 2;
+                    const itemCenterY = itemRect[1] + (itemRect[3] - itemRect[1]) / 2;
+
+                    if (itemCenterX >= linkRect[0] && itemCenterX <= linkRect[2] &&
+                        itemCenterY >= linkRect[1] && itemCenterY <= linkRect[3]) {
+                        isInsideLink = true;
+                        break; // Found overlap, no need to check other links for this item
+                    }
+                    // Note: This 'center point' method might miss text items that are partially
+                    // inside a link but whose center is outside. A full overlap check is more complex.
+                    // For simplicity and performance, we use the center point check.
+                }
+
+                if (!isInsideLink) {
+                    // Count words by splitting on whitespace
+                    wordCount += itemText.trim().split(/\s+/).filter(Boolean).length;
+                }
+            }
+            const readingTime = Math.ceil(wordCount / 5); // 1 second per 5 words
+             // console.log(`Page ${pageNum} word count (non-link): ${wordCount}, Time: ${readingTime}s`);
+            return readingTime;
+
+        } catch (error) {
+            console.error(`Error calculating reading time for page ${pageNum}:`, error);
+            return 0; // Default to 0 time on error
+        }
+    }
+
+    // --- Update Display (MODIFIED to calculate reading time) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1004,6 +1107,12 @@ body.loading-game-active #definition-popup {
 
         let renderPromises = [];
 
+        // Clear previous time lock immediately before rendering new pages
+        isTimeLockActive = false;
+        currentPagePairStartTime = 0;
+        requiredReadingTimeForPair = 0;
+
+        // Render Left Page
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
             leftPageNumDisplay.textContent = String(leftPageNum);
             renderPromises.push(renderPage(leftPageNum, 'left-page-canvas'));
@@ -1013,34 +1122,66 @@ body.loading-game-active #definition-popup {
             const lTextLayer = document.getElementById('left-text-layer'), lAnnLayer = document.getElementById('left-annotation-layer'), lKeywordOverlay = document.getElementById('left-keyword-overlay');
             if(lTextLayer) lTextLayer.innerHTML = ''; if(lAnnLayer) lAnnLayer.innerHTML = ''; if(lKeywordOverlay) lKeywordOverlay.innerHTML = '';
             leftPageDiv.classList.add('placeholder-page');
+            currentViewports['left-page-canvas'] = null; // Clear viewport
         }
 
+        // Prepare Right Page
         rightPageDiv.style.display = 'none';
         rightPageDiv.classList.remove('placeholder-page');
         const rCanvas = document.getElementById('right-page-canvas'), rCtx = rCanvas?.getContext('2d'); if (rCtx) rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
         const rTextLayer = document.getElementById('right-text-layer'), rAnnLayer = document.getElementById('right-annotation-layer'), rKeywordOverlay = document.getElementById('right-keyword-overlay');
         if(rTextLayer) rTextLayer.innerHTML = ''; if(rAnnLayer) rAnnLayer.innerHTML = ''; if(rKeywordOverlay) rKeywordOverlay.innerHTML = ''; rightPageNumDisplay.textContent = '';
+        currentViewports['right-page-canvas'] = null; // Clear viewport
 
-        if (book.isDoublePageView && !isFullscreen && !isContentRotated) {
+        const shouldShowRightPage = book.isDoublePageView && !isFullscreen && !isContentRotated;
+
+        if (shouldShowRightPage) {
             if (rightPageNum >= 1 && rightPageNum <= book.totalPages) {
                 rightPageNumDisplay.textContent = String(rightPageNum);
                 rightPageDiv.style.display = 'flex';
                 renderPromises.push(renderPage(rightPageNum, 'right-page-canvas'));
             } else if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+                // Show placeholder if left exists but right doesn't
                 rightPageDiv.style.display = 'flex';
                 rightPageDiv.classList.add('placeholder-page');
                 rightPageNumDisplay.textContent = '';
             }
         }
 
+        // Wait for pages to render (this populates currentViewports)
         await Promise.all(renderPromises);
+
+        // --- NEW: Calculate and set reading time lock AFTER rendering ---
+        const leftViewport = currentViewports['left-page-canvas'];
+        const rightViewport = currentViewports['right-page-canvas'];
+        const rightPageIsRendered = shouldShowRightPage && rightPageNum >= 1 && rightPageNum <= book.totalPages;
+
+        let timeLeft = 0;
+        if (leftPageNum >= 1 && leftPageNum <= book.totalPages && leftViewport) {
+            timeLeft = await calculatePageReadingTime(leftPageNum, leftViewport);
+        }
+
+        let timeRight = 0;
+        if (rightPageIsRendered && rightViewport) {
+            timeRight = await calculatePageReadingTime(rightPageNum, rightViewport);
+        }
+
+        requiredReadingTimeForPair = timeLeft + timeRight;
+        if (requiredReadingTimeForPair > 0) {
+            currentPagePairStartTime = Date.now();
+            isTimeLockActive = true;
+            updateStatus(`Reading time lock SET for pages ${leftPageNum}${rightPageIsRendered ? '-' + rightPageNum : ''}: ${requiredReadingTimeForPair} seconds`);
+        } else {
+            // Keep state as reset earlier (startTime=0, active=false, requiredTime=0)
+             updateStatus(`Reading time lock NOT SET for pages ${leftPageNum}${rightPageIsRendered ? '-' + rightPageNum : ''}.`);
+        }
+        // --- End NEW Reading Time Logic ---
 
         updateSliderPosition();
         preloadAdjacentPages(book.currentPage);
         applyCurrentViewModeStyles();
         updateStatus("Display update complete.");
     }
-
 
     // --- Preloading (Unchanged) ---
      function preloadAdjacentPages(currentPage) {
@@ -1057,12 +1198,81 @@ body.loading-game-active #definition-popup {
         });
     }
 
-    // --- Navigation (Unchanged) ---
-    function nextPage(){ const inc=book.isDoublePageView?2:1,t=book.currentPage+inc; if(t<=book.totalPages)jumpToPage(t); else if(!book.isDoublePageView&&book.currentPage<book.totalPages)jumpToPage(book.totalPages) }
-    function prevPage(){ const dec=book.isDoublePageView?2:1,t=book.currentPage-dec; if(t>=1)jumpToPage(t) }
-    function jumpToPage(pageNum){ if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return} let targetPage=pageNum; if(book.isDoublePageView&&targetPage>1&&targetPage%2===0)targetPage--; if(targetPage===book.currentPage)return; updateStatus(`Jumping to page ${targetPage}`); book.currentPage=targetPage; if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage; hideDefinitionPopup(); updateDisplay(); showPageSlider(); manageToolbar(false) }
+    // --- Reading Time Alert ---
+    function showReadingTimeAlert() {
+        clearTimeout(alertTimeout);
+        let alertDiv = document.getElementById('reading-time-alert');
+        if (!alertDiv) {
+            alertDiv = document.createElement('div');
+            alertDiv.id = 'reading-time-alert';
+            // Styles are applied via CSS using the #reading-time-alert selector
+            document.body.appendChild(alertDiv);
+        }
+        alertDiv.textContent = 'Please read the text!';
+        alertDiv.classList.add('visible'); // Use class for opacity transition defined in CSS
 
-    // --- View Modes (Unchanged) ---
+        alertTimeout = setTimeout(() => {
+            alertDiv.classList.remove('visible');
+        }, 2500); // Show for 2.5 seconds
+    }
+
+    // --- Reading Time Lock Check ---
+    function checkReadingTimeLock() {
+        if (isTimeLockActive) {
+            const elapsedSeconds = (Date.now() - currentPagePairStartTime) / 1000;
+            if (elapsedSeconds < requiredReadingTimeForPair) {
+                updateStatus(`Time lock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTimeForPair}s`);
+                showReadingTimeAlert();
+                return true; // Indicate lock is active and time is not up
+            } else {
+                updateStatus(`Time lock FINISHED: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTimeForPair}s`);
+                isTimeLockActive = false; // Unlock once time is up (or allow nav)
+            }
+        }
+        return false; // Indicate lock is not preventing navigation
+    }
+
+    // --- Navigation (MODIFIED with lock check) ---
+    function nextPage(){
+        if (checkReadingTimeLock()) return; // Check lock before proceeding
+
+        const inc=book.isDoublePageView?2:1,t=book.currentPage+inc;
+        if(t<=book.totalPages)jumpToPage(t);
+        else if(!book.isDoublePageView&&book.currentPage<book.totalPages)jumpToPage(book.totalPages)
+    }
+
+    function prevPage(){
+        // No time lock for going backwards
+        const dec=book.isDoublePageView?2:1,t=book.currentPage-dec;
+        if(t>=1)jumpToPage(t)
+    }
+
+    function jumpToPage(pageNum){
+        if(!book.pdfDocument||pageNum<1||pageNum>book.totalPages){console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);return}
+
+        let targetPage=pageNum;
+        // Adjust target page for double page view consistency (always land on odd page if possible)
+        if(book.isDoublePageView && targetPage > 1 && targetPage % 2 === 0) targetPage--;
+        if(targetPage===book.currentPage) return; // No change
+
+        // Check lock ONLY if moving forward
+        // "Forward" means the target starting page number is greater than the current starting page number.
+        const isMovingForward = targetPage > book.currentPage;
+        if (isMovingForward && checkReadingTimeLock()) {
+            updateStatus(`Navigation blocked by time lock. Target: ${pageNum}`);
+            return; // Stop navigation
+        }
+
+        updateStatus(`Jumping to page ${targetPage}`);
+        book.currentPage=targetPage;
+        if(targetPage>user.readingProgress.furthestPage)user.readingProgress.furthestPage=targetPage;
+        hideDefinitionPopup();
+        updateDisplay(); // This will fetch, render, and recalculate/set the timer for the new page(s)
+        showPageSlider();
+        manageToolbar(false)
+    }
+
+    // --- View Modes (Unchanged - implicitly reset timer via updateDisplay) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -1099,7 +1309,7 @@ body.loading-game-active #definition-popup {
         document.body.classList.remove('content-rotated-mode');
         document.body.classList.add('fullscreen-mode');
         hideDefinitionPopup();
-        await updateDisplay();
+        await updateDisplay(); // Calls updateDisplay, which resets timer
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1111,7 +1321,7 @@ body.loading-game-active #definition-popup {
         document.body.classList.remove('content-rotated-mode', 'fullscreen-mode');
         if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--;
         hideDefinitionPopup();
-        await updateDisplay();
+        await updateDisplay(); // Calls updateDisplay, which resets timer
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1119,23 +1329,23 @@ body.loading-game-active #definition-popup {
     async function setRotatedView() {
         if (document.body.classList.contains('content-rotated-mode')) return;
         updateStatus("Setting Content Rotated View");
-        book.isDoublePageView = false;
+        book.isDoublePageView = false; // Treat as single page for nav logic
         document.body.classList.remove('fullscreen-mode');
         document.body.classList.add('content-rotated-mode');
         hideDefinitionPopup();
-        await updateDisplay();
+        await updateDisplay(); // Calls updateDisplay, which resets timer
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
     }
 
-    // --- UI Toggles (Minor Modification - Unchanged from prev) ---
+    // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
     function hideTableOfContents(){toggleElement('toc-panel',false)}
     function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Modification to check game state - Unchanged from prev) ---
+    // --- Slider Logic (MODIFIED 'change' listener) ---
     function showPageSlider(){
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
@@ -1145,7 +1355,63 @@ body.loading-game-active #definition-popup {
         clearTimeout(sliderHideTimeout);
         sliderHideTimeout = setTimeout(hidePageSlider, 1750);
     }
-    function initPageSlider(){const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');if(!s||!sc)return;let i=!1;s.addEventListener('input',()=>{if(!i)return;const n=parseInt(s.value,10),d=document.getElementById('current-page-display');if(d){let t=`Page ${n}`;if(book.isDoublePageView&&n+1<=book.totalPages && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))t+=`-${n+1}`;d.textContent=t}updateSliderStyle(s,n);resetSliderHideTimer()});s.addEventListener('pointerdown',()=>{i=!0});s.addEventListener('pointerup',()=>{i=!1});s.addEventListener('change',()=>{jumpToPage(parseInt(s.value,10));resetSliderHideTimer()});sc.addEventListener('mouseenter',()=>{if(document.body.classList.contains('loading-game-active')) return; clearTimeout(sliderHideTimeout)});sc.addEventListener('mouseleave',()=>{if(document.body.classList.contains('loading-game-active')) return; resetSliderHideTimer()});updateSliderTotalPages();updateSliderPosition()}
+    function initPageSlider(){
+        const s=document.getElementById('page-slider'),sc=document.getElementById('page-slider-container');
+        if(!s||!sc)return;
+        let isDragging = false; // Track dragging state
+
+        s.addEventListener('input', () => { // Update display while dragging
+            if (!isDragging) return;
+            const targetPageValue = parseInt(s.value, 10);
+            const displayElem = document.getElementById('current-page-display');
+            if (displayElem) {
+                let pageText = `Page ${targetPageValue}`;
+                // Check if double page view *would* be active for the target page
+                const isDoubleTarget = book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode');
+                let adjustedTarget = targetPageValue;
+                if (isDoubleTarget && adjustedTarget > 1 && adjustedTarget % 2 === 0) adjustedTarget--;
+
+                if (isDoubleTarget && adjustedTarget + 1 <= book.totalPages) {
+                    pageText += `-${adjustedTarget + 1}`;
+                }
+                displayElem.textContent = pageText;
+            }
+            updateSliderStyle(s, targetPageValue);
+            resetSliderHideTimer();
+        });
+
+        s.addEventListener('pointerdown', () => { isDragging = true; });
+        s.addEventListener('pointerup', () => { isDragging = false; });
+        s.addEventListener('lostpointercapture', () => { isDragging = false; }); // Handle cases like focus loss
+
+        s.addEventListener('change', () => { // Final jump on release/change
+            isDragging = false; // Ensure dragging state is false
+            const targetPageValue = parseInt(s.value, 10);
+
+            // Determine the actual target page number considering view mode
+            let targetJumpPage = targetPageValue;
+             if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode')) {
+                  if (targetJumpPage > 1 && targetJumpPage % 2 === 0) targetJumpPage--;
+             }
+
+            // Check lock ONLY if moving forward
+            const isMovingForward = targetJumpPage > book.currentPage;
+            if (isMovingForward && checkReadingTimeLock()) {
+                // Prevent jump by resetting slider visually to current page
+                updateStatus(`Slider navigation blocked by time lock. Target: ${targetPageValue}`);
+                updateSliderPosition(); // Reset slider to actual current page
+                return;
+            }
+            // If lock passed or not applicable, proceed with jump
+            jumpToPage(targetPageValue); // Use the raw slider value for jumpToPage
+            resetSliderHideTimer();
+        });
+
+        sc.addEventListener('mouseenter',()=>{if(document.body.classList.contains('loading-game-active')) return; clearTimeout(sliderHideTimeout)});
+        sc.addEventListener('mouseleave',()=>{if(document.body.classList.contains('loading-game-active')) return; resetSliderHideTimer()});
+        updateSliderTotalPages();
+        updateSliderPosition();
+    }
     function updateSliderTotalPages(){const s=document.getElementById('page-slider'),d=document.getElementById('total-pages-display');if(s&&d){const t=book.totalPages>0?book.totalPages:1;s.max=t;d.textContent=t;updateSliderStyle(s,s.value)}}
     function updateSliderPosition(){const s=document.getElementById('page-slider'),d=document.getElementById('current-page-display');if(s&&d){const c=book.currentPage>0?book.currentPage:1,t=book.totalPages>0?book.totalPages:1;s.value=c;let p=`Page ${c}`;if(book.isDoublePageView&&c+1<=t && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode'))p+=`-${c+1}`;d.textContent=p;updateSliderStyle(s,c)}}
     function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
@@ -1162,7 +1428,7 @@ body.loading-game-active #definition-popup {
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- Pre-scan Function (Unchanged from previous step) ---
+    // --- Pre-scan Function (Unchanged) ---
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
         globalFirstInstanceLocation = {};
@@ -1214,11 +1480,11 @@ body.loading-game-active #definition-popup {
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED: Sends disableRestart message) ---
+    // --- PDF Loading (Unchanged) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        globalFirstInstanceLocation = {};
+        globalFirstInstanceLocation = {}; isTimeLockActive = false; // Reset lock on new PDF
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
@@ -1262,7 +1528,7 @@ body.loading-game-active #definition-popup {
             updateSliderPosition();
 
             await new Promise(resolve => requestAnimationFrame(resolve));
-            await updateDisplay(); // Render first display
+            await updateDisplay(); // Render first display & calculate initial time lock
 
             // --- *** READER IS READY *** ---
             isReaderReady = true;
@@ -1314,7 +1580,17 @@ body.loading-game-active #definition-popup {
                     } else if (Array.isArray(item.dest) && item.dest[0]) {
                          pageIndex = await book.pdfDocument.getPageIndex(item.dest[0]);
                     } else { console.warn("Unknown TOC destination format:", item.dest); }
-                    if (pageIndex >= 0) { jumpToPage(pageIndex + 1); hideTableOfContents(); }
+                    if (pageIndex >= 0) {
+                        // TOC click should bypass time lock? Assume yes for usability.
+                        const targetPage = pageIndex + 1;
+                        updateStatus(`Jumping via TOC to page ${targetPage}`);
+                        book.currentPage=targetPage;
+                        if(book.isDoublePageView && book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--;
+                        if(book.currentPage > user.readingProgress.furthestPage)user.readingProgress.furthestPage=book.currentPage;
+                        hideDefinitionPopup(); hideTableOfContents();
+                        updateDisplay(); // Reset timer on TOC jump
+                        showPageSlider(); manageToolbar(false)
+                    }
                     else { throw new Error(`Could not resolve page for destination: ${item.title}`); }
                 } catch (navError) { console.error("TOC navigation error:", navError); alert(`Navigation failed: ${navError.message}`); }
             };
@@ -1356,7 +1632,7 @@ body.loading-game-active #definition-popup {
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- Game Transition Logic (Unchanged from previous step) ---
+    // --- Game Transition Logic (Unchanged) ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
@@ -1373,43 +1649,35 @@ body.loading-game-active #definition-popup {
              updateStatus("Reader should be visible and scaled.");
         }, 50);
     }
-
-    // --- Handle Game Over Message (Safeguard disableRestart call) ---
+    // --- Handle Game Over Message (Unchanged) ---
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
         if (isReaderReady) {
             updateStatus("Reader is ready, handling automatic transition after game over.");
-            // Safeguard: Ensure restart is disabled (might be redundant but safe)
             if (gameIframe && gameIframe.contentWindow) {
-                try {
-                    gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
-                    // updateStatus("Sent safeguard disableRestart message to game iframe.");
-                } catch (e) {
-                    console.error("Error posting safeguard disableRestart message:", e);
-                }
+                try { gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
+                 catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
             }
-            // Start timer for transition
             clearTimeout(gameOverTimeoutId);
             gameOverTimeoutId = setTimeout(() => {
                 updateStatus("Game over timeout finished, transitioning now.");
                 transitionToChapter();
-            }, 3000); // 3 seconds delay
+            }, 3000);
         } else {
             updateStatus("Game over occurred, but reader is not ready yet. No automatic transition.");
-            // Button in game should still be enabled at this point.
         }
     }
     // --- END: Game Transition Logic ---
 
 
-    // --- Event Setup (MODIFIED for focus and message handling) ---
+    // --- Event Setup (MODIFIED for edge clicks, keyboard nav) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // Toolbar Clicks (No change)
+        // Toolbar Clicks (No change relevant to lock)
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
              if (!btn) return;
@@ -1428,14 +1696,95 @@ body.loading-game-active #definition-popup {
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
         // Popup Close (No change)
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
-        // Page Edge Clicks (No change)
-        bookSpread?.addEventListener('click', e => { if (document.body.classList.contains('loading-game-active')) return; if (e.target.classList.contains('page-edge-nav')) { const pageDiv = e.target.closest('.book-page'); if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return; if (e.target.classList.contains('page-edge-left')) { prevPage(); } else { nextPage(); } showPageSlider(); manageToolbar(false); } });
-        // Keyboard Navigation (No change)
-        document.addEventListener('keydown', e => { if (document.body.classList.contains('loading-game-active')) return; if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return; if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; } if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return; let navAction = false; switch(e.key){ case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; case 'Home': if(book.totalPages > 0) jumpToPage(1); navAction = true; break; case 'End': if(book.totalPages > 0) jumpToPage(book.totalPages); navAction = true; break; } if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); } });
+
+        // Page Edge Clicks (MODIFIED for lock check)
+        bookSpread?.addEventListener('click', e => {
+            if (document.body.classList.contains('loading-game-active')) return;
+            if (e.target.classList.contains('page-edge-nav')) {
+                const pageDiv = e.target.closest('.book-page');
+                if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
+                if (e.target.classList.contains('page-edge-left')) {
+                    prevPage(); // No lock for previous
+                } else { // page-edge-right (attempting next)
+                    // Check time lock BEFORE calling nextPage()
+                    if (checkReadingTimeLock()) {
+                        updateStatus("Edge click navigation blocked by time lock.");
+                        return; // Stop if locked
+                    }
+                    nextPage(); // Proceed if unlocked
+                }
+                showPageSlider();
+                manageToolbar(false);
+            }
+        });
+
+        // Keyboard Navigation (MODIFIED for lock check)
+        document.addEventListener('keydown', e => {
+            if (document.body.classList.contains('loading-game-active')) return;
+            if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; }
+            if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return;
+
+            let navAction = false;
+            switch(e.key){
+                case 'ArrowRight': case 'PageDown':
+                     // Check time lock BEFORE calling nextPage()
+                     if (checkReadingTimeLock()) {
+                         updateStatus("Keyboard navigation (forward) blocked by time lock.");
+                         e.preventDefault(); return; // Stop if locked
+                     }
+                     nextPage(); navAction = true; break;
+                case 'ArrowLeft': case 'PageUp':
+                     prevPage(); navAction = true; break; // No lock for previous
+                case 'Home':
+                     // No lock for jumping to start
+                     if(book.totalPages > 0) jumpToPage(1); navAction = true; break;
+                case 'End':
+                     if(book.totalPages > 0) {
+                         const targetPage = book.totalPages;
+                         // Check lock only if End is forward from current page
+                         const isMovingForward = targetPage > book.currentPage; // Simple check
+                         if (isMovingForward && checkReadingTimeLock()) {
+                              updateStatus("Keyboard navigation (End) blocked by time lock.");
+                              e.preventDefault(); return; // Stop if locked
+                         }
+                         jumpToPage(targetPage);
+                     }
+                     navAction = true; break;
+            }
+            if(navAction){ e.preventDefault(); showPageSlider(); manageToolbar(false); }
+        });
+
         // Resize Handling (No change)
         window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); if (!document.body.classList.contains('loading-game-active')) { updateDisplay(); } manageToolbar(); }, 250); });
-        // Touch Swipes (No change)
-        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70; document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true}); document.body.addEventListener('touchend',e=>{if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;if(e.changedTouches.length===1){const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;if(tE<ST){const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);if(aX>SW&&aY<SV){if(dX>0){prevPage()}else{nextPage()}showPageSlider();manageToolbar(false)}}}tX=0;tY=0;tS=0});
+        // Touch Swipes (MODIFIED for lock check)
+        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
+        document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true});
+        document.body.addEventListener('touchend',e=>{
+             if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;
+             if(e.changedTouches.length===1){
+                 const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;
+                 if(tE<ST){
+                     const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);
+                     if(aX>SW&&aY<SV){ // Horizontal swipe detected
+                         if(dX>0){ // Swipe Right (Previous Page)
+                             prevPage();
+                         } else { // Swipe Left (Next Page)
+                             // Check time lock BEFORE calling nextPage()
+                             if (checkReadingTimeLock()) {
+                                 updateStatus("Swipe navigation (forward) blocked by time lock.");
+                                 tX=0;tY=0;tS=0; // Reset touch state
+                                 return; // Stop if locked
+                             }
+                             nextPage();
+                         }
+                         showPageSlider(); manageToolbar(false);
+                     }
+                 }
+             }
+             tX=0;tY=0;tS=0;
+        });
+
         // Slider Trigger Zone (No change)
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(document.body.classList.contains('loading-game-active')) return; if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{if(document.body.classList.contains('loading-game-active')) return; const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
         // Global Click Listener for Popup Dismissal (No change)
@@ -1446,39 +1795,18 @@ body.loading-game-active #definition-popup {
              { hideDefinitionPopup(); }
         }, true);
 
-        // --- NEW Event Listeners ---
-        // Go to Chapter Button Click
+        // --- NEW Event Listeners (No change related to lock) ---
         goToChapterBtn.addEventListener('click', transitionToChapter);
-
-        // Listen for messages from the game iframe
         window.addEventListener('message', (event) => {
             if (event.source !== gameIframe.contentWindow) { return; }
-             // Optional: Origin check for production
-             // const expectedOrigin = new URL(gameIframe.src).origin;
-             // if (event.origin !== expectedOrigin) { return; }
-
-            if (event.data && event.data.type === 'gameOver') {
-                handleGameOverFromGame(event.data.score);
-            }
+            if (event.data && event.data.type === 'gameOver') { handleGameOverFromGame(event.data.score); }
             if (event.data && event.data.type === 'gameLoaded') {
                  if(iframeLoadingText) iframeLoadingText.style.display = 'none';
                  updateStatus("Game iframe reported *itself* loaded.");
-                 // --- *** FIX: Attempt to focus iframe *** ---
-                 try {
-                     if (gameIframe && gameIframe.contentWindow) {
-                         gameIframe.contentWindow.focus();
-                         updateStatus("Attempted to focus game iframe.");
-                     }
-                 } catch (focusError) {
-                     // Focusing cross-origin iframes can sometimes fail silently or throw errors
-                     // depending on browser policies and iframe sandbox attributes.
-                     console.warn("Could not focus game iframe:", focusError.message);
-                 }
-                 // --- *** END FIX *** ---
-             }
+                 try { if (gameIframe && gameIframe.contentWindow) { gameIframe.contentWindow.focus(); updateStatus("Attempted to focus game iframe."); } }
+                 catch (focusError) { console.warn("Could not focus game iframe:", focusError.message); }
+            }
         });
-
-        // Hide iframe loading text when the iframe *document* loads
         gameIframe.addEventListener('load', () => {
             if(iframeLoadingText) iframeLoadingText.style.display = 'none';
             updateStatus("Game iframe document structure loaded (waiting for gameLoaded message).");
@@ -1487,7 +1815,7 @@ body.loading-game-active #definition-popup {
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (Unchanged from previous step) ---
+    // --- Initialization (Unchanged) ---
     async function init() {
         updateStatus("Initializing application...");
         document.body.classList.add('loading-game-active');
@@ -1511,7 +1839,7 @@ body.loading-game-active #definition-popup {
                 if(sc) sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto;"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
             }
 
-            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); clearTimeout(gameOverTimeoutId); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); clearTimeout(gameOverTimeoutId); clearTimeout(alertTimeout); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
             updateStatus("Initialization complete. Background loading may be in progress.");
 
         } catch (initError) {
