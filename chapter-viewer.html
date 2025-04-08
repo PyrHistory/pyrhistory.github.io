@@ -779,11 +779,12 @@ body.loading-game-active #definition-popup {
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
 
     // --- Reading Time Lock State ---
-    let currentPagePairStartTime = 0;
-    let requiredReadingTimeForPair = 0;
-    let isTimeLockActive = false;
-    let isCurrentLockForPair = false; // Tracks if the current lock applies to a page pair
-    let completedTimeLockPages = new Set(); // Stores first page number of pairs where lock was completed
+    let currentPagePairStartTime = 0; // Timestamp when the *current* viewing session of a pair started
+    let requiredReadingTimeForPair = 0; // Total reading time (seconds) required for the pair currently in view
+    let isTimeLockActive = false; // Is a timer currently running and potentially blocking forward navigation?
+    let isCurrentLockForPair = false; // Was the currently active lock initiated for a page pair (true) or single page (false)?
+    const completedTimeLockPairs = new Set(); // Stores *pair key* (first page num, always odd) of pairs where lock was completed
+    const elapsedTimeForPair = new Map(); // Stores *pair key* -> elapsed milliseconds read for that pair
     let alertTimeout = null; // For the alert message
 
 
@@ -1105,7 +1106,7 @@ body.loading-game-active #definition-popup {
         }
     }
 
-    // --- Update Display (MODIFIED to handle time lock state based on history) ---
+    // --- Update Display (MODIFIED to initiate pair-based timer) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1126,11 +1127,12 @@ body.loading-game-active #definition-popup {
 
         let renderPromises = [];
 
-        // Clear previous time lock state immediately before rendering new pages and deciding on new lock
+        // --- Clear previous time lock state immediately ---
         isTimeLockActive = false;
         isCurrentLockForPair = false;
-        currentPagePairStartTime = 0;
-        requiredReadingTimeForPair = 0;
+        currentPagePairStartTime = 0; // Reset session timer
+        requiredReadingTimeForPair = 0; // Reset required time for *this view*
+        // Note: We DO NOT clear completedTimeLockPairs or elapsedTimeForPair here
 
         // Render Left Page
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
@@ -1171,7 +1173,7 @@ body.loading-game-active #definition-popup {
         // Wait for pages to render (this populates currentViewports)
         await Promise.all(renderPromises);
 
-        // --- MODIFIED: Calculate and set reading time lock AFTER rendering, checking history ---
+        // --- MODIFIED: Calculate and set reading time lock AFTER rendering ---
         const leftViewport = currentViewports['left-page-canvas'];
         const rightViewport = currentViewports['right-page-canvas'];
         const rightPageIsRendered = shouldShowRightPage && rightPageNum >= 1 && rightPageNum <= book.totalPages;
@@ -1186,32 +1188,39 @@ body.loading-game-active #definition-popup {
             timeRight = await calculatePageReadingTime(rightPageNum, rightViewport);
         }
 
-        requiredReadingTimeForPair = timeLeft + timeRight;
-        const isPotentiallyPairLock = rightPageIsRendered && timeLeft > 0 && timeRight > 0; // Check if both pages contribute time
+        const totalRequiredTime = timeLeft + timeRight; // Total seconds for the pair/page(s) in view
+        const firstPageOfCurrentView = leftPageNum;
 
-        const firstPageOfCurrentView = leftPageNum; // The page number lock is associated with
+        // Determine the key for this pair (always the odd page number)
+        const pairKey = (firstPageOfCurrentView % 2 === 0 && firstPageOfCurrentView > 0)
+                        ? firstPageOfCurrentView - 1
+                        : firstPageOfCurrentView;
 
-        // Check if lock was previously completed for this starting page
-        if (completedTimeLockPages.has(firstPageOfCurrentView)) {
-            // Lock already completed, ensure lock state remains inactive
-            isTimeLockActive = false;
-            isCurrentLockForPair = false;
-            currentPagePairStartTime = 0;
-            requiredReadingTimeForPair = 0;
-            updateStatus(`Reading time lock previously completed for page ${firstPageOfCurrentView}. Skipping.`);
-        } else if (requiredReadingTimeForPair > 0) {
-            // Lock not completed and there's reading time required, ACTIVATE lock
-            currentPagePairStartTime = Date.now();
-            isTimeLockActive = true;
-            isCurrentLockForPair = isPotentiallyPairLock; // Set flag based on whether right page contributed time
-            updateStatus(`Reading time lock SET for page(s) starting ${firstPageOfCurrentView}. Pair lock: ${isCurrentLockForPair}. Time: ${requiredReadingTimeForPair}s`);
+        if (pairKey >= 1 && totalRequiredTime > 0 && !completedTimeLockPairs.has(pairKey)) {
+            const currentElapsedTimeMs = elapsedTimeForPair.get(pairKey) || 0;
+            const totalRequiredMs = totalRequiredTime * 1000;
+
+            if (currentElapsedTimeMs < totalRequiredMs) {
+                // Lock is needed and not yet fully completed for this pair
+                requiredReadingTimeForPair = totalRequiredTime; // Set total time needed for checks
+                currentPagePairStartTime = Date.now(); // Start timing *this session*
+                isTimeLockActive = true;
+                // A lock is considered "for a pair" if the right page is rendered and contributes time
+                isCurrentLockForPair = (rightPageIsRendered && timeRight > 0);
+                const remainingSeconds = (totalRequiredMs - currentElapsedTimeMs) / 1000;
+                updateStatus(`Reading time lock SET for pair starting ${pairKey}. Total: ${totalRequiredTime}s, Remaining: ${remainingSeconds.toFixed(1)}s. Is Pair Lock: ${isCurrentLockForPair}`);
+            } else {
+                // Should have been completed, but wasn't in the set. Mark complete now.
+                completedTimeLockPairs.add(pairKey);
+                updateStatus(`Pair starting ${pairKey} already completed based on stored time. Marking complete.`);
+            }
         } else {
-            // No required time OR already completed, ensure lock is inactive
-            isTimeLockActive = false;
-            isCurrentLockForPair = false;
-            currentPagePairStartTime = 0;
-            // requiredReadingTimeForPair is already 0 here
-            updateStatus(`Reading time lock NOT SET for page(s) starting ${firstPageOfCurrentView}.`);
+            // No lock needed (pair completed, no time required, or invalid pair key)
+            if (pairKey >= 1 && completedTimeLockPairs.has(pairKey)) {
+                updateStatus(`Pair starting ${pairKey} is already completed. No lock needed.`);
+            } else {
+                updateStatus(`No reading time lock needed for page(s) starting ${firstPageOfCurrentView}.`);
+            }
         }
         // --- End MODIFIED Reading Time Logic ---
 
@@ -1237,7 +1246,7 @@ body.loading-game-active #definition-popup {
         });
     }
 
-    // --- Reading Time Alert (MODIFIED CSS handles animation) ---
+    // --- Reading Time Alert (Unchanged - CSS handles animation) ---
     function showReadingTimeAlert() {
         clearTimeout(alertTimeout);
         let alertDiv = document.getElementById('reading-time-alert');
@@ -1251,84 +1260,161 @@ body.loading-game-active #definition-popup {
         }, 2500); // Show for 2.5 seconds
     }
 
-    // --- Reading Time Lock Check (MODIFIED to mark completion) ---
-    function checkReadingTimeLock() {
-        if (isTimeLockActive) {
-            const elapsedSeconds = (Date.now() - currentPagePairStartTime) / 1000;
-            const firstPageOfLockedView = book.currentPage; // Get the first page num of the currently locked view
-
-            if (elapsedSeconds < requiredReadingTimeForPair) {
-                // Lock is active, time not up
-                updateStatus(`Time lock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTimeForPair}s on page ${firstPageOfLockedView}`);
-                showReadingTimeAlert();
-                return true; // Indicate lock is preventing navigation
-            } else {
-                // Time is up!
-                updateStatus(`Time lock FINISHED: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTimeForPair}s on page ${firstPageOfLockedView}`);
-                isTimeLockActive = false; // Unlock for future checks in this sequence
-                isCurrentLockForPair = false; // Reset flag
-
-                // *** Add starting page of this view to completed set ***
-                if (!completedTimeLockPages.has(firstPageOfLockedView)) {
-                    completedTimeLockPages.add(firstPageOfLockedView);
-                    updateStatus(`Page ${firstPageOfLockedView} added to completed time lock set.`);
-                }
-                // Fall through to return false (lock is no longer preventing navigation)
-            }
+    // --- Reading Time Lock Helper - Update Elapsed Time ---
+    // Stores elapsed time for the *current* pair when navigating away or checking completion.
+    function updateElapsedTime(currentStartPage) {
+        if (!isTimeLockActive || currentPagePairStartTime === 0) {
+            // No active timer session was running for the page(s) being left.
+            return;
         }
-        // Lock is not active OR time just expired
-        return false; // Indicate lock is not preventing navigation
+
+        const elapsedMillisThisSession = Date.now() - currentPagePairStartTime;
+        if (elapsedMillisThisSession <= 0) return; // Avoid issues if time is weird
+
+        const pairKey = (currentStartPage % 2 === 0 && currentStartPage > 0)
+                        ? currentStartPage - 1
+                        : currentStartPage;
+
+        if (pairKey < 1) return; // Invalid pair
+
+        const previousElapsedMillis = elapsedTimeForPair.get(pairKey) || 0;
+        const newTotalElapsedMillis = previousElapsedMillis + elapsedMillisThisSession;
+        const requiredMillis = requiredReadingTimeForPair * 1000;
+
+        // Cap elapsed time at the required amount
+        const finalElapsedMillis = Math.min(newTotalElapsedMillis, requiredMillis);
+
+        elapsedTimeForPair.set(pairKey, finalElapsedMillis);
+        updateStatus(`Stored elapsed time for pair ${pairKey}: ${finalElapsedMillis / 1000}s / ${requiredMillis / 1000}s`);
+
+        // Reset the session timer *after* storing the value
+        currentPagePairStartTime = 0;
+
+        // Check if this update completes the pair
+        if (finalElapsedMillis >= requiredMillis && !completedTimeLockPairs.has(pairKey)) {
+            completedTimeLockPairs.add(pairKey);
+            isTimeLockActive = false; // Mark lock as inactive *now*
+            isCurrentLockForPair = false;
+            requiredReadingTimeForPair = 0; // Reset required time as it's met
+            updateStatus(`Pair ${pairKey} completed.`);
+        }
     }
 
-    // --- Navigation (MODIFIED nextPage, jumpToPage handles lock check) ---
-    function nextPage() {
-        const isSinglePageMode = document.body.classList.contains('fullscreen-mode') || document.body.classList.contains('content-rotated-mode');
-        const currentActualPage = book.currentPage; // The currently displayed page number (or the left one)
-
-        // Determine the next logical page number the user likely wants to see
-        const nextPageNumberTarget = currentActualPage + 1;
-
-        if (nextPageNumberTarget > book.totalPages) {
-            return; // Already on or trying to go past the last page
+    // --- Reading Time Lock Helper - Check Lock Status ---
+    // Checks if navigation should be blocked based on accumulated time.
+    // Returns TRUE if locked, FALSE if allowed.
+    function checkReadingTimeLock(currentStartPage) {
+        if (!isTimeLockActive) {
+            // updateStatus("Lock check: Not active.");
+            return false; // Not locked
         }
 
-        // Check if we are *currently* on the first page of a locked pair *in single page mode*
-        const isTryingToMoveWithinLockedPair =
-            isTimeLockActive &&
-            isCurrentLockForPair &&
-            isSinglePageMode;
-            // We don't need to check the target page here, jumpToPage will handle the bypass
+        const pairKey = (currentStartPage % 2 === 0 && currentStartPage > 0)
+                        ? currentStartPage - 1
+                        : currentStartPage;
+
+        if (pairKey < 1 || completedTimeLockPairs.has(pairKey)) {
+            // updateStatus(`Lock check: Pair ${pairKey} invalid or already completed.`);
+            return false; // Invalid or completed pair, not locked
+        }
+
+        // Calculate total elapsed time including current session
+        const elapsedMillisThisSession = (currentPagePairStartTime > 0) ? (Date.now() - currentPagePairStartTime) : 0;
+        const previousElapsedMillis = elapsedTimeForPair.get(pairKey) || 0;
+        const totalElapsedMillis = previousElapsedMillis + elapsedMillisThisSession;
+        const requiredMillis = requiredReadingTimeForPair * 1000;
+
+        if (totalElapsedMillis < requiredMillis) {
+            // Lock is active, time not up
+            const remainingSeconds = (requiredMillis - totalElapsedMillis) / 1000;
+            updateStatus(`Time lock ACTIVE for pair ${pairKey}: Remaining ${remainingSeconds.toFixed(1)}s`);
+            showReadingTimeAlert();
+            return true; // Indicate lock is preventing navigation
+        } else {
+            // Time is up!
+            updateStatus(`Time lock PASSED for pair ${pairKey}.`);
+            // Mark as completed (even if updateElapsedTime missed it)
+            if (!completedTimeLockPairs.has(pairKey)) {
+                 completedTimeLockPairs.add(pairKey);
+            }
+            // Ensure stored time reflects completion
+            elapsedTimeForPair.set(pairKey, requiredMillis);
+            // Deactivate the lock state variables
+            isTimeLockActive = false;
+            isCurrentLockForPair = false;
+            currentPagePairStartTime = 0;
+            requiredReadingTimeForPair = 0;
+            return false; // Indicate lock is no longer preventing navigation
+        }
+    }
+
+
+    // --- Navigation (MODIFIED nextPage, jumpToPage handles lock check & persistence) ---
+    function nextPage() {
+        const currentStartPage = book.currentPage;
+        if (currentStartPage >= book.totalPages) return; // Already on last possible starting page
+
+        const isCurrentlySinglePageMode = document.body.classList.contains('fullscreen-mode') || document.body.classList.contains('content-rotated-mode');
+        const pairKey = (currentStartPage % 2 === 0 && currentStartPage > 0) ? currentStartPage - 1 : currentStartPage;
+
+        // Check if we *can* navigate internally within a locked pair
+        // Conditions: single page mode, lock is active *for a pair*, currently on the *first* page of the pair.
+        const canDoInternalNav = isCurrentlySinglePageMode &&
+                                isTimeLockActive && // Check if lock is currently active
+                                isCurrentLockForPair && // Check if it's a pair lock
+                                (currentStartPage % 2 !== 0) && // Check if we are on the first page (odd)
+                                !completedTimeLockPairs.has(pairKey); // Check the pair isn't completed
 
         let targetPageForJump;
-        if (isTryingToMoveWithinLockedPair) {
-            // If lock is active for a pair in single view, the 'next' action targets the second page of that pair
-            targetPageForJump = nextPageNumberTarget; // Attempt to jump to page N+1
+        if (canDoInternalNav) {
+            // If special case, target the next page (the second page of the pair)
+            targetPageForJump = currentStartPage + 1;
+            updateStatus(`NextPage: Internal pair navigation targeting ${targetPageForJump}`);
         } else {
             // Normal scenario: calculate target based on view mode increment
-            const isCurrentlyDoubleView = book.isDoublePageView && !isSinglePageMode;
+            const isCurrentlyDoubleView = book.isDoublePageView && !isCurrentlySinglePageMode;
             const jumpIncrement = isCurrentlyDoubleView ? 2 : 1;
-            targetPageForJump = currentActualPage + jumpIncrement;
+            targetPageForJump = currentStartPage + jumpIncrement;
+            updateStatus(`NextPage: Normal navigation targeting ${targetPageForJump}`);
         }
 
         // Ensure the calculated target is within bounds before attempting jump
-        if (targetPageForJump <= book.totalPages) {
+        targetPageForJump = Math.min(targetPageForJump, book.totalPages);
+
+        if (targetPageForJump > currentStartPage) {
             jumpToPage(targetPageForJump); // Let jumpToPage handle the final lock check and adjustments
-        } else if (currentActualPage < book.totalPages) {
-            // If calculated jump goes too far, try jumping to the very last page as a fallback
-            jumpToPage(book.totalPages);
+        } else {
+             updateStatus(`NextPage: Calculated target ${targetPageForJump} is not > current ${currentStartPage}. No jump.`);
         }
     }
 
-
     function prevPage(){
-        // No time lock for going backwards
+        // Time lock doesn't apply when going backwards.
+        const currentStartPage = book.currentPage;
+        if (currentStartPage <= 1) return; // Already on the first page
+
+        // --- IMPORTANT: Update elapsed time for the pair being left ---
+        updateElapsedTime(currentStartPage);
+        // ---
+
         const isSinglePageMode = document.body.classList.contains('fullscreen-mode') || document.body.classList.contains('content-rotated-mode');
-        const dec = book.isDoublePageView && !isSinglePageMode ? 2 : 1;
-        const targetPage = book.currentPage - dec;
-        if(targetPage >= 1) jumpToPage(targetPage);
+        const isCurrentlyDoubleView = book.isDoublePageView && !isSinglePageMode;
+        const dec = isCurrentlyDoubleView ? 2 : 1;
+        const targetPage = Math.max(1, currentStartPage - dec); // Ensure target is at least 1
+
+        if(targetPage < currentStartPage) {
+            // Direct jump, bypasses lock check logic in jumpToPage intentionally
+            updateStatus(`PrevPage: Jumping directly to page ${targetPage}`);
+            book.currentPage = targetPage;
+            if(book.currentPage > user.readingProgress.furthestPage) user.readingProgress.furthestPage = book.currentPage; // Should not happen when going back, but safe check
+            hideDefinitionPopup();
+            updateDisplay(); // Render new page(s), potentially starting a timer if returning to an incomplete pair
+            showPageSlider();
+            manageToolbar(false);
+        }
     }
 
-    // MODIFIED jumpToPage with refined lock check logic
+    // MODIFIED jumpToPage with refined lock check logic & persistence
     function jumpToPage(pageNum){
         if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages){
             console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);
@@ -1337,6 +1423,7 @@ body.loading-game-active #definition-popup {
 
         // Determine the target *starting page* for the view, adjusting for double page view
         let targetStartPage = pageNum;
+        // Check if the *target* view would be double page
         const isTargetingDoubleView = book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode');
         // If aiming for a double page view, and the requested page is even (and not page 1), set the start page to the preceding odd page.
         if (isTargetingDoubleView && targetStartPage > 1 && targetStartPage % 2 === 0) {
@@ -1344,60 +1431,67 @@ body.loading-game-active #definition-popup {
         }
 
         const currentStartPage = book.currentPage; // The start page of the *current* view
-        if (targetStartPage === currentStartPage) return; // No change needed
+        if (targetStartPage === currentStartPage) {
+             updateStatus(`JumpToPage: Target start page ${targetStartPage} is same as current. No action.`);
+             return; // No change needed
+        }
 
-        // --- Refined Lock Check Logic ---
         const isMovingForward = targetStartPage > currentStartPage;
-        const isSinglePageMode = !isTargetingDoubleView; // Is the *target* view single page? Should check *current* view mode for bypass logic.
-        const isCurrentlySinglePageMode = document.body.classList.contains('fullscreen-mode') || document.body.classList.contains('content-rotated-mode');
+        const wasTimeLockActiveBeforeUpdate = isTimeLockActive; // Store state *before* updating elapsed time
+        const wasCurrentLockForPair = isCurrentLockForPair;
 
+        // --- Update Elapsed Time for Page Being Left ---
+        // This should happen regardless of moving forward/backward or lock status
+        updateElapsedTime(currentStartPage);
+        // ---
 
-        // Determine if the attempted jump is *within* a currently locked pair in single page mode
-        // This specific navigation should be allowed:
-        // 1. A time lock is currently active (`isTimeLockActive`)
-        // 2. That lock was set because it was a page pair (`isCurrentLockForPair`)
-        // 3. The user is currently in single page view (`isCurrentlySinglePageMode`)
-        // 4. The *requested* destination page (`pageNum`) is exactly one page after the current *starting* page (`currentStartPage + 1`)
-        const isJumpingToSecondPageOfPairInSingleMode =
-            isTimeLockActive &&
-            isCurrentLockForPair &&
-            isCurrentlySinglePageMode &&
-            (pageNum === currentStartPage + 1);
+        // --- Lock Check Logic ---
+        let blockNavigation = false;
+        if (isMovingForward) {
+            // Determine if this jump qualifies as the special internal pair navigation in single page mode
+            const isCurrentlySinglePageMode = document.body.classList.contains('fullscreen-mode') || document.body.classList.contains('content-rotated-mode');
+            const isCurrentlyOnFirstPageOfPair = (currentStartPage % 2 !== 0);
+            // Check based on state *before* updateElapsedTime potentially completed the lock
+            const allowInternalPairNav = isCurrentlySinglePageMode &&
+                                        wasTimeLockActiveBeforeUpdate &&
+                                        wasCurrentLockForPair &&
+                                        isCurrentlyOnFirstPageOfPair &&
+                                        (pageNum === currentStartPage + 1); // Check raw target page num
 
-        // Check lock ONLY if:
-        // - Moving forward AND
-        // - It's NOT the special case defined above
-        if (isMovingForward && !isJumpingToSecondPageOfPairInSingleMode) {
-            // Perform the standard lock check
-            if (checkReadingTimeLock()) {
-                // Lock is active and time is not up, block navigation
-                updateStatus(`Navigation blocked by time lock. From ${currentStartPage} to ${pageNum}. Target start: ${targetStartPage}`);
-                // If blocked by slider interaction, reset slider visually to current page
-                const slider = document.getElementById('page-slider');
-                if (document.activeElement === slider) {
-                    updateSliderPosition(); // Reset slider to actual current page
+            if (allowInternalPairNav) {
+                updateStatus(`JumpToPage: Allowing internal pair navigation from ${currentStartPage} to ${pageNum} (target view start ${targetStartPage}). Bypassing lock check.`);
+                // Do not check lock, proceed with navigation
+                // Force targetStartPage to be the requested single page
+                targetStartPage = pageNum;
+            } else {
+                // Standard forward movement, perform lock check
+                // Use the check function which considers the *updated* elapsed time
+                if (checkReadingTimeLock(currentStartPage)) {
+                    // Lock is active and time is not up, block navigation
+                    updateStatus(`JumpToPage: Navigation blocked by time lock. From ${currentStartPage} to ${pageNum}. Target start: ${targetStartPage}`);
+                    blockNavigation = true;
                 }
-                return; // Stop navigation
+                // If checkReadingTimeLock() returned false, the lock is passed (or wasn't active). Proceed.
             }
-            // If checkReadingTimeLock() returned false, the lock is passed (or wasn't active)
         }
         // --- End Lock Check ---
 
-        // --- Proceed with Navigation ---
-        if (isJumpingToSecondPageOfPairInSingleMode) {
-             updateStatus(`Bypassing lock check: Navigating to second page (${pageNum}) of pair in single view.`);
-             // Force targetStartPage to be the requested page number for single view
-             targetStartPage = pageNum;
+        if (blockNavigation) {
+            // If blocked by slider interaction, reset slider visually to current page
+            const slider = document.getElementById('page-slider');
+            if (document.activeElement === slider) {
+                updateSliderPosition(); // Reset slider to actual current page
+            }
+            return; // Stop navigation
         }
 
-        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
+        // --- Proceed with Navigation ---
+        updateStatus(`JumpToPage: Jumping to page ${targetStartPage} (requested ${pageNum})`);
         book.currentPage = targetStartPage; // Set the new *starting* page for the view
 
         // Update furthest page tracker if moved forward
         if (isMovingForward && targetStartPage > user.readingProgress.furthestPage) {
             user.readingProgress.furthestPage = targetStartPage;
-             // Add the *previous* page to completed set *only if* we are moving forward *away* from it
-             // And the lock was previously active but now passed (handled by checkReadingTimeLock)
         }
 
         hideDefinitionPopup();
@@ -1406,7 +1500,7 @@ body.loading-game-active #definition-popup {
         manageToolbar(false);
     }
 
-    // --- View Modes (Unchanged - implicitly reset timer via updateDisplay) ---
+    // --- View Modes (MODIFIED to update elapsed time before changing view) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -1439,12 +1533,13 @@ body.loading-game-active #definition-popup {
     async function setSinglePageView(){
         if (!book.isDoublePageView && document.body.classList.contains('fullscreen-mode')) return;
         updateStatus("Setting Single Page View");
+        updateElapsedTime(book.currentPage); // Store time before changing view
         book.isDoublePageView = false; // Affects future page calculations
         document.body.classList.remove('content-rotated-mode');
         document.body.classList.add('fullscreen-mode');
         hideDefinitionPopup();
         // Page number doesn't need adjustment here, updateDisplay handles rendering correctly
-        await updateDisplay(); // Calls updateDisplay, which resets timer and lock state based on new view
+        await updateDisplay(); // Calls updateDisplay, which resets session timer & initiates new one if needed
         manageToolbar();
         updateSliderTotalPages(); // Slider max remains total pages
         updateSliderPosition(); // Update slider value and text
@@ -1452,12 +1547,16 @@ body.loading-game-active #definition-popup {
     async function setDoublePageView(){
         if (book.isDoublePageView && !document.body.classList.contains('fullscreen-mode') && !document.body.classList.contains('content-rotated-mode')) return;
         updateStatus("Setting Double Page View");
+        updateElapsedTime(book.currentPage); // Store time before changing view
         book.isDoublePageView = true; // Affects future page calculations
         document.body.classList.remove('content-rotated-mode', 'fullscreen-mode');
         // Adjust current page to be odd if needed for double view start
-        if (book.currentPage > 1 && book.currentPage % 2 === 0) book.currentPage--;
+        if (book.currentPage > 1 && book.currentPage % 2 === 0) {
+            updateStatus(`Adjusting page from ${book.currentPage} to ${book.currentPage - 1} for double view`);
+            book.currentPage--;
+        }
         hideDefinitionPopup();
-        await updateDisplay(); // Calls updateDisplay, resets timer/lock, renders pair
+        await updateDisplay(); // Calls updateDisplay, resets session timer, renders pair, initiates new timer if needed
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1465,12 +1564,13 @@ body.loading-game-active #definition-popup {
     async function setRotatedView() {
         if (document.body.classList.contains('content-rotated-mode')) return;
         updateStatus("Setting Content Rotated View");
+        updateElapsedTime(book.currentPage); // Store time before changing view
         book.isDoublePageView = false; // Treat as single page for nav logic and rendering
         document.body.classList.remove('fullscreen-mode');
         document.body.classList.add('content-rotated-mode');
         hideDefinitionPopup();
          // Page number doesn't need adjustment here
-        await updateDisplay(); // Calls updateDisplay, resets timer/lock
+        await updateDisplay(); // Calls updateDisplay, resets session timer, initiates new timer if needed
         manageToolbar();
         updateSliderTotalPages();
         updateSliderPosition();
@@ -1615,12 +1715,14 @@ body.loading-game-active #definition-popup {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
         globalFirstInstanceLocation = {};
-        // Reset time lock state completely on new PDF load
+        // --- Reset time lock state completely on new PDF load ---
         isTimeLockActive = false;
         isCurrentLockForPair = false;
-        completedTimeLockPages.clear();
+        completedTimeLockPairs.clear();
+        elapsedTimeForPair.clear(); // Clear the persisted times
         currentPagePairStartTime = 0;
         requiredReadingTimeForPair = 0;
+        // ---
 
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; hideDefinitionPopup(); document.title = "Heritage History™ Reader";
 
@@ -1691,7 +1793,10 @@ body.loading-game-active #definition-popup {
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error);
             isReaderReady = false;
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; completedTimeLockPages.clear(); // Clear on error too
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {};
+            // --- Reset time lock state on error too ---
+            completedTimeLockPairs.clear(); elapsedTimeForPair.clear(); isTimeLockActive = false; isCurrentLockForPair = false; currentPagePairStartTime = 0; requiredReadingTimeForPair = 0;
+            // ---
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC();
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
@@ -1704,7 +1809,7 @@ body.loading-game-active #definition-popup {
     }
 
 
-    // --- TOC population (MODIFIED to bypass time lock) ---
+    // --- TOC population (MODIFIED to update elapsed time) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
@@ -1712,7 +1817,9 @@ body.loading-game-active #definition-popup {
         const createTocItem = (item, level = 0) => {
             const d = document.createElement('div'); d.className = level === 0 ? 'toc-chapter' : 'toc-section'; const s = document.createElement('span'); s.className = level === 0 ? 'toc-chapter-title' : ''; s.textContent = item.title || 'Untitled'; s.style.cursor = 'pointer'; s.title = `Go to: ${item.title||'Untitled'}`;
             s.onclick = async (e) => {
-                e.preventDefault(); try {
+                e.preventDefault();
+                const currentStartPageBeforeJump = book.currentPage; // Get page before jump
+                try {
                     let pageIndex = -1;
                     if (typeof item.dest === 'string') {
                         const destArray = await book.pdfDocument.getDestination(item.dest);
@@ -1724,9 +1831,9 @@ body.loading-game-active #definition-popup {
                         const targetPage = pageIndex + 1;
                         updateStatus(`Jumping via TOC to page ${targetPage}`);
 
-                        // --- TOC Navigation Bypasses Time Lock ---
-                        // We directly set the page and update display, which resets any active lock.
-                        // No explicit lock check needed here.
+                        // --- TOC Navigation Bypasses Time Lock Check, BUT update elapsed time ---
+                        updateElapsedTime(currentStartPageBeforeJump); // Store time for the page being left
+                        // ---
 
                         let targetStartPage = targetPage;
                          // Adjust target start page for double view consistency *if* target is double view
@@ -1740,7 +1847,7 @@ body.loading-game-active #definition-popup {
 
                         hideDefinitionPopup();
                         hideTableOfContents();
-                        updateDisplay(); // Update display for the new page, resets lock state
+                        updateDisplay(); // Update display for the new page, resets session lock state, starts new timer if needed
                         showPageSlider();
                         manageToolbar(false);
                     }
@@ -1831,12 +1938,16 @@ body.loading-game-active #definition-popup {
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // Toolbar Clicks (No change)
+        // Toolbar Clicks (No change needed here as view changes call updateElapsedTime)
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
              if (!btn) return;
              switch (btn.id) {
-                 case 'back-btn': window.history.back(); break;
+                 case 'back-btn':
+                     // Update elapsed time before potentially leaving the page via history
+                     updateElapsedTime(book.currentPage);
+                     window.history.back();
+                     break;
                  case 'single-page-btn': setSinglePageView(); break;
                  case 'double-page-btn': setDoublePageView(); break;
                  case 'rotate-btn': setRotatedView(); break;
@@ -1851,7 +1962,7 @@ body.loading-game-active #definition-popup {
         // Popup Close (No change)
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
 
-        // Page Edge Clicks (Use nextPage/prevPage)
+        // Page Edge Clicks (Use nextPage/prevPage which handle time updates/checks)
         bookSpread?.addEventListener('click', e => {
             if (document.body.classList.contains('loading-game-active')) return;
             if (e.target.classList.contains('page-edge-nav')) {
@@ -1859,15 +1970,14 @@ body.loading-game-active #definition-popup {
                 if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
 
                 if (e.target.classList.contains('page-edge-left')) {
-                    prevPage(); // No lock check needed for previous
+                    prevPage(); // Handles time update internally
                 } else { // page-edge-right
-                    nextPage(); // nextPage calls jumpToPage which handles lock check
+                    nextPage(); // Handles time update/check internally via jumpToPage
                 }
-                // showPageSlider and manageToolbar are called within jumpToPage if successful
             }
         });
 
-        // Keyboard Navigation (Use nextPage/prevPage/jumpToPage)
+        // Keyboard Navigation (Use nextPage/prevPage/jumpToPage which handle time updates/checks)
         document.addEventListener('keydown', e => {
             if (document.body.classList.contains('loading-game-active')) return;
             if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -1877,25 +1987,25 @@ body.loading-game-active #definition-popup {
             let navAction = false;
             switch(e.key){
                 case 'ArrowRight': case 'PageDown':
-                     nextPage(); // Handles lock check internally via jumpToPage
+                     nextPage();
                      navAction = true; break;
                 case 'ArrowLeft': case 'PageUp':
-                     prevPage(); // No lock check needed
+                     prevPage();
                      navAction = true; break;
                 case 'Home':
-                     if(book.totalPages > 0) jumpToPage(1); // Handles lock check internally
+                     if(book.totalPages > 0) jumpToPage(1);
                      navAction = true; break;
                 case 'End':
-                     if(book.totalPages > 0) jumpToPage(book.totalPages); // Handles lock check internally
+                     if(book.totalPages > 0) jumpToPage(book.totalPages);
                      navAction = true; break;
             }
-            if(navAction){ e.preventDefault(); /* Slider/Toolbar managed by jumpToPage */ }
+            if(navAction){ e.preventDefault(); /* Slider/Toolbar managed by jumpToPage/prevPage */ }
         });
 
         // Resize Handling (No change)
         window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ updateStatus("Resize detected."); hideDefinitionPopup(); applyCurrentViewModeStyles(); if (!document.body.classList.contains('loading-game-active')) { updateDisplay(); } manageToolbar(); }, 250); });
 
-        // Touch Swipes (Use nextPage/prevPage)
+        // Touch Swipes (Use nextPage/prevPage which handle time updates/checks)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
         document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true});
         document.body.addEventListener('touchend',e=>{
@@ -1908,9 +2018,9 @@ body.loading-game-active #definition-popup {
                          if(dX>0){ // Swipe Right (Previous Page)
                              prevPage();
                          } else { // Swipe Left (Next Page)
-                             nextPage(); // Handles lock check internally
+                             nextPage();
                          }
-                         // Slider/Toolbar managed by jumpToPage
+                         // Slider/Toolbar managed by jumpToPage/prevPage
                      }
                  }
              }
@@ -1980,7 +2090,14 @@ body.loading-game-active #definition-popup {
                  if (gameContainer) gameContainer.style.display = 'none';
             }
 
-            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); clearTimeout(gameOverTimeoutId); clearTimeout(alertTimeout); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+            window.addEventListener('beforeunload', () => {
+                 updateStatus("Unloading - Saving final elapsed time...");
+                 updateElapsedTime(book.currentPage); // Save time for the last viewed page
+                 clearTimeout(gameOverTimeoutId);
+                 clearTimeout(alertTimeout);
+                 pageCache.clear();
+                 if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; }
+             });
             updateStatus("Initialization complete. Background loading may be in progress.");
 
         } catch (initError) {
