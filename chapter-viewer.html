@@ -745,7 +745,9 @@ body.loading-game-active #left-toolbar, /* Hide left toolbar too */
 body.loading-game-active .left-toolbar-trigger-area, /* Hide left trigger too */
 body.loading-game-active #page-slider-container,
 body.loading-game-active #page-slider-trigger-zone,
-body.loading-game-active #definition-popup {
+body.loading-game-active #definition-popup,
+body.loading-game-active #iframe-popup-backdrop, /* Hide iframe popup too */
+body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     display: none;
     visibility: hidden;
 }
@@ -784,6 +786,79 @@ body.loading-game-active #definition-popup {
 }
 /* --- END: Reading Time Alert --- */
 
+/* --- START: Iframe Popup Styles --- */
+#iframe-popup-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(8, 14, 28, 0.7); /* Semi-transparent dark blue */
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 10003; /* Above definition popup, below modal */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease-out, visibility 0s linear 0.25s;
+    cursor: pointer; /* Indicate clicking backdrop closes it */
+}
+#iframe-popup-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 80%;
+    height: 80%;
+    max-width: 1000px;
+    max-height: 700px;
+    background-color: var(--page); /* White page background */
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 10004; /* Above backdrop */
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, visibility 0s linear 0.25s;
+}
+#iframe-popup-backdrop.visible,
+#iframe-popup-modal.visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+#iframe-popup-modal.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+#popup-iframe {
+    flex-grow: 1; /* Take remaining space */
+    border: none;
+    width: 100%;
+    height: 100%; /* Fill the container */
+}
+#close-iframe-popup-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    z-index: 10005; /* Above iframe content */
+}
+#close-iframe-popup-btn:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+/* --- END: Iframe Popup Styles --- */
 
 </style>
 
@@ -850,6 +925,14 @@ body.loading-game-active #definition-popup {
     <!-- Alert Div (populated by JS, styled by CSS) -->
     <div id="reading-time-alert"></div>
 
+    <!-- START: Iframe Popup HTML -->
+    <div id="iframe-popup-backdrop"></div>
+    <div id="iframe-popup-modal">
+        <button id="close-iframe-popup-btn" title="Close (Esc)">×</button>
+        <iframe id="popup-iframe" src="about:blank" title="Embedded Content"></iframe>
+    </div>
+    <!-- END: Iframe Popup HTML -->
+
 <script>
     // --- START: HTML Population ---
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
@@ -888,6 +971,11 @@ body.loading-game-active #definition-popup {
     const iframeLoadingText = document.getElementById('iframe-loading-text');
     // --- Timelock UI Elements ---
     const timelockToggleButton = document.getElementById('timelock-toggle-btn');
+    // --- NEW: Iframe Popup Elements ---
+    const iframePopupBackdrop = document.getElementById('iframe-popup-backdrop');
+    const iframePopupModal = document.getElementById('iframe-popup-modal');
+    const popupIframe = document.getElementById('popup-iframe');
+    const closeIframePopupBtn = document.getElementById('close-iframe-popup-btn');
 
 
     // --- State Variables ---
@@ -898,6 +986,7 @@ body.loading-game-active #definition-popup {
     // --- NEW State Variables ---
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
+    let iframeMappings = {}; // Stores { pageNum: iframeUrl }
 
     // --- Reading Time Lock State ---
     let isTimelockGloballyEnabled = true; // *** NEW: Master switch for timelock ***
@@ -1239,7 +1328,7 @@ body.loading-game-active #definition-popup {
         }
     }
 
-    // --- Update Display (MODIFIED - Respects isTimelockGloballyEnabled) ---
+    // --- Update Display (MODIFIED - Checks for iframe popup) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1416,6 +1505,23 @@ body.loading-game-active #definition-popup {
         updateSliderPosition(); // Update slider based on new state
         preloadAdjacentPages(book.currentPage); // Preload based on start page
         applyCurrentViewModeStyles(); // Ensure scaling/rotation is correct
+
+        // --- *** NEW: Check for Iframe Popup *** ---
+        if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+            const iframeUrl = iframeMappings[leftPageNum.toString()];
+            if (iframeUrl) {
+                updateStatus(`Iframe found for page ${leftPageNum}. Showing popup.`);
+                showIframePopup(iframeUrl);
+            } else {
+                // Ensure iframe popup is hidden if navigating *away* from a page that had one
+                // (This might already be handled by jumpToPage, but double-check)
+                hideIframePopupIfNeeded();
+            }
+        } else {
+            hideIframePopupIfNeeded(); // Hide if current page is invalid
+        }
+        // --- *** END: Check for Iframe Popup *** ---
+
         updateStatus("Display update complete.");
     }
 
@@ -1540,7 +1646,7 @@ body.loading-game-active #definition-popup {
         else if (book.currentPage > 1) jumpToPage(1); // Go to first page if decrement goes below 1
     }
 
-    // MODIFIED jumpToPage to use modified lock check
+    // MODIFIED jumpToPage to hide popups before jump
     function jumpToPage(pageNum){
         if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages){
             console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);
@@ -1603,8 +1709,12 @@ body.loading-game-active #definition-popup {
             // Optionally save progress here if needed
         }
 
+        // --- Hide ALL popups before updating display ---
         hideDefinitionPopup();
-        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting
+        hideIframePopup(); // Also hide iframe popup before page change
+        // ---
+
+        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting. Also handles showing iframe popup if needed.
         showPageSlider(); // Show slider briefly after navigation
         manageToolbar(false); // Hide right toolbar after navigation
         manageLeftToolbar(false); // Hide left toolbar after navigation
@@ -1662,6 +1772,7 @@ body.loading-game-active #definition-popup {
         document.body.classList.add('fullscreen-mode'); // Add fullscreen class
 
         hideDefinitionPopup();
+        hideIframePopup(); // Hide iframe popup when changing view mode
         // updateDisplay will calculate lock based on the new effective single-page mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -1687,6 +1798,7 @@ body.loading-game-active #definition-popup {
         }
 
         hideDefinitionPopup();
+        hideIframePopup(); // Hide iframe popup when changing view mode
          // updateDisplay will calculate lock based on the new effective double-page mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -1705,6 +1817,7 @@ body.loading-game-active #definition-popup {
         document.body.classList.add('content-rotated-mode'); // Add rotate class
 
         hideDefinitionPopup();
+        hideIframePopup(); // Hide iframe popup when changing view mode
         // updateDisplay will calculate lock based on the new effective single-page (rotated) mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -1851,6 +1964,48 @@ body.loading-game-active #definition-popup {
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
+    // --- NEW: Load Iframe Data ---
+    async function loadIframeData(pdfUrl) {
+        const iframeDataUrl = pdfUrl.replace(/\.pdf$/i, '-iframes.json');
+        updateStatus(`Attempting to load iframe data from: ${iframeDataUrl}`);
+        iframeMappings = {}; // Reset before loading
+        try {
+            const response = await fetch(iframeDataUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    updateStatus(`Iframe data file not found at ${iframeDataUrl}. No iframe popups will be shown.`);
+                } else {
+                    console.warn(`Iframe data fetch failed: HTTP error ${response.status} for ${iframeDataUrl}`);
+                }
+                return false; // Indicate failure or non-existence
+            }
+            const data = await response.json();
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                 console.warn("Invalid iframe data structure in JSON file. Expected an object { pageNum: urlString }.");
+                 return false;
+            }
+            // Validate and store mappings
+            const validMappings = {};
+            let count = 0;
+            for (const [key, value] of Object.entries(data)) {
+                const pageNum = parseInt(key, 10);
+                if (!isNaN(pageNum) && pageNum > 0 && typeof value === 'string' && value.trim() !== '') {
+                    validMappings[key] = value.trim(); // Store page number as string key
+                    count++;
+                } else {
+                    console.warn(`Invalid iframe mapping skipped: Key='${key}', Value='${value}'`);
+                }
+            }
+            iframeMappings = validMappings;
+            updateStatus(`Iframe data loaded successfully: ${count} mappings found.`);
+            return true;
+        } catch (error) {
+            console.warn(`Iframe data fetch/parse error for ${iframeDataUrl}: ${error.message}. No iframe popups will be shown.`);
+            iframeMappings = {};
+            return false;
+        }
+    }
+
     // --- Pre-scan Function (Unchanged) ---
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
@@ -1903,15 +2058,15 @@ body.loading-game-active #definition-popup {
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED to reset global timelock state) ---
+    // --- PDF Loading (MODIFIED to load iframe data and reset state) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        globalFirstInstanceLocation = {};
+        globalFirstInstanceLocation = {}; iframeMappings = {}; // Reset iframe mappings
 
         // *** Reset time lock state completely on new PDF load ***
         updateStatus("Resetting time lock state for new PDF.");
-        isTimeLockGloballyEnabled = true; // *** Reset global toggle to ON ***
+        isTimelockGloballyEnabled = true; // *** Reset global toggle to ON ***
         updateTimelockButtonVisuals(); // Ensure button reflects the default ON state
         isTimeLockActive = false;
         completedTimeLockPages.clear(); // Clear the set of completed pages/pairs
@@ -1920,14 +2075,18 @@ body.loading-game-active #definition-popup {
         // *** END Reset time lock state ***
 
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; book.isDoublePageView = true; // Reset to default intended view
-        hideDefinitionPopup(); document.title = "Heritage History™ Reader";
+        hideDefinitionPopup(); hideIframePopup(); // Hide both popups
+        document.title = "Heritage History™ Reader";
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
         try {
             updateStatus("Starting background PDF document loading...");
             console.log("Internal Status: Loading PDF document...");
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            const overlayPromise = loadOverlayData(pdfUrl); // Start loading overlay concurrently
+            // --- Start loading overlay and iframe data concurrently ---
+            const overlayPromise = loadOverlayData(pdfUrl);
+            const iframeDataPromise = loadIframeData(pdfUrl);
+            // ---
 
             book.pdfDocument = await loadingTask.promise;
             book.totalPages = book.pdfDocument.numPages;
@@ -1941,8 +2100,11 @@ body.loading-game-active #definition-popup {
             updateStatus("Fetching outline...");
             try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
 
-            const overlayLoaded = await overlayPromise; // Wait for overlay loading to finish
+            // --- Wait for overlay and iframe data loading to finish ---
+            const [overlayLoaded, iframeDataLoaded] = await Promise.all([overlayPromise, iframeDataPromise]);
             updateStatus(`Overlay data loaded: ${overlayLoaded}`);
+            updateStatus(`Iframe data loaded: ${iframeDataLoaded}`);
+            // ---
 
             if (overlayLoaded && book.pdfDocument) {
                 console.log("Internal Status: Scanning for keywords...");
@@ -1970,6 +2132,7 @@ body.loading-game-active #definition-popup {
             await new Promise(resolve => requestAnimationFrame(resolve));
 
             // Perform the initial display render and calculate/set the first time lock (if applicable and enabled)
+            // This will also check for an iframe on page 1.
             await updateDisplay();
 
             // --- *** READER IS READY *** ---
@@ -1995,7 +2158,7 @@ body.loading-game-active #definition-popup {
             console.error("FATAL: Error loading PDF document:", error);
             isReaderReady = false;
             // Reset state on error
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; iframeMappings = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC(); // Update UI to reflect error state
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
@@ -2008,7 +2171,7 @@ body.loading-game-active #definition-popup {
     }
 
 
-    // --- TOC population (MODIFIED - Respects global timelock state when jumping) ---
+    // --- TOC population (MODIFIED - Hides iframe popup on jump) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
@@ -2050,9 +2213,14 @@ body.loading-game-active #definition-popup {
                         // Update furthest page if necessary
                         if(book.currentPage > user.readingProgress.furthestPage) user.readingProgress.furthestPage = book.currentPage;
 
+                        // --- Hide ALL popups before TOC jump ---
                         hideDefinitionPopup();
+                        hideIframePopup();
                         hideTableOfContents();
+                        // ---
+
                         // Update display: This will apply the global timelock setting when determining if a *new* lock should be set
+                        // It will also check for an iframe on the target page.
                         await updateDisplay();
                         showPageSlider();
                         manageToolbar(false); // Hide right toolbar
@@ -2068,7 +2236,7 @@ body.loading-game-active #definition-popup {
      }
 
 
-    // --- Popup Handling Functions (Unchanged) ---
+    // --- Popup Handling Functions (Definition Popup - Unchanged) ---
     function showDefinitionPopup(word, definition, rect) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
         // Added check: Don't show if in rotated mode
@@ -2076,6 +2244,9 @@ body.loading-game-active #definition-popup {
              updateStatus("Popup suppressed in rotated mode.");
              return;
         }
+        // --- Hide iframe popup if definition popup is shown ---
+        hideIframePopupIfNeeded();
+        // ---
         popupWord.textContent = word || "Keyword";
         popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
         popupDefinition.scrollTop = 0;
@@ -2104,6 +2275,48 @@ body.loading-game-active #definition-popup {
     function hideDefinitionPopup() {
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
+
+    // --- NEW: Iframe Popup Handling Functions ---
+    function showIframePopup(url) {
+        if (!iframePopupBackdrop || !iframePopupModal || !popupIframe || !closeIframePopupBtn || !url) {
+            console.error("Cannot show iframe popup: Missing element or URL.");
+            return;
+        }
+         // --- Hide definition popup if iframe popup is shown ---
+        hideDefinitionPopup();
+        // ---
+
+        // Check if already visible with the same URL to prevent unnecessary reloads
+        if (iframePopupModal.classList.contains('visible') && popupIframe.src === url) {
+            updateStatus("Iframe popup already visible with the same URL.");
+            return;
+        }
+
+        updateStatus(`Showing iframe popup for URL: ${url}`);
+        popupIframe.src = url; // Set the source
+        iframePopupBackdrop.classList.add('visible');
+        iframePopupModal.classList.add('visible');
+    }
+
+    function hideIframePopup() {
+        if (!iframePopupBackdrop || !iframePopupModal || !popupIframe) return;
+        if (iframePopupModal.classList.contains('visible')) {
+             updateStatus("Hiding iframe popup.");
+             iframePopupBackdrop.classList.remove('visible');
+             iframePopupModal.classList.remove('visible');
+             // Reset src to prevent background activity and potential audio issues
+             popupIframe.src = 'about:blank';
+        }
+    }
+
+    // Helper to hide iframe popup only if it's currently visible
+    function hideIframePopupIfNeeded() {
+         if (iframePopupModal?.classList.contains('visible')) {
+             hideIframePopup();
+         }
+    }
+    // --- END: Iframe Popup Handling Functions ---
+
 
     // --- Game Transition Logic (Unchanged) ---
     function transitionToChapter() {
@@ -2183,7 +2396,7 @@ body.loading-game-active #definition-popup {
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for left toolbar and timelock button) ---
+    // --- Event Setup (MODIFIED - Adds listeners for iframe popup, updates Esc key) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2216,6 +2429,9 @@ body.loading-game-active #definition-popup {
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
         // Popup Close (No change)
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
+        // --- NEW: Iframe Popup Close ---
+        closeIframePopupBtn?.addEventListener('click', hideIframePopup);
+        iframePopupBackdrop?.addEventListener('click', hideIframePopup); // Click backdrop to close
 
         // Page Edge Clicks (Uses updated nextPage/prevPage)
         bookSpread?.addEventListener('click', e => {
@@ -2239,13 +2455,33 @@ body.loading-game-active #definition-popup {
             }
         });
 
-        // Keyboard Navigation (Uses updated nextPage/prevPage/jumpToPage)
+        // Keyboard Navigation (MODIFIED Esc key behavior)
         document.addEventListener('keydown', e => {
             if (document.body.classList.contains('loading-game-active')) return;
-            // Ignore if focus is in an input, TOC is open, or popup is open (except Escape)
-            if (document.getElementById('toc-panel')?.classList.contains('visible') || (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
-            if (e.key === 'Escape' && definitionPopup.classList.contains('visible')) { hideDefinitionPopup(); e.preventDefault(); return; }
-            if (definitionPopup.classList.contains('visible') || e.ctrlKey || e.altKey || e.metaKey) return;
+
+            // --- Check for popup closes first ---
+            if (e.key === 'Escape') {
+                if (iframePopupModal?.classList.contains('visible')) {
+                    hideIframePopup();
+                    e.preventDefault();
+                    return; // Stop further processing
+                } else if (definitionPopup.classList.contains('visible')) {
+                    hideDefinitionPopup();
+                    e.preventDefault();
+                    return; // Stop further processing
+                }
+                // If no popups are open, Esc does nothing else here
+            }
+            // ---
+
+            // Ignore if focus is in an input, TOC is open, or a popup is still open (shouldn't happen after Esc check above, but good safeguard)
+            if (document.getElementById('toc-panel')?.classList.contains('visible') ||
+                iframePopupModal?.classList.contains('visible') ||
+                definitionPopup.classList.contains('visible') ||
+               (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+
+            // Ignore modifier keys
+            if (e.ctrlKey || e.altKey || e.metaKey) return;
 
             let navAction = false;
             switch(e.key){
@@ -2265,15 +2501,17 @@ body.loading-game-active #definition-popup {
             if(navAction){ e.preventDefault(); /* Slider/Toolbars managed by jumpToPage/showPageSlider */ }
         });
 
-        // Resize Handling (Uses modified updateDisplay)
+        // Resize Handling (Uses modified updateDisplay, hides iframe popup)
         window.addEventListener('resize', ()=>{
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
                 updateStatus("Resize detected.");
                 hideDefinitionPopup();
+                hideIframePopup(); // Hide iframe popup on resize
                 applyCurrentViewModeStyles(); // Recalculate scale/rotation first
                 if (!document.body.classList.contains('loading-game-active') && book.pdfDocument) {
                     // Re-render and re-evaluate locks based on potentially new effective view mode
+                    // Also re-checks for iframe on the *current* page after resize
                     updateDisplay();
                 }
                  manageToolbar(); // Adjust right toolbar visibility if needed
@@ -2283,7 +2521,18 @@ body.loading-game-active #definition-popup {
 
         // Touch Swipes (Uses updated nextPage/prevPage)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
-        document.body.addEventListener('touchstart',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section')){tX=0;tY=0;return}if(e.touches.length===1){tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now()}else{tX=0;tY=0}},{passive:true});
+        document.body.addEventListener('touchstart',e=>{
+            if(document.body.classList.contains('loading-game-active')) return;
+            // Ignore swipes starting on interactive elements or popups
+            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop')){
+                tX=0;tY=0;return;
+            }
+            if(e.touches.length===1){
+                tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now();
+            } else {
+                tX=0;tY=0;
+            }
+        },{passive:true});
         document.body.addEventListener('touchend',e=>{
              if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;
              if(e.changedTouches.length===1){
@@ -2306,7 +2555,7 @@ body.loading-game-active #definition-popup {
 
         // Slider Trigger Zone (No change)
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(document.body.classList.contains('loading-game-active')) return; if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{if(document.body.classList.contains('loading-game-active')) return; const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
-        // Global Click Listener for Popup Dismissal (No change)
+        // Global Click Listener for Popup Dismissal (Definition Popup Only)
         document.addEventListener('click', e => {
              if (definitionPopup.classList.contains('visible')
                  && !definitionPopup.contains(e.target)
