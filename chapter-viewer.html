@@ -790,15 +790,30 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
 #iframe-popup-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(8, 14, 28, 0.7); /* Semi-transparent dark blue */
-    backdrop-filter: blur(3px);
+    background-color: rgba(8, 14, 28, 0.7); /* Base semi-transparent dark blue */
+    backdrop-filter: blur(3px); /* Apply blur effect */
     -webkit-backdrop-filter: blur(3px);
     z-index: 10003; /* Above definition popup, below modal */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s ease-out, visibility 0s linear 0.25s;
     cursor: pointer; /* Indicate clicking backdrop closes it */
+    overflow: hidden; /* Contain the pseudo-element */
 }
+
+/* Gradient overlay using ::before */
+#iframe-popup-backdrop::before {
+    content: "";
+    position: absolute;
+    inset: 0; /* Cover the entire backdrop */
+    background: var(--gradient-time-capsule); /* Apply the specified flowing gradient */
+    background-size: 300% 300%; /* Match button animation size */
+    opacity: 0.35; /* Match button initial opacity for the overlay */
+    animation: hazyGradientAnimation 6s linear infinite; /* Apply the animation */
+    pointer-events: none; /* Don't interfere with clicks */
+    z-index: -1; /* Place behind potential backdrop content, but above page content */
+}
+
 #iframe-popup-modal {
     position: fixed;
     top: 50%;
