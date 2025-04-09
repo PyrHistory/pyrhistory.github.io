@@ -35,6 +35,11 @@
     --space-sm: 8px; /* Example value */
     --space-xs: 4px; /* Example value */
 
+    /* --- NEW: Parchment Popup Variables --- */
+    --parchment-bg: #f3e9d2; /* Parchment-like background color */
+    --parchment-border: #c8bfa8; /* Darker border */
+    --parchment-overlay-opacity: 0.85;
+    --notes-popup-z-index: 10006; /* Above iframe popup */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -747,7 +752,9 @@ body.loading-game-active #page-slider-container,
 body.loading-game-active #page-slider-trigger-zone,
 body.loading-game-active #definition-popup,
 body.loading-game-active #iframe-popup-backdrop, /* Hide iframe popup too */
-body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
+body.loading-game-active #iframe-popup-modal,   /* Hide iframe popup too */
+body.loading-game-active #notes-popup-overlay, /* Hide notes popup too */
+body.loading-game-active #notes-popup-window {  /* Hide notes popup too */
     display: none;
     visibility: hidden;
 }
@@ -875,6 +882,133 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
 }
 /* --- END: Iframe Popup Styles --- */
 
+/* --- START: Notes (Parchment PDF) Popup Styles --- */
+#notes-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(243, 233, 210, var(--parchment-overlay-opacity)); /* Parchment color with opacity */
+    /* Optional subtle texture */
+    /* background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="4" height="4" viewBox="0 0 4 4"%3E%3Cpath fill="%23c8bfa8" fill-opacity="0.1" d="M1 3h1v1H1V3zm2-2h1v1H3V1z"%3E%3C/path%3E%3C/svg%3E'); */
+    z-index: calc(var(--notes-popup-z-index) - 1); /* Below the window */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
+    cursor: pointer;
+}
+#notes-popup-window {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 85%;
+    height: 85%;
+    max-width: 800px; /* Adjust max width as needed */
+    max-height: 90vh; /* Limit height */
+    background-color: #fff; /* Standard white background for PDF viewing */
+    border: 3px solid var(--parchment-border);
+    border-radius: 6px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    z-index: var(--notes-popup-z-index);
+    opacity: 0;
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Important */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out, visibility 0s linear 0.3s;
+}
+#notes-popup-overlay.visible,
+#notes-popup-window.visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+#notes-popup-window.visible {
+    transform: translate(-50%, -50%) scale(1);
+}
+#notes-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--parchment-bg);
+    border-bottom: 1px solid var(--parchment-border);
+    flex-shrink: 0;
+}
+#notes-popup-title {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: #5a4d41; /* Darker brown for text */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+}
+#close-notes-popup-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #8c7b6b;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+#close-notes-popup-btn:hover {
+    color: #5a4d41;
+}
+#notes-popup-content {
+    flex-grow: 1;
+    position: relative; /* Needed for canvas positioning */
+    overflow: hidden; /* Clip canvas if needed */
+    background-color: #e0e0e0; /* Light grey background behind canvas */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#notes-popup-canvas {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block; /* Remove extra space below */
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+}
+#notes-popup-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: var(--parchment-bg);
+    border-top: 1px solid var(--parchment-border);
+    flex-shrink: 0;
+}
+#notes-popup-nav button {
+    background-color: #fff;
+    border: 1px solid var(--parchment-border);
+    color: #5a4d41;
+    padding: 5px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    margin: 0 5px;
+}
+#notes-popup-nav button:hover:not(:disabled) {
+    background-color: #f8f4e9;
+    border-color: #a89f88;
+}
+#notes-popup-nav button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+#notes-page-info {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: #6a5d51;
+}
+/* --- END: Notes (Parchment PDF) Popup Styles --- */
+
 </style>
 
 </head>
@@ -948,6 +1082,29 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     </div>
     <!-- END: Iframe Popup HTML -->
 
+    <!-- START: Notes (Parchment PDF) Popup HTML -->
+    <div id="notes-popup-overlay"></div>
+    <div id="notes-popup-window">
+        <div id="notes-popup-header">
+            <span id="notes-popup-title">Notes</span>
+            <button id="close-notes-popup-btn" title="Close (Esc)">×</button>
+        </div>
+        <div id="notes-popup-content">
+            <canvas id="notes-popup-canvas"></canvas>
+            <!-- Optional: Add loading indicator for popup PDF -->
+            <!-- <div id="notes-popup-loading" style="position:absolute; ...">Loading PDF...</div> -->
+        </div>
+        <div id="notes-popup-footer">
+            <div id="notes-popup-nav">
+                <button id="notes-prev-btn" title="Previous Page (←)">&lt; Prev</button>
+                <button id="notes-next-btn" title="Next Page (→)">Next &gt;</button>
+            </div>
+            <span id="notes-page-info">Page 1 of 1</span>
+        </div>
+    </div>
+    <!-- END: Notes (Parchment PDF) Popup HTML -->
+
+
 <script>
     // --- START: HTML Population ---
     const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
@@ -991,6 +1148,15 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     const iframePopupModal = document.getElementById('iframe-popup-modal');
     const popupIframe = document.getElementById('popup-iframe');
     const closeIframePopupBtn = document.getElementById('close-iframe-popup-btn');
+    // --- NEW: Notes Popup Elements ---
+    const notesPopupOverlay = document.getElementById('notes-popup-overlay');
+    const notesPopupWindow = document.getElementById('notes-popup-window');
+    const notesPopupTitle = document.getElementById('notes-popup-title');
+    const closeNotesPopupBtn = document.getElementById('close-notes-popup-btn');
+    const notesPopupCanvas = document.getElementById('notes-popup-canvas');
+    const notesPrevBtn = document.getElementById('notes-prev-btn');
+    const notesNextBtn = document.getElementById('notes-next-btn');
+    const notesPageInfo = document.getElementById('notes-page-info');
 
 
     // --- State Variables ---
@@ -1002,6 +1168,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
     let iframeMappings = {}; // Stores { pageNum: iframeUrl }
+    let popupTriggersData = {}; // Stores { pageNum: {pdfUrl: '', initialPage: 1} } for notes popup
 
     // --- Reading Time Lock State ---
     let isTimelockGloballyEnabled = true; // *** NEW: Master switch for timelock ***
@@ -1013,6 +1180,13 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     // - Single View: Stores the EVEN page number itself.
     let completedTimeLockPages = new Set();
     let alertTimeout = null; // For the alert message
+
+    // --- NEW: Notes Popup State ---
+    let notesPopupPdfDoc = null;
+    let notesPopupCurrentPageNum = 1;
+    let notesPopupTotalPages = 0;
+    let isNotesPopupVisible = false;
+    let currentNotesTriggerConfig = null; // Stores the config used to open the current notes popup
 
 
     // --- PDF.js Setup (Unchanged) ---
@@ -1148,6 +1322,9 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
                         highlightDiv.addEventListener('click', (e) => {
                             // Note: This event might not fire in rotated mode due to CSS pointer-events: none
                             e.stopPropagation();
+                            // *** NEW: Hide notes popup if definition is clicked ***
+                            hideNotesPopupIfNeeded();
+                            // *** END NEW ***
                             const currentHighlight = e.currentTarget;
                             const word = currentHighlight.dataset.keyword;
                             const def = currentHighlight.dataset.definition;
@@ -1343,7 +1520,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         }
     }
 
-    // --- Update Display (MODIFIED - Checks for iframe popup) ---
+    // --- Update Display (MODIFIED - Checks for notes popup trigger) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1521,21 +1698,36 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         preloadAdjacentPages(book.currentPage); // Preload based on start page
         applyCurrentViewModeStyles(); // Ensure scaling/rotation is correct
 
-        // --- *** NEW: Check for Iframe Popup *** ---
+        // --- Check for Popups (Iframe and Notes) ---
+        let triggerPageNumToCheck = leftPageNum; // Always check the left (or single) page
+        let triggerConfigFound = null;
+
+        // Check iframe popup
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-            const iframeUrl = iframeMappings[leftPageNum.toString()];
+            const iframeUrl = iframeMappings[triggerPageNumToCheck.toString()];
             if (iframeUrl) {
-                updateStatus(`Iframe found for page ${leftPageNum}. Showing popup.`);
-                showIframePopup(iframeUrl);
-            } else {
-                // Ensure iframe popup is hidden if navigating *away* from a page that had one
-                // (This might already be handled by jumpToPage, but double-check)
-                hideIframePopupIfNeeded();
+                updateStatus(`Iframe found for page ${triggerPageNumToCheck}. Showing popup.`);
+                showIframePopup(iframeUrl); // This will hide notes popup if shown
+                triggerConfigFound = 'iframe'; // Mark that a popup was triggered
             }
-        } else {
-            hideIframePopupIfNeeded(); // Hide if current page is invalid
         }
-        // --- *** END: Check for Iframe Popup *** ---
+
+        // Check notes popup *only if iframe popup wasn't triggered*
+        if (!triggerConfigFound && popupTriggersData && leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+             const notesTriggerConfig = popupTriggersData[triggerPageNumToCheck.toString()];
+             if (notesTriggerConfig) {
+                 updateStatus(`Notes popup trigger found for page ${triggerPageNumToCheck}. Showing.`);
+                 showNotesPopup(notesTriggerConfig); // This will hide iframe popup if shown
+                 triggerConfigFound = 'notes';
+             }
+        }
+
+        // If no popup was triggered for the current page, ensure they are hidden
+        if (!triggerConfigFound) {
+            hideIframePopupIfNeeded();
+            hideNotesPopupIfNeeded(); // Also hide notes popup if navigating away
+        }
+        // --- END Popup Checks ---
 
         updateStatus("Display update complete.");
     }
@@ -1726,17 +1918,18 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
 
         // --- Hide ALL popups before updating display ---
         hideDefinitionPopup();
-        hideIframePopup(); // Also hide iframe popup before page change
+        hideIframePopup();
+        hideNotesPopup(); // Also hide notes popup before page change
         // ---
 
-        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting. Also handles showing iframe popup if needed.
+        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting. Also handles checking for popups.
         showPageSlider(); // Show slider briefly after navigation
         manageToolbar(false); // Hide right toolbar after navigation
         manageLeftToolbar(false); // Hide left toolbar after navigation
     }
 
 
-    // --- View Modes (Uses modified updateDisplay) ---
+    // --- View Modes (Uses modified updateDisplay and hides popups) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -1787,8 +1980,9 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         document.body.classList.add('fullscreen-mode'); // Add fullscreen class
 
         hideDefinitionPopup();
-        hideIframePopup(); // Hide iframe popup when changing view mode
-        // updateDisplay will calculate lock based on the new effective single-page mode
+        hideIframePopup();
+        hideNotesPopup(); // Hide notes popup when changing view mode
+        // updateDisplay will calculate lock based on the new effective single-page mode and check for popups
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
         manageLeftToolbar(false); // Hide left toolbar after action
@@ -1813,8 +2007,9 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         }
 
         hideDefinitionPopup();
-        hideIframePopup(); // Hide iframe popup when changing view mode
-         // updateDisplay will calculate lock based on the new effective double-page mode
+        hideIframePopup();
+        hideNotesPopup(); // Hide notes popup when changing view mode
+         // updateDisplay will calculate lock based on the new effective double-page mode and check for popups
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
         manageLeftToolbar(false); // Hide left toolbar after action
@@ -1832,8 +2027,9 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         document.body.classList.add('content-rotated-mode'); // Add rotate class
 
         hideDefinitionPopup();
-        hideIframePopup(); // Hide iframe popup when changing view mode
-        // updateDisplay will calculate lock based on the new effective single-page (rotated) mode
+        hideIframePopup();
+        hideNotesPopup(); // Hide notes popup when changing view mode
+        // updateDisplay will calculate lock based on the new effective single-page (rotated) mode and check for popups
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
         manageLeftToolbar(false); // Hide left toolbar after action
@@ -2021,6 +2217,60 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         }
     }
 
+    // --- NEW: Load Notes Popup Data ---
+    async function loadNotesData(pdfUrl) {
+        // Assume notes data lives alongside the main PDF, e.g., 'chapter2.pdf' -> 'chapter2-notes.json'
+        // Or use the example path structure if a base path is known.
+        // Let's use the replacement convention for robustness.
+        const notesDataUrl = pdfUrl.replace(/\.pdf$/i, '-notes.json');
+        // const notesDataUrl = `chapters/ancient-history/chapter2-notes.json`; // Example hardcoded path
+        updateStatus(`Attempting to load notes popup data from: ${notesDataUrl}`);
+        popupTriggersData = {}; // Reset before loading
+        try {
+            const response = await fetch(notesDataUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    updateStatus(`Notes popup data file not found at ${notesDataUrl}. No notes popups will be shown.`);
+                } else {
+                    console.warn(`Notes popup data fetch failed: HTTP error ${response.status} for ${notesDataUrl}`);
+                }
+                return false; // Indicate failure or non-existence
+            }
+            const data = await response.json();
+            // Validate the structure: Expect { "popupTriggers": { "pageNumber": { "pdfUrl": "...", "initialPage": 1 } } }
+            if (!data || typeof data !== 'object' || typeof data.popupTriggers !== 'object') {
+                 console.warn("Invalid notes popup data structure in JSON file. Expected an object with a 'popupTriggers' key containing page mappings.");
+                 return false;
+            }
+
+            const validTriggers = {};
+            let count = 0;
+            for (const [key, config] of Object.entries(data.popupTriggers)) {
+                const pageNum = parseInt(key, 10);
+                if (!isNaN(pageNum) && pageNum > 0 &&
+                    typeof config === 'object' && config !== null &&
+                    typeof config.pdfUrl === 'string' && config.pdfUrl.trim() !== '')
+                {
+                    validTriggers[key] = {
+                        pdfUrl: config.pdfUrl.trim(),
+                        initialPage: (typeof config.initialPage === 'number' && config.initialPage > 0) ? Math.floor(config.initialPage) : 1
+                    };
+                    count++;
+                } else {
+                    console.warn(`Invalid notes popup trigger skipped: Key='${key}', Config='${JSON.stringify(config)}'`);
+                }
+            }
+            popupTriggersData = validTriggers;
+            updateStatus(`Notes popup data loaded successfully: ${count} triggers found.`);
+            return true;
+        } catch (error) {
+            console.warn(`Notes popup data fetch/parse error for ${notesDataUrl}: ${error.message}. No notes popups will be shown.`);
+            popupTriggersData = {};
+            return false;
+        }
+    }
+
+
     // --- Pre-scan Function (Unchanged) ---
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
@@ -2073,11 +2323,11 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED to load iframe data and reset state) ---
+    // --- PDF Loading (MODIFIED to load notes data and reset state) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        globalFirstInstanceLocation = {}; iframeMappings = {}; // Reset iframe mappings
+        globalFirstInstanceLocation = {}; iframeMappings = {}; popupTriggersData = {}; // Reset notes triggers
 
         // *** Reset time lock state completely on new PDF load ***
         updateStatus("Resetting time lock state for new PDF.");
@@ -2090,7 +2340,8 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         // *** END Reset time lock state ***
 
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; book.isDoublePageView = true; // Reset to default intended view
-        hideDefinitionPopup(); hideIframePopup(); // Hide both popups
+        hideDefinitionPopup(); hideIframePopup(); hideNotesPopup(); // Hide all popups
+
         document.title = "Heritage History™ Reader";
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
@@ -2098,9 +2349,10 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             updateStatus("Starting background PDF document loading...");
             console.log("Internal Status: Loading PDF document...");
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            // --- Start loading overlay and iframe data concurrently ---
+            // --- Start loading overlay, iframe, and notes data concurrently ---
             const overlayPromise = loadOverlayData(pdfUrl);
             const iframeDataPromise = loadIframeData(pdfUrl);
+            const notesDataPromise = loadNotesData(pdfUrl); // NEW
             // ---
 
             book.pdfDocument = await loadingTask.promise;
@@ -2115,10 +2367,11 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             updateStatus("Fetching outline...");
             try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
 
-            // --- Wait for overlay and iframe data loading to finish ---
-            const [overlayLoaded, iframeDataLoaded] = await Promise.all([overlayPromise, iframeDataPromise]);
+            // --- Wait for overlay, iframe, and notes data loading to finish ---
+            const [overlayLoaded, iframeDataLoaded, notesDataLoaded] = await Promise.all([overlayPromise, iframeDataPromise, notesDataPromise]);
             updateStatus(`Overlay data loaded: ${overlayLoaded}`);
             updateStatus(`Iframe data loaded: ${iframeDataLoaded}`);
+            updateStatus(`Notes popup data loaded: ${notesDataLoaded}`); // NEW
             // ---
 
             if (overlayLoaded && book.pdfDocument) {
@@ -2147,7 +2400,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             await new Promise(resolve => requestAnimationFrame(resolve));
 
             // Perform the initial display render and calculate/set the first time lock (if applicable and enabled)
-            // This will also check for an iframe on page 1.
+            // This will also check for iframe/notes popups on page 1.
             await updateDisplay();
 
             // --- *** READER IS READY *** ---
@@ -2173,7 +2426,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             console.error("FATAL: Error loading PDF document:", error);
             isReaderReady = false;
             // Reset state on error
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; iframeMappings = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; iframeMappings = {}; popupTriggersData = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC(); // Update UI to reflect error state
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
@@ -2186,7 +2439,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     }
 
 
-    // --- TOC population (MODIFIED - Hides iframe popup on jump) ---
+    // --- TOC population (MODIFIED - Hides all popups on jump) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
@@ -2231,11 +2484,12 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
                         // --- Hide ALL popups before TOC jump ---
                         hideDefinitionPopup();
                         hideIframePopup();
+                        hideNotesPopup();
                         hideTableOfContents();
                         // ---
 
                         // Update display: This will apply the global timelock setting when determining if a *new* lock should be set
-                        // It will also check for an iframe on the target page.
+                        // It will also check for iframe/notes popups on the target page.
                         await updateDisplay();
                         showPageSlider();
                         manageToolbar(false); // Hide right toolbar
@@ -2251,7 +2505,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
      }
 
 
-    // --- Popup Handling Functions (Definition Popup - Unchanged) ---
+    // --- Popup Handling Functions (Definition Popup - MODIFIED to hide others) ---
     function showDefinitionPopup(word, definition, rect) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
         // Added check: Don't show if in rotated mode
@@ -2259,8 +2513,9 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
              updateStatus("Popup suppressed in rotated mode.");
              return;
         }
-        // --- Hide iframe popup if definition popup is shown ---
+        // --- Hide other popups ---
         hideIframePopupIfNeeded();
+        hideNotesPopupIfNeeded();
         // ---
         popupWord.textContent = word || "Keyword";
         popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
@@ -2291,14 +2546,15 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- NEW: Iframe Popup Handling Functions ---
+    // --- Iframe Popup Handling Functions (MODIFIED to hide others) ---
     function showIframePopup(url) {
         if (!iframePopupBackdrop || !iframePopupModal || !popupIframe || !closeIframePopupBtn || !url) {
             console.error("Cannot show iframe popup: Missing element or URL.");
             return;
         }
-         // --- Hide definition popup if iframe popup is shown ---
+         // --- Hide other popups ---
         hideDefinitionPopup();
+        hideNotesPopupIfNeeded();
         // ---
 
         // Check if already visible with the same URL to prevent unnecessary reloads
@@ -2331,6 +2587,174 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
          }
     }
     // --- END: Iframe Popup Handling Functions ---
+
+
+    // --- START: Notes (Parchment PDF) Popup Handling Functions ---
+    async function showNotesPopup(triggerConfig) {
+        if (!notesPopupOverlay || !notesPopupWindow || !notesPopupCanvas || !triggerConfig || !triggerConfig.pdfUrl) {
+            console.error("Cannot show notes popup: Missing elements or trigger config.");
+            return;
+        }
+        // --- Hide other popups ---
+        hideDefinitionPopup();
+        hideIframePopupIfNeeded();
+        // ---
+
+        // Check if already visible with the same config to avoid reload
+        if (isNotesPopupVisible && currentNotesTriggerConfig?.pdfUrl === triggerConfig.pdfUrl) {
+             updateStatus("Notes popup already visible with the same PDF.");
+             // Maybe navigate to initialPage if it differs? For now, just return.
+             return;
+        }
+
+        updateStatus(`Showing notes popup for PDF: ${triggerConfig.pdfUrl}`);
+        isNotesPopupVisible = true;
+        currentNotesTriggerConfig = triggerConfig; // Store current config
+        notesPopupOverlay.classList.add('visible');
+        notesPopupWindow.classList.add('visible');
+
+        // Set title (extract filename)
+        let pdfFilename = "Note";
+        try { pdfFilename = decodeURIComponent(triggerConfig.pdfUrl.split('/').pop() || pdfFilename).replace(/\.pdf$/i, ''); } catch(e){}
+        if (notesPopupTitle) notesPopupTitle.textContent = pdfFilename;
+
+        // Reset state
+        notesPopupCurrentPageNum = triggerConfig.initialPage || 1;
+        notesPopupTotalPages = 0;
+        if (notesPopupPdfDoc) {
+             try { notesPopupPdfDoc.destroy(); } catch (e) {}
+             notesPopupPdfDoc = null;
+        }
+        // Clear canvas
+        const ctx = notesPopupCanvas.getContext('2d');
+        ctx.clearRect(0, 0, notesPopupCanvas.width, notesPopupCanvas.height);
+        if (notesPageInfo) notesPageInfo.textContent = 'Loading...';
+        if (notesPrevBtn) notesPrevBtn.disabled = true;
+        if (notesNextBtn) notesNextBtn.disabled = true;
+
+        // TODO: Add loading indicator visual toggle here if desired
+
+        try {
+            updateStatus(`Loading notes PDF: ${triggerConfig.pdfUrl}`);
+            const loadingTask = pdfjsLib.getDocument(triggerConfig.pdfUrl);
+            notesPopupPdfDoc = await loadingTask.promise;
+            notesPopupTotalPages = notesPopupPdfDoc.numPages;
+            updateStatus(`Notes PDF loaded. Pages: ${notesPopupTotalPages}`);
+
+            // Validate initial page number
+            if (notesPopupCurrentPageNum < 1 || notesPopupCurrentPageNum > notesPopupTotalPages) {
+                notesPopupCurrentPageNum = 1;
+            }
+
+            await renderNotesPopupPage(notesPopupCurrentPageNum);
+            // TODO: Hide loading indicator here
+
+        } catch (error) {
+            console.error(`Error loading or rendering notes popup PDF (${triggerConfig.pdfUrl}):`, error);
+             if (notesPageInfo) notesPageInfo.textContent = 'Error';
+             ctx.clearRect(0, 0, notesPopupCanvas.width, notesPopupCanvas.height); // Clear canvas on error
+             // Optionally display an error message in the canvas area
+             ctx.fillStyle = 'red'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+             ctx.fillText('Error loading PDF', notesPopupCanvas.width / 2, notesPopupCanvas.height / 2);
+             isNotesPopupVisible = false; // Mark as not visible if load failed critically
+             currentNotesTriggerConfig = null;
+             // TODO: Hide loading indicator here
+        }
+    }
+
+    function hideNotesPopup() {
+        if (!isNotesPopupVisible) return; // Already hidden
+        updateStatus("Hiding notes popup.");
+        isNotesPopupVisible = false;
+        currentNotesTriggerConfig = null;
+        notesPopupOverlay?.classList.remove('visible');
+        notesPopupWindow?.classList.remove('visible');
+
+        // Cleanup PDF resources
+        if (notesPopupPdfDoc) {
+            try { notesPopupPdfDoc.destroy(); } catch(e) { console.warn("Error destroying notes PDF doc:", e); }
+            notesPopupPdfDoc = null;
+        }
+        // Clear canvas
+        if (notesPopupCanvas) {
+            const ctx = notesPopupCanvas.getContext('2d');
+            ctx.clearRect(0, 0, notesPopupCanvas.width, notesPopupCanvas.height);
+        }
+        notesPopupCurrentPageNum = 1;
+        notesPopupTotalPages = 0;
+    }
+
+    // Helper to hide notes popup only if it's currently visible
+    function hideNotesPopupIfNeeded() {
+         if (isNotesPopupVisible) {
+             hideNotesPopup();
+         }
+    }
+
+    async function renderNotesPopupPage(pageNum) {
+        if (!notesPopupPdfDoc || !notesPopupCanvas || pageNum < 1 || pageNum > notesPopupTotalPages) {
+            console.warn(`Cannot render notes popup page ${pageNum}: Invalid state or page number.`);
+            return;
+        }
+        // TODO: Show loading indicator?
+
+        try {
+            const page = await notesPopupPdfDoc.getPage(pageNum);
+            const canvasContainer = notesPopupCanvas.parentElement; // Get the content div
+            const containerStyle = getComputedStyle(canvasContainer);
+            const availableWidth = parseFloat(containerStyle.width) - 10; // Some padding
+            const availableHeight = parseFloat(containerStyle.height) - 10; // Some padding
+
+            if (availableWidth <= 0 || availableHeight <= 0) {
+                 console.warn("Notes popup container has zero dimensions. Cannot render."); return;
+            }
+
+            const viewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(availableWidth / viewport.width, availableHeight / viewport.height);
+            const scaledViewport = page.getViewport({ scale: scale });
+
+            const ctx = notesPopupCanvas.getContext('2d');
+            const outputScale = window.devicePixelRatio || 1;
+
+            notesPopupCanvas.width = Math.floor(scaledViewport.width * outputScale);
+            notesPopupCanvas.height = Math.floor(scaledViewport.height * outputScale);
+            notesPopupCanvas.style.width = `${Math.floor(scaledViewport.width)}px`;
+            notesPopupCanvas.style.height = `${Math.floor(scaledViewport.height)}px`;
+
+            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+            await page.render({
+                canvasContext: ctx,
+                transform: transform,
+                viewport: scaledViewport
+            }).promise;
+
+            // Update page info and button states
+            notesPopupCurrentPageNum = pageNum;
+            if (notesPageInfo) notesPageInfo.textContent = `Page ${notesPopupCurrentPageNum} of ${notesPopupTotalPages}`;
+            if (notesPrevBtn) notesPrevBtn.disabled = (notesPopupCurrentPageNum <= 1);
+            if (notesNextBtn) notesNextBtn.disabled = (notesPopupCurrentPageNum >= notesPopupTotalPages);
+
+        } catch (error) {
+            console.error(`Error rendering notes popup page ${pageNum}:`, error);
+            // Handle error display if needed
+        } finally {
+            // TODO: Hide loading indicator
+        }
+    }
+
+    function notesPopupNextPage() {
+        if (notesPopupCurrentPageNum < notesPopupTotalPages) {
+            renderNotesPopupPage(notesPopupCurrentPageNum + 1);
+        }
+    }
+
+    function notesPopupPrevPage() {
+        if (notesPopupCurrentPageNum > 1) {
+            renderNotesPopupPage(notesPopupCurrentPageNum - 1);
+        }
+    }
+    // --- END: Notes (Parchment PDF) Popup Handling Functions ---
 
 
     // --- Game Transition Logic (Unchanged) ---
@@ -2411,7 +2835,7 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for iframe popup, updates Esc key) ---
+    // --- Event Setup (MODIFIED - Adds listeners for notes popup, updates Esc key) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2447,6 +2871,13 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         // --- NEW: Iframe Popup Close ---
         closeIframePopupBtn?.addEventListener('click', hideIframePopup);
         iframePopupBackdrop?.addEventListener('click', hideIframePopup); // Click backdrop to close
+        // --- NEW: Notes Popup Close ---
+        closeNotesPopupBtn?.addEventListener('click', hideNotesPopup);
+        notesPopupOverlay?.addEventListener('click', hideNotesPopup); // Click overlay to close
+        // --- NEW: Notes Popup Navigation ---
+        notesPrevBtn?.addEventListener('click', notesPopupPrevPage);
+        notesNextBtn?.addEventListener('click', notesPopupNextPage);
+
 
         // Page Edge Clicks (Uses updated nextPage/prevPage)
         bookSpread?.addEventListener('click', e => {
@@ -2470,32 +2901,45 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             }
         });
 
-        // Keyboard Navigation (MODIFIED Esc key behavior)
+        // Keyboard Navigation (MODIFIED Esc key behavior and Notes Popup keys)
         document.addEventListener('keydown', e => {
             if (document.body.classList.contains('loading-game-active')) return;
 
-            // --- Check for popup closes first ---
+            // --- Check for popup closes first (Priority: Notes > Iframe > Definition) ---
             if (e.key === 'Escape') {
-                if (iframePopupModal?.classList.contains('visible')) {
+                if (isNotesPopupVisible) {
+                    hideNotesPopup();
+                    e.preventDefault(); return;
+                } else if (iframePopupModal?.classList.contains('visible')) {
                     hideIframePopup();
-                    e.preventDefault();
-                    return; // Stop further processing
+                    e.preventDefault(); return;
                 } else if (definitionPopup.classList.contains('visible')) {
                     hideDefinitionPopup();
-                    e.preventDefault();
-                    return; // Stop further processing
+                    e.preventDefault(); return;
                 }
-                // If no popups are open, Esc does nothing else here
             }
             // ---
 
-            // Ignore if focus is in an input, TOC is open, or a popup is still open (shouldn't happen after Esc check above, but good safeguard)
+            // Handle Notes Popup navigation if it's visible
+            if (isNotesPopupVisible) {
+                if (e.key === 'ArrowRight') {
+                    notesPopupNextPage();
+                    e.preventDefault(); return;
+                } else if (e.key === 'ArrowLeft') {
+                    notesPopupPrevPage();
+                    e.preventDefault(); return;
+                }
+                // Don't allow main book navigation while notes popup is open
+                return;
+            }
+
+            // Ignore if focus is in an input, TOC is open, or other popups are still open
             if (document.getElementById('toc-panel')?.classList.contains('visible') ||
                 iframePopupModal?.classList.contains('visible') ||
                 definitionPopup.classList.contains('visible') ||
                (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
 
-            // Ignore modifier keys
+            // Ignore modifier keys for main navigation
             if (e.ctrlKey || e.altKey || e.metaKey) return;
 
             let navAction = false;
@@ -2516,17 +2960,18 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
             if(navAction){ e.preventDefault(); /* Slider/Toolbars managed by jumpToPage/showPageSlider */ }
         });
 
-        // Resize Handling (Uses modified updateDisplay, hides iframe popup)
+        // Resize Handling (Uses modified updateDisplay, hides all popups)
         window.addEventListener('resize', ()=>{
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
                 updateStatus("Resize detected.");
                 hideDefinitionPopup();
-                hideIframePopup(); // Hide iframe popup on resize
+                hideIframePopup();
+                hideNotesPopup(); // Hide notes popup on resize
                 applyCurrentViewModeStyles(); // Recalculate scale/rotation first
                 if (!document.body.classList.contains('loading-game-active') && book.pdfDocument) {
                     // Re-render and re-evaluate locks based on potentially new effective view mode
-                    // Also re-checks for iframe on the *current* page after resize
+                    // Also re-checks for popups on the *current* page after resize
                     updateDisplay();
                 }
                  manageToolbar(); // Adjust right toolbar visibility if needed
@@ -2538,8 +2983,8 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
-            // Ignore swipes starting on interactive elements or popups
-            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop')){
+            // Ignore swipes starting on interactive elements or ANY popup
+            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-window,#notes-popup-overlay')){
                 tX=0;tY=0;return;
             }
             if(e.touches.length===1){
@@ -2640,7 +3085,15 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
                  if (gameContainer) gameContainer.style.display = 'none';
             }
 
-            window.addEventListener('beforeunload', () => { updateStatus("Unloading - Cleanup."); clearTimeout(gameOverTimeoutId); clearTimeout(alertTimeout); pageCache.clear(); if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; } });
+            window.addEventListener('beforeunload', () => {
+                updateStatus("Unloading - Cleanup.");
+                clearTimeout(gameOverTimeoutId);
+                clearTimeout(alertTimeout);
+                pageCache.clear();
+                if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; }
+                // Destroy notes popup PDF too
+                if (notesPopupPdfDoc) { try { notesPopupPdfDoc.destroy(); } catch(e){} notesPopupPdfDoc = null; }
+            });
             updateStatus("Initialization complete. Background loading may be in progress.");
 
         } catch (initError) {
