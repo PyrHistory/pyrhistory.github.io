@@ -560,7 +560,7 @@ body:not(.loading-game-active) .main-container {
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--page-w);height:var(--page-h)} /* Default page size */
 .book-page.right.placeholder-page{background-color:var(--page)!important;border-left:1px solid rgba(0,0,0,.1);position:relative;display:flex!important;justify-content:center;align-items:center}
 .book-page.right.placeholder-page::after{content:"End of document";font-size:14px;font-style:italic;color:rgba(0,0,0,.5)}
-.book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay{display:none}
+.book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay,.book-page.right.placeholder-page .page-action-btn{display:none} /* Hide page action buttons on placeholder */
 
 /* Gutter shadow effect only in double page view */
 /* EXISTING inner gutter shadows (applied to canvas container inside page) */
@@ -590,6 +590,50 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     opacity: 1; /* Keep opacity at 1, control darkness via RGBA alpha values */
 }
 /* --- END: REALISTIC VERTICAL CREASE EFFECT --- */
+
+/* --- START: Page Action Button Styles (e.g., Rotate) --- */
+.page-action-btn { /* Base style for potential future page buttons */
+    position: absolute;
+    z-index: 20; /* Above page content, potentially below edge nav hover */
+    background-color: rgba(44, 62, 80, 0.7);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    font-size: 20px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0; /* Hidden by default */
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.page-action-btn:hover {
+    background-color: rgba(52, 73, 94, 0.9);
+    transform: scale(1.1);
+}
+.page-rotate-btn { /* Specific positioning for rotate button */
+    top: 10px;
+    right: 10px;
+}
+/* Show button on hover over the page */
+.book-page:hover .page-rotate-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Hide button during game loading */
+body.loading-game-active .page-rotate-btn {
+     display: none !important;
+}
+/* Hide button in rotated mode itself */
+body.content-rotated-mode .page-rotate-btn {
+    display: none !important;
+}
+/* --- END: Page Action Button Styles --- */
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords --- */
@@ -725,7 +769,7 @@ body:not(.loading-game-active) #loading-game-container {
     visibility: hidden;
 }
 
-#go-to-chapter-btn.visible {
+#go-to-chapter-btn.visible { /* Class added by JS on game over */
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) scale(1);
@@ -759,27 +803,22 @@ body.loading-game-active #definition-popup,
 body.loading-game-active #iframe-popup-backdrop, /* Hide iframe popup too */
 body.loading-game-active #iframe-popup-modal,   /* Hide iframe popup too */
 body.loading-game-active #notes-popup-backdrop, /* Hide notes popup too */
-body.loading-game-active #notes-popup-container /* Hide notes popup too */
+body.loading-game-active #notes-popup-container, /* Hide notes popup too */
+body.loading-game-active .page-action-btn /* Hide page action buttons too */
 {
-    display: none;
+    display: none !important; /* Use !important for robustness */
     visibility: hidden;
+    opacity: 0;
 }
 /* --- END: Loading Game Styles --- */
 
 /* --- START: Reading Time Alert --- */
-@keyframes funWiggle { /* Wiggle Animation */
-    0%, 100% { transform: translateX(-50%) rotate(0); }
-    25% { transform: translateX(calc(-50% - 3px)) rotate(-1.5deg); }
-    50% { transform: translateX(calc(-50% + 3px)) rotate(1.5deg); }
-    75% { transform: translateX(calc(-50% - 2px)) rotate(-1deg); }
-}
-
 #reading-time-alert {
     position: fixed;
     bottom: 80px; /* Adjust as needed, above slider */
     left: 50%;
-    transform: translateX(-50%); /* Start centered */
-    background: rgba(249, 115, 22, 0.9); /* Fiery orange, slightly transparent */
+    transform: translateX(-50%);
+    background: rgba(44, 62, 80, 0.9); /* Darker background */
     color: white;
     padding: 10px 20px;
     border-radius: 6px;
@@ -789,13 +828,19 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     font-weight: 500;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     opacity: 0;
-    transition: opacity 0.3s ease-in-out; /* Fade in/out */
+    visibility: hidden; /* Add visibility */
+    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s; /* Fade in/out */
     pointer-events: none; /* Prevent interaction */
     white-space: nowrap;
 }
-#reading-time-alert.visible { /* Class added by JS for fade-in and wiggle */
+#reading-time-alert.visible {
     opacity: 1;
-    animation: funWiggle 0.4s ease-in-out 1; /* Play wiggle animation once */
+    visibility: visible;
+    transition-delay: 0s;
+}
+#reading-time-alert em { /* Style the italic text */
+    font-style: italic;
+    font-weight: normal; /* Ensure it's not bold if parent is bold */
 }
 /* --- END: Reading Time Alert --- */
 
@@ -902,10 +947,19 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     cursor: pointer; /* Click backdrop to close */
 }
 
+/* *** NEW: Subtle Wiggle Animation *** */
+@keyframes subtleWiggle {
+  0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  25% { transform: translate(calc(-50% - 2px), -50%) scale(1.01) rotate(-0.5deg); }
+  50% { transform: translate(calc(-50% + 2px), -50%) scale(1.01) rotate(0.5deg); }
+  75% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+
 #notes-popup-container {
     position: fixed;
     top: 50%;
     left: 50%;
+    /* Base state before visible */
     transform: translate(-50%, -50%) scale(0.95);
     width: 90vw; /* Responsive width */
     height: 90vh; /* Responsive height */
@@ -920,6 +974,8 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     visibility: hidden;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out, visibility 0s linear 0.3s;
     pointer-events: none; /* Allow clicks through container to backdrop by default */
+    /* Remove animation from base state */
+    animation: none;
 }
 
 #notes-popup-backdrop.visible,
@@ -929,8 +985,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     transition-delay: 0s;
 }
 #notes-popup-container.visible {
+    /* Final visible state */
     transform: translate(-50%, -50%) scale(1);
     pointer-events: auto; /* Enable interaction with content when visible */
+    /* Apply wiggle animation ONCE when it becomes visible */
+    animation: subtleWiggle 0.4s ease-in-out 1 forwards; /* Use 'forwards' to hold end state if needed, though keyframes end correctly */
 }
 
 #notes-pdf-canvas-container {
@@ -942,6 +1001,8 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     position: relative; /* For button positioning */
     margin-bottom: 10px;
     pointer-events: auto; /* Canvas area can be interacted with (e.g., text selection if enabled) */
+    overflow: hidden; /* Helps contain absolutely positioned children if needed */
+    -webkit-tap-highlight-color: transparent; /* Prevent highlight on swipe */
 }
 
 #notes-pdf-canvas {
@@ -992,10 +1053,12 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     pointer-events: none;
 }
 #notes-prev-btn {
-    left: -65px;
+    /* left: -65px; */ /* OLD */
+    left: 5px; /* NEW: Position inside near left edge */
 }
 #notes-next-btn {
-    right: -65px;
+    /* right: -65px; */ /* OLD */
+    right: 5px; /* NEW: Position inside near right edge */
 }
 
 #notes-instruction {
@@ -1040,6 +1103,8 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     <div class="main-container">
         <div class="book-spread">
             <div class="book-page left">
+                <!-- *** NEW: Page Rotate Button *** -->
+                <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
                 <div class="canvas-container">
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
                     <div class="textLayer" id="left-text-layer"></div>
@@ -1110,11 +1175,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     const clockOnIconSVG = `<svg class="icon icon-clock-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
     const clockOffIconSVG = `<svg class="icon icon-clock-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
 
+    // *** MODIFIED: Removed Rotate Button from Toolbar HTML ***
     document.getElementById('new-toolbar').innerHTML = `
         <button class="new-btn" id="back-btn" title="Go Back">↤</button>
         <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button>
         <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
-        <button class="new-btn" id="rotate-btn" title="Rotate Content">↷</button>
         <button class="new-btn" id="time-capsule-btn" title="Time Capsule (TOC Disabled)">${boxIconSVG}</button>
     `;
     document.getElementById('left-toolbar').innerHTML = `
@@ -1758,7 +1823,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         });
     }
 
-    // --- Reading Time Alert (MODIFIED: Checks global enabled state) ---
+    // --- Reading Time Alert (MODIFIED: Italicized text, checks global enable state) ---
     function showReadingTimeAlert() {
         // Only show alert if timelock is globally enabled and blocking
         if (!isTimelockGloballyEnabled) return;
@@ -1767,13 +1832,15 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         let alertDiv = document.getElementById('reading-time-alert');
         if (!alertDiv) { return; } // Should exist after init
 
-        alertDiv.textContent = 'Please read the text first!';
-        alertDiv.classList.add('visible'); // Add class to trigger fade-in and wiggle animation via CSS
+        // *** MODIFIED: Use innerHTML for italics ***
+        alertDiv.innerHTML = '<em>Please read the text first!</em>';
+        alertDiv.classList.add('visible'); // Add class to trigger fade-in
 
         alertTimeout = setTimeout(() => {
             alertDiv.classList.remove('visible'); // Remove class to trigger fade-out
         }, 2500); // Show for 2.5 seconds
     }
+
 
     // --- Reading Time Lock Check (MODIFIED: Checks global enabled state first) ---
     function checkReadingTimeLock() {
@@ -1861,7 +1928,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         else if (book.currentPage > 1) jumpToPage(1); // Go to first page if decrement goes below 1
     }
 
-    // MODIFIED jumpToPage to hide ALL popups before jump
+    // MODIFIED jumpToPage to hide ALL popups before jump AND correctly handle slider lock reset
     function jumpToPage(pageNum){
         if (!book.pdfDocument || pageNum < 1 || pageNum > book.totalPages){
             console.warn(`Jump to page ${pageNum} out of bounds (1-${book.totalPages})`);
@@ -1894,10 +1961,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
             if (checkReadingTimeLock()) {
                 // Lock is active and time is not up, block navigation
                 updateStatus(`Navigation blocked by time lock.`);
-                // Reset slider if needed (e.g., user tried to slide past lock)
+                // *** Reset slider if needed (e.g., user tried to slide past lock) ***
                 const slider = document.getElementById('page-slider');
-                if (slider && document.activeElement === slider) {
-                    updateSliderPosition(); // Reset slider to show the current locked page
+                // Check if the slider was the element triggering the attempt or is currently focused
+                if (slider && (document.activeElement === slider || (typeof event !== 'undefined' && event?.target === slider))) {
+                    updateSliderPosition(); // Reset slider to show the current locked page visually
                 }
                 return; // Stop navigation
             }
@@ -1976,6 +2044,41 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         }
     }
 
+    // Modified to use the new hover-button trigger instead of toolbar button
+    async function setRotatedView() {
+        // Check if already rotated
+        if (document.body.classList.contains('content-rotated-mode')) {
+            updateStatus("Setting back to previous view (Double/Single)");
+            // Revert to the INTENDED view mode (which might be single or double)
+            document.body.classList.remove('content-rotated-mode');
+            if (!book.isDoublePageView) {
+                document.body.classList.add('fullscreen-mode'); // Re-apply fullscreen if intention was single
+            } else {
+                 // Adjust current page if needed when going back to double view
+                 if (book.currentPage > 1 && book.currentPage % 2 === 0) {
+                     updateStatus(`Adjusting current page from ${book.currentPage} to ${book.currentPage - 1} for double view restore.`);
+                     book.currentPage--;
+                 }
+            }
+        } else {
+            updateStatus("Setting Content Rotated View");
+            // Ensure fullscreen is off when rotating
+            document.body.classList.remove('fullscreen-mode');
+            document.body.classList.add('content-rotated-mode'); // Add rotate class
+        }
+
+        hideDefinitionPopup();
+        hideIframePopup();
+        hideNotesPopup(); // Hide notes popup when changing view mode
+        // updateDisplay will calculate lock based on the new effective single-page (rotated) mode or restored mode
+        await updateDisplay();
+        manageToolbar(false); // Hide right toolbar after action
+        manageLeftToolbar(false); // Hide left toolbar after action
+        updateSliderTotalPages();
+        updateSliderPosition(); // Update slider value and text
+    }
+
+
     async function setSinglePageView(){
         // Check if already effectively in single page, non-rotated mode
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
@@ -2025,25 +2128,6 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         updateSliderPosition(); // Update slider value and text
     }
 
-    async function setRotatedView() {
-        if (document.body.classList.contains('content-rotated-mode')) return; // Already rotated
-
-        updateStatus("Setting Content Rotated View");
-        // Intention doesn't matter as much here, but treat as single page effectively
-        // book.isDoublePageView = false; // Optional: align intention with effect
-        document.body.classList.remove('fullscreen-mode'); // Ensure fullscreen is off
-        document.body.classList.add('content-rotated-mode'); // Add rotate class
-
-        hideDefinitionPopup();
-        hideIframePopup();
-        hideNotesPopup(); // Hide notes popup when changing view mode
-        // updateDisplay will calculate lock based on the new effective single-page (rotated) mode
-        await updateDisplay();
-        manageToolbar(false); // Hide right toolbar after action
-        manageLeftToolbar(false); // Hide left toolbar after action
-        updateSliderTotalPages();
-        updateSliderPosition(); // Update slider value and text
-    }
 
     // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
@@ -2051,7 +2135,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Unchanged - uses modified jumpToPage) ---
+    // --- Slider Logic (Unchanged - uses modified jumpToPage which handles lock correctly) ---
     function showPageSlider(){
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
@@ -2068,7 +2152,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
 
         let isDragging = false; // Track dragging state
 
-        slider.addEventListener('input', () => { // Update display text ONLY while dragging
+        slider.addEventListener('input', (event) => { // Update display text ONLY while dragging
             if (!isDragging) return; // Only update text if actively dragging
 
             const targetPageValue = parseInt(slider.value, 10);
@@ -2101,12 +2185,12 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
              isDragging = true;
              clearTimeout(sliderHideTimeout); // Prevent hiding while dragging
          });
-        slider.addEventListener('pointerup', () => {
+        slider.addEventListener('pointerup', (event) => { // Pass event to jumpToPage check
              if (!isDragging) return; // Avoid triggering jump if not dragging
              isDragging = false;
              const targetPageValue = parseInt(slider.value, 10);
              updateStatus(`Slider released at value: ${targetPageValue}`);
-             jumpToPage(targetPageValue); // Final jump on release
+             jumpToPage(targetPageValue); // Final jump on release, passes event implicitly
              resetSliderHideTimer(); // Start timer to hide slider after jump attempt
          });
         slider.addEventListener('lostpointercapture', () => {
@@ -2119,13 +2203,13 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
                  resetSliderHideTimer();
             }
         });
-        slider.addEventListener('change', () => {
+        slider.addEventListener('change', (event) => { // Pass event to jumpToPage check
              // This might fire for keyboard changes or sometimes after pointerup.
              // Ensure we don't double-trigger jumpToPage if pointerup already handled it.
             if (!isDragging) { // Only handle if not currently being dragged (e.g., keyboard nav on slider)
                  const targetPageValue = parseInt(slider.value, 10);
                  updateStatus(`Slider changed (not dragging) to value: ${targetPageValue}`);
-                 jumpToPage(targetPageValue);
+                 jumpToPage(targetPageValue); // Passes event implicitly
                  resetSliderHideTimer();
              }
         });
@@ -2277,7 +2361,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED to load iframe data and reset ALL popup states) ---
+    // --- PDF Loading (MODIFIED: Doesn't show GoToChapterBtn on reader ready) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
@@ -2359,7 +2443,8 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
             // --- *** READER IS READY *** ---
             isReaderReady = true;
             updateStatus("Reader is ready!");
-            goToChapterBtn.classList.add('visible'); // Show the button to proceed from game
+            // *** MODIFIED: Do NOT show button automatically here ***
+            // goToChapterBtn.classList.add('visible'); // REMOVED
 
             // --- *** FIX: Immediately disable restart in game *** ---
             if (gameIframe && gameIframe.contentWindow) {
@@ -2589,7 +2674,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
 
         updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
         notesPopupBackdrop.classList.add('visible');
-        notesPopupContainer.classList.add('visible');
+        notesPopupContainer.classList.add('visible'); // This triggers CSS transition + animation
 
         // Clear previous notes content
         const ctx = notesPdfCanvas.getContext('2d');
@@ -2741,7 +2826,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     // --- END: Notes Popup Handling Functions ---
 
 
-    // --- Game Transition Logic (Unchanged) ---
+    // --- Game Transition Logic ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
@@ -2759,9 +2844,15 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
              updateStatus("Reader should be visible and scaled.");
         }, 50); // Small delay matches transition duration
     }
-    // --- Handle Game Over Message (Unchanged) ---
+
+    // --- Handle Game Over Message (MODIFIED: Always shows GoToChapterBtn) ---
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
+
+        // *** MODIFIED: Always make button visible on game over ***
+        goToChapterBtn.classList.add('visible');
+        updateStatus("Made 'Go to Chapter' button visible.");
+
         if (isReaderReady) {
             updateStatus("Reader is ready, handling automatic transition after game over.");
             if (gameIframe && gameIframe.contentWindow) {
@@ -2771,12 +2862,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
             clearTimeout(gameOverTimeoutId);
             gameOverTimeoutId = setTimeout(() => {
                 updateStatus("Game over timeout finished, transitioning now.");
-                transitionToChapter();
+                transitionToChapter(); // This will hide the button via CSS class change on body
             }, 3000); // 3-second delay after game over
         } else {
-            updateStatus("Game over occurred, but reader is not ready yet. No automatic transition.");
-            // If reader isn't ready, we might still want to enable the button
-             goToChapterBtn.classList.add('visible'); // Allow manual transition if reader loads later
+            updateStatus("Game over occurred, but reader is not ready yet. Button made visible for manual transition.");
+            // Button is already made visible above
         }
     }
     // --- END: Game Transition Logic ---
@@ -2819,7 +2909,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for notes popup, updates Esc key) ---
+    // --- Event Setup (MODIFIED - Adds listeners for notes popup, page rotate btn, updates Esc key, toolbar setup) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2835,7 +2925,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
                  case 'back-btn': window.history.back(); break;
                  case 'single-page-btn': setSinglePageView(); break; // Calls updateDisplay internally
                  case 'double-page-btn': setDoublePageView(); break; // Calls updateDisplay internally
-                 case 'rotate-btn': setRotatedView(); break;     // Calls updateDisplay internally
+                 // case 'rotate-btn': setRotatedView(); break; // REMOVED from toolbar
                  case 'time-capsule-btn': console.log("Time Capsule button clicked (feature disabled)."); break;
              }
              // Toolbar hiding is handled within the view change functions
@@ -2861,9 +2951,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         notesNextBtn?.addEventListener('click', notesNextPage);
 
 
-        // Page Edge Clicks (Uses updated nextPage/prevPage)
+        // Page Edge & Page Action Button Clicks
         bookSpread?.addEventListener('click', e => {
             if (document.body.classList.contains('loading-game-active')) return;
+
+            // Page Edge Navigation
             if (e.target.classList.contains('page-edge-nav')) {
                 const pageDiv = e.target.closest('.book-page');
                 if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
@@ -2879,7 +2971,16 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
                 } else { // page-edge-right
                     nextPage(); // Calls jumpToPage (handles lock check internally if needed)
                 }
-                // showPageSlider and manageToolbar are called within jumpToPage if navigation occurs
+            }
+            // *** NEW: Page Rotate Button Click ***
+            else if (e.target.closest('.page-rotate-btn')) {
+                 const rotateBtn = e.target.closest('.page-rotate-btn');
+                 // Check if the button is on the left page (currently only place it exists)
+                 const pageDiv = rotateBtn.closest('.book-page.left');
+                 if (pageDiv && !pageDiv.classList.contains('placeholder-page')) {
+                     updateStatus("Page rotate button clicked.");
+                     setRotatedView(); // Call the function to toggle rotated view
+                 }
             }
         });
 
@@ -2953,29 +3054,35 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
              }, 250);
         });
 
-        // Touch Swipes (MODIFIED to ignore swipes on popups)
-        let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
+        // Touch Swipes (MODIFIED to ignore swipes on popups AND add notes swipe)
+        let bodyTX=0, bodyTY=0, bodyTS=0; const bodySW=50, bodyST=500, bodySV=70;
+        // Body swipe (for main reader)
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
-            // Ignore swipes starting on interactive elements OR ANY POPUP
-            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop')){
-                tX=0;tY=0;return;
+            // Ignore swipes starting on interactive elements OR ANY POPUP or Notes Container
+            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn')){
+                bodyTX=0; bodyTY=0; return;
             }
             if(e.touches.length===1){
-                tX=e.touches[0].screenX;tY=e.touches[0].screenY;tS=Date.now();
+                bodyTX=e.touches[0].screenX; bodyTY=e.touches[0].screenY; bodyTS=Date.now();
             } else {
-                tX=0;tY=0;
+                bodyTX=0; bodyTY=0;
             }
         },{passive:true});
         document.body.addEventListener('touchend',e=>{
-             if(document.body.classList.contains('loading-game-active') || (tX===0&&tY===0))return;
+             if(document.body.classList.contains('loading-game-active') || (bodyTX===0&&bodyTY===0))return;
+             // Check if touchend happened inside notes container - if so, let notes handler deal with it
+             if (e.target.closest('#notes-pdf-canvas-container')) {
+                 bodyTX=0; bodyTY=0; bodyTS=0; // Reset body tracking
+                 return;
+             }
              if(e.changedTouches.length===1){
-                 const eX=e.changedTouches[0].screenX,eY=e.changedTouches[0].screenY,tE=Date.now()-tS;
-                 if(tE<ST){
-                     const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);
-                     if(aX>SW&&aY<SV){ // Horizontal swipe detected
+                 const bodyEX=e.changedTouches[0].screenX, bodyEY=e.changedTouches[0].screenY, bodyTE=Date.now()-bodyTS;
+                 if(bodyTE<bodyST){
+                     const bodyDX=bodyEX-bodyTX, bodyDY=bodyEY-bodyTY, bodyAX=Math.abs(bodyDX), bodyAY=Math.abs(bodyDY);
+                     if(bodyAX>bodySW&&bodyAY<bodySV){ // Horizontal swipe detected
                          e.preventDefault(); // Prevent default scroll on successful swipe
-                         if(dX>0){ // Swipe Right (Previous Page)
+                         if(bodyDX>0){ // Swipe Right (Previous Page)
                              prevPage();
                          } else { // Swipe Left (Next Page)
                              nextPage(); // Handles lock check internally
@@ -2984,8 +3091,57 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
                      }
                  }
              }
-             tX=0;tY=0;tS=0;
+             bodyTX=0; bodyTY=0; bodyTS=0;
         });
+
+        // *** NEW: Notes Popup Swipe ***
+        const notesCanvasContainer = document.getElementById('notes-pdf-canvas-container');
+        let notesTX = 0, notesTY = 0, notesTS = 0;
+        const notesSW = 50, notesST = 500, notesSV = 70;
+
+        if (notesCanvasContainer) {
+            notesCanvasContainer.addEventListener('touchstart', e => {
+                // Only track if notes popup is visible and swipe doesn't start on buttons
+                if (!notesPopupContainer?.classList.contains('visible') || e.target.closest('.notes-nav-btn')) {
+                    notesTX = 0; notesTY = 0; notesTS = 0; return;
+                }
+                if (e.touches.length === 1) {
+                    notesTX = e.touches[0].screenX;
+                    notesTY = e.touches[0].screenY;
+                    notesTS = Date.now();
+                } else {
+                    notesTX = 0; notesTY = 0; notesTS = 0;
+                }
+            }, { passive: true });
+
+            notesCanvasContainer.addEventListener('touchend', e => {
+                if (!notesPopupContainer?.classList.contains('visible') || (notesTX === 0 && notesTY === 0)) return;
+                if (e.changedTouches.length === 1) {
+                    const notesEX = e.changedTouches[0].screenX;
+                    const notesEY = e.changedTouches[0].screenY;
+                    const notesTE = Date.now() - notesTS;
+                    if (notesTE < notesST) {
+                        const notesDX = notesEX - notesTX;
+                        const notesDY = notesEY - notesTY;
+                        const notesAX = Math.abs(notesDX);
+                        const notesAY = Math.abs(notesDY);
+                        if (notesAX > notesSW && notesAY < notesSV) { // Horizontal swipe
+                            // e.preventDefault(); // Prevent default only if swipe successful? May not be needed inside popup.
+                            e.stopPropagation(); // IMPORTANT: Prevent triggering body swipe listener
+                            if (notesDX > 0) { // Swipe Right (Previous)
+                                notesPrevPage();
+                            } else { // Swipe Left (Next)
+                                notesNextPage();
+                            }
+                        }
+                    }
+                }
+                notesTX = 0; notesTY = 0; notesTS = 0;
+            });
+        } else {
+            console.error("Notes canvas container not found for swipe events.");
+        }
+
 
         // Slider Trigger Zone (No change)
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(document.body.classList.contains('loading-game-active')) return; if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{if(document.body.classList.contains('loading-game-active')) return; const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
