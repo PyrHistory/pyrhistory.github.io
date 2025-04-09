@@ -741,6 +741,13 @@ body:not(.loading-game-active) #loading-game-container {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.15) inset;
 }
 
+/* *** SUREFIRE WAY TO HIDE BUTTON WHEN READER IS ACTIVE *** */
+body:not(.loading-game-active) #go-to-chapter-btn {
+    display: none !important; /* Ensure it's completely removed from layout */
+    opacity: 0;
+    visibility: hidden;
+}
+
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
 body.loading-game-active .toolbar-trigger-area,
@@ -958,7 +965,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     background-color: rgba(44, 62, 80, 0.7); /* Semi-transparent dark */
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    font-size: 28px;
+    font-size: 28px; /* Adjusted size for new symbols */
     font-weight: bold;
     line-height: 1;
     display: flex;
@@ -970,6 +977,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     pointer-events: auto; /* Ensure buttons are clickable */
     user-select: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    padding: 0; /* Ensure padding doesn't interfere with centering */
 }
 .notes-nav-btn:hover {
     background-color: rgba(52, 73, 94, 0.9);
@@ -984,10 +992,10 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     pointer-events: none;
 }
 #notes-prev-btn {
-    left: 15px; /* Position between PDF edge and screen edge */
+    left: 25px; /* *** INCREASED SPACE *** Position further from PDF edge */
 }
 #notes-next-btn {
-    right: 15px; /* Position between PDF edge and screen edge */
+    right: 25px; /* *** INCREASED SPACE *** Position further from PDF edge */
 }
 
 #notes-instruction {
@@ -1085,10 +1093,12 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     <div id="notes-popup-container">
         <div id="notes-pdf-canvas-container">
             <canvas id="notes-pdf-canvas"></canvas>
-            <button id="notes-prev-btn" class="notes-nav-btn" title="Previous Notes Page">&lt;</button>
-            <button id="notes-next-btn" class="notes-nav-btn" title="Next Notes Page">&gt;</button>
+            <!-- *** UPDATED BUTTON SYMBOLS *** -->
+            <button id="notes-prev-btn" class="notes-nav-btn" title="Previous Notes Page">ᐸ</button>
+            <button id="notes-next-btn" class="notes-nav-btn" title="Next Notes Page">ᐳ</button>
         </div>
-        <div id="notes-instruction">Copy the notes into your Pyr Notebook before continuing</div>
+         <!-- *** UPDATED INSTRUCTION TEXT *** -->
+        <div id="notes-instruction">Copy <em>these</em> notes into your Pyr Notebook before continuing</div>
     </div>
     <!-- END: Notes Popup HTML -->
 
@@ -2695,7 +2705,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
 
         document.body.classList.remove('loading-game-active');
-        goToChapterBtn.classList.remove('visible');
+        // JS already removes '.visible' from goToChapterBtn, and CSS rule ensures it's hidden
 
          window.focus(); // Move focus back to main window
 
