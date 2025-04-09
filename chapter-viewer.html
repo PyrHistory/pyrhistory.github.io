@@ -35,8 +35,10 @@
     --space-sm: 8px; /* Example value */
     --space-xs: 4px; /* Example value */
 
-    /* --- NEW: Parchment/Papyrus color variable --- */
-    --parchment-bg: #f5e8c3; /* Example: A light beige/yellowish color */
+    /* --- NEW: Parchment Color --- */
+    --parchment-bg: #f5e8c8; /* A parchment/papyrus like color */
+    --parchment-overlay-opacity: 0.75; /* Opacity for the overlay */
+    --note-popup-text: #3a2f0f; /* Dark brown text for notes */
 
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -751,8 +753,8 @@ body.loading-game-active #page-slider-trigger-zone,
 body.loading-game-active #definition-popup,
 body.loading-game-active #iframe-popup-backdrop, /* Hide iframe popup too */
 body.loading-game-active #iframe-popup-modal,   /* Hide iframe popup too */
-body.loading-game-active #notes-popup-overlay, /* --- NEW: Hide notes popup too --- */
-body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too --- */
+body.loading-game-active #note-popup-overlay, /* --- NEW: Hide note popup too --- */
+body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too --- */
     display: none;
     visibility: hidden;
 }
@@ -798,7 +800,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     background-color: rgba(8, 14, 28, 0.7); /* Base semi-transparent dark blue */
     backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
     -webkit-backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
-    z-index: 10003; /* Below modal, above def popup */
+    z-index: 10003; /* Above definition popup, below modal */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s ease-out, visibility 0s linear 0.25s; /* UNCHANGED: Blur appears simultaneously with opacity transition */
@@ -880,162 +882,156 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
 }
 /* --- END: Iframe Popup Styles --- */
 
-/* --- START: Notes Popup Styles (NEW) --- */
-#notes-popup-overlay {
+
+/* --- START: Note Popup Styles (New Feature) --- */
+#note-popup-overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(245, 232, 195, 0.85); /* Parchment color with transparency */
-    /* Optional: Add subtle texture */
-    /* background-image: url('path/to/parchment-texture.png'); */
-    z-index: 10006; /* Above iframe popup backdrop, below notes modal */
+    background-color: var(--parchment-bg);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.25s ease-out, visibility 0s linear 0.25s;
-    cursor: pointer; /* Indicate clicking overlay closes it */
+    z-index: 10006; /* Higher than iframe popup backdrop */
+    cursor: pointer;
+    transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
 }
-
-#notes-popup-modal {
+#note-popup-modal {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.95);
     width: 85%;
     height: 85%;
-    max-width: 800px; /* Adjust max size as needed */
-    max-height: 650px;
-    background-color: var(--page); /* Standard page background for the content */
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    max-width: 800px; /* Slightly smaller max width than iframe */
+    max-height: 750px; /* Slightly taller max height */
+    background-color: var(--page); /* Use page background for the modal itself */
+    border: 1px solid rgba(0,0,0,0.15);
     border-radius: 6px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-    z-index: 10007; /* Above its overlay */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    z-index: 10007; /* Higher than overlay */
     opacity: 0;
     visibility: hidden;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, visibility 0s linear 0.25s;
+    font-family: var(--font-sans); /* Use sans-serif for UI elements */
+    color: var(--note-popup-text);
 }
-
-#notes-popup-overlay.visible,
-#notes-popup-modal.visible {
-    opacity: 1;
+#note-popup-overlay.visible {
+    opacity: var(--parchment-overlay-opacity); /* Use defined opacity */
     visibility: visible;
     transition-delay: 0s;
 }
-#notes-popup-modal.visible {
+#note-popup-modal.visible {
+    opacity: 1;
+    visibility: visible;
     transform: translate(-50%, -50%) scale(1);
+    transition-delay: 0s;
 }
-
-#notes-popup-header {
-    padding: 8px 15px;
-    background-color: #e8e8e8; /* Light grey header */
-    border-bottom: 1px solid #ccc;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-#notes-popup-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    font-family: var(--font-sans);
-}
-
-#close-notes-popup-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #666;
-    cursor: pointer;
-    padding: 0 5px;
-    line-height: 1;
-}
-#close-notes-popup-btn:hover {
-    color: #000;
-}
-
-#notes-popup-content {
+#note-viewer {
     flex-grow: 1;
-    position: relative; /* For positioning canvas */
-    overflow: hidden; /* Container clips canvas */
-    background-color: #f9f9f9; /* Slightly off-white canvas background */
+    position: relative; /* Needed for canvas positioning */
+    overflow: auto; /* Scroll if content overflows */
+    padding: 10px;
+    background-color: #fdfdfa; /* Slightly off-white for contrast */
     display: flex;
     justify-content: center;
     align-items: center;
 }
-
-#notes-pdf-canvas-container {
+#note-canvas {
     max-width: 100%;
     max-height: 100%;
-    overflow: auto; /* Allow scrolling if PDF is larger than container */
-    position: relative; /* For positioning */
+    display: block;
+    object-fit: contain;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-
-#notes-pdf-canvas {
-    display: block; /* Prevent extra space below canvas */
-    max-width: none; /* Allow canvas to be its rendered size */
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* Subtle shadow on the PDF page */
-}
-
-#notes-popup-footer {
-    padding: 8px 15px;
-    background-color: #e8e8e8; /* Match header */
-    border-top: 1px solid #ccc;
-    display: flex;
-    justify-content: center; /* Center buttons and page info */
-    align-items: center;
+#note-nav {
     flex-shrink: 0;
-    gap: 15px;
-    visibility: hidden; /* Hide footer initially, show only if needed */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 15px;
+    background-color: #f0eada; /* Lighter parchment shade for nav */
+    border-top: 1px solid rgba(0,0,0,0.1);
 }
-#notes-popup-footer.visible {
-    visibility: visible;
-}
-
-#notes-prev-btn,
-#notes-next-btn {
-    background-color: #777;
-    color: white;
-    border: none;
+#note-nav .note-btn {
+    background-color: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--note-popup-text);
+    padding: 6px 12px;
     border-radius: 4px;
-    padding: 5px 12px;
-    font-size: 14px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    font-size: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
 }
-#notes-prev-btn:hover,
-#notes-next-btn:hover {
-    background-color: #555;
+#note-nav .note-btn:hover:not([disabled]) {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0,0,0,0.2);
 }
-#notes-prev-btn:disabled,
-#notes-next-btn:disabled {
-    background-color: #bbb;
+#note-nav .note-btn[disabled] {
+    opacity: 0.5;
     cursor: not-allowed;
-    opacity: 0.7;
 }
-
-#notes-page-num {
+#note-page-info {
     font-size: 13px;
-    color: #333;
-    font-family: var(--font-sans);
-    min-width: 60px; /* Prevent layout jumps */
-    text-align: center;
+    font-weight: 500;
+    color: var(--note-popup-text);
 }
-
-/* Style for loading state within the notes popup */
-#notes-popup-content .page-loading-spinner { /* Reuse existing spinner */
-    display: none; /* Hidden by default */
+#note-close-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(0, 0, 0, 0.1);
+    color: var(--note-popup-text);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 50%;
+    font-size: 18px;
+    line-height: 1;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    z-index: 10008; /* Above nav potentially */
+}
+#note-close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+    transform: scale(1.1);
+}
+/* Loading indicator inside note modal */
+#note-loading-indicator {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 10009; /* Above canvas */
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    color: var(--note-popup-text);
 }
-#notes-popup-modal.loading #notes-popup-content .page-loading-spinner {
-    display: block; /* Show spinner when loading class is added */
+#note-loading-indicator .note-spinner {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 3px solid rgba(0,0,0,.1);
+    border-top-color: var(--note-popup-text);
+    animation: spin 1s linear infinite;
 }
-/* --- END: Notes Popup Styles --- */
+#note-popup-modal.loading #note-loading-indicator {
+    display: flex;
+}
+#note-popup-modal.loading #note-canvas {
+    opacity: 0.5; /* Dim canvas while loading */
+}
+/* --- END: Note Popup Styles --- */
 
 </style>
 
@@ -1110,26 +1106,24 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     </div>
     <!-- END: Iframe Popup HTML -->
 
-    <!-- START: Notes Popup HTML (NEW) -->
-    <div id="notes-popup-overlay"></div>
-    <div id="notes-popup-modal">
-        <div id="notes-popup-header">
-            <span id="notes-popup-title">Notes</span>
-            <button id="close-notes-popup-btn" title="Close (Esc)">×</button>
-        </div>
-        <div id="notes-popup-content">
-            <div id="notes-pdf-canvas-container">
-                <canvas id="notes-pdf-canvas"></canvas>
+    <!-- START: Note Popup HTML (New Feature) -->
+    <div id="note-popup-overlay"></div>
+    <div id="note-popup-modal">
+        <button id="note-close-btn" title="Close Note (Esc)">×</button>
+        <div id="note-viewer">
+            <canvas id="note-canvas"></canvas>
+             <div id="note-loading-indicator">
+                 <div class="note-spinner"></div>
+                 <span>Loading note...</span>
             </div>
-             <div class="page-loading-spinner"></div> <!-- Spinner for notes PDF -->
         </div>
-        <div id="notes-popup-footer">
-            <button id="notes-prev-btn" title="Previous Page">‹ Prev</button>
-            <span id="notes-page-num">Page 1 of 1</span>
-            <button id="notes-next-btn" title="Next Page">Next ›</button>
+        <div id="note-nav">
+            <button class="note-btn" id="note-prev-btn" title="Previous Note Page">Previous</button>
+            <span id="note-page-info">Page 1 of 1</span>
+            <button class="note-btn" id="note-next-btn" title="Next Note Page">Next</button>
         </div>
     </div>
-    <!-- END: Notes Popup HTML -->
+    <!-- END: Note Popup HTML -->
 
 
 <script>
@@ -1175,17 +1169,17 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     const iframePopupModal = document.getElementById('iframe-popup-modal');
     const popupIframe = document.getElementById('popup-iframe');
     const closeIframePopupBtn = document.getElementById('close-iframe-popup-btn');
-    // --- Notes Popup Elements (NEW) ---
-    const notesPopupOverlay = document.getElementById('notes-popup-overlay');
-    const notesPopupModal = document.getElementById('notes-popup-modal');
-    const closeNotesPopupBtn = document.getElementById('close-notes-popup-btn');
-    const notesPdfCanvas = document.getElementById('notes-pdf-canvas');
-    const notesPdfCanvasContainer = document.getElementById('notes-pdf-canvas-container');
-    const notesPopupFooter = document.getElementById('notes-popup-footer');
-    const notesPrevBtn = document.getElementById('notes-prev-btn');
-    const notesNextBtn = document.getElementById('notes-next-btn');
-    const notesPageNum = document.getElementById('notes-page-num');
-    const notesPopupTitle = document.getElementById('notes-popup-title');
+    // --- Note Popup Elements (New Feature) ---
+    const notePopupOverlay = document.getElementById('note-popup-overlay');
+    const notePopupModal = document.getElementById('note-popup-modal');
+    const noteViewer = document.getElementById('note-viewer');
+    const noteCanvas = document.getElementById('note-canvas');
+    const noteNav = document.getElementById('note-nav');
+    const notePrevBtn = document.getElementById('note-prev-btn');
+    const noteNextBtn = document.getElementById('note-next-btn');
+    const notePageInfo = document.getElementById('note-page-info');
+    const noteCloseBtn = document.getElementById('note-close-btn');
+    const noteLoadingIndicator = document.getElementById('note-loading-indicator');
 
 
     // --- State Variables ---
@@ -1197,13 +1191,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
     let iframeMappings = {}; // Stores { pageNum: iframeUrl }
-    let notesMappings = {}; // --- NEW: Stores { pageNum: notesPdfPath } ---
-
-    // --- Notes Popup State (NEW) ---
-    let notesPdfDoc = null;
-    let notesCurrentPageNum = 1;
-    let notesTotalPages = 0;
-    let notesIsLoading = false; // Track loading state for secondary PDF
+    let noteMappings = {}; // --- NEW: Stores { pageNum: notePdfUrl } for the notes feature ---
 
     // --- Reading Time Lock State ---
     let isTimelockGloballyEnabled = true; // *** NEW: Master switch for timelock ***
@@ -1215,6 +1203,11 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     // - Single View: Stores the EVEN page number itself.
     let completedTimeLockPages = new Set();
     let alertTimeout = null; // For the alert message
+
+    // --- Note Popup State (New Feature) ---
+    let notePdfDoc = null;
+    let noteCurrentPage = 1;
+    let noteTotalPages = 0;
 
 
     // --- PDF.js Setup ---
@@ -1257,7 +1250,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- createKeywordOverlays FUNCTION ---
+    // --- createKeywordOverlays FUNCTION (Unchanged) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -1369,7 +1362,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     // --- END: createKeywordOverlays FUNCTION ---
 
 
-    // --- Simplified Base Text Layer Rendering ---
+    // --- Simplified Base Text Layer Rendering (Unchanged) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
       if (!page || !container || !viewport) return;
       container.innerHTML = '';
@@ -1384,7 +1377,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
       }
     }
 
-    // --- Annotation Layer Rendering ---
+    // --- Annotation Layer Rendering (Unchanged) ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
         container.innerHTML = '';
@@ -1401,7 +1394,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }
     }
 
-    // --- renderPage function ---
+    // --- renderPage function (Unchanged) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -1478,7 +1471,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }
     }
 
-    // --- Reading Time Calculation ---
+    // --- Reading Time Calculation (Unchanged) ---
     async function calculatePageReadingTime(pageNum, viewport) {
         if (!book.pdfDocument || !viewport || pageNum < 1 || pageNum > book.totalPages) {
             return 0;
@@ -1545,7 +1538,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }
     }
 
-    // --- Update Display (MODIFIED - Checks for notes popup) ---
+    // --- Update Display (MODIFIED - Checks for note popup FIRST, then iframe popup) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1723,45 +1716,40 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         preloadAdjacentPages(book.currentPage); // Preload based on start page
         applyCurrentViewModeStyles(); // Ensure scaling/rotation is correct
 
-        // --- *** Check for Popups (Iframe and Notes) *** ---
+        // --- *** NEW: Check for Popups (Note FIRST, then Iframe) *** ---
+        let popupShown = false; // Flag to prevent showing both types
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
-            // Check for Notes Popup FIRST (maybe higher priority?)
-            const notesPdfPath = notesMappings[leftPageNum.toString()];
-            if (notesPdfPath) {
-                updateStatus(`Notes found for page ${leftPageNum}. Showing notes popup.`);
-                // Ensure other popups are hidden before showing notes
-                hideIframePopupIfNeeded();
-                hideDefinitionPopup();
-                showNotesPopup(notesPdfPath); // Show notes popup
-            } else {
-                // If no notes popup for this page, check for Iframe popup
-                 const iframeUrl = iframeMappings[leftPageNum.toString()];
-                 if (iframeUrl) {
-                     updateStatus(`Iframe found for page ${leftPageNum}. Showing iframe popup.`);
-                     // Ensure other popups are hidden
-                     hideNotesPopupIfNeeded();
-                     hideDefinitionPopup();
-                     showIframePopup(iframeUrl);
-                 } else {
-                    // If neither popup is for this page, ensure they are hidden if currently open
-                    hideNotesPopupIfNeeded();
-                    hideIframePopupIfNeeded();
-                    // Definition popup hidden by interactions, not page load usually
-                 }
+            const notePdfUrl = noteMappings[leftPageNum.toString()];
+            if (notePdfUrl) {
+                updateStatus(`Note popup found for page ${leftPageNum}. Showing note popup.`);
+                showNotePopup(notePdfUrl);
+                popupShown = true;
             }
-        } else {
-            // Current page is invalid, hide all popups
-            hideNotesPopupIfNeeded();
+
+            // Only check for iframe if note popup wasn't triggered
+            if (!popupShown) {
+                const iframeUrl = iframeMappings[leftPageNum.toString()];
+                if (iframeUrl) {
+                    updateStatus(`Iframe found for page ${leftPageNum}. Showing iframe popup.`);
+                    showIframePopup(iframeUrl);
+                    popupShown = true;
+                }
+            }
+        }
+
+        // Ensure popups are hidden if navigating *away* from a page that had one
+        if (!popupShown) {
+            hideNotePopupIfNeeded();
             hideIframePopupIfNeeded();
-            hideDefinitionPopup(); // Hide def popup too just in case
         }
         // --- *** END: Check for Popups *** ---
+
 
         updateStatus("Display update complete.");
     }
 
 
-    // --- Preloading ---
+    // --- Preloading (Unchanged) ---
      function preloadAdjacentPages(currentPage) {
         if (!book.pdfDocument) return;
         // Determine lookahead based on *intended* view mode for efficiency
@@ -1778,7 +1766,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         });
     }
 
-    // --- Reading Time Alert ---
+    // --- Reading Time Alert (MODIFIED: Checks global enabled state) ---
     function showReadingTimeAlert() {
         // Only show alert if timelock is globally enabled and blocking
         if (!isTimelockGloballyEnabled) return;
@@ -1795,7 +1783,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }, 2500); // Show for 2.5 seconds
     }
 
-    // --- Reading Time Lock Check ---
+    // --- Reading Time Lock Check (MODIFIED: Checks global enabled state first) ---
     function checkReadingTimeLock() {
         // Called by jumpToPage only when moving forward.
 
@@ -1842,7 +1830,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     }
 
 
-    // --- Navigation ---
+    // --- Navigation (Uses modified checkReadingTimeLock) ---
     function nextPage() {
         // Determine increment based on *effective* view mode at the moment of click/keypress
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
@@ -1947,17 +1935,17 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         // --- Hide ALL popups before updating display ---
         hideDefinitionPopup();
         hideIframePopup();
-        hideNotesPopup(); // --- NEW: Hide notes popup ---
+        hideNotePopup(); // --- NEW: Hide note popup before page change ---
         // ---
 
-        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting. Also handles showing popups if needed.
+        updateDisplay(); // Fetches, renders, and SETS THE NEXT lock state based on the new view/page(s) and global setting. Also handles showing appropriate popups.
         showPageSlider(); // Show slider briefly after navigation
         manageToolbar(false); // Hide right toolbar after navigation
         manageLeftToolbar(false); // Hide left toolbar after navigation
     }
 
 
-    // --- View Modes (Uses modified updateDisplay, hides popups) ---
+    // --- View Modes (Uses modified updateDisplay and hides all popups) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -2009,7 +1997,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
 
         hideDefinitionPopup();
         hideIframePopup();
-        hideNotesPopup(); // --- NEW: Hide notes popup ---
+        hideNotePopup(); // --- NEW: Hide note popup ---
         // updateDisplay will calculate lock based on the new effective single-page mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -2036,7 +2024,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
 
         hideDefinitionPopup();
         hideIframePopup();
-        hideNotesPopup(); // --- NEW: Hide notes popup ---
+        hideNotePopup(); // --- NEW: Hide note popup ---
          // updateDisplay will calculate lock based on the new effective double-page mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -2056,7 +2044,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
 
         hideDefinitionPopup();
         hideIframePopup();
-        hideNotesPopup(); // --- NEW: Hide notes popup ---
+        hideNotePopup(); // --- NEW: Hide note popup ---
         // updateDisplay will calculate lock based on the new effective single-page (rotated) mode
         await updateDisplay();
         manageToolbar(false); // Hide right toolbar after action
@@ -2065,13 +2053,13 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         updateSliderPosition(); // Update slider value and text
     }
 
-    // --- UI Toggles ---
+    // --- UI Toggles (Unchanged) ---
     function toggleElement(id,show){const el = document.getElementById(id); if(el) el.classList.toggle('visible',show)}
     function hideTableOfContents(){toggleElement('toc-panel',false)}
     function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic ---
+    // --- Slider Logic (Unchanged - uses modified jumpToPage) ---
     function showPageSlider(){
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
@@ -2191,7 +2179,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     }
     function updateSliderStyle(s,v){if(!s)return;const i=parseInt(s.min||1),a=parseInt(s.max||1),r=a>i?a-i:1,p=(parseInt(v)-i)/r*100;s.style.setProperty('--slider-percent',`${Math.max(0,Math.min(100,p))}%`)}
 
-    // --- Overlay Data Loading ---
+    // --- Overlay Data Loading (Unchanged) ---
     async function loadOverlayData(pdfUrl) {
         const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json'); updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
         try {
@@ -2203,7 +2191,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         } catch (error) { console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`); keywordDefinitions = {}; pageKeywords = {}; return false; }
      }
 
-    // --- Load Iframe Data ---
+    // --- NEW: Load Iframe Data ---
     async function loadIframeData(pdfUrl) {
         const iframeDataUrl = pdfUrl.replace(/\.pdf$/i, '-iframes.json');
         updateStatus(`Attempting to load iframe data from: ${iframeDataUrl}`);
@@ -2245,25 +2233,25 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }
     }
 
-    // --- Load Notes Data (NEW) ---
-    async function loadNotesData(mainPdfUrl) {
-        // Using the hardcoded path as requested
-        const notesDataUrl = 'chapters/ancient-history/chapter2-notes.json';
-        updateStatus(`Attempting to load notes data from: ${notesDataUrl}`);
-        notesMappings = {}; // Reset before loading
+    // --- NEW: Load Note Data ---
+    async function loadNoteData() {
+        // Specific path provided by the user
+        const noteDataUrl = 'chapters/ancient-history/chapter2-notes.json';
+        updateStatus(`Attempting to load note data from: ${noteDataUrl}`);
+        noteMappings = {}; // Reset before loading
         try {
-            const response = await fetch(notesDataUrl);
+            const response = await fetch(noteDataUrl);
             if (!response.ok) {
                 if (response.status === 404) {
-                    updateStatus(`Notes data file not found at ${notesDataUrl}. No notes popups will be shown.`);
+                    updateStatus(`Note data file not found at ${noteDataUrl}. No note popups will be shown.`);
                 } else {
-                    console.warn(`Notes data fetch failed: HTTP error ${response.status} for ${notesDataUrl}`);
+                    console.warn(`Note data fetch failed: HTTP error ${response.status} for ${noteDataUrl}`);
                 }
                 return false; // Indicate failure or non-existence
             }
             const data = await response.json();
             if (!data || typeof data !== 'object' || Array.isArray(data)) {
-                 console.warn("Invalid notes data structure in JSON file. Expected an object { pageNum: notesPdfPath }.");
+                 console.warn("Invalid note data structure in JSON file. Expected an object { pageNum: pdfPathString }.");
                  return false;
             }
             // Validate and store mappings
@@ -2271,26 +2259,26 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             let count = 0;
             for (const [key, value] of Object.entries(data)) {
                 const pageNum = parseInt(key, 10);
-                // Ensure value is a string ending with .pdf (case-insensitive)
-                if (!isNaN(pageNum) && pageNum > 0 && typeof value === 'string' && value.trim() !== '' && value.toLowerCase().endsWith('.pdf')) {
-                    validMappings[key] = value.trim(); // Store page number as string key
+                // Ensure value is a non-empty string ending in .pdf (case-insensitive)
+                if (!isNaN(pageNum) && pageNum > 0 && typeof value === 'string' && value.trim() !== '' && /\.pdf$/i.test(value.trim())) {
+                    validMappings[key] = value.trim(); // Store page number as string key, value is PDF path
                     count++;
                 } else {
-                    console.warn(`Invalid notes mapping skipped: Key='${key}', Value='${value}' (must be a non-empty string ending in .pdf)`);
+                    console.warn(`Invalid note mapping skipped: Key='${key}', Value='${value}' (Must be a valid page number and PDF path)`);
                 }
             }
-            notesMappings = validMappings;
-            updateStatus(`Notes data loaded successfully: ${count} mappings found.`);
+            noteMappings = validMappings;
+            updateStatus(`Note data loaded successfully: ${count} mappings found.`);
             return true;
         } catch (error) {
-            console.warn(`Notes data fetch/parse error for ${notesDataUrl}: ${error.message}. No notes popups will be shown.`);
-            notesMappings = {};
+            console.warn(`Note data fetch/parse error for ${noteDataUrl}: ${error.message}. No note popups will be shown.`);
+            noteMappings = {};
             return false;
         }
     }
 
 
-    // --- Pre-scan Function ---
+    // --- Pre-scan Function (Unchanged) ---
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
         globalFirstInstanceLocation = {};
@@ -2342,11 +2330,11 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED to load notes data and reset state) ---
+    // --- PDF Loading (MODIFIED to load NOTE data and reset all states) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
-        globalFirstInstanceLocation = {}; iframeMappings = {}; notesMappings = {}; // Reset ALL mappings
+        globalFirstInstanceLocation = {}; iframeMappings = {}; noteMappings = {}; // Reset ALL mappings
 
         // *** Reset time lock state completely on new PDF load ***
         updateStatus("Resetting time lock state for new PDF.");
@@ -2359,7 +2347,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         // *** END Reset time lock state ***
 
         if(book.pdfDocument){try{book.pdfDocument.destroy()}catch(e){console.warn("Error destroying previous PDF doc:", e)}} book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="No Document"; book.outline=[]; book.isDoublePageView = true; // Reset to default intended view
-        hideDefinitionPopup(); hideIframePopup(); hideNotesPopup(); // Hide ALL popups
+        hideDefinitionPopup(); hideIframePopup(); hideNotePopup(); // Hide ALL popups
         document.title = "Heritage History™ Reader";
 
         let filename = "Document"; try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch(e){} book.title = filename;
@@ -2367,10 +2355,10 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             updateStatus("Starting background PDF document loading...");
             console.log("Internal Status: Loading PDF document...");
             const loadingTask = pdfjsLib.getDocument(pdfUrl);
-            // --- Start loading overlay, iframe, and notes data concurrently ---
+            // --- Start loading overlay, iframe, AND note data concurrently ---
             const overlayPromise = loadOverlayData(pdfUrl);
             const iframeDataPromise = loadIframeData(pdfUrl);
-            const notesDataPromise = loadNotesData(pdfUrl); // --- NEW ---
+            const noteDataPromise = loadNoteData(); // Load the specific note JSON
             // ---
 
             book.pdfDocument = await loadingTask.promise;
@@ -2385,13 +2373,11 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             updateStatus("Fetching outline...");
             try { book.outline = await book.pdfDocument.getOutline(); populateTOC(); } catch (outlineError) { console.warn("Could not get PDF outline:", outlineError); book.outline = []; populateTOC(); }
 
-            // --- Wait for overlay, iframe, and notes data loading to finish ---
-            const [overlayLoaded, iframeDataLoaded, notesDataLoaded] = await Promise.all([
-                overlayPromise, iframeDataPromise, notesDataPromise
-            ]);
+            // --- Wait for overlay, iframe, AND note data loading to finish ---
+            const [overlayLoaded, iframeDataLoaded, noteDataLoaded] = await Promise.all([overlayPromise, iframeDataPromise, noteDataPromise]);
             updateStatus(`Overlay data loaded: ${overlayLoaded}`);
             updateStatus(`Iframe data loaded: ${iframeDataLoaded}`);
-            updateStatus(`Notes data loaded: ${notesDataLoaded}`); // --- NEW ---
+            updateStatus(`Note data loaded: ${noteDataLoaded}`); // --- NEW ---
             // ---
 
             if (overlayLoaded && book.pdfDocument) {
@@ -2420,7 +2406,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             await new Promise(resolve => requestAnimationFrame(resolve));
 
             // Perform the initial display render and calculate/set the first time lock (if applicable and enabled)
-            // This will also check for an iframe or notes popup on page 1.
+            // This will also check for popups (note first, then iframe) on page 1.
             await updateDisplay();
 
             // --- *** READER IS READY *** ---
@@ -2446,7 +2432,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             console.error("FATAL: Error loading PDF document:", error);
             isReaderReady = false;
             // Reset state on error
-            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; iframeMappings = {}; notesMappings = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
+            book.pdfDocument=null; book.totalPages=0; book.currentPage=1; book.title="Error Loading"; book.outline=[]; keywordDefinitions={}; pageKeywords={}; globalFirstInstanceLocation = {}; iframeMappings = {}; noteMappings = {}; completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); hideNotePopup(); // Ensure note popup state is reset
             document.title="Heritage History™ Reader - Error"; updateSliderTotalPages(); updateSliderPosition(); populateTOC(); // Update UI to reflect error state
             const spreadContainer = document.querySelector('.main-container .book-spread');
             if (spreadContainer) {
@@ -2504,7 +2490,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
                         // --- Hide ALL popups before TOC jump ---
                         hideDefinitionPopup();
                         hideIframePopup();
-                        hideNotesPopup(); // --- NEW ---
+                        hideNotePopup(); // --- NEW: Hide note popup ---
                         hideTableOfContents();
                         // ---
 
@@ -2525,7 +2511,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
      }
 
 
-    // --- Popup Handling Functions (Definition Popup) ---
+    // --- Popup Handling Functions (Definition Popup - MODIFIED to hide other popups) ---
     function showDefinitionPopup(word, definition, rect) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
         // Added check: Don't show if in rotated mode
@@ -2533,9 +2519,9 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
              updateStatus("Popup suppressed in rotated mode.");
              return;
         }
-        // --- Hide iframe and notes popups if definition popup is shown ---
+        // --- Hide iframe and note popups if definition popup is shown ---
         hideIframePopupIfNeeded();
-        hideNotesPopupIfNeeded();
+        hideNotePopupIfNeeded(); // --- NEW ---
         // ---
         popupWord.textContent = word || "Keyword";
         popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
@@ -2566,15 +2552,15 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- Iframe Popup Handling Functions ---
+    // --- Iframe Popup Handling Functions (MODIFIED to hide other popups) ---
     function showIframePopup(url) {
         if (!iframePopupBackdrop || !iframePopupModal || !popupIframe || !closeIframePopupBtn || !url) {
             console.error("Cannot show iframe popup: Missing element or URL.");
             return;
         }
-         // --- Hide definition and notes popups if iframe popup is shown ---
+         // --- Hide definition and note popups if iframe popup is shown ---
         hideDefinitionPopup();
-        hideNotesPopupIfNeeded();
+        hideNotePopupIfNeeded(); // --- NEW ---
         // ---
 
         // Check if already visible with the same URL to prevent unnecessary reloads
@@ -2608,171 +2594,175 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     }
     // --- END: Iframe Popup Handling Functions ---
 
-    // --- Notes Popup Handling Functions (NEW) ---
-    function updateNotesNavButtons() {
-        if (!notesPrevBtn || !notesNextBtn) return;
-        notesPrevBtn.disabled = (notesCurrentPageNum <= 1);
-        notesNextBtn.disabled = (notesCurrentPageNum >= notesTotalPages);
-    }
+    // --- START: Note Popup Handling Functions (New Feature) ---
 
-    function updateNotesPageDisplay() {
-        if (notesPageNum) {
-            notesPageNum.textContent = `Page ${notesCurrentPageNum} of ${notesTotalPages}`;
+    // Renders a specific page of the currently loaded note PDF
+    async function renderNotePage(pageNum) {
+        if (!notePdfDoc || !noteCanvas || pageNum < 1 || pageNum > noteTotalPages) {
+            console.error(`Note render failed: Invalid state or page number ${pageNum}`);
+             if (noteCanvas) {
+                 const ctx = noteCanvas.getContext('2d');
+                 ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+                 noteCanvas.width = 300; noteCanvas.height = 150; // Reset canvas size
+                 ctx.fillStyle = "#cccccc"; ctx.fillRect(0, 0, 300, 150);
+                 ctx.fillStyle = "#555555"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
+                 ctx.fillText("Error rendering note page.", 150, 75);
+             }
+             // Update UI even on error
+             noteCurrentPage = pageNum > 0 ? pageNum : 1;
+             notePageInfo.textContent = `Page ${noteCurrentPage} of ${noteTotalPages || '?'}`;
+             notePrevBtn.disabled = true;
+             noteNextBtn.disabled = true;
+             notePopupModal.classList.remove('loading');
+            return;
         }
-        updateNotesNavButtons();
-    }
 
-    async function renderNotesPage(pageNum) {
-        if (!notesPdfDoc || pageNum < 1 || pageNum > notesTotalPages || !notesPdfCanvas) return;
-        notesIsLoading = true;
-        notesPopupModal?.classList.add('loading'); // Show spinner
-        const canvasCtx = notesPdfCanvas.getContext('2d');
+        notePopupModal.classList.add('loading'); // Show loading indicator
 
         try {
-            const page = await notesPdfDoc.getPage(pageNum);
-            const containerWidth = notesPdfCanvasContainer.clientWidth - 10; // Allow some padding
-            const containerHeight = notesPdfCanvasContainer.clientHeight - 10;
+            const page = await notePdfDoc.getPage(pageNum);
+            const viewerStyle = getComputedStyle(noteViewer);
+            const availableWidth = parseFloat(viewerStyle.width) - 20; // Account for padding
+            const availableHeight = parseFloat(viewerStyle.height) - 20;
 
-            const defaultViewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(containerWidth / defaultViewport.width, containerHeight / defaultViewport.height);
-            const viewport = page.getViewport({ scale: scale });
+            if (availableWidth <= 0 || availableHeight <= 0) {
+                console.warn("Note viewer has zero dimensions. Cannot render.");
+                throw new Error("Note viewer area not ready.");
+            }
 
+            const viewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(availableWidth / viewport.width, availableHeight / viewport.height);
+            const scaledViewport = page.getViewport({ scale: scale });
+
+            const canvas = noteCanvas;
+            const context = canvas.getContext('2d');
             const outputScale = window.devicePixelRatio || 1;
-            notesPdfCanvas.width = Math.floor(viewport.width * outputScale);
-            notesPdfCanvas.height = Math.floor(viewport.height * outputScale);
-            notesPdfCanvas.style.width = `${Math.floor(viewport.width)}px`;
-            notesPdfCanvas.style.height = `${Math.floor(viewport.height)}px`;
+
+            canvas.width = Math.floor(scaledViewport.width * outputScale);
+            canvas.height = Math.floor(scaledViewport.height * outputScale);
+            canvas.style.width = `${Math.floor(scaledViewport.width)}px`;
+            canvas.style.height = `${Math.floor(scaledViewport.height)}px`;
 
             const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-            await page.render({ canvasContext: canvasCtx, transform, viewport }).promise;
 
-            notesCurrentPageNum = pageNum;
-            updateNotesPageDisplay();
+            await page.render({ canvasContext: context, transform, viewport: scaledViewport }).promise;
+
+            // Update state and UI
+            noteCurrentPage = pageNum;
+            notePageInfo.textContent = `Page ${noteCurrentPage} of ${noteTotalPages}`;
+            notePrevBtn.disabled = noteCurrentPage <= 1;
+            noteNextBtn.disabled = noteCurrentPage >= noteTotalPages;
 
         } catch (error) {
-            console.error(`Error rendering notes page ${pageNum}:`, error);
-            canvasCtx.clearRect(0, 0, notesPdfCanvas.width, notesPdfCanvas.height); // Clear canvas on error
-             notesPageNum.textContent = "Error";
+            console.error(`Error rendering note page ${pageNum}:`, error);
+            // Display error on canvas
+            const ctx = noteCanvas.getContext('2d');
+            ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+            noteCanvas.width = 300; noteCanvas.height = 150; // Reset canvas size
+            ctx.fillStyle = "#cccccc"; ctx.fillRect(0, 0, 300, 150);
+            ctx.fillStyle = "#e74c3c"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(`Error: ${error.message}`, 150, 75);
+            // Update UI
+             notePageInfo.textContent = `Error loading page ${pageNum}`;
+             notePrevBtn.disabled = true;
+             noteNextBtn.disabled = true;
         } finally {
-            notesIsLoading = false;
-            notesPopupModal?.classList.remove('loading'); // Hide spinner
+             notePopupModal.classList.remove('loading'); // Hide loading indicator
         }
     }
 
-    async function loadNotesPdf(pdfPath) {
-        if (notesIsLoading) {
-            updateStatus("Notes PDF is already loading.");
-            return;
+    // Loads a new PDF into the note popup viewer
+    async function loadNotePdf(url) {
+        updateStatus(`Loading note PDF from: ${url}`);
+        if (notePdfDoc) {
+            try { notePdfDoc.destroy(); } catch (e) { console.warn("Error destroying previous note PDF doc:", e); }
+            notePdfDoc = null;
         }
-        if (notesPdfDoc) {
-            try { notesPdfDoc.destroy(); } catch (e) { console.warn("Error destroying previous notes PDF doc:", e); }
-            notesPdfDoc = null;
-        }
-        notesCurrentPageNum = 1;
-        notesTotalPages = 0;
-        notesIsLoading = true;
-        notesPopupModal?.classList.add('loading'); // Show spinner
-        notesPopupFooter?.classList.remove('visible'); // Hide footer while loading
+        noteCurrentPage = 1;
+        noteTotalPages = 0;
+        notePopupModal.classList.add('loading'); // Show loading immediately
 
-        // Set popup title from filename
-        let filename = "Notes";
-        try { filename = decodeURIComponent(pdfPath.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) {}
-        if (notesPopupTitle) notesPopupTitle.textContent = filename;
+        // Reset canvas and UI
+        const ctx = noteCanvas.getContext('2d');
+        ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+        notePageInfo.textContent = 'Loading...';
+        notePrevBtn.disabled = true;
+        noteNextBtn.disabled = true;
 
-
-        updateStatus(`Loading notes PDF from: ${pdfPath}`);
         try {
-            const loadingTask = pdfjsLib.getDocument(pdfPath);
-            notesPdfDoc = await loadingTask.promise;
-            notesTotalPages = notesPdfDoc.numPages;
-            updateStatus(`Notes PDF loaded: ${notesTotalPages} pages.`);
-
-            if (notesTotalPages > 0) {
-                await renderNotesPage(1); // Render the first page
-                 if (notesTotalPages > 1) {
-                     notesPopupFooter?.classList.add('visible'); // Show footer only if multiple pages
-                 }
-            } else {
-                // Handle case of 0-page PDF?
-                console.warn("Notes PDF loaded but has 0 pages.");
-                 if (notesPageNum) notesPageNum.textContent = "No pages";
-                 notesPopupModal?.classList.remove('loading');
-            }
+            const loadingTask = pdfjsLib.getDocument(url);
+            notePdfDoc = await loadingTask.promise;
+            noteTotalPages = notePdfDoc.numPages;
+            updateStatus(`Note PDF loaded: ${noteTotalPages} pages.`);
+            await renderNotePage(1); // Render the first page
         } catch (error) {
-            console.error(`Failed to load notes PDF from ${pdfPath}:`, error);
-             if (notesPageNum) notesPageNum.textContent = "Load Error";
-             notesPopupModal?.classList.remove('loading');
-            // Optionally display an error message in the popup content area
-             const ctx = notesPdfCanvas.getContext('2d');
-             if (ctx) ctx.clearRect(0, 0, notesPdfCanvas.width, notesPdfCanvas.height);
-             // Could add text here: ctx.fillText("Failed to load notes PDF", 10, 50);
+            console.error(`FATAL: Error loading note PDF document (${url}):`, error);
+            notePdfDoc = null; noteTotalPages = 0; noteCurrentPage = 1;
+            // Display error on canvas
+            ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+            noteCanvas.width = 300; noteCanvas.height = 150;
+            ctx.fillStyle = "#cccccc"; ctx.fillRect(0, 0, 300, 150);
+            ctx.fillStyle = "#e74c3c"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
+            ctx.fillText(`Failed to load note: ${error.message}`, 150, 75);
+            notePageInfo.textContent = 'Load Error';
+            notePopupModal.classList.remove('loading');
         }
-        // Loading state is handled within renderNotesPage or finally block of catch
     }
 
-    function notesNextPage() {
-        if (notesIsLoading || !notesPdfDoc || notesCurrentPageNum >= notesTotalPages) return;
-        renderNotesPage(notesCurrentPageNum + 1);
-    }
-
-    function notesPrevPage() {
-        if (notesIsLoading || !notesPdfDoc || notesCurrentPageNum <= 1) return;
-        renderNotesPage(notesCurrentPageNum - 1);
-    }
-
-    function showNotesPopup(pdfPath) {
-        if (!notesPopupOverlay || !notesPopupModal || !pdfPath) {
-            console.error("Cannot show notes popup: Missing elements or PDF path.");
+    // Shows the note popup and loads the specified PDF
+    function showNotePopup(pdfUrl) {
+        if (!notePopupOverlay || !notePopupModal || !pdfUrl) {
+            console.error("Cannot show note popup: Missing element or URL.");
             return;
         }
-        // --- Hide other popups ---
+        // --- Hide definition and iframe popups if note popup is shown ---
         hideDefinitionPopup();
         hideIframePopupIfNeeded();
         // ---
 
-        updateStatus(`Showing notes popup for: ${pdfPath}`);
-        notesPopupOverlay.classList.add('visible');
-        notesPopupModal.classList.add('visible');
-
-        // Load the PDF associated with the notes
-        loadNotesPdf(pdfPath);
+        updateStatus(`Showing note popup for PDF: ${pdfUrl}`);
+        notePopupOverlay.classList.add('visible');
+        notePopupModal.classList.add('visible');
+        loadNotePdf(pdfUrl); // Load the PDF (handles rendering page 1)
     }
 
-    function hideNotesPopup() {
-        if (!notesPopupOverlay || !notesPopupModal) return;
-        if (notesPopupModal.classList.contains('visible')) {
-            updateStatus("Hiding notes popup.");
-            notesPopupOverlay.classList.remove('visible');
-            notesPopupModal.classList.remove('visible');
-            notesPopupFooter?.classList.remove('visible'); // Ensure footer is hidden
+    // Hides the note popup and cleans up
+    function hideNotePopup() {
+        if (!notePopupOverlay || !notePopupModal) return;
+        if (notePopupModal.classList.contains('visible')) {
+            updateStatus("Hiding note popup.");
+            notePopupOverlay.classList.remove('visible');
+            notePopupModal.classList.remove('visible');
+            notePopupModal.classList.remove('loading'); // Ensure loading class is removed
 
-            // Cleanup notes PDF state
-            if (notesPdfDoc) {
-                try { notesPdfDoc.destroy(); } catch (e) { console.warn("Error destroying notes PDF doc:", e); }
-                notesPdfDoc = null;
+            // Destroy the PDF document to free resources
+            if (notePdfDoc) {
+                try { notePdfDoc.destroy(); } catch (e) { console.warn("Error destroying note PDF doc:", e); }
+                notePdfDoc = null;
             }
-            notesCurrentPageNum = 1;
-            notesTotalPages = 0;
-            notesIsLoading = false;
-            notesPopupModal.classList.remove('loading'); // Ensure loading state is off
-            // Clear canvas
-            const ctx = notesPdfCanvas?.getContext('2d');
-            if (ctx) ctx.clearRect(0, 0, notesPdfCanvas.width, notesPdfCanvas.height);
-            if (notesPageNum) notesPageNum.textContent = ""; // Clear page number
-            if (notesPopupTitle) notesPopupTitle.textContent = "Notes"; // Reset title
+            // Reset state
+            noteCurrentPage = 1;
+            noteTotalPages = 0;
+
+            // Clear canvas (optional, but good practice)
+            const ctx = noteCanvas.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
+            notePageInfo.textContent = '';
+            notePrevBtn.disabled = true;
+            noteNextBtn.disabled = true;
         }
     }
 
-    // Helper to hide notes popup only if it's currently visible
-    function hideNotesPopupIfNeeded() {
-         if (notesPopupModal?.classList.contains('visible')) {
-             hideNotesPopup();
-         }
+    // Helper to hide note popup only if it's currently visible
+    function hideNotePopupIfNeeded() {
+        if (notePopupModal?.classList.contains('visible')) {
+            hideNotePopup();
+        }
     }
-    // --- END: Notes Popup Handling Functions ---
+    // --- END: Note Popup Handling Functions ---
 
 
-    // --- Game Transition Logic ---
+    // --- Game Transition Logic (Unchanged) ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
@@ -2790,7 +2780,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
              updateStatus("Reader should be visible and scaled.");
         }, 50); // Small delay matches transition duration
     }
-    // --- Handle Game Over Message ---
+    // --- Handle Game Over Message (Unchanged) ---
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
         if (isReaderReady) {
@@ -2812,7 +2802,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
     }
     // --- END: Game Transition Logic ---
 
-    // --- Update Timelock Button Visuals ---
+    // --- NEW: Update Timelock Button Visuals ---
     function updateTimelockButtonVisuals() {
         if (!timelockToggleButton) return;
         if (isTimelockGloballyEnabled) {
@@ -2826,7 +2816,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         }
     }
 
-    // --- Toggle Timelock Functionality ---
+    // --- NEW: Toggle Timelock Functionality ---
     function toggleTimelock() {
         isTimelockGloballyEnabled = !isTimelockGloballyEnabled;
         updateStatus(`Timelock globally ${isTimelockGloballyEnabled ? 'ENABLED' : 'DISABLED'}`);
@@ -2850,7 +2840,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for notes popup, updates Esc key) ---
+    // --- Event Setup (MODIFIED - Adds listeners for NOTE popup, updates Esc key) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2858,89 +2848,102 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         const mainContainer = document.querySelector('.main-container');
         const bookSpread = mainContainer?.querySelector('.book-spread');
 
-        // Right Toolbar Clicks
+        // Right Toolbar Clicks (Calls updated view functions)
         toolbar?.addEventListener('click', e => {
              const btn = e.target.closest('.new-btn');
              if (!btn) return;
              switch (btn.id) {
                  case 'back-btn': window.history.back(); break;
-                 case 'single-page-btn': setSinglePageView(); break;
-                 case 'double-page-btn': setDoublePageView(); break;
-                 case 'rotate-btn': setRotatedView(); break;
+                 case 'single-page-btn': setSinglePageView(); break; // Calls updateDisplay internally
+                 case 'double-page-btn': setDoublePageView(); break; // Calls updateDisplay internally
+                 case 'rotate-btn': setRotatedView(); break;     // Calls updateDisplay internally
                  case 'time-capsule-btn': console.log("Time Capsule button clicked (feature disabled)."); break;
              }
+             // Toolbar hiding is handled within the view change functions
         });
 
-        // Left Toolbar Click (Timelock Toggle)
+        // *** NEW: Left Toolbar Click (Timelock Toggle) ***
         leftToolbar?.addEventListener('click', e => {
             const btn = e.target.closest('.new-btn');
             if (!btn || btn.id !== 'timelock-toggle-btn') return;
             toggleTimelock();
         });
 
-        // TOC Close
+        // TOC Close (No change)
         document.getElementById('close-toc-btn')?.addEventListener('click', hideTableOfContents);
-        // Definition Popup Close
+        // Popup Close (No change)
         closePopupBtn?.addEventListener('click', hideDefinitionPopup);
-        // Iframe Popup Close
+        // --- Iframe Popup Close ---
         closeIframePopupBtn?.addEventListener('click', hideIframePopup);
-        iframePopupBackdrop?.addEventListener('click', hideIframePopup);
-        // --- Notes Popup Close (NEW) ---
-        closeNotesPopupBtn?.addEventListener('click', hideNotesPopup);
-        notesPopupOverlay?.addEventListener('click', hideNotesPopup);
-        // --- Notes Popup Navigation (NEW) ---
-        notesPrevBtn?.addEventListener('click', notesPrevPage);
-        notesNextBtn?.addEventListener('click', notesNextPage);
+        iframePopupBackdrop?.addEventListener('click', hideIframePopup); // Click backdrop to close
+        // --- Note Popup Close (New Feature) ---
+        noteCloseBtn?.addEventListener('click', hideNotePopup);
+        notePopupOverlay?.addEventListener('click', hideNotePopup); // Click overlay to close
 
+        // --- Note Popup Navigation (New Feature) ---
+        notePrevBtn?.addEventListener('click', () => {
+            if (noteCurrentPage > 1) {
+                renderNotePage(noteCurrentPage - 1);
+            }
+        });
+        noteNextBtn?.addEventListener('click', () => {
+            if (noteCurrentPage < noteTotalPages) {
+                renderNotePage(noteCurrentPage + 1);
+            }
+        });
 
-        // Page Edge Clicks
+        // Page Edge Clicks (Uses updated nextPage/prevPage)
         bookSpread?.addEventListener('click', e => {
             if (document.body.classList.contains('loading-game-active')) return;
             if (e.target.classList.contains('page-edge-nav')) {
                 const pageDiv = e.target.closest('.book-page');
                 if (!pageDiv || pageDiv.classList.contains('placeholder-page')) return;
 
+                // Check if the clicked button is actually visible (based on updateDisplay logic)
                 if (e.target.style.display === 'none') {
                     updateStatus("Clicked hidden edge nav button. Ignoring.");
-                    return;
+                    return; // Don't navigate if the button is hidden
                 }
 
                 if (e.target.classList.contains('page-edge-left')) {
-                    prevPage();
-                } else {
-                    nextPage();
+                    prevPage(); // Calls jumpToPage (no lock check needed for prev)
+                } else { // page-edge-right
+                    nextPage(); // Calls jumpToPage (handles lock check internally if needed)
                 }
+                // showPageSlider and manageToolbar are called within jumpToPage if navigation occurs
             }
         });
 
-        // Keyboard Navigation (MODIFIED Esc key behavior)
+        // Keyboard Navigation (MODIFIED Esc key behavior for ALL popups)
         document.addEventListener('keydown', e => {
             if (document.body.classList.contains('loading-game-active')) return;
 
-            // --- Check for popup closes first (priority: Notes > Iframe > Definition) ---
+            // --- Check for popup closes first (Note > Iframe > Definition) ---
             if (e.key === 'Escape') {
-                if (notesPopupModal?.classList.contains('visible')) {
-                    hideNotesPopup();
+                if (notePopupModal?.classList.contains('visible')) {
+                    hideNotePopup();
                     e.preventDefault();
-                    return;
+                    return; // Stop further processing
                 } else if (iframePopupModal?.classList.contains('visible')) {
                     hideIframePopup();
                     e.preventDefault();
-                    return;
+                    return; // Stop further processing
                 } else if (definitionPopup.classList.contains('visible')) {
                     hideDefinitionPopup();
                     e.preventDefault();
-                    return;
+                    return; // Stop further processing
                 }
+                // If no popups are open, Esc does nothing else here
             }
             // ---
 
-            // Ignore if focus is in an input, TOC is open, or ANY popup is still open
+            // Ignore if focus is in an input, TOC is open, or a popup is still open (shouldn't happen after Esc check above, but good safeguard)
             if (document.getElementById('toc-panel')?.classList.contains('visible') ||
-                notesPopupModal?.classList.contains('visible') || // Check notes popup
+                notePopupModal?.classList.contains('visible') || // --- NEW ---
                 iframePopupModal?.classList.contains('visible') ||
                 definitionPopup.classList.contains('visible') ||
-               (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+               (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('#note-nav'))) // --- Ignore focus within note nav ---
+                return;
 
             // Ignore modifier keys
             if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -2948,50 +2951,50 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             let navAction = false;
             switch(e.key){
                 case 'ArrowRight': case 'PageDown':
-                     nextPage();
+                     nextPage(); // Handles lock check internally via jumpToPage
                      navAction = true; break;
                 case 'ArrowLeft': case 'PageUp':
-                     prevPage();
+                     prevPage(); // No lock check needed
                      navAction = true; break;
                 case 'Home':
-                     if(book.totalPages > 0) jumpToPage(1);
+                     if(book.totalPages > 0) jumpToPage(1); // Handles lock check internally (only if moving forward from non-1)
                      navAction = true; break;
                 case 'End':
-                     if(book.totalPages > 0) jumpToPage(book.totalPages);
+                     if(book.totalPages > 0) jumpToPage(book.totalPages); // Handles lock check internally
                      navAction = true; break;
             }
-            if(navAction){ e.preventDefault(); }
+            if(navAction){ e.preventDefault(); /* Slider/Toolbars managed by jumpToPage/showPageSlider */ }
         });
 
-        // Resize Handling (MODIFIED - Hides all popups)
+        // Resize Handling (Uses modified updateDisplay, hides ALL popups)
         window.addEventListener('resize', ()=>{
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
                 updateStatus("Resize detected.");
                 hideDefinitionPopup();
                 hideIframePopup();
-                hideNotesPopup(); // --- NEW ---
-                applyCurrentViewModeStyles();
+                hideNotePopup(); // --- NEW: Hide note popup on resize ---
+                applyCurrentViewModeStyles(); // Recalculate scale/rotation first
                 if (!document.body.classList.contains('loading-game-active') && book.pdfDocument) {
-                    // Re-render and re-evaluate locks/popups based on potentially new effective view mode
+                    // Re-render and re-evaluate locks based on potentially new effective view mode
+                    // Also re-checks for popups on the *current* page after resize
                     updateDisplay();
-                    // --- NEW: Re-render notes PDF if visible after resize ---
-                    if (notesPopupModal?.classList.contains('visible') && notesPdfDoc && notesCurrentPageNum > 0) {
-                        updateStatus("Re-rendering notes PDF after resize.");
-                        renderNotesPage(notesCurrentPageNum); // Re-render current notes page to fit new modal size
-                    }
+                     // Re-render note popup if it was open (simple approach, could optimize)
+                     if (notePdfDoc && notePopupModal?.classList.contains('visible')) {
+                         renderNotePage(noteCurrentPage);
+                     }
                 }
-                 manageToolbar();
-                 manageLeftToolbar();
+                 manageToolbar(); // Adjust right toolbar visibility if needed
+                 manageLeftToolbar(); // Adjust left toolbar visibility if needed
              }, 250);
         });
 
-        // Touch Swipes
+        // Touch Swipes (Uses updated nextPage/prevPage)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
-            // Ignore swipes starting on interactive elements or ANY popups
-            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-modal,#notes-popup-overlay')){
+            // Ignore swipes starting on interactive elements or popups
+            if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#note-popup-modal,#note-popup-overlay')){ // --- ADDED Note Popup ---
                 tX=0;tY=0;return;
             }
             if(e.touches.length===1){
@@ -3007,39 +3010,39 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
                  if(tE<ST){
                      const dX=eX-tX,dY=eY-tY,aX=Math.abs(dX),aY=Math.abs(dY);
                      if(aX>SW&&aY<SV){ // Horizontal swipe detected
-                         e.preventDefault();
-                         if(dX>0){ prevPage(); } else { nextPage(); }
+                         e.preventDefault(); // Prevent default scroll on successful swipe
+                         if(dX>0){ // Swipe Right (Previous Page)
+                             prevPage();
+                         } else { // Swipe Left (Next Page)
+                             nextPage(); // Handles lock check internally
+                         }
+                         // Slider/Toolbars managed by jumpToPage/showPageSlider
                      }
                  }
              }
              tX=0;tY=0;tS=0;
         });
 
-        // Slider Trigger Zone
+        // Slider Trigger Zone (No change)
         const stz=document.getElementById('page-slider-trigger-zone'),slc=document.getElementById('page-slider-container');if(stz&&slc){const et=()=>{if(document.body.classList.contains('loading-game-active')) return; if(book.pdfDocument&&book.totalPages>0){showPageSlider();clearTimeout(sliderHideTimeout)}};const lts=e=>{if(document.body.classList.contains('loading-game-active')) return; const rt=e.relatedTarget;if(!slc.contains(rt)&&!stz.contains(rt)){resetSliderHideTimer()}};stz.addEventListener('mouseenter',et);slc.addEventListener('mouseenter',et);stz.addEventListener('mouseleave',lts);slc.addEventListener('mouseleave',lts)}
-
-        // Global Click Listener for Popup Dismissal (Definition Popup Only)
+        // Global Click Listener for Popup Dismissal (Definition Popup Only - Keep specific)
         document.addEventListener('click', e => {
-             // Def popup click outside
              if (definitionPopup.classList.contains('visible')
                  && !definitionPopup.contains(e.target)
+                 // Check if the click originated on a keyword highlight *that is interactive*
+                 // (CSS pointer-events: none will prevent clicks in rotated mode anyway)
                  && !e.target.closest('.keyword-highlight[style*="pointer-events: auto"], .keyword-highlight:not([style*="pointer-events"])'))
              { hideDefinitionPopup(); }
+             // Note: Note/Iframe popups are closed by clicking their specific overlay/close buttons only.
+        }, true);
 
-             // Notes popup click outside (only closes if clicking the overlay directly)
-             // Note: We already have a direct click listener on notesPopupOverlay, so this might be redundant
-             // if (notesPopupModal.classList.contains('visible') && !notesPopupModal.contains(e.target) && e.target === notesPopupOverlay) {
-             //    hideNotesPopup();
-             // }
-
-        }, true); // Use capture phase for popups? Check necessity.
-
-        // --- Game Event Listeners ---
+        // --- Game Event Listeners (No change) ---
         goToChapterBtn.addEventListener('click', transitionToChapter);
         window.addEventListener('message', (event) => {
             // IMPORTANT: Check origin in production!
             // if (event.origin !== 'expected-game-origin') return;
             if (event.source !== gameIframe.contentWindow) {
+                // console.warn("Ignoring message not from game iframe contentWindow.");
                  return;
             }
             if (event.data && event.data.type === 'gameOver') { handleGameOverFromGame(event.data.score); }
@@ -3058,7 +3061,7 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization ---
+    // --- Initialization (MODIFIED - Sets up left toolbar hover) ---
     async function init() {
         updateStatus("Initializing application...");
         document.body.classList.add('loading-game-active');
@@ -3067,9 +3070,9 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
 
             setupEvents();
-            setupToolbarHover();
-            setupLeftToolbarHover();
-            updateTimelockButtonVisuals();
+            setupToolbarHover(); // Setup right toolbar
+            setupLeftToolbarHover(); // *** Setup left toolbar ***
+            updateTimelockButtonVisuals(); // Set initial button state
             initPageSlider();
 
             const urlParams = new URLSearchParams(window.location.search);
@@ -3080,31 +3083,35 @@ body.loading-game-active #notes-popup-modal {   /* --- NEW: Hide notes popup too
                 loadPdf(pdfUrlParam); // Run in background, awaits are internal
             } else {
                 updateStatus("No PDF specified in URL parameter (?pdf=...). Reader content will not load.");
-                 isReaderReady = false;
-                 goToChapterBtn.classList.remove('visible');
-                 document.body.classList.remove('loading-game-active');
+                 isReaderReady = false; // Ensure reader isn't considered ready
+                 goToChapterBtn.classList.remove('visible'); // Hide button
+                 document.body.classList.remove('loading-game-active'); // Allow UI to show message
                 const sc = document.querySelector('.main-container');
                 if(sc) {
-                    sc.style.visibility = 'visible'; sc.style.opacity = '1';
+                    sc.style.visibility = 'visible'; sc.style.opacity = '1'; // Make container visible
                     sc.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
                 }
+                // Hide game elements if no PDF
                  const gameContainer = document.getElementById('loading-game-container');
                  if (gameContainer) gameContainer.style.display = 'none';
             }
 
             window.addEventListener('beforeunload', () => {
                 updateStatus("Unloading - Cleanup.");
-                clearTimeout(gameOverTimeoutId); clearTimeout(alertTimeout); pageCache.clear();
+                clearTimeout(gameOverTimeoutId);
+                clearTimeout(alertTimeout);
+                pageCache.clear();
                 if (book.pdfDocument) { try { book.pdfDocument.destroy(); } catch(e){} book.pdfDocument = null; }
-                // --- NEW: Cleanup notes PDF on unload ---
-                if (notesPdfDoc) { try { notesPdfDoc.destroy(); } catch(e){} notesPdfDoc = null; }
-             });
+                // --- NEW: Cleanup note PDF doc ---
+                if (notePdfDoc) { try { notePdfDoc.destroy(); } catch(e){} notePdfDoc = null; }
+                // ---
+            });
             updateStatus("Initialization complete. Background loading may be in progress.");
 
         } catch (initError) {
             console.error("Initialization failed:", initError);
             document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace; position: fixed; top: 10px; left: 10px; z-index: 11000;"><pre>App Init Error:\n${initError.stack || initError}</pre></div>`;
-            document.body.classList.add('loading-game-active');
+            document.body.classList.add('loading-game-active'); // Keep game hidden on fatal init error
             goToChapterBtn.classList.remove('visible');
         }
     }
