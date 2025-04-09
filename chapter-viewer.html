@@ -800,7 +800,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     background-color: rgba(8, 14, 28, 0.7); /* Base semi-transparent dark blue */
     backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
     -webkit-backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
-    z-index: 10003; /* Above definition popup, below modal */
+    z-index: 10003; /* Above definition popup, below note overlay */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.25s ease-out, visibility 0s linear 0.25s; /* UNCHANGED: Blur appears simultaneously with opacity transition */
@@ -833,7 +833,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     background-color: var(--page); /* White page background */
     border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    z-index: 10004; /* Above backdrop */
+    z-index: 10004; /* Above backdrop, below note modal */
     opacity: 0;
     visibility: hidden;
     display: flex;
@@ -883,7 +883,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
 /* --- END: Iframe Popup Styles --- */
 
 
-/* --- START: Note Popup Styles (New Feature) --- */
+/* --- START: Note Popup Styles (MODIFIED Layout) --- */
 #note-popup-overlay {
     position: fixed;
     inset: 0;
@@ -901,8 +901,8 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     transform: translate(-50%, -50%) scale(0.95);
     width: 85%;
     height: 85%;
-    max-width: 800px; /* Slightly smaller max width than iframe */
-    max-height: 750px; /* Slightly taller max height */
+    max-width: 800px;
+    max-height: 750px;
     background-color: var(--page); /* Use page background for the modal itself */
     border: 1px solid rgba(0,0,0,0.15);
     border-radius: 6px;
@@ -910,15 +910,15 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     z-index: 10007; /* Higher than overlay */
     opacity: 0;
     visibility: hidden;
-    display: flex;
-    flex-direction: column;
+    display: flex; /* Use flex for main modal layout */
+    flex-direction: column; /* Stack viewer and potentially footer/header */
     overflow: hidden;
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, visibility 0s linear 0.25s;
-    font-family: var(--font-sans); /* Use sans-serif for UI elements */
+    font-family: var(--font-sans);
     color: var(--note-popup-text);
 }
 #note-popup-overlay.visible {
-    opacity: var(--parchment-overlay-opacity); /* Use defined opacity */
+    opacity: var(--parchment-overlay-opacity);
     visibility: visible;
     transition-delay: 0s;
 }
@@ -928,16 +928,31 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     transform: translate(-50%, -50%) scale(1);
     transition-delay: 0s;
 }
+
+/* Modified note viewer */
 #note-viewer {
-    flex-grow: 1;
-    position: relative; /* Needed for canvas positioning */
-    overflow: auto; /* Scroll if content overflows */
-    padding: 10px;
-    background-color: #fdfdfa; /* Slightly off-white for contrast */
+    flex-grow: 1; /* Takes up most space */
+    position: relative; /* For absolute positioning of buttons and text */
+    overflow: hidden; /* Hide potential overflow */
+    display: flex;
+    flex-direction: column; /* Stack canvas and instruction text */
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    padding: 40px 60px 20px 60px; /* Top, Sides, Bottom - adjust side padding for buttons */
+    background-color: #fdfdfa;
+}
+
+#note-canvas-container { /* New container for canvas for centering */
+    width: 100%;
+    flex-grow: 1; /* Allow canvas area to grow */
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative; /* For loading indicator */
+    overflow: hidden; /* Clip canvas if needed */
+    margin-bottom: 15px; /* Space between canvas and text */
 }
+
 #note-canvas {
     max-width: 100%;
     max-height: 100%;
@@ -945,42 +960,64 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     object-fit: contain;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
-#note-nav {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 15px;
-    background-color: #f0eada; /* Lighter parchment shade for nav */
-    border-top: 1px solid rgba(0,0,0,0.1);
-}
-#note-nav .note-btn {
-    background-color: rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0,0,0,0.1);
-    color: var(--note-popup-text);
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s, border-color 0.2s;
-}
-#note-nav .note-btn:hover:not([disabled]) {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-color: rgba(0,0,0,0.2);
-}
-#note-nav .note-btn[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-#note-page-info {
+
+/* NEW: Instruction Text Styling */
+#note-instruction-text {
+    flex-shrink: 0; /* Prevent text from shrinking */
+    text-align: center;
     font-size: 13px;
-    font-weight: 500;
     color: var(--note-popup-text);
+    opacity: 0.85;
+    padding: 5px 10px;
+    line-height: 1.5;
 }
+
+/* NEW: Side Navigation Buttons Styling */
+.note-side-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--note-popup-text);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, opacity 0.2s;
+    z-index: 10008; /* Above canvas */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.note-side-nav-btn:hover:not([disabled]) {
+    background-color: rgba(0, 0, 0, 0.25);
+}
+.note-side-nav-btn[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+#note-side-prev-btn {
+    left: 10px; /* Position from left edge of note-viewer */
+}
+#note-side-next-btn {
+    right: 10px; /* Position from right edge of note-viewer */
+}
+
+/* REMOVED: Old #note-nav styling */
+/* #note-nav { ... } */
+/* #note-nav .note-btn { ... } */
+/* #note-page-info { ... } */
+
 #note-close-btn {
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 10px; /* Adjusted position */
+    right: 10px; /* Adjusted position */
     width: 30px;
     height: 30px;
     background-color: rgba(0, 0, 0, 0.1);
@@ -995,25 +1032,26 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, transform 0.2s;
-    z-index: 10008; /* Above nav potentially */
+    z-index: 10009; /* Above side buttons */
 }
 #note-close-btn:hover {
     background-color: rgba(0, 0, 0, 0.2);
     transform: scale(1.1);
 }
-/* Loading indicator inside note modal */
+
+/* Loading indicator inside note modal (adjust positioning if needed) */
 #note-loading-indicator {
     position: absolute;
-    top: 50%;
+    top: 50%; /* Center within #note-canvas-container */
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 10009; /* Above canvas */
+    z-index: 5; /* Above canvas */
     display: none; /* Hidden by default */
     flex-direction: column;
     align-items: center;
     gap: 10px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.85);
     border-radius: 5px;
     color: var(--note-popup-text);
 }
@@ -1106,22 +1144,28 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     </div>
     <!-- END: Iframe Popup HTML -->
 
-    <!-- START: Note Popup HTML (New Feature) -->
+    <!-- START: Note Popup HTML (MODIFIED Layout) -->
     <div id="note-popup-overlay"></div>
     <div id="note-popup-modal">
         <button id="note-close-btn" title="Close Note (Esc)">×</button>
         <div id="note-viewer">
-            <canvas id="note-canvas"></canvas>
-             <div id="note-loading-indicator">
-                 <div class="note-spinner"></div>
-                 <span>Loading note...</span>
+            <!-- Side Navigation Buttons -->
+            <button class="note-side-nav-btn" id="note-side-prev-btn" title="Previous Note Page">&lt;</button>
+            <button class="note-side-nav-btn" id="note-side-next-btn" title="Next Note Page">&gt;</button>
+
+            <!-- Canvas Container -->
+            <div id="note-canvas-container">
+                <canvas id="note-canvas"></canvas>
+                <div id="note-loading-indicator">
+                    <div class="note-spinner"></div>
+                    <span>Loading note...</span>
+                </div>
             </div>
+
+            <!-- Instruction Text -->
+            <p id="note-instruction-text">Copy the notes above into your Pyr Notebook before you continue</p>
         </div>
-        <div id="note-nav">
-            <button class="note-btn" id="note-prev-btn" title="Previous Note Page">Previous</button>
-            <span id="note-page-info">Page 1 of 1</span>
-            <button class="note-btn" id="note-next-btn" title="Next Note Page">Next</button>
-        </div>
+        <!-- Removed old note-nav div -->
     </div>
     <!-- END: Note Popup HTML -->
 
@@ -1169,17 +1213,17 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     const iframePopupModal = document.getElementById('iframe-popup-modal');
     const popupIframe = document.getElementById('popup-iframe');
     const closeIframePopupBtn = document.getElementById('close-iframe-popup-btn');
-    // --- Note Popup Elements (New Feature) ---
+    // --- Note Popup Elements (MODIFIED Selectors) ---
     const notePopupOverlay = document.getElementById('note-popup-overlay');
     const notePopupModal = document.getElementById('note-popup-modal');
     const noteViewer = document.getElementById('note-viewer');
     const noteCanvas = document.getElementById('note-canvas');
-    const noteNav = document.getElementById('note-nav');
-    const notePrevBtn = document.getElementById('note-prev-btn');
-    const noteNextBtn = document.getElementById('note-next-btn');
-    const notePageInfo = document.getElementById('note-page-info');
+    const noteSidePrevBtn = document.getElementById('note-side-prev-btn'); // New side button
+    const noteSideNextBtn = document.getElementById('note-side-next-btn'); // New side button
+    const noteInstructionText = document.getElementById('note-instruction-text'); // New instruction text
     const noteCloseBtn = document.getElementById('note-close-btn');
     const noteLoadingIndicator = document.getElementById('note-loading-indicator');
+    // Removed: noteNav, notePrevBtn, noteNextBtn, notePageInfo
 
 
     // --- State Variables ---
@@ -2014,7 +2058,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
 
         updateStatus("Setting Double Page View");
         book.isDoublePageView = true; // Set INTENDED mode
-        document.body.classList.remove('content-rotated-mode', 'fullscreen-mode'); // Remove overrides
+        document.body.classList.remove('content-rotated-mode', 'fullscreen-mode'); // Remove override classes
 
         // Adjust current page to be odd if needed for double view start
         if (book.currentPage > 1 && book.currentPage % 2 === 0) {
@@ -2594,11 +2638,12 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
     }
     // --- END: Iframe Popup Handling Functions ---
 
-    // --- START: Note Popup Handling Functions (New Feature) ---
+    // --- START: Note Popup Handling Functions (MODIFIED Logic) ---
 
     // Renders a specific page of the currently loaded note PDF
     async function renderNotePage(pageNum) {
-        if (!notePdfDoc || !noteCanvas || pageNum < 1 || pageNum > noteTotalPages) {
+        // Ensure new button references are used
+        if (!notePdfDoc || !noteCanvas || !noteSidePrevBtn || !noteSideNextBtn || pageNum < 1 || pageNum > noteTotalPages) {
             console.error(`Note render failed: Invalid state or page number ${pageNum}`);
              if (noteCanvas) {
                  const ctx = noteCanvas.getContext('2d');
@@ -2610,9 +2655,9 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
              }
              // Update UI even on error
              noteCurrentPage = pageNum > 0 ? pageNum : 1;
-             notePageInfo.textContent = `Page ${noteCurrentPage} of ${noteTotalPages || '?'}`;
-             notePrevBtn.disabled = true;
-             noteNextBtn.disabled = true;
+             // Removed page info text update
+             noteSidePrevBtn.disabled = true; // Use new button ID
+             noteSideNextBtn.disabled = true; // Use new button ID
              notePopupModal.classList.remove('loading');
             return;
         }
@@ -2621,12 +2666,16 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
 
         try {
             const page = await notePdfDoc.getPage(pageNum);
-            const viewerStyle = getComputedStyle(noteViewer);
-            const availableWidth = parseFloat(viewerStyle.width) - 20; // Account for padding
-            const availableHeight = parseFloat(viewerStyle.height) - 20;
+            // Use note-canvas-container for sizing now
+            const canvasContainer = document.getElementById('note-canvas-container');
+            if (!canvasContainer) throw new Error("Canvas container not found");
+
+            const viewerStyle = getComputedStyle(canvasContainer);
+            const availableWidth = parseFloat(viewerStyle.width); // Use container width
+            const availableHeight = parseFloat(viewerStyle.height); // Use container height
 
             if (availableWidth <= 0 || availableHeight <= 0) {
-                console.warn("Note viewer has zero dimensions. Cannot render.");
+                console.warn("Note canvas container has zero dimensions. Cannot render.");
                 throw new Error("Note viewer area not ready.");
             }
 
@@ -2647,11 +2696,11 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
 
             await page.render({ canvasContext: context, transform, viewport: scaledViewport }).promise;
 
-            // Update state and UI
+            // Update state and UI (Side Buttons)
             noteCurrentPage = pageNum;
-            notePageInfo.textContent = `Page ${noteCurrentPage} of ${noteTotalPages}`;
-            notePrevBtn.disabled = noteCurrentPage <= 1;
-            noteNextBtn.disabled = noteCurrentPage >= noteTotalPages;
+            // Removed page info text update
+            noteSidePrevBtn.disabled = noteCurrentPage <= 1; // Use new button ID
+            noteSideNextBtn.disabled = noteCurrentPage >= noteTotalPages; // Use new button ID
 
         } catch (error) {
             console.error(`Error rendering note page ${pageNum}:`, error);
@@ -2662,10 +2711,9 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
             ctx.fillStyle = "#cccccc"; ctx.fillRect(0, 0, 300, 150);
             ctx.fillStyle = "#e74c3c"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
             ctx.fillText(`Error: ${error.message}`, 150, 75);
-            // Update UI
-             notePageInfo.textContent = `Error loading page ${pageNum}`;
-             notePrevBtn.disabled = true;
-             noteNextBtn.disabled = true;
+            // Update UI (Side Buttons)
+             noteSidePrevBtn.disabled = true; // Use new button ID
+             noteSideNextBtn.disabled = true; // Use new button ID
         } finally {
              notePopupModal.classList.remove('loading'); // Hide loading indicator
         }
@@ -2682,19 +2730,19 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
         noteTotalPages = 0;
         notePopupModal.classList.add('loading'); // Show loading immediately
 
-        // Reset canvas and UI
+        // Reset canvas and UI (Side Buttons)
         const ctx = noteCanvas.getContext('2d');
         ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
-        notePageInfo.textContent = 'Loading...';
-        notePrevBtn.disabled = true;
-        noteNextBtn.disabled = true;
+        // Removed page info text update
+        if(noteSidePrevBtn) noteSidePrevBtn.disabled = true;
+        if(noteSideNextBtn) noteSideNextBtn.disabled = true;
 
         try {
             const loadingTask = pdfjsLib.getDocument(url);
             notePdfDoc = await loadingTask.promise;
             noteTotalPages = notePdfDoc.numPages;
             updateStatus(`Note PDF loaded: ${noteTotalPages} pages.`);
-            await renderNotePage(1); // Render the first page
+            await renderNotePage(1); // Render the first page (will update buttons)
         } catch (error) {
             console.error(`FATAL: Error loading note PDF document (${url}):`, error);
             notePdfDoc = null; noteTotalPages = 0; noteCurrentPage = 1;
@@ -2704,7 +2752,9 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
             ctx.fillStyle = "#cccccc"; ctx.fillRect(0, 0, 300, 150);
             ctx.fillStyle = "#e74c3c"; ctx.font = "14px sans-serif"; ctx.textAlign = "center";
             ctx.fillText(`Failed to load note: ${error.message}`, 150, 75);
-            notePageInfo.textContent = 'Load Error';
+            // Removed page info text update
+            if(noteSidePrevBtn) noteSidePrevBtn.disabled = true;
+            if(noteSideNextBtn) noteSideNextBtn.disabled = true;
             notePopupModal.classList.remove('loading');
         }
     }
@@ -2723,7 +2773,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
         updateStatus(`Showing note popup for PDF: ${pdfUrl}`);
         notePopupOverlay.classList.add('visible');
         notePopupModal.classList.add('visible');
-        loadNotePdf(pdfUrl); // Load the PDF (handles rendering page 1)
+        loadNotePdf(pdfUrl); // Load the PDF (handles rendering page 1 and setting button states)
     }
 
     // Hides the note popup and cleans up
@@ -2747,9 +2797,9 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
             // Clear canvas (optional, but good practice)
             const ctx = noteCanvas.getContext('2d');
             if (ctx) ctx.clearRect(0, 0, noteCanvas.width, noteCanvas.height);
-            notePageInfo.textContent = '';
-            notePrevBtn.disabled = true;
-            noteNextBtn.disabled = true;
+            // Removed page info text update
+            if(noteSidePrevBtn) noteSidePrevBtn.disabled = true;
+            if(noteSideNextBtn) noteSideNextBtn.disabled = true;
         }
     }
 
@@ -2840,7 +2890,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for NOTE popup, updates Esc key) ---
+    // --- Event Setup (MODIFIED - Adds listeners for NEW NOTE popup elements) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2880,13 +2930,13 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
         noteCloseBtn?.addEventListener('click', hideNotePopup);
         notePopupOverlay?.addEventListener('click', hideNotePopup); // Click overlay to close
 
-        // --- Note Popup Navigation (New Feature) ---
-        notePrevBtn?.addEventListener('click', () => {
+        // --- Note Popup Side Navigation (New Feature) ---
+        noteSidePrevBtn?.addEventListener('click', () => {
             if (noteCurrentPage > 1) {
                 renderNotePage(noteCurrentPage - 1);
             }
         });
-        noteNextBtn?.addEventListener('click', () => {
+        noteSideNextBtn?.addEventListener('click', () => {
             if (noteCurrentPage < noteTotalPages) {
                 renderNotePage(noteCurrentPage + 1);
             }
@@ -2937,12 +2987,12 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
             }
             // ---
 
-            // Ignore if focus is in an input, TOC is open, or a popup is still open (shouldn't happen after Esc check above, but good safeguard)
+            // Ignore if focus is in an input, TOC is open, or a popup is still open
             if (document.getElementById('toc-panel')?.classList.contains('visible') ||
-                notePopupModal?.classList.contains('visible') || // --- NEW ---
+                notePopupModal?.classList.contains('visible') || // Ignore main nav if note popup is open
                 iframePopupModal?.classList.contains('visible') ||
                 definitionPopup.classList.contains('visible') ||
-               (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('#note-nav'))) // --- Ignore focus within note nav ---
+               (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA'))
                 return;
 
             // Ignore modifier keys
@@ -2979,9 +3029,12 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
                     // Re-render and re-evaluate locks based on potentially new effective view mode
                     // Also re-checks for popups on the *current* page after resize
                     updateDisplay();
-                     // Re-render note popup if it was open (simple approach, could optimize)
-                     if (notePdfDoc && notePopupModal?.classList.contains('visible')) {
-                         renderNotePage(noteCurrentPage);
+                     // Re-render note popup if it was open (simple approach)
+                     // Check if notePdfDoc exists and modal *should* be visible (even if temporarily hidden by this resize handler)
+                     if (notePdfDoc) {
+                        // A better check might be needed if we want to preserve the open state more robustly
+                        // For now, just re-render if the document exists
+                        renderNotePage(noteCurrentPage);
                      }
                 }
                  manageToolbar(); // Adjust right toolbar visibility if needed
@@ -2989,7 +3042,7 @@ body.loading-game-active #note-popup-modal {   /* --- NEW: Hide note popup too -
              }, 250);
         });
 
-        // Touch Swipes (Uses updated nextPage/prevPage)
+        // Touch Swipes (Uses updated nextPage/prevPage, ignores swipes on note popup)
         let tX=0,tY=0,tS=0; const SW=50,ST=500,SV=70;
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
