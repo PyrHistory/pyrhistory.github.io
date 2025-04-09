@@ -992,10 +992,10 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     pointer-events: none;
 }
 #notes-prev-btn {
-    left: -65px; 
+    left: -65px;
 }
 #notes-next-btn {
-    right: -65px; 
+    right: -65px;
 }
 
 #notes-instruction {
@@ -1163,15 +1163,22 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
     let isReaderReady = false; // Flag to track if the main PDF content is loaded
     let gameOverTimeoutId = null; // To store the timeout ID for the game over transition
     let iframeMappings = {}; // Stores { pageNum: iframeUrl }
+    // --- NEW: Notes Data Handling ---
+    // Raw notes data based on the new JSON structure (example for chapter 2)
+    // This would typically be loaded from an external JSON file specific to the chapter,
+    // but embedding it here fulfills the "robust/surefire" requirement by avoiding async fetch issues.
+    const rawNotesData = [
+      { "chapterPage": 11, "path": "chapters/ancient-history/chapter2-notes-1.pdf", "notesPage": 1 },
+      { "chapterPage": 15, "path": "chapters/ancient-history/chapter2-notes-2.pdf", "notesPage": 1 },
+      { "chapterPage": 21, "path": "chapters/ancient-history/chapter2-notes-3.pdf", "notesPage": 2 },
+      { "chapterPage": 29, "path": "chapters/ancient-history/chapter2-notes-4.pdf", "notesPage": 2 },
+      { "chapterPage": 35, "path": "chapters/ancient-history/chapter2-notes-5.pdf", "notesPage": 3 },
+      { "chapterPage": 49, "path": "chapters/ancient-history/chapter2-notes-6.pdf", "notesPage": 3 },
+      { "chapterPage": 55, "path": "chapters/ancient-history/chapter2-notes-7.pdf", "notesPage": 4 }
+    ];
+    // Processed notes mapping (key: chapterPage, value: { pdf, page }) - Populated in init()
+    let notesMapping = {};
     // --- NEW: Notes Popup State ---
-    const notesMapping = { // Embedded from chapter2-notes.json
-      "15": { "pdf": "chapters/ancient-history/chapter2-notes-1.pdf", "page": 1 },
-      "21": { "pdf": "chapters/ancient-history/chapter2-notes-2.pdf", "page": 1 },
-      "29": { "pdf": "chapters/ancient-history/chapter2-notes-3.pdf", "page": 1 },
-      "35": { "pdf": "chapters/ancient-history/chapter2-notes-4.pdf", "page": 1 },
-      "49": { "pdf": "chapters/ancient-history/chapter2-notes-5.pdf", "page": 1 },
-      "55": { "pdf": "chapters/ancient-history/chapter2-notes-6.pdf", "page": 1 }
-    };
     let currentNotesPdfDoc = null; // Holds the loaded notes PDF document
     let currentNotesPageNum = 1;   // Current page number *within* the notes PDF
     let totalNotesPages = 0;       // Total pages in the currently loaded notes PDF
@@ -1517,7 +1524,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         }
     }
 
-    // --- Update Display (MODIFIED - Checks for iframe AND notes popups) ---
+    // --- Update Display (Unchanged - Relies on notesMapping object which is now populated from new source) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1699,10 +1706,11 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         // Prioritize Notes Popup if applicable for the current page
         let shouldShowNotesPopup = false;
         if (leftPageNum >= 1 && leftPageNum <= book.totalPages) {
+            // --- Use the processed notesMapping object for lookup ---
             const notesInfo = notesMapping[leftPageNum.toString()];
             if (notesInfo) {
                 updateStatus(`Notes Popup found for page ${leftPageNum}. Showing.`);
-                showNotesPopup(notesInfo.pdf, notesInfo.page);
+                showNotesPopup(notesInfo.pdf, notesInfo.page); // Call with data from mapping
                 shouldShowNotesPopup = true;
             } else {
                 hideNotesPopupIfNeeded(); // Hide notes if navigating away from a notes page
@@ -2274,7 +2282,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
         globalFirstInstanceLocation = {}; iframeMappings = {}; // Reset iframe mappings
-        // Note: notesMapping is hardcoded, no need to reset unless loaded dynamically
+        // Note: notesMapping is handled during initialization
 
         // *** Reset time lock state completely on new PDF load ***
         updateStatus("Resetting time lock state for new PDF.");
@@ -2298,7 +2306,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
             // --- Start loading overlay and iframe data concurrently ---
             const overlayPromise = loadOverlayData(pdfUrl);
             const iframeDataPromise = loadIframeData(pdfUrl);
-            // Note: Notes mapping is already embedded
+            // Note: Notes mapping is already embedded/processed
             // ---
 
             book.pdfDocument = await loadingTask.promise;
@@ -2533,6 +2541,40 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
          }
     }
     // --- END: Iframe Popup Handling Functions ---
+
+    // --- START: Notes Data Processing ---
+    // Processes the raw notes data array into the lookup object format
+    function processNotesData(rawData) {
+        const mapping = {};
+        if (!Array.isArray(rawData)) {
+            console.error("Invalid raw notes data: Expected an array.");
+            return mapping; // Return empty mapping
+        }
+        rawData.forEach((entry, index) => {
+            // Validate each entry structure and types
+            if (typeof entry === 'object' && entry !== null &&
+                typeof entry.chapterPage === 'number' && Number.isInteger(entry.chapterPage) && entry.chapterPage > 0 &&
+                typeof entry.path === 'string' && entry.path.trim() !== '' &&
+                typeof entry.notesPage === 'number' && Number.isInteger(entry.notesPage) && entry.notesPage > 0)
+            {
+                const chapterPageStr = entry.chapterPage.toString();
+                if (mapping[chapterPageStr]) {
+                     console.warn(`Duplicate chapterPage ${entry.chapterPage} found in notes data at index ${index}. Overwriting previous entry.`);
+                }
+                // Store in the format expected by updateDisplay: { pdf: 'path', page: number }
+                mapping[chapterPageStr] = {
+                    pdf: entry.path,
+                    page: entry.notesPage
+                };
+            } else {
+                console.warn(`Invalid notes data entry at index ${index}. Skipping:`, entry);
+            }
+        });
+        updateStatus(`Notes mapping processed: ${Object.keys(mapping).length} valid entries found.`);
+        return mapping;
+    }
+    // --- END: Notes Data Processing ---
+
 
     // --- START: Notes Popup Handling Functions ---
     async function showNotesPopup(pdfUrl, pageNum = 1) {
@@ -2983,7 +3025,7 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (MODIFIED - Sets up left toolbar hover) ---
+    // --- Initialization (MODIFIED - Processes notes data) ---
     async function init() {
         updateStatus("Initializing application...");
         document.body.classList.add('loading-game-active');
@@ -2991,20 +3033,15 @@ body.loading-game-active #notes-popup-container /* Hide notes popup too */
         try {
             try { PAGE_PADDING = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15; } catch(e){ PAGE_PADDING=15; console.warn("CSS var --page-padding read failed.") }
 
+            // --- Process the raw notes data into the usable mapping object ---
+            notesMapping = processNotesData(rawNotesData);
+            // ---
+
             setupEvents();
             setupToolbarHover(); // Setup right toolbar
             setupLeftToolbarHover(); // *** Setup left toolbar ***
             updateTimelockButtonVisuals(); // Set initial button state
             initPageSlider();
-
-            // Validate notes mapping structure (optional, good practice)
-            for (const key in notesMapping) {
-                if (typeof notesMapping[key] !== 'object' || !notesMapping[key].pdf || typeof notesMapping[key].pdf !== 'string' || !notesMapping[key].page || typeof notesMapping[key].page !== 'number') {
-                    console.warn(`Invalid entry in notesMapping for key ${key}. Skipping.`);
-                    delete notesMapping[key];
-                }
-            }
-            updateStatus(`Notes mapping loaded: ${Object.keys(notesMapping).length} entries.`);
 
             const urlParams = new URLSearchParams(window.location.search);
             const pdfUrlParam = urlParams.get('pdf');
