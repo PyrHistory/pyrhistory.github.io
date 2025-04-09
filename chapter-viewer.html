@@ -205,13 +205,13 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     position: absolute;
     z-index: -1; /* Behind the button content */
     top: -3px; left: -3px; right: -3px; bottom: -3px; /* Offset for effect */
-    background: var(--gradient-time-capsule);
+    background: var(--gradient-time-capsule); /* --- UNCHANGED: This gradient is used for initial state --- */
     background-size: 300% 300%;
     border-radius: 50%; /* Match button shape */
     filter: blur(3px); /* Initial blur */
     opacity: 0.35; /* Initial opacity */
     transition: opacity 0.4s ease-out, filter 0.4s ease-out;
-    animation: hazyGradientAnimation 6s linear infinite;
+    animation: hazyGradientAnimation 6s linear infinite; /* --- UNCHANGED: Button animation speed --- */
     pointer-events: none; /* Don't interfere with clicks */
 }
 
@@ -791,14 +791,12 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     position: fixed;
     inset: 0;
     background-color: rgba(8, 14, 28, 0.7); /* Base semi-transparent dark blue */
-    /* MODIFIED: Increased blur */
-    backdrop-filter: blur(3.2px); /* Apply blur effect (Increased from 3px) */
-    -webkit-backdrop-filter: blur(3.2px); /* Increased from 3px */
+    backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
+    -webkit-backdrop-filter: blur(3.15px); /* MODIFIED: Blur effect 5% stronger */
     z-index: 10003; /* Above definition popup, below modal */
     opacity: 0;
     visibility: hidden;
-    /* MODIFIED: Blur appears simultaneously with opacity transition */
-    transition: opacity 0.25s ease-out, visibility 0s linear 0.25s; /* No change needed for timing */
+    transition: opacity 0.25s ease-out, visibility 0s linear 0.25s; /* UNCHANGED: Blur appears simultaneously with opacity transition */
     cursor: pointer; /* Indicate clicking backdrop closes it */
     overflow: hidden; /* Contain the pseudo-element */
 }
@@ -808,11 +806,10 @@ body.loading-game-active #iframe-popup-modal {   /* Hide iframe popup too */
     content: "";
     position: absolute;
     inset: 0; /* Cover the entire backdrop */
-    background: var(--gradient-time-capsule); /* Apply the specified flowing gradient (Matches Time Capsule btn) */
+    background: var(--gradient-time-capsule); /* UNCHANGED: Apply the specified flowing gradient (matches button initial state) */
     background-size: 300% 300%; /* Match button animation size */
     opacity: 0.35; /* Match button initial opacity for the overlay */
-    /* MODIFIED: Animation duration changed from 6s to 40s (15% speed) */
-    animation: hazyGradientAnimation 40s linear infinite; /* Apply the animation */
+    animation: hazyGradientAnimation 30s linear infinite; /* MODIFIED: Apply the animation, 5x slower (30s vs 6s) */
     pointer-events: none; /* Don't interfere with clicks */
     z-index: -1; /* Place behind potential backdrop content, but above page content */
 }
