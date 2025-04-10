@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -634,7 +633,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     transform: scale(1.1);
 }
 .page-rotate-btn { /* Specific positioning for rotate button */
-    top: 10px; /* MODIFIED: Positioned inside the page */
+    top: 10px; /* Positioned inside the page */
     right: 10px;
 }
 /* --- MODIFIED: Show button ONLY on hover over the direct parent page --- */
@@ -768,10 +767,10 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
     inset: 0;
     z-index: 10000;
     background-color: var(--lab-blue);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    display: flex; /* Enables flexbox */
+    flex-direction: column; /* Stacks children vertically */
+    justify-content: center; /* Centers children vertically */
+    align-items: center; /* Centers children horizontally */
     transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s;
     opacity: 1;
     visibility: visible;
@@ -790,42 +789,66 @@ body:not(.loading-game-active) #loading-game-container {
 
 #game-iframe {
     width: 90%;
-    max-width: 900px;
+    max-width: 900px; /* Keeps iframe from being too wide */
     height: 70vh;
-    max-height: 400px;
+    max-height: 400px; /* Limits iframe height */
     border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
-    background-color: var(--lab-blue); /* Use lab blue as placeholder */
-    margin-bottom: 15px; /* Space between iframe and bar/text */
+    background-color: var(--lab-blue); /* Placeholder bg */
+    margin-bottom: 30px; /* MODIFIED: Increased space between iframe and loading indicator */
+    /* Centering is handled by the flex container (#loading-game-container) */
 }
 
-/* NEW: Loading Bar Styles */
-#game-loading-bar-container {
-    width: 60%; /* Match iframe width roughly */
-    max-width: 400px;
-    height: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-top: 10px; /* Space above bar */
-    margin-bottom: 15px; /* Space below bar */
-    display: none; /* Hidden initially, shown by JS */
-}
-body.loading-game-active #game-loading-bar-container {
-    display: block; /* Show only when game loading is active */
+/* NEW: Pulsing loading button animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+        box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.5); /* Accent color */
+    }
+    70% {
+        transform: scale(1.02);
+        opacity: 1;
+        box-shadow: 0 0 0 10px rgba(245, 166, 35, 0);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.7;
+        box-shadow: 0 0 0 0 rgba(245, 166, 35, 0);
+    }
 }
 
-#game-loading-bar {
-    width: 0%; /* Start at 0% */
-    height: 100%;
-    background: linear-gradient(to right, var(--fiery-orange), var(--accent));
-    border-radius: 4px;
-    transition: width 0.5s ease-out; /* Animate width change */
+/* NEW: Loading Button Style */
+#game-loading-button {
+    background-color: rgba(44, 62, 80, 0.8); /* Dark blue-gray base */
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 10px 25px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px; /* Rounded ends */
+    cursor: default; /* Not clickable */
+    text-align: center;
+    min-width: 120px;
+    margin-bottom: 15px; /* Space below button */
+    opacity: 0.7; /* Start slightly dimmed */
+    animation: pulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+    transition: opacity 0.3s ease;
+    /* Centering is handled by the flex container */
+}
+body.loading-game-active #game-loading-button {
+    display: inline-block; /* Show only when game loading is active */
+}
+body:not(.loading-game-active) #game-loading-button {
+    display: none; /* Hide when not loading */
+    animation: none; /* Stop animation when hidden */
 }
 
 #iframe-loading-text {
     color: var(--text-on-dark);
-    margin-top: 0; /* Reset margin, spacing handled by bar container */
+    margin-top: 0; /* Reset margin, spacing handled by button's margin-bottom */
 }
 
 /* MODIFIED: Pop-up animation for Go To Chapter button */
@@ -1210,10 +1233,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     <!-- Loading Game Screen -->
     <div id="loading-game-container">
         <iframe id="game-iframe" src="/chapter2-loading-game.html" title="Loading Game"></iframe>
-        <!-- NEW: Loading Bar -->
-        <div id="game-loading-bar-container">
-            <div id="game-loading-bar"></div>
-        </div>
+        <!-- NEW: Pulsing Loading Button -->
+        <button id="game-loading-button">Loading…</button>
         <p id="iframe-loading-text">Loading game...</p>
     </div>
     <!-- Go To Chapter Button (Initially hidden, shown via JS) -->
@@ -1345,7 +1366,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     const SLIDER_HIDE_DELAY = 1750;
     const READING_TIME_ALERT_DURATION = 2500;
     const GAME_OVER_TRANSITION_DELAY = 3000;
-    const LOADING_BAR_ANIMATION_BUFFER = 600; // ms > transition duration
+    const LOADING_BAR_ANIMATION_BUFFER = 600; // ms > transition duration (Not used for bar anymore, but kept for button show delay)
     const NOTES_WIGGLE_DURATION = 500; // ms
 
     const CSS_CLASS = {
@@ -1422,8 +1443,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         gameIframe: document.getElementById('game-iframe'),
         goToChapterBtn: document.getElementById('go-to-chapter-btn'),
         iframeLoadingText: document.getElementById('iframe-loading-text'),
-        gameLoadingBarContainer: document.getElementById('game-loading-bar-container'),
-        gameLoadingBar: document.getElementById('game-loading-bar'),
+        gameLoadingButton: document.getElementById('game-loading-button'), // NEW: Loading button reference
 
         statusIndicator: document.getElementById('status-indicator'), // Although hidden
     };
@@ -2479,7 +2499,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
              // Add class to body? Optional, for styling during drag
         };
 
-        const handlePointerUpOrChange = () => {
+        const handlePointerUpOrChange = (event) => { // Added event param
              if (!appState.isDraggingSlider && event.type !== 'change') return;
              const wasDragging = appState.isDraggingSlider;
              appState.isDraggingSlider = false;
@@ -2734,7 +2754,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         resetPopupStates();
         document.title = "Heritage History™ Reader";
         ui.tocList.innerHTML = 'Loading...'; // Reset TOC display
-        if (ui.gameLoadingBar) ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
+        // No loading bar reset needed anymore
 
         let filename = "Document";
         try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
@@ -2801,22 +2821,15 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             appState.isReaderReady = true;
             updateStatus("Reader is ready!");
 
-            // Animate loading bar and show 'Go to Chapter' button
-            if (ui.gameLoadingBar) {
-                updateStatus("Animating loading bar to 100%.");
-                ui.gameLoadingBar.style.width = '100%';
-                setTimeout(() => {
-                    // Only show button if still in loading game state
-                    if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                        updateStatus("Showing 'Go to Chapter' button after loading.");
-                        toggleVisibility(ui.goToChapterBtn, true); // Trigger pop-up animation via CSS
-                    }
-                }, LOADING_BAR_ANIMATION_BUFFER);
-            } else if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                 // Fallback if bar missing
-                 updateStatus("Loading bar missing, showing 'Go to Chapter' button directly.");
-                 toggleVisibility(ui.goToChapterBtn, true);
-            }
+            // Show 'Go to Chapter' button after a short delay
+            // (Loading bar animation is replaced by the pulsing button)
+            setTimeout(() => {
+                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                    updateStatus("Showing 'Go to Chapter' button after loading.");
+                    toggleVisibility(ui.goToChapterBtn, true); // Trigger pop-up animation via CSS
+                }
+            }, LOADING_BAR_ANIMATION_BUFFER);
+
 
             // Notify game iframe that reader is ready (to prevent auto-restart)
             if (ui.gameIframe?.contentWindow) {
