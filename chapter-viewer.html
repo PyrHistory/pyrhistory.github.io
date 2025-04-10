@@ -85,17 +85,37 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     top:0;
     right:0;
     width:30px; /* Width of the hover area */
-    height:100%; /* Cover full height for edge activation */
-    z-index:9998; /* Above glow, below toolbar */
+    /* MODIFIED: Reduce height to focus glow at the top */
+    height: 150px; /* Adjust as needed, covers general toolbar area */
+    z-index:9998; /* Below toolbar */
     transition:none!important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
-    position: relative; /* Needed for potential future pseudo-element, but glow is removed */
-    overflow: hidden; /* Keep this? Maybe not needed anymore */
+    position: relative; /* Needed for pseudo-element */
+    overflow: hidden; /* Contain glow */
+    /* background: rgba(255,0,0,0.1); */ /* Optional: for debugging trigger area */
 }
 
-/* --- REMOVED: Subtle Glow Effect (On Hover) from Trigger Area --- */
-/* The ::after pseudo-element is no longer used here for the glow */
-
+/* --- MODIFIED: Subtle Glow Effect (On Hover) --- */
+.toolbar-trigger-area::after {
+    content: '';
+    position: absolute;
+    /* MODIFIED: Position glow relative to trigger area (top right) */
+    top: 0; /* Glow starts near the top of the trigger area */
+    left: 0; /* Glow fills trigger area from left */
+    bottom: auto; /* Don't stretch to bottom */
+    width: 100%; /* Span the full trigger width */
+    height: 100%; /* MODIFIED: Fill the trigger area height */
+    /* MODIFIED: Subtle orange glow fading from top right edge of trigger area */
+    background: radial-gradient(circle at top right, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    opacity: 0; /* MODIFIED: Initially hidden */
+    transition: opacity 0.3s ease; /* Transition the opacity */
+    pointer-events: none; /* Don't block hover on trigger area itself */
+    z-index: -1; /* Behind potential future content */
+}
+.toolbar-trigger-area:hover::after {
+    opacity: 1; /* MODIFIED: Show glow on hover of trigger area */
+}
+/* --- END: Subtle Glow Effect --- */
 
 /* MODIFIED: Toolbar becomes visible by sliding in from right */
 #new-toolbar.visible{
@@ -266,7 +286,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     display:flex;
     flex-direction:column!important; /* Content flows vertically */
     align-items:center;
-    z-index:9998; /* Above glow, below toolbars */
+    z-index:9998;
     transition:bottom .35s cubic-bezier(.2,.9,.3,1)!important; /* Animate bottom property */
     border-radius:16px 16px 0 0; /* Rounded top corners */
 }
@@ -360,9 +380,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     bottom: 0; /* At the bottom edge */
     left: 0;
     width: 100%;
-    height: 30px;
-    z-index: 9997; /* Below slider container, above glow, same as book */
-    pointer-events: auto;
+    height: 30px; /* Height of the hover area at the bottom */
+    z-index: 9997; /* Below slider container */
+    pointer-events: auto; /* Needs pointer events to trigger hover */
+    /* background: rgba(0, 255, 0, 0.1); */ /* Optional: for debugging trigger zone */
 }
 /* --- END: Toolbar & Slider Base Positioning --- */
 
@@ -397,23 +418,26 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     top: 0;
     left: 0; /* Always on the left edge */
     width: 30px; /* Width of hover area */
-    height: 100%;
-    z-index: 9998; /* Above glow, below toolbar */
+    /* MODIFIED: Reduce height to be more focused at the top */
+    height: 150px; /* Match right side */
+    z-index: 9998; /* Below toolbar */
     transition: none !important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
     position: relative;
     overflow: hidden; /* Contain glow */
+    /* background: rgba(0,0,255,0.1); */ /* Optional: for debugging trigger area */
 }
-/* --- NEW: Subtle Glow Effect for Left Trigger --- */
+/* --- MODIFIED: Subtle Glow Effect for Left Trigger --- */
 .left-toolbar-trigger-area::after {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0; /* Glow from the right edge */
-    bottom: 0;
+    top: 0; /* Align with top */
+    right: 0; /* Glow fills trigger area from right */
+    bottom: auto; /* Don't stretch to bottom */
     width: 100%; /* Span the full trigger width */
-    /* Use same orange glow, but positioned on the left */
-    background: radial-gradient(circle at center left, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    height: 100%; /* MODIFIED: Fill trigger area height */
+    /* MODIFIED: Use same orange glow, positioned top left */
+    background: radial-gradient(circle at top left, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none; /* Don't block hover on trigger area itself */
@@ -468,7 +492,7 @@ body:not(.loading-game-active) .main-container {
 }
 
 
-.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%); z-index: 100; /* MODIFIED: Above glow overlay */ }
+.book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
 .book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
@@ -868,8 +892,7 @@ body.loading-game-active #iframe-popup-modal,
 body.loading-game-active #notes-popup-backdrop,
 body.loading-game-active #notes-popup-container,
 body.loading-game-active .page-action-btn, /* Hide page action buttons */
-body.loading-game-active #return-view-fixed-btn, /* Hide return view button */
-body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
+body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 {
     display: none !important;
     visibility: hidden;
@@ -1160,25 +1183,6 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
 }
 /* --- END: Notes Popup Styles --- */
 
-/* --- START: Toolbar Glow Overlay --- */
-#toolbar-glow-overlay {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 200px; /* Adjust size as needed */
-    height: 200px;
-    /* Centered on top right corner */
-    background: radial-gradient(circle at top right, rgba(245, 166, 35, 0.5) 0%, rgba(245, 166, 35, 0.0) 70%);
-    z-index: 9996; /* Below book spread, slider trigger, toolbars */
-    pointer-events: none; /* Doesn't block interactions */
-    opacity: 1; /* Always visible when reader is active */
-    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s; /* Match game transition */
-}
-/* Hide glow when game is loading (rule is already present in Loading Game Styles) */
-/* body.loading-game-active #toolbar-glow-overlay { display: none !important; visibility: hidden; opacity: 0; } */
-/* --- END: Toolbar Glow Overlay --- */
-
-
 </style>
 
 </head>
@@ -1281,9 +1285,6 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
          <div id="notes-instruction"><em>Copy these notes into your Pyr Notebook before continuing</em></div>
     </div>
 
-    <!-- NEW: Toolbar Glow Overlay -->
-    <div id="toolbar-glow-overlay"></div>
-
 <!-- Script block for initial HTML population (minimal changes) -->
 <script>
     // --- START: HTML Population ---
@@ -1321,7 +1322,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
     // --- Constants ---
     const MAX_CACHE_SIZE = 20;
     const TOOLBAR_HIDE_DELAY = 500;
-    const SLIDER_HIDE_DELAY = 1750;
+    const SLIDER_HIDE_DELAY = 1750; // MODIFIED: Longer delay for slider hide
     const READING_TIME_ALERT_DURATION = 2500;
     const GAME_OVER_TRANSITION_DELAY = 3000;
     const LOADING_BAR_ANIMATION_BUFFER = 600; // ms > transition duration
@@ -1363,7 +1364,6 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
         leftToolbarTrigger: document.getElementById('left-toolbar-trigger-area'),
         timelockToggleButton: document.getElementById('timelock-toggle-btn'),
         returnViewFixedBtn: document.getElementById('return-view-fixed-btn'),
-        toolbarGlowOverlay: document.getElementById('toolbar-glow-overlay'), // NEW
 
         sliderContainer: document.getElementById('page-slider-container'),
         slider: document.getElementById('page-slider'),
@@ -1428,6 +1428,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
         leftToolbarTimer: null,
         resizeTimer: null,
         sliderHideTimeout: null,
+        sliderHover: false, // MODIFIED: Added slider hover state
         gameOverTimeoutId: null,
         alertTimeout: null,
         alertWiggleTimeout: null,
@@ -2282,7 +2283,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
         resetPopupStates(); // Hide any open popups
 
         updateDisplay(); // Render the new page(s), calculate next lock state, check for popups
-        // showPageSlider(); // REMOVED: Don't automatically show slider on page jump
+        // showPageSlider(); // MODIFIED: Removed this call - slider now triggered by hover
         manageToolbar(false); // Hide toolbars
         manageLeftToolbar(false);
     }
@@ -2402,29 +2403,34 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
     }
     function hideLoading() { toggleVisibility(ui.loadingOverlay, false); }
 
-    // --- Slider Logic ---
-    function showPageSlider() {
-        // NO LONGER USED EXPLICITLY - Visibility handled by hover in initPageSlider
-        // if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-        // if (ui.sliderContainer && pdfState.totalPages > 0) {
-        //     toggleVisibility(ui.sliderContainer, true);
-        //     resetSliderHideTimer();
-        // }
-    }
-    function hidePageSlider() {
-        // Only hide if not currently dragging
-        if (!appState.isDraggingSlider) {
-            toggleVisibility(ui.sliderContainer, false);
+    // --- MODIFIED: Slider Logic ---
+    function showPageSlider() { // Now only called by hover logic
+        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+        if (ui.sliderContainer && pdfState.totalPages > 0) {
+            clearTimeout(appState.sliderHideTimeout); // Clear any pending hide
+            toggleVisibility(ui.sliderContainer, true);
+            // updateStatus("Slider Shown"); // Optional debug
         }
-     }
+    }
 
-    function resetSliderHideTimer() {
+    function hidePageSlider(immediate = false) {
         clearTimeout(appState.sliderHideTimeout);
-        appState.sliderHideTimeout = setTimeout(hidePageSlider, SLIDER_HIDE_DELAY);
+        if (immediate) {
+             toggleVisibility(ui.sliderContainer, false);
+             // updateStatus("Slider Hidden (Immediate)"); // Optional debug
+        } else {
+            // Only schedule hide if not dragging and mouse isn't over trigger/slider
+            if (!appState.isDraggingSlider && !appState.sliderHover) {
+                 appState.sliderHideTimeout = setTimeout(() => {
+                      toggleVisibility(ui.sliderContainer, false);
+                      // updateStatus("Slider Hidden (Delayed)"); // Optional debug
+                 }, SLIDER_HIDE_DELAY);
+            }
+        }
     }
 
     function initPageSlider() {
-        if (!ui.slider || !ui.sliderContainer || !ui.sliderTriggerZone) { console.error("Slider elements not found"); return; }
+        if (!ui.slider || !ui.sliderContainer) { console.error("Slider elements not found"); return; }
 
         // Update display text during drag/input
         const handleSliderInput = () => {
@@ -2446,54 +2452,65 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
                 ui.currentPageDisplay.textContent = pageText;
             }
             updateSliderStyle(ui.slider, targetPageValue);
-            resetSliderHideTimer(); // Keep slider visible while interacting
+            // resetSliderHideTimer(); // MODIFIED: No longer needed here, handled by hover
+            clearTimeout(appState.sliderHideTimeout); // Keep slider visible while interacting
         };
 
         // Start dragging
-        const handlePointerDown = () => {
+        const handlePointerDown = (event) => {
              if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-             appState.isDraggingSlider = true;
-             clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
+             // Check if the click target is the slider itself (not just the container)
+             if (event.target === ui.slider) {
+                 appState.isDraggingSlider = true;
+                 clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
+                 // updateStatus("Slider Drag Start"); // Optional debug
+             }
          };
 
         // End dragging or click completed
-        const handlePointerUpOrChange = (event) => { // Added event parameter
-             if (!appState.isDraggingSlider && event.type !== 'change') return; // Handle pointerup only if dragging, always handle change
-
-             appState.isDraggingSlider = false;
+        const handlePointerUpOrChange = (event) => {
+             // Ensure we have a target page value
              const targetPageValue = parseInt(ui.slider.value, 10);
-             updateStatus(`Slider action ended at value: ${targetPageValue}`);
-             jumpToPage(targetPageValue); // Navigate to the selected page
-             resetSliderHideTimer(); // Start timer to hide slider
+             if (isNaN(targetPageValue)) return;
+
+             // Handle event if dragging OR if it's a 'change' event (click without drag)
+             if (appState.isDraggingSlider || event.type === 'change') {
+                 // updateStatus(`Slider Drag End/Change at: ${targetPageValue}`); // Optional debug
+                 appState.isDraggingSlider = false; // Ensure dragging state is off
+                 jumpToPage(targetPageValue); // Navigate to the selected page
+                 // Start timer to hide slider only if mouse isn't currently over it
+                 if (!appState.sliderHover) {
+                     hidePageSlider();
+                 }
+             }
          };
 
          // Handle lost pointer capture (e.g., dragging off screen)
          const handleLostPointer = () => {
             if (appState.isDraggingSlider) {
+                // updateStatus("Slider Lost Pointer Capture"); // Optional debug
                 appState.isDraggingSlider = false;
                  const targetPageValue = parseInt(ui.slider.value, 10);
                  updateStatus(`Slider lost capture at value: ${targetPageValue}`);
                  jumpToPage(targetPageValue);
-                 resetSliderHideTimer();
+                 if (!appState.sliderHover) { // Start hide timer if mouse not over slider
+                     hidePageSlider();
+                 }
             }
         };
 
-        // MODIFIED: Show slider on hover, clear hide timer
-        const handleMouseEnter = () => {
+        // Handle slider area hover states
+        const handleSliderEnter = () => {
             if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-            clearTimeout(appState.sliderHideTimeout);
-            toggleVisibility(ui.sliderContainer, true); // Make visible on hover
+            appState.sliderHover = true;
+            showPageSlider(); // Show immediately on hover
         };
-        // MODIFIED: Start hide timer on leave
-        const handleMouseLeave = (event) => {
-             if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-             // Check if mouse left to something *outside* the slider container AND the trigger zone
-             const relatedTarget = event.relatedTarget;
-             const isLeavingToOutside = !ui.sliderContainer.contains(relatedTarget) && !ui.sliderTriggerZone.contains(relatedTarget);
-
-             if (isLeavingToOutside) {
-                 resetSliderHideTimer(); // Start timer to hide slider
-             }
+        const handleSliderLeave = () => {
+            appState.sliderHover = false;
+            // Don't hide immediately, start the timer (unless dragging just stopped)
+            if (!appState.isDraggingSlider) {
+                hidePageSlider(); // Schedules the hide
+            }
         };
 
         ui.slider.addEventListener('input', handleSliderInput);
@@ -2502,17 +2519,28 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
         ui.slider.addEventListener('change', handlePointerUpOrChange); // Handles clicks without drag
         ui.slider.addEventListener('lostpointercapture', handleLostPointer);
 
-        // Listen on both container and trigger zone
-        ui.sliderContainer.addEventListener('mouseenter', handleMouseEnter);
-        ui.sliderContainer.addEventListener('mouseleave', handleMouseLeave);
-        ui.sliderTriggerZone.addEventListener('mouseenter', handleMouseEnter);
-        ui.sliderTriggerZone.addEventListener('mouseleave', handleMouseLeave);
+        // Apply hover logic to trigger zone AND the slider container itself
+        ui.sliderTriggerZone?.addEventListener('mouseenter', handleSliderEnter);
+        ui.sliderContainer?.addEventListener('mouseenter', handleSliderEnter);
+        ui.sliderTriggerZone?.addEventListener('mouseleave', handleSliderLeave);
+        ui.sliderContainer?.addEventListener('mouseleave', handleSliderLeave);
 
+        // Ensure popups hide the slider immediately
+        const originalShowIframePopup = showIframePopup;
+        showIframePopup = function(...args) {
+            hidePageSlider(true); // Hide immediately
+            originalShowIframePopup.apply(this, args);
+        };
+        const originalShowNotesPopup = showNotesPopup;
+        showNotesPopup = function(...args) {
+            hidePageSlider(true); // Hide immediately
+            originalShowNotesPopup.apply(this, args);
+        };
 
+        updateStatus("Slider initialized with hover trigger.");
         updateSliderTotalPages();
         updateSliderPosition();
-        // Ensure slider starts hidden
-        toggleVisibility(ui.sliderContainer, false);
+        toggleVisibility(ui.sliderContainer, false); // Ensure slider starts hidden
     }
 
     function updateSliderTotalPages() {
@@ -2554,9 +2582,11 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
         const min = parseInt(slider.min || 1);
         const max = parseInt(slider.max || 1);
         const range = max > min ? max - min : 1;
-        const percentage = ((parseInt(value) - min) / range) * 100;
+        const val = parseInt(value) || min; // Ensure value is a number
+        const percentage = ((val - min) / range) * 100;
         slider.style.setProperty('--slider-percent', `${Math.max(0, Math.min(100, percentage))}%`);
     }
+    // --- END MODIFIED: Slider Logic ---
 
 
     // --- Data Loading (Overlays, Iframes, Keywords) ---
@@ -3004,6 +3034,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
             console.error("Cannot show iframe popup: Missing element or URL."); return;
         }
         hideDefinitionPopup(); hideNotesPopupIfNeeded(); // Hide other popups
+        hidePageSlider(true); // MODIFIED: Hide slider immediately when iframe popup shows
 
         // Avoid reloading if already visible with the same URL
         if (ui.iframePopupModal.classList.contains(CSS_CLASS.VISIBLE) && ui.popupIframe.src === url) {
@@ -3063,6 +3094,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
             console.error("Cannot show notes popup: Missing elements."); return;
         }
         hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
+        hidePageSlider(true); // MODIFIED: Hide slider immediately when notes popup shows
         updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
 
         toggleVisibility(ui.notesPopupBackdrop, true);
@@ -3544,7 +3576,7 @@ body.loading-game-active #toolbar-glow-overlay /* Hide new glow overlay */
             setupToolbarHover(); // Right toolbar hover
             setupLeftToolbarHover(); // Left toolbar hover
             updateTimelockButtonVisuals(); // Set initial timelock icon state
-            initPageSlider(); // Setup slider interaction
+            initPageSlider(); // MODIFIED: Setup slider interaction including hover
 
             // Get PDF URL from query parameter
             const urlParams = new URLSearchParams(window.location.search);
