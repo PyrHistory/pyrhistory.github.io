@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,14 +86,12 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     top:0;
     right:0;
     width:30px; /* Width of the hover area */
-    /* MODIFIED: Reduce height to focus glow at the top */
-    height: 150px; /* Adjust as needed, covers general toolbar area */
-    z-index:9998; /* Below toolbar */
+    height:100%; /* Cover full height for edge activation */
+    z-index:9998;
     transition:none!important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
     position: relative; /* Needed for pseudo-element */
     overflow: hidden; /* Contain glow */
-    /* background: rgba(255,0,0,0.1); */ /* Optional: for debugging trigger area */
 }
 
 /* --- MODIFIED: Subtle Glow Effect (On Hover) --- */
@@ -100,13 +99,12 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     content: '';
     position: absolute;
     /* MODIFIED: Position glow relative to trigger area (top right) */
-    top: 0; /* Glow starts near the top of the trigger area */
-    left: 0; /* Glow fills trigger area from left */
-    bottom: auto; /* Don't stretch to bottom */
+    top: 0;
+    left: 0; /* Glow from the left edge OF THE TRIGGER AREA */
+    bottom: 0;
     width: 100%; /* Span the full trigger width */
-    height: 100%; /* MODIFIED: Fill the trigger area height */
-    /* MODIFIED: Subtle orange glow fading from top right edge of trigger area */
-    background: radial-gradient(circle at top right, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    /* Subtle orange glow fading from right edge of trigger area */
+    background: radial-gradient(circle at center right, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
     opacity: 0; /* MODIFIED: Initially hidden */
     transition: opacity 0.3s ease; /* Transition the opacity */
     pointer-events: none; /* Don't block hover on trigger area itself */
@@ -265,7 +263,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     100% { background-position: 0% 50%; }
 }
 
-
+/* --- START: MODIFIED SLIDER VISIBILITY/POSITIONING --- */
 .page-slider-container{
     position:fixed;
     bottom:-80px; /* Start hidden below */
@@ -289,10 +287,31 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     z-index:9998;
     transition:bottom .35s cubic-bezier(.2,.9,.3,1)!important; /* Animate bottom property */
     border-radius:16px 16px 0 0; /* Rounded top corners */
+    opacity: 0; /* Start fully transparent */
+    visibility: hidden; /* Start hidden */
+    pointer-events: none; /* Not interactive when hidden */
+    transition: bottom .35s cubic-bezier(.2,.9,.3,1), opacity .35s ease-out, visibility 0s linear .35s !important; /* Add opacity/visibility transition */
 }
 .page-slider-container.visible{
     bottom:0!important; /* Slide up from bottom */
+    opacity: 1; /* Fade in */
+    visibility: visible; /* Become visible */
+    pointer-events: auto; /* Become interactive */
+    transition-delay: 0s, 0s, 0s !important; /* Reset transition delay for visibility */
 }
+#page-slider-trigger-zone { /* Trigger zone for slider */
+    position: fixed;
+    bottom: 0; /* At the bottom edge */
+    left: 0;
+    width: 100%;
+    height: 30px; /* Height of the trigger area */
+    z-index: 9997;
+    pointer-events: auto; /* Must be interactive */
+    cursor: pointer; /* Indicate it's interactive */
+    /* background: rgba(255,0,0,0.1); */ /* DEBUG: Optional visual */
+}
+/* --- END: MODIFIED SLIDER VISIBILITY/POSITIONING --- */
+
 .page-slider-track{width:100%;margin-bottom:8px;padding:0 10px}
 .page-slider{
     width:100%!important; /* Full width */
@@ -375,16 +394,6 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     margin-bottom: 0 !important; /* Reset margin */
     padding-top: 0 !important; /* Reset padding */
 }
-#page-slider-trigger-zone { /* Trigger zone for slider */
-    position: fixed;
-    bottom: 0; /* At the bottom edge */
-    left: 0;
-    width: 100%;
-    height: 30px; /* Height of the hover area at the bottom */
-    z-index: 9997; /* Below slider container */
-    pointer-events: auto; /* Needs pointer events to trigger hover */
-    /* background: rgba(0, 255, 0, 0.1); */ /* Optional: for debugging trigger zone */
-}
 /* --- END: Toolbar & Slider Base Positioning --- */
 
 /* --- START: Left Toolbar for Timelock --- */
@@ -418,26 +427,23 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     top: 0;
     left: 0; /* Always on the left edge */
     width: 30px; /* Width of hover area */
-    /* MODIFIED: Reduce height to be more focused at the top */
-    height: 150px; /* Match right side */
-    z-index: 9998; /* Below toolbar */
+    height: 100%;
+    z-index: 9998;
     transition: none !important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
     position: relative;
     overflow: hidden; /* Contain glow */
-    /* background: rgba(0,0,255,0.1); */ /* Optional: for debugging trigger area */
 }
-/* --- MODIFIED: Subtle Glow Effect for Left Trigger --- */
+/* --- NEW: Subtle Glow Effect for Left Trigger --- */
 .left-toolbar-trigger-area::after {
     content: '';
     position: absolute;
-    top: 0; /* Align with top */
-    right: 0; /* Glow fills trigger area from right */
-    bottom: auto; /* Don't stretch to bottom */
+    top: 0;
+    right: 0; /* Glow from the right edge */
+    bottom: 0;
     width: 100%; /* Span the full trigger width */
-    height: 100%; /* MODIFIED: Fill trigger area height */
-    /* MODIFIED: Use same orange glow, positioned top left */
-    background: radial-gradient(circle at top left, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    /* Use same orange glow, but positioned on the left */
+    background: radial-gradient(circle at center left, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none; /* Don't block hover on trigger area itself */
@@ -900,8 +906,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 }
 /* --- END: Loading Game Styles --- */
 
-/* --- START: Reading Time Alert (MODIFIED) --- */
-/* Fun wiggle animation */
+/* --- START: Reading Time Alert (MODIFIED for Fade Down) --- */
+/* Fun wiggle animation (Shared - ensure translateX stays for centering) */
 @keyframes wiggle {
   0%, 100% { transform: translateX(-50%) rotate(0deg); }
   25% { transform: translateX(-50%) rotate(-3deg); }
@@ -913,7 +919,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     position: fixed;
     bottom: 80px;
     left: 50%;
-    transform: translateX(-50%); /* Base transform for positioning */
+    /* Start centered horizontally AND translated down */
+    transform: translateX(-50%) translateY(30px);
     background: rgba(44, 62, 80, 0.9);
     color: white;
     padding: 10px 20px;
@@ -923,17 +930,20 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     font-size: 14px;
     font-weight: 500;
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s;
+    opacity: 0; /* Start invisible */
+    visibility: hidden; /* Start hidden */
+    /* MODIFIED transition to include transform */
+    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s, transform 0.3s ease-in-out;
     pointer-events: none;
     white-space: nowrap;
     animation: none; /* No animation by default */
 }
 #reading-time-alert.visible {
-    opacity: 1;
-    visibility: visible;
-    transition-delay: 0s;
+    opacity: 1; /* Fade in */
+    visibility: visible; /* Become visible */
+    /* Move to final vertical position (centered horizontally) */
+    transform: translateX(-50%) translateY(0);
+    transition-delay: 0s, 0s, 0s; /* Reset delays for fade-in/move-up */
     /* Apply wiggle animation ONCE when it becomes visible */
     animation: wiggle 0.5s ease-in-out 1;
 }
@@ -1050,8 +1060,14 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 }
 #notes-popup-backdrop.visible { opacity: 1; visibility: visible; transition-delay: 0s; } /* Added */
 
-/* Shared wiggle animation (from Reading Time Alert) */
-/* @keyframes wiggle { ... } defined earlier */
+/* Wiggle animation reused from Alert (modified to only rotate) */
+/* MODIFIED Wiggle animation (Rely on external centering) */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+  75% { transform: rotate(-1deg); }
+}
 
 /* Subtle wiggle for the whole notes popup container */
 @keyframes subtleWiggle {
@@ -1072,8 +1088,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     max-height: 900px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: center; /* Center children horizontally */
+    justify-content: center; /* Center vertically (unless children push) */
     z-index: 10011;
     opacity: 0;
     visibility: hidden;
@@ -1157,6 +1173,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     right: 5px;
 }
 
+/* MODIFIED Notes Instruction for better centering */
 #notes-instruction {
     background-color: rgba(44, 62, 80, 0.9);
     color: var(--text-on-dark);
@@ -1165,20 +1182,22 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 500;
-    text-align: center;
+    text-align: center; /* Center text inside */
     z-index: 10012;
     pointer-events: auto;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    margin-top: auto;
-    /* Ensure transform origin is suitable for wiggle */
-    transform-origin: center center;
-    /* Base transform state for animation */
-    transform: scale(1);
+    margin-top: auto; /* Pushes to bottom of flex container */
+    width: auto; /* Let content dictate width */
+    max-width: 90%; /* Prevent overflow */
+    /* Flex container handles horizontal centering, no translateX needed here */
+    transform-origin: center center; /* For rotation animation */
+    transform: scale(1); /* Base state, no scaling */
     animation: none; /* No animation by default */
 }
 /* Class added by JS after PDF load to trigger wiggle */
 #notes-instruction.wiggle-now {
+    /* Apply the modified wiggle animation (rotation only) */
     animation: wiggle 0.5s ease-in-out 1;
 }
 /* --- END: Notes Popup Styles --- */
@@ -1255,6 +1274,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     <div class="loading-overlay" id="loading-overlay"></div>
     <!-- Page Slider -->
     <div class="page-slider-container" id="page-slider-container"></div>
+    <!-- Separate Trigger Zone for Page Slider -->
     <div id="page-slider-trigger-zone"></div>
 
     <!-- Keyword Definition Popup -->
@@ -1322,7 +1342,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     // --- Constants ---
     const MAX_CACHE_SIZE = 20;
     const TOOLBAR_HIDE_DELAY = 500;
-    const SLIDER_HIDE_DELAY = 1750; // MODIFIED: Longer delay for slider hide
+    const SLIDER_HIDE_DELAY = 1750;
     const READING_TIME_ALERT_DURATION = 2500;
     const GAME_OVER_TRANSITION_DELAY = 3000;
     const LOADING_BAR_ANIMATION_BUFFER = 600; // ms > transition duration
@@ -1428,12 +1448,12 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         leftToolbarTimer: null,
         resizeTimer: null,
         sliderHideTimeout: null,
-        sliderHover: false, // MODIFIED: Added slider hover state
         gameOverTimeoutId: null,
         alertTimeout: null,
         alertWiggleTimeout: null,
         isDraggingSlider: false,
         pagePadding: 15, // Default, updated on init
+        isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
     };
 
     const pdfState = {
@@ -2134,20 +2154,15 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         clearTimeout(appState.alertWiggleTimeout);
 
         ui.readingTimeAlert.innerHTML = '<em>Please read the text first!</em>';
-        toggleVisibility(ui.readingTimeAlert, true); // Add .visible class
+        toggleVisibility(ui.readingTimeAlert, true); // Add .visible class (triggers fade-in/move-up and wiggle)
 
-        // Apply wiggle animation by adding class (CSS handles the animation)
-        ui.readingTimeAlert.classList.add(CSS_CLASS.WIGGLE_NOW); // Assuming wiggle animates on .visible
-
-        // Timeout to hide the alert
+        // Timeout to hide the alert (triggers fade-out/move-down)
         appState.alertTimeout = setTimeout(() => {
             toggleVisibility(ui.readingTimeAlert, false);
         }, READING_TIME_ALERT_DURATION);
 
-        // Timeout to remove wiggle class (optional, if animation doesn't reset itself)
-        appState.alertWiggleTimeout = setTimeout(() => {
-             ui.readingTimeAlert?.classList.remove(CSS_CLASS.WIGGLE_NOW);
-        }, NOTES_WIGGLE_DURATION); // Use notes wiggle duration as it's defined
+        // Timeout to remove wiggle class (animation already runs once via CSS)
+        // No need for separate timer if animation-iteration-count: 1
     }
 
 
@@ -2283,7 +2298,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         resetPopupStates(); // Hide any open popups
 
         updateDisplay(); // Render the new page(s), calculate next lock state, check for popups
-        // showPageSlider(); // MODIFIED: Removed this call - slider now triggered by hover
+        // showPageSlider(); // REMOVED: Do not show slider on page turn
         manageToolbar(false); // Hide toolbars
         manageLeftToolbar(false);
     }
@@ -2403,113 +2418,94 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     }
     function hideLoading() { toggleVisibility(ui.loadingOverlay, false); }
 
-    // --- MODIFIED: Slider Logic ---
-    function showPageSlider() { // Now only called by hover logic
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-        if (ui.sliderContainer && pdfState.totalPages > 0) {
-            clearTimeout(appState.sliderHideTimeout); // Clear any pending hide
-            toggleVisibility(ui.sliderContainer, true);
-            // updateStatus("Slider Shown"); // Optional debug
+    // --- START: MODIFIED SLIDER LOGIC ---
+    function showPageSlider() {
+        if (!ui.sliderContainer || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+        clearTimeout(appState.sliderHideTimeout); // Always clear timer when showing
+        toggleVisibility(ui.sliderContainer, true); // Add .visible class
+    }
+
+    function hidePageSlider() {
+        // Only hide if not dragging and not hovered
+        if (!appState.isDraggingSlider && !appState.isSliderAreaHovered) {
+            toggleVisibility(ui.sliderContainer, false);
         }
     }
 
-    function hidePageSlider(immediate = false) {
+    function startSliderHideTimer() {
         clearTimeout(appState.sliderHideTimeout);
-        if (immediate) {
-             toggleVisibility(ui.sliderContainer, false);
-             // updateStatus("Slider Hidden (Immediate)"); // Optional debug
-        } else {
-            // Only schedule hide if not dragging and mouse isn't over trigger/slider
-            if (!appState.isDraggingSlider && !appState.sliderHover) {
-                 appState.sliderHideTimeout = setTimeout(() => {
-                      toggleVisibility(ui.sliderContainer, false);
-                      // updateStatus("Slider Hidden (Delayed)"); // Optional debug
-                 }, SLIDER_HIDE_DELAY);
-            }
-        }
+        appState.sliderHideTimeout = setTimeout(hidePageSlider, SLIDER_HIDE_DELAY);
     }
 
     function initPageSlider() {
-        if (!ui.slider || !ui.sliderContainer) { console.error("Slider elements not found"); return; }
+        if (!ui.slider || !ui.sliderContainer || !ui.sliderTriggerZone) {
+            console.error("Slider elements or trigger zone not found"); return;
+        }
 
-        // Update display text during drag/input
-        const handleSliderInput = () => {
-            if (!appState.isDraggingSlider) return; // Only update during drag
-            const targetPageValue = parseInt(ui.slider.value, 10);
+        // --- Hover Logic ---
+        const handleSliderAreaEnter = () => {
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+            appState.isSliderAreaHovered = true;
+            showPageSlider(); // This also clears the hide timer
+        };
 
-            if (ui.currentPageDisplay && ui.totalPagesDisplay) {
-                let displayPageStart = targetPageValue;
-                // Adjust display for double page view to show the pair's start page
-                if (pdfState.isDoublePageView && displayPageStart > 1 && displayPageStart % 2 === 0) {
-                     displayPageStart--;
-                }
-                let pageText;
-                if (pdfState.isDoublePageView && displayPageStart + 1 <= pdfState.totalPages) {
-                    pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
-                } else {
-                    pageText = `Page ${targetPageValue}`; // Show single page number
-                }
-                ui.currentPageDisplay.textContent = pageText;
+        const handleSliderAreaLeave = () => {
+            appState.isSliderAreaHovered = false;
+            // Start timer only if not currently dragging the slider thumb
+            if (!appState.isDraggingSlider) {
+                startSliderHideTimer();
             }
+        };
+
+        // Apply hover logic to BOTH the trigger zone and the slider container itself
+        ui.sliderTriggerZone.addEventListener('mouseenter', handleSliderAreaEnter);
+        ui.sliderTriggerZone.addEventListener('mouseleave', handleSliderAreaLeave);
+        ui.sliderContainer.addEventListener('mouseenter', handleSliderAreaEnter);
+        ui.sliderContainer.addEventListener('mouseleave', handleSliderAreaLeave);
+
+        // --- Drag/Input Logic ---
+        const handleSliderInput = () => {
+            if (!appState.isDraggingSlider) return; // Only update display during drag
+            const targetPageValue = parseInt(ui.slider.value, 10);
+            updateSliderInfoText(targetPageValue); // Update text dynamically
             updateSliderStyle(ui.slider, targetPageValue);
-            // resetSliderHideTimer(); // MODIFIED: No longer needed here, handled by hover
             clearTimeout(appState.sliderHideTimeout); // Keep slider visible while interacting
         };
 
-        // Start dragging
-        const handlePointerDown = (event) => {
-             if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-             // Check if the click target is the slider itself (not just the container)
-             if (event.target === ui.slider) {
-                 appState.isDraggingSlider = true;
-                 clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
-                 // updateStatus("Slider Drag Start"); // Optional debug
-             }
-         };
+        const handlePointerDown = () => {
+             if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+             appState.isDraggingSlider = true;
+             clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
+             // Add class to body? Optional, for styling during drag
+        };
 
-        // End dragging or click completed
-        const handlePointerUpOrChange = (event) => {
-             // Ensure we have a target page value
+        const handlePointerUpOrChange = () => {
+             if (!appState.isDraggingSlider && event.type !== 'change') return;
+             const wasDragging = appState.isDraggingSlider;
+             appState.isDraggingSlider = false;
+             // Remove class from body?
+
              const targetPageValue = parseInt(ui.slider.value, 10);
-             if (isNaN(targetPageValue)) return;
+             updateStatus(`Slider action ended at value: ${targetPageValue}`);
+             jumpToPage(targetPageValue); // Navigate
 
-             // Handle event if dragging OR if it's a 'change' event (click without drag)
-             if (appState.isDraggingSlider || event.type === 'change') {
-                 // updateStatus(`Slider Drag End/Change at: ${targetPageValue}`); // Optional debug
-                 appState.isDraggingSlider = false; // Ensure dragging state is off
-                 jumpToPage(targetPageValue); // Navigate to the selected page
-                 // Start timer to hide slider only if mouse isn't currently over it
-                 if (!appState.sliderHover) {
-                     hidePageSlider();
-                 }
+             // Restart hide timer if the mouse isn't still over the slider area
+             if (!appState.isSliderAreaHovered) {
+                 startSliderHideTimer();
              }
          };
 
-         // Handle lost pointer capture (e.g., dragging off screen)
          const handleLostPointer = () => {
             if (appState.isDraggingSlider) {
-                // updateStatus("Slider Lost Pointer Capture"); // Optional debug
                 appState.isDraggingSlider = false;
-                 const targetPageValue = parseInt(ui.slider.value, 10);
-                 updateStatus(`Slider lost capture at value: ${targetPageValue}`);
-                 jumpToPage(targetPageValue);
-                 if (!appState.sliderHover) { // Start hide timer if mouse not over slider
-                     hidePageSlider();
+                // Remove class from body?
+                const targetPageValue = parseInt(ui.slider.value, 10);
+                updateStatus(`Slider lost capture at value: ${targetPageValue}`);
+                jumpToPage(targetPageValue);
+                 // Restart hide timer if the mouse isn't still over the slider area
+                 if (!appState.isSliderAreaHovered) {
+                    startSliderHideTimer();
                  }
-            }
-        };
-
-        // Handle slider area hover states
-        const handleSliderEnter = () => {
-            if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-            appState.sliderHover = true;
-            showPageSlider(); // Show immediately on hover
-        };
-        const handleSliderLeave = () => {
-            appState.sliderHover = false;
-            // Don't hide immediately, start the timer (unless dragging just stopped)
-            if (!appState.isDraggingSlider) {
-                hidePageSlider(); // Schedules the hide
             }
         };
 
@@ -2519,29 +2515,31 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         ui.slider.addEventListener('change', handlePointerUpOrChange); // Handles clicks without drag
         ui.slider.addEventListener('lostpointercapture', handleLostPointer);
 
-        // Apply hover logic to trigger zone AND the slider container itself
-        ui.sliderTriggerZone?.addEventListener('mouseenter', handleSliderEnter);
-        ui.sliderContainer?.addEventListener('mouseenter', handleSliderEnter);
-        ui.sliderTriggerZone?.addEventListener('mouseleave', handleSliderLeave);
-        ui.sliderContainer?.addEventListener('mouseleave', handleSliderLeave);
-
-        // Ensure popups hide the slider immediately
-        const originalShowIframePopup = showIframePopup;
-        showIframePopup = function(...args) {
-            hidePageSlider(true); // Hide immediately
-            originalShowIframePopup.apply(this, args);
-        };
-        const originalShowNotesPopup = showNotesPopup;
-        showNotesPopup = function(...args) {
-            hidePageSlider(true); // Hide immediately
-            originalShowNotesPopup.apply(this, args);
-        };
-
-        updateStatus("Slider initialized with hover trigger.");
         updateSliderTotalPages();
-        updateSliderPosition();
-        toggleVisibility(ui.sliderContainer, false); // Ensure slider starts hidden
+        updateSliderPosition(); // Set initial state
     }
+
+    function updateSliderInfoText(pageValue) {
+         if (ui.currentPageDisplay && ui.totalPagesDisplay) {
+            let displayPageStart = pageValue;
+            // Adjust display for double page view based on current effective mode
+            const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+            const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+            const isCurrentlyEffectiveDoubleView = pdfState.isDoublePageView && !isFullscreenCurrent && !isContentRotatedCurrent;
+
+            if (isCurrentlyEffectiveDoubleView && displayPageStart > 1 && displayPageStart % 2 === 0) {
+                 displayPageStart--; // Show the pair's starting page
+            }
+            let pageText;
+            if (isCurrentlyEffectiveDoubleView && displayPageStart + 1 <= pdfState.totalPages) {
+                pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
+            } else {
+                pageText = `Page ${pageValue}`; // Show single page number
+            }
+            ui.currentPageDisplay.textContent = pageText;
+        }
+    }
+    // --- END: MODIFIED SLIDER LOGIC ---
 
     function updateSliderTotalPages() {
         if (ui.slider && ui.totalPagesDisplay) {
@@ -2555,23 +2553,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     function updateSliderPosition() {
         if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay) {
             const currentPage = pdfState.currentPage > 0 ? pdfState.currentPage : 1;
-            const totalPages = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
-
             ui.slider.value = currentPage; // Set slider handle position
-
-            // Determine current effective view mode for display text
-            const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-            const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-            const isCurrentlyEffectiveDoubleView = pdfState.isDoublePageView && !isFullscreenCurrent && !isContentRotatedCurrent;
-
-            let pageText;
-            if (isCurrentlyEffectiveDoubleView && currentPage + 1 <= totalPages) {
-                pageText = `Page ${currentPage}-${currentPage + 1}`;
-            } else {
-                pageText = `Page ${currentPage}`;
-            }
-            ui.currentPageDisplay.textContent = pageText;
-
+            updateSliderInfoText(currentPage); // Update display text based on current view mode
             updateSliderStyle(ui.slider, currentPage); // Update track fill
         }
     }
@@ -2582,11 +2565,9 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         const min = parseInt(slider.min || 1);
         const max = parseInt(slider.max || 1);
         const range = max > min ? max - min : 1;
-        const val = parseInt(value) || min; // Ensure value is a number
-        const percentage = ((val - min) / range) * 100;
+        const percentage = ((parseInt(value) - min) / range) * 100;
         slider.style.setProperty('--slider-percent', `${Math.max(0, Math.min(100, percentage))}%`);
     }
-    // --- END MODIFIED: Slider Logic ---
 
 
     // --- Data Loading (Overlays, Iframes, Keywords) ---
@@ -3034,7 +3015,6 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             console.error("Cannot show iframe popup: Missing element or URL."); return;
         }
         hideDefinitionPopup(); hideNotesPopupIfNeeded(); // Hide other popups
-        hidePageSlider(true); // MODIFIED: Hide slider immediately when iframe popup shows
 
         // Avoid reloading if already visible with the same URL
         if (ui.iframePopupModal.classList.contains(CSS_CLASS.VISIBLE) && ui.popupIframe.src === url) {
@@ -3045,6 +3025,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         ui.popupIframe.src = url;
         toggleVisibility(ui.iframePopupBackdrop, true);
         toggleVisibility(ui.iframePopupModal, true);
+        // toggleVisibility(ui.sliderContainer, false); // REMOVED: Do not hide slider here
     }
 
     function hideIframePopup() {
@@ -3094,11 +3075,11 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             console.error("Cannot show notes popup: Missing elements."); return;
         }
         hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
-        hidePageSlider(true); // MODIFIED: Hide slider immediately when notes popup shows
         updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
 
         toggleVisibility(ui.notesPopupBackdrop, true);
         toggleVisibility(ui.notesPopupContainer, true); // Triggers container animation
+        // toggleVisibility(ui.sliderContainer, false); // REMOVED: Do not hide slider here
 
         const ctx = ui.notesPdfCanvas.getContext('2d');
         ctx.clearRect(0, 0, ui.notesPdfCanvas.width, ui.notesPdfCanvas.height);
@@ -3203,10 +3184,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             if (ui.notesInstruction) {
                 updateStatus("Triggering notes instruction wiggle.");
                 ui.notesInstruction.classList.add(CSS_CLASS.WIGGLE_NOW);
-                 // Optional: remove class after animation
-                 setTimeout(() => {
-                     ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW);
-                 }, NOTES_WIGGLE_DURATION);
+                 // Optional: remove class after animation (CSS animation-iteration-count: 1 handles this)
             }
 
         } catch (error) {
@@ -3576,7 +3554,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             setupToolbarHover(); // Right toolbar hover
             setupLeftToolbarHover(); // Left toolbar hover
             updateTimelockButtonVisuals(); // Set initial timelock icon state
-            initPageSlider(); // MODIFIED: Setup slider interaction including hover
+            initPageSlider(); // Setup slider interaction
 
             // Get PDF URL from query parameter
             const urlParams = new URLSearchParams(window.location.search);
