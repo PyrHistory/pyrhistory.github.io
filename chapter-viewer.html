@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,29 +77,14 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border:1px solid rgba(255,255,255,.1);
     border-right: none!important; /* Border only on left/top/bottom */
 }
-#new-toolbar::before{ /* Handle "≡" */
-    content:"≡";
-    position:absolute;
-    left:-25px; /* Position handle to the left of the toolbar */
-    top:50%;
-    transform:translateY(-50%);
-    background:rgba(28,37,54,.9);
-    backdrop-filter:blur(5px);
-    -webkit-backdrop-filter:blur(5px);
-    width:25px;
-    height:40px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:4px 0 0 4px;
-    color:var(--text-on-dark);
-    font-size:20px;
-    box-shadow:-2px 2px 5px rgba(0,0,0,.3);
-    transition:all .3s ease;
-    border:1px solid rgba(255,255,255,.1);
-    border-right:none;
-    cursor:pointer;
+/* START: Removed Toolbar Handle Styles */
+#new-toolbar::before{ /* Handle "≡" REMOVED */
+    content: none !important; /* Remove content */
+    display: none !important; /* Remove from layout */
 }
+/* END: Removed Toolbar Handle Styles */
+
+/* START: Updated Toolbar Trigger Area */
 .toolbar-trigger-area{ /* Trigger zone for hover */
     position:fixed;
     top:0;
@@ -106,8 +92,17 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     width:30px;
     height:100%;
     z-index:9998;
-    transition:none!important; /* No transition needed */
+    transition: box-shadow 0.3s ease !important; /* Smooth transition for glow */
+    cursor: pointer; /* Indicate it's interactive */
+    pointer-events: auto; /* Ensure hover works */
 }
+/* Glow effect on hover */
+.toolbar-trigger-area:hover {
+    /* Subtle orange inset glow from the right edge */
+    box-shadow: inset -5px 0 15px -5px rgba(245, 166, 35, 0.6); /* --accent is #f5a623 */
+}
+/* END: Updated Toolbar Trigger Area */
+
 #new-toolbar.visible{
     right:0!important; /* Slide in from the right */
     transform:none!important; /* No translation needed */
@@ -398,31 +393,14 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border-left: none !important; /* Border only on right/top/bottom */
 }
 
-#left-toolbar::before { /* Handle "≡" */
-    content: "≡";
-    position: absolute;
-    right: -25px; /* Position handle to the right of the toolbar */
-    left: auto; /* Ensure left is not set */
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(28, 37, 54, .9);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    width: 25px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0 4px 4px 0;
-    color: var(--text-on-dark);
-    font-size: 20px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, .3);
-    transition: all .3s ease;
-    border: 1px solid rgba(255, 255, 255, .1);
-    border-left: none;
-    cursor: pointer;
+/* START: Removed Toolbar Handle Styles */
+#left-toolbar::before { /* Handle "≡" REMOVED */
+    content: none !important; /* Remove content */
+    display: none !important; /* Remove from layout */
 }
+/* END: Removed Toolbar Handle Styles */
 
+/* START: Updated Toolbar Trigger Area */
 .left-toolbar-trigger-area { /* Trigger zone for hover */
     position: fixed;
     top: 0;
@@ -430,8 +408,17 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     width: 30px;
     height: 100%;
     z-index: 9998;
-    transition: none !important; /* No transition needed */
+    transition: box-shadow 0.3s ease !important; /* Smooth transition for glow */
+    cursor: pointer; /* Indicate it's interactive */
+    pointer-events: auto; /* Ensure hover works */
 }
+/* Glow effect on hover */
+.left-toolbar-trigger-area:hover {
+    /* Subtle orange inset glow from the left edge */
+    box-shadow: inset 5px 0 15px -5px rgba(245, 166, 35, 0.6); /* --accent is #f5a623 */
+}
+/* END: Updated Toolbar Trigger Area */
+
 
 #left-toolbar.visible {
     left: 0 !important; /* Slide in from the left */
@@ -607,9 +594,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
+    /* UPDATED: Added opacity and pointer-events transition */
+    transition: all 0.2s ease, opacity 0.2s ease, pointer-events 0s linear 0.2s;
     opacity: 0; /* Hidden by default */
-    pointer-events: none;
+    pointer-events: none; /* Non-interactive by default */
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 .page-action-btn:hover {
@@ -620,10 +608,11 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     top: 10px;
     right: 10px;
 }
-/* Show button on hover over the page */
+/* Show button ONLY on direct hover over the page */
 .book-page:hover .page-rotate-btn {
     opacity: 1;
     pointer-events: auto;
+    transition-delay: 0s, 0s, 0s; /* Ensure immediate interaction on hover */
 }
 /* Hide button during game loading */
 body.loading-game-active .page-rotate-btn {
@@ -659,8 +648,12 @@ body.content-rotated-mode .page-rotate-btn {
 .textLayer > div { position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%; pointer-events: none !important; border-radius: 2px; }
 .annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
 .annotationLayer section { position: absolute; pointer-events: auto; }
+/* START: Updated Link Style */
 .annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
+/* Hover effect unchanged, link target handled by JS */
 .annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
+/* END: Updated Link Style */
+
 /* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
@@ -1103,7 +1096,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     <div class="main-container">
         <div class="book-spread">
             <div class="book-page left">
-                <!-- *** NEW: Page Rotate Button *** -->
+                <!-- *** NEW: Page Rotate Button (Visibility handled by CSS) *** -->
                 <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
                 <div class="canvas-container">
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
@@ -1281,6 +1274,9 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     let sliderHideTimeout=null;
 
     const linkService = new pdfjsViewer.SimpleLinkService();
+    // *** NEW: Ensure external links open in a new tab ***
+    linkService.externalLinkTarget = pdfjsViewer.LinkTarget.BLANK;
+
     const eventBus = new pdfjsViewer.EventBus();
 
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
@@ -1288,11 +1284,25 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
 
     // --- Toolbar Logic ---
     function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
-    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Right Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;/* Removed rotated check as handle is always vertical now */ if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true; if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Right Toolbar setup.")}
+    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area');if(!t||!a){console.error("Right Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);
+    // Click trigger area to toggle toolbar (new glow effect doesn't need this, but keep for potential usability)
+    a.addEventListener('click', e => {
+        if (document.body.classList.contains('loading-game-active')) return;
+        toolbarHover = !t.classList.contains('visible');
+        manageToolbar();
+    });
+    updateStatus("Right Toolbar setup.")}
 
     // --- NEW: Left Toolbar Logic ---
     function manageLeftToolbar(s=null){const t=document.getElementById('left-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(leftToolbarTimer);const show=s??leftToolbarHover;if(show){t.classList.add('visible')}else{leftToolbarTimer=setTimeout(()=>{if(!leftToolbarHover)t.classList.remove('visible')},500)}}
-    function setupLeftToolbarHover(){const t=document.getElementById('left-toolbar'),a=document.getElementById('left-toolbar-trigger-area'),h=t;if(!t||!a){console.error("Left Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; leftToolbarHover=true;manageLeftToolbar(true)};const leave=()=>{leftToolbarHover=false;manageLeftToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX>r.right&&e.clientX<=r.right+w)c=true; if(c){leftToolbarHover=!t.classList.contains('visible');manageLeftToolbar()}});updateStatus("Left Toolbar setup.")}
+    function setupLeftToolbarHover(){const t=document.getElementById('left-toolbar'),a=document.getElementById('left-toolbar-trigger-area');if(!t||!a){console.error("Left Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; leftToolbarHover=true;manageLeftToolbar(true)};const leave=()=>{leftToolbarHover=false;manageLeftToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);
+    // Click trigger area to toggle toolbar
+    a.addEventListener('click', e => {
+        if (document.body.classList.contains('loading-game-active')) return;
+        leftToolbarHover = !t.classList.contains('visible');
+        manageLeftToolbar();
+    });
+    updateStatus("Left Toolbar setup.")}
     // --- END: Left Toolbar Logic ---
 
     // --- Caching & Page Loading (Unchanged) ---
@@ -1428,7 +1438,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
       }
     }
 
-    // --- Annotation Layer Rendering (Unchanged) ---
+    // --- Annotation Layer Rendering (Uses linkService which now has target set) ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
         container.innerHTML = '';
@@ -1437,7 +1447,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
             if (annotations.length === 0) return;
             pdfjsLib.AnnotationLayer.render({
                 viewport: viewport.clone({ dontFlip: true }), div: container,
-                annotations: annotations, page: page, linkService: linkService
+                annotations: annotations, page: page, linkService: linkService // linkService now handles new tab target
             });
         } catch (error) {
             console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
@@ -1445,7 +1455,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         }
     }
 
-    // --- renderPage function (Unchanged) ---
+    // --- renderPage function (Unchanged, calls updated renderAnnotationLayer) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -1511,7 +1521,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
 
             // Render layers after canvas is ready
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
-            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
+            await renderAnnotationLayer(page, annotationLayerContainer, viewport); // Uses updated linkService
             await createKeywordOverlays(pageNum, pageElement, viewport); // Ensure this uses the final viewport
 
         } catch (error) {
@@ -2909,7 +2919,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for notes popup, page rotate btn, updates Esc key, toolbar setup) ---
+    // --- Event Setup (MODIFIED - Adds listeners for notes popup, page rotate btn, updates Esc key, toolbar setup, touch thresholds) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -3054,8 +3064,11 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
              }, 250);
         });
 
-        // Touch Swipes (MODIFIED to ignore swipes on popups AND add notes swipe)
-        let bodyTX=0, bodyTY=0, bodyTS=0; const bodySW=50, bodyST=500, bodySV=70;
+        // Touch Swipes (MODIFIED to ignore swipes on popups, add notes swipe, AND ADJUSTED SENSITIVITY)
+        let bodyTX=0, bodyTY=0, bodyTS=0;
+        // *** UPDATED Swipe Thresholds for Body ***
+        const bodySW=25, bodyST=500, bodySV=70; // Reduced bodySW from 50 to 25 for easier swiping
+
         // Body swipe (for main reader)
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
@@ -3080,7 +3093,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
                  const bodyEX=e.changedTouches[0].screenX, bodyEY=e.changedTouches[0].screenY, bodyTE=Date.now()-bodyTS;
                  if(bodyTE<bodyST){
                      const bodyDX=bodyEX-bodyTX, bodyDY=bodyEY-bodyTY, bodyAX=Math.abs(bodyDX), bodyAY=Math.abs(bodyDY);
-                     if(bodyAX>bodySW&&bodyAY<bodySV){ // Horizontal swipe detected
+                     if(bodyAX>bodySW&&bodyAY<bodySV){ // Horizontal swipe detected (using updated bodySW)
                          e.preventDefault(); // Prevent default scroll on successful swipe
                          if(bodyDX>0){ // Swipe Right (Previous Page)
                              prevPage();
@@ -3097,7 +3110,8 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         // *** NEW: Notes Popup Swipe ***
         const notesCanvasContainer = document.getElementById('notes-pdf-canvas-container');
         let notesTX = 0, notesTY = 0, notesTS = 0;
-        const notesSW = 50, notesST = 500, notesSV = 70;
+        // *** UPDATED Swipe Thresholds for Notes ***
+        const notesSW = 25, notesST = 500, notesSV = 70; // Reduced notesSW from 50 to 25
 
         if (notesCanvasContainer) {
             notesCanvasContainer.addEventListener('touchstart', e => {
@@ -3125,7 +3139,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
                         const notesDY = notesEY - notesTY;
                         const notesAX = Math.abs(notesDX);
                         const notesAY = Math.abs(notesDY);
-                        if (notesAX > notesSW && notesAY < notesSV) { // Horizontal swipe
+                        if (notesAX > notesSW && notesAY < notesSV) { // Horizontal swipe (using updated notesSW)
                             // e.preventDefault(); // Prevent default only if swipe successful? May not be needed inside popup.
                             e.stopPropagation(); // IMPORTANT: Prevent triggering body swipe listener
                             if (notesDX > 0) { // Swipe Right (Previous)
