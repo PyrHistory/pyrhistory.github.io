@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +46,8 @@ body{
     color:var(--text-on-dark);
     height:100vh; width:100vw;
     overflow:hidden; display:flex; flex-direction:column; position:fixed;
-    line-height:1.6
+    line-height:1.6;
+    -webkit-tap-highlight-color: transparent; /* Prevent tap highlight globally */
 }
 body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-2;background-image:radial-gradient(circle at 15% 15%,rgba(249,115,22,.12) 0,transparent 45%),radial-gradient(circle at 85% 85%,rgba(197,83,235,.12) 0,transparent 45%),radial-gradient(circle at 85% 15%,rgba(56,189,248,.05) 0,transparent 40%),radial-gradient(circle at 15% 85%,rgba(251,191,36,.08) 0,transparent 40%);animation:ambient-shift 30s ease infinite alternate}
 @keyframes ambient-shift{0%{background-position:0 0,0 0,0 0,0 0}100%{background-position:5% 10%,-5% -5%,10% -5%,-10% 5%}}
@@ -77,31 +77,42 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border:1px solid rgba(255,255,255,.1);
     border-right: none!important; /* Border only on left/top/bottom */
 }
-/* START: Removed Toolbar Handle Styles */
-#new-toolbar::before{ /* Handle "≡" REMOVED */
-    content: none !important; /* Remove content */
-    display: none !important; /* Remove from layout */
-}
-/* END: Removed Toolbar Handle Styles */
+/* --- REMOVED: Original Toolbar Handle "≡" --- */
+/* #new-toolbar::before{ ... } REMOVED */
 
-/* START: Updated Toolbar Trigger Area */
+/* --- MODIFIED: Trigger zone styling --- */
 .toolbar-trigger-area{ /* Trigger zone for hover */
     position:fixed;
     top:0;
     right:0; /* Always on the right edge */
-    width:30px;
+    width:30px; /* Width of the hover area */
     height:100%;
     z-index:9998;
-    transition: box-shadow 0.3s ease !important; /* Smooth transition for glow */
+    transition:none!important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
-    pointer-events: auto; /* Ensure hover works */
+    /* NEW: Added relative positioning for pseudo-element */
+    position: relative;
+    overflow: hidden; /* Contain glow */
 }
-/* Glow effect on hover */
-.toolbar-trigger-area:hover {
-    /* Subtle orange inset glow from the right edge */
-    box-shadow: inset -5px 0 15px -5px rgba(245, 166, 35, 0.6); /* --accent is #f5a623 */
+/* --- NEW: Subtle Glow Effect --- */
+.toolbar-trigger-area::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0; /* Glow from the left edge */
+    bottom: 0;
+    width: 100%; /* Span the full trigger width */
+    /* Subtle orange glow fading from right */
+    background: radial-gradient(circle at center right, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* Don't block hover on trigger area itself */
+    z-index: -1; /* Behind potential future content */
 }
-/* END: Updated Toolbar Trigger Area */
+.toolbar-trigger-area:hover::after {
+    opacity: 1; /* Show glow on hover */
+}
+/* --- END: Subtle Glow Effect --- */
 
 #new-toolbar.visible{
     right:0!important; /* Slide in from the right */
@@ -392,33 +403,42 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border: 1px solid rgba(255, 255, 255, .1);
     border-left: none !important; /* Border only on right/top/bottom */
 }
+/* --- REMOVED: Left Toolbar Handle "≡" --- */
+/* #left-toolbar::before { ... } REMOVED */
 
-/* START: Removed Toolbar Handle Styles */
-#left-toolbar::before { /* Handle "≡" REMOVED */
-    content: none !important; /* Remove content */
-    display: none !important; /* Remove from layout */
-}
-/* END: Removed Toolbar Handle Styles */
-
-/* START: Updated Toolbar Trigger Area */
+/* --- MODIFIED: Left Trigger zone styling --- */
 .left-toolbar-trigger-area { /* Trigger zone for hover */
     position: fixed;
     top: 0;
     left: 0; /* Always on the left edge */
-    width: 30px;
+    width: 30px; /* Width of hover area */
     height: 100%;
     z-index: 9998;
-    transition: box-shadow 0.3s ease !important; /* Smooth transition for glow */
+    transition: none !important; /* No transition needed */
     cursor: pointer; /* Indicate it's interactive */
-    pointer-events: auto; /* Ensure hover works */
+    /* NEW: Added relative positioning for pseudo-element */
+    position: relative;
+    overflow: hidden; /* Contain glow */
 }
-/* Glow effect on hover */
-.left-toolbar-trigger-area:hover {
-    /* Subtle orange inset glow from the left edge */
-    box-shadow: inset 5px 0 15px -5px rgba(245, 166, 35, 0.6); /* --accent is #f5a623 */
+/* --- NEW: Subtle Glow Effect for Left Trigger --- */
+.left-toolbar-trigger-area::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0; /* Glow from the right edge */
+    bottom: 0;
+    width: 100%; /* Span the full trigger width */
+    /* Use same orange glow, but positioned on the left */
+    background: radial-gradient(circle at center left, rgba(245, 166, 35, 0.4) 0%, rgba(245, 166, 35, 0.0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* Don't block hover on trigger area itself */
+    z-index: -1; /* Behind potential future content */
 }
-/* END: Updated Toolbar Trigger Area */
-
+.left-toolbar-trigger-area:hover::after {
+    opacity: 1; /* Show glow on hover */
+}
+/* --- END: Subtle Glow Effect for Left Trigger --- */
 
 #left-toolbar.visible {
     left: 0 !important; /* Slide in from the left */
@@ -594,10 +614,9 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* UPDATED: Added opacity and pointer-events transition */
-    transition: all 0.2s ease, opacity 0.2s ease, pointer-events 0s linear 0.2s;
-    opacity: 0; /* Hidden by default */
-    pointer-events: none; /* Non-interactive by default */
+    transition: all 0.2s ease;
+    opacity: 0; /* MODIFIED: Hidden by default */
+    pointer-events: none; /* MODIFIED: Not interactive by default */
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 .page-action-btn:hover {
@@ -608,11 +627,10 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     top: 10px;
     right: 10px;
 }
-/* Show button ONLY on direct hover over the page */
+/* --- MODIFIED: Show button ONLY on hover over the direct parent page --- */
 .book-page:hover .page-rotate-btn {
     opacity: 1;
     pointer-events: auto;
-    transition-delay: 0s, 0s, 0s; /* Ensure immediate interaction on hover */
 }
 /* Hide button during game loading */
 body.loading-game-active .page-rotate-btn {
@@ -648,12 +666,27 @@ body.content-rotated-mode .page-rotate-btn {
 .textLayer > div { position: absolute; white-space: pre; cursor: default; transform-origin: 0% 0%; pointer-events: none !important; border-radius: 2px; }
 .annotationLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 3; }
 .annotationLayer section { position: absolute; pointer-events: auto; }
-/* START: Updated Link Style */
-.annotationLayer .linkAnnotation > a { position: absolute; font-size: 1em; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid transparent; transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out; }
-/* Hover effect unchanged, link target handled by JS */
-.annotationLayer .linkAnnotation > a:hover { cursor: pointer; background-color: rgba(255, 255, 0, 0.2); border: 1px solid rgba(255, 255, 0, 0.5); box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5); }
-/* END: Updated Link Style */
-
+/* --- MODIFIED: Annotation Link Style --- */
+.annotationLayer .linkAnnotation > a {
+    position: absolute;
+    font-size: 1em;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 1px solid transparent;
+    transition: border-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    /* Ensure links are clickable */
+    pointer-events: auto !important; /* Explicitly allow pointer events on the link itself */
+    cursor: pointer;
+}
+.annotationLayer .linkAnnotation > a:hover {
+    cursor: pointer;
+    background-color: rgba(255, 255, 0, 0.2);
+    border: 1px solid rgba(255, 255, 0, 0.5);
+    box-shadow: 0px 0px 2px rgba(255, 255, 0, 0.5);
+}
+/* --- END: Custom Keyword Overlay & Popup Styles --- */
 /* --- START: Custom Keyword Overlay & Popup Styles --- */
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
@@ -1085,10 +1118,12 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
 
     <!-- Left Toolbar (Timelock) -->
     <div id="left-toolbar"></div>
+    <!-- MODIFIED: Added Trigger Area for Left Toolbar -->
     <div class="left-toolbar-trigger-area" id="left-toolbar-trigger-area"></div>
 
     <!-- Right Toolbar (Existing) -->
     <div id="new-toolbar"></div>
+    <!-- MODIFIED: Trigger Area for Right Toolbar (was already there, just confirming) -->
     <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
 
     <div id="status-indicator">Status: Initializing...</div>
@@ -1096,7 +1131,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     <div class="main-container">
         <div class="book-spread">
             <div class="book-page left">
-                <!-- *** NEW: Page Rotate Button (Visibility handled by CSS) *** -->
+                <!-- *** MODIFIED: Page Rotate Button - hidden by default, shown on page hover via CSS *** -->
                 <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
                 <div class="canvas-container">
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
@@ -1273,36 +1308,49 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     let resizeTimer;
     let sliderHideTimeout=null;
 
+    // --- MODIFIED: Link Service Setup ---
+    // We will modify links *after* rendering, so SimpleLinkService setup is less critical for target="_blank",
+    // but it's still used by PDF.js internally. Keep it simple.
     const linkService = new pdfjsViewer.SimpleLinkService();
-    // *** NEW: Ensure external links open in a new tab ***
-    linkService.externalLinkTarget = pdfjsViewer.LinkTarget.BLANK;
-
+    // We don't need to set externalLinkTarget here as we'll override later.
     const eventBus = new pdfjsViewer.EventBus();
+    // linkService.externalLinkTarget = pdfjsViewer.LinkTarget.BLANK; // Alternative, less direct method
 
     const updateStatus=m=>console.log(`[Viewer Status] ${m}`);
     // const updateStatus = () => {}; // Production
 
-    // --- Toolbar Logic ---
-    function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
-    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area');if(!t||!a){console.error("Right Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);
-    // Click trigger area to toggle toolbar (new glow effect doesn't need this, but keep for potential usability)
-    a.addEventListener('click', e => {
-        if (document.body.classList.contains('loading-game-active')) return;
-        toolbarHover = !t.classList.contains('visible');
-        manageToolbar();
-    });
-    updateStatus("Right Toolbar setup.")}
+    // --- Toolbar Logic (MODIFIED - Removed click listener on handle area) ---
+    function manageToolbar(s = null) { const t = document.getElementById('new-toolbar'); if (!t || document.body.classList.contains('loading-game-active')) return; clearTimeout(toolbarTimer); const show = s ?? toolbarHover; if (show) { t.classList.add('visible') } else { toolbarTimer = setTimeout(() => { if (!toolbarHover) t.classList.remove('visible') }, 500) } }
+    function setupToolbarHover() {
+        const t = document.getElementById('new-toolbar'), a = document.getElementById('toolbar-trigger-area');
+        if (!t || !a) { console.error("Right Toolbar/trigger missing"); return }
+        const enter = () => { if (document.body.classList.contains('loading-game-active')) return; toolbarHover = true; manageToolbar(true) };
+        const leave = () => { toolbarHover = false; manageToolbar(false) };
+        a.addEventListener('mouseenter', enter);
+        t.addEventListener('mouseenter', enter);
+        a.addEventListener('mouseleave', leave);
+        t.addEventListener('mouseleave', leave);
+        // *** REMOVED: Click listener on the toolbar handle area (a) as the handle is gone ***
+        // a.addEventListener('click', e => { ... });
+        updateStatus("Right Toolbar setup.")
+    }
 
-    // --- NEW: Left Toolbar Logic ---
-    function manageLeftToolbar(s=null){const t=document.getElementById('left-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(leftToolbarTimer);const show=s??leftToolbarHover;if(show){t.classList.add('visible')}else{leftToolbarTimer=setTimeout(()=>{if(!leftToolbarHover)t.classList.remove('visible')},500)}}
-    function setupLeftToolbarHover(){const t=document.getElementById('left-toolbar'),a=document.getElementById('left-toolbar-trigger-area');if(!t||!a){console.error("Left Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; leftToolbarHover=true;manageLeftToolbar(true)};const leave=()=>{leftToolbarHover=false;manageLeftToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);
-    // Click trigger area to toggle toolbar
-    a.addEventListener('click', e => {
-        if (document.body.classList.contains('loading-game-active')) return;
-        leftToolbarHover = !t.classList.contains('visible');
-        manageLeftToolbar();
-    });
-    updateStatus("Left Toolbar setup.")}
+
+    // --- Left Toolbar Logic (MODIFIED - Removed click listener on handle area) ---
+    function manageLeftToolbar(s = null) { const t = document.getElementById('left-toolbar'); if (!t || document.body.classList.contains('loading-game-active')) return; clearTimeout(leftToolbarTimer); const show = s ?? leftToolbarHover; if (show) { t.classList.add('visible') } else { leftToolbarTimer = setTimeout(() => { if (!leftToolbarHover) t.classList.remove('visible') }, 500) } }
+    function setupLeftToolbarHover() {
+        const t = document.getElementById('left-toolbar'), a = document.getElementById('left-toolbar-trigger-area');
+        if (!t || !a) { console.error("Left Toolbar/trigger missing"); return }
+        const enter = () => { if (document.body.classList.contains('loading-game-active')) return; leftToolbarHover = true; manageLeftToolbar(true) };
+        const leave = () => { leftToolbarHover = false; manageLeftToolbar(false) };
+        a.addEventListener('mouseenter', enter);
+        t.addEventListener('mouseenter', enter);
+        a.addEventListener('mouseleave', leave);
+        t.addEventListener('mouseleave', leave);
+        // *** REMOVED: Click listener on the toolbar handle area (a) as the handle is gone ***
+        // a.addEventListener('click', e => { ... });
+        updateStatus("Left Toolbar setup.")
+    }
     // --- END: Left Toolbar Logic ---
 
     // --- Caching & Page Loading (Unchanged) ---
@@ -1311,7 +1359,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     function hidePageLoading(canvasId){const o=document.getElementById(canvasId)?.closest('.book-page')?.querySelector('.page-loading-overlay');if(o)o.style.display='none';}
 
 
-    // --- createKeywordOverlays FUNCTION (Unchanged - Click logic remains, but CSS will disable it in rotated mode) ---
+    // --- createKeywordOverlays FUNCTION (Unchanged) ---
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
         const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
         const overlayContainer = document.getElementById(overlayContainerId);
@@ -1438,24 +1486,46 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
       }
     }
 
-    // --- Annotation Layer Rendering (Uses linkService which now has target set) ---
+    // --- Annotation Layer Rendering (MODIFIED to set target="_blank") ---
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
         container.innerHTML = '';
         try {
             const annotations = await page.getAnnotations();
             if (annotations.length === 0) return;
+
+            // Render the annotations using PDF.js library function
             pdfjsLib.AnnotationLayer.render({
-                viewport: viewport.clone({ dontFlip: true }), div: container,
-                annotations: annotations, page: page, linkService: linkService // linkService now handles new tab target
+                viewport: viewport.clone({ dontFlip: true }),
+                div: container,
+                annotations: annotations,
+                page: page,
+                linkService: linkService // Pass the SimpleLinkService
+                // Note: We don't need renderInteractiveForms or downloadManager for basic link handling
             });
+
+            // *** NEW: Set target="_blank" for all generated links ***
+            // Use requestAnimationFrame to ensure the DOM elements are available after rendering completes.
+            requestAnimationFrame(() => {
+                const links = container.querySelectorAll('.linkAnnotation > a');
+                links.forEach(link => {
+                    // Set target="_blank" for *all* links within the annotation layer.
+                    link.setAttribute('target', '_blank');
+                    // Add rel="noopener noreferrer" for security and performance best practices when using target="_blank".
+                    link.setAttribute('rel', 'noopener noreferrer');
+                    // updateStatus(`Set target="_blank" for link: ${link.href}`); // Optional logging
+                });
+            });
+            // *** END NEW ***
+
         } catch (error) {
             console.error(`Error rendering annotation layer for page ${page.pageNumber}:`, error);
-            container.innerHTML = '';
+            container.innerHTML = ''; // Clear container on error
         }
     }
 
-    // --- renderPage function (Unchanged, calls updated renderAnnotationLayer) ---
+
+    // --- renderPage function (Unchanged - calls modified renderAnnotationLayer) ---
     async function renderPage(pageNum, canvasId) {
         const canvas = document.getElementById(canvasId); const ctx = canvas?.getContext('2d');
         const canvasContainer = canvas?.closest('.canvas-container');
@@ -1521,7 +1591,8 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
 
             // Render layers after canvas is ready
             await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
-            await renderAnnotationLayer(page, annotationLayerContainer, viewport); // Uses updated linkService
+            // Call the modified function that now sets target="_blank"
+            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
             await createKeywordOverlays(pageNum, pageElement, viewport); // Ensure this uses the final viewport
 
         } catch (error) {
@@ -1599,7 +1670,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         }
     }
 
-    // --- Update Display (Unchanged - Relies on notesMapping object which is now populated from new source) ---
+    // --- Update Display (Unchanged) ---
     async function updateDisplay() {
         if (!book.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
         const leftPageNum = book.currentPage;
@@ -1833,7 +1904,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         });
     }
 
-    // --- Reading Time Alert (MODIFIED: Italicized text, checks global enable state) ---
+    // --- Reading Time Alert (Unchanged) ---
     function showReadingTimeAlert() {
         // Only show alert if timelock is globally enabled and blocking
         if (!isTimelockGloballyEnabled) return;
@@ -1852,7 +1923,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
 
 
-    // --- Reading Time Lock Check (MODIFIED: Checks global enabled state first) ---
+    // --- Reading Time Lock Check (Unchanged) ---
     function checkReadingTimeLock() {
         // Called by jumpToPage only when moving forward.
 
@@ -1899,7 +1970,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
 
 
-    // --- Navigation (Uses modified checkReadingTimeLock) ---
+    // --- Navigation (Unchanged) ---
     function nextPage() {
         // Determine increment based on *effective* view mode at the moment of click/keypress
         const isFullscreen = document.body.classList.contains('fullscreen-mode');
@@ -2015,7 +2086,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
 
 
-    // --- View Modes (MODIFIED to hide ALL popups) ---
+    // --- View Modes (Unchanged) ---
     function applyCurrentViewModeStyles() {
         if (document.body.classList.contains('loading-game-active')) return;
         const isContentRotated = document.body.classList.contains('content-rotated-mode');
@@ -2145,7 +2216,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     function showLoading(msg='Processing...'){ const lo=document.getElementById('loading-overlay'),lm=lo?.querySelector('.loading-message');if(lo&&lm){lm.textContent=msg;lo.classList.add('visible')}}
     function hideLoading(){toggleElement('loading-overlay',false)}
 
-    // --- Slider Logic (Unchanged - uses modified jumpToPage which handles lock correctly) ---
+    // --- Slider Logic (Unchanged) ---
     function showPageSlider(){
         if (document.body.classList.contains('loading-game-active')) return;
         const s=document.getElementById('page-slider-container');if(s&&book.totalPages>0){s.classList.add('visible');resetSliderHideTimer()}
@@ -2371,7 +2442,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     // --- END: Pre-scan Function ---
 
 
-    // --- PDF Loading (MODIFIED: Doesn't show GoToChapterBtn on reader ready) ---
+    // --- PDF Loading (Unchanged) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         pageCache.clear(); currentViewports={}; keywordDefinitions={}; pageKeywords={};
@@ -2488,7 +2559,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
 
 
-    // --- TOC population (MODIFIED - Hides ALL popups on jump) ---
+    // --- TOC population (Unchanged) ---
     function populateTOC() {
         const tocList = document.getElementById('toc-list');
         if (!tocList) return; tocList.innerHTML = '';
@@ -2554,7 +2625,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
      }
 
 
-    // --- Popup Handling Functions (MODIFIED to hide other popups) ---
+    // --- Popup Handling Functions (Unchanged) ---
     function showDefinitionPopup(word, definition, rect) {
         if (!definitionPopup || !popupWord || !popupDefinition || !closePopupBtn || !rect) { console.error("Cannot show popup: Missing element or rect."); return; }
         // Added check: Don't show if in rotated mode
@@ -2595,7 +2666,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         if (definitionPopup) { definitionPopup.classList.remove('visible'); }
     }
 
-    // --- NEW: Iframe Popup Handling Functions (MODIFIED to hide other popups) ---
+    // --- NEW: Iframe Popup Handling Functions (Unchanged) ---
     function showIframePopup(url) {
         if (!iframePopupBackdrop || !iframePopupModal || !popupIframe || !closeIframePopupBtn || !url) {
             console.error("Cannot show iframe popup: Missing element or URL.");
@@ -2637,7 +2708,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
     // --- END: Iframe Popup Handling Functions ---
 
-    // --- START: Notes Data Processing ---
+    // --- START: Notes Data Processing (Unchanged) ---
     // Processes the raw notes data array into the lookup object format
     function processNotesData(rawData) {
         const mapping = {};
@@ -2671,7 +2742,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     // --- END: Notes Data Processing ---
 
 
-    // --- START: Notes Popup Handling Functions ---
+    // --- START: Notes Popup Handling Functions (Unchanged) ---
     async function showNotesPopup(pdfUrl, pageNum = 1) {
         if (!notesPopupBackdrop || !notesPopupContainer || !notesPdfCanvas) {
             console.error("Cannot show notes popup: Missing elements.");
@@ -2836,7 +2907,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     // --- END: Notes Popup Handling Functions ---
 
 
-    // --- Game Transition Logic ---
+    // --- Game Transition Logic (Unchanged) ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(gameOverTimeoutId); // Clear any pending game over transition
@@ -2855,7 +2926,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         }, 50); // Small delay matches transition duration
     }
 
-    // --- Handle Game Over Message (MODIFIED: Always shows GoToChapterBtn) ---
+    // --- Handle Game Over Message (Unchanged) ---
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
 
@@ -2881,7 +2952,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
     }
     // --- END: Game Transition Logic ---
 
-    // --- NEW: Update Timelock Button Visuals ---
+    // --- NEW: Update Timelock Button Visuals (Unchanged) ---
     function updateTimelockButtonVisuals() {
         if (!timelockToggleButton) return;
         if (isTimelockGloballyEnabled) {
@@ -2895,7 +2966,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         }
     }
 
-    // --- NEW: Toggle Timelock Functionality ---
+    // --- NEW: Toggle Timelock Functionality (Unchanged) ---
     function toggleTimelock() {
         isTimelockGloballyEnabled = !isTimelockGloballyEnabled;
         updateStatus(`Timelock globally ${isTimelockGloballyEnabled ? 'ENABLED' : 'DISABLED'}`);
@@ -2919,7 +2990,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         manageLeftToolbar(false); // Hide toolbar after action
     }
 
-    // --- Event Setup (MODIFIED - Adds listeners for notes popup, page rotate btn, updates Esc key, toolbar setup, touch thresholds) ---
+    // --- Event Setup (MODIFIED - Touch sensitivity, page rotate btn click, setupLeftToolbarHover) ---
     function setupEvents() {
         updateStatus("Setting up events");
         const toolbar = document.getElementById('new-toolbar');
@@ -2941,7 +3012,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
              // Toolbar hiding is handled within the view change functions
         });
 
-        // *** NEW: Left Toolbar Click (Timelock Toggle) ***
+        // *** Left Toolbar Click (Timelock Toggle) ***
         leftToolbar?.addEventListener('click', e => {
             const btn = e.target.closest('.new-btn');
             if (!btn || btn.id !== 'timelock-toggle-btn') return;
@@ -2982,19 +3053,23 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
                     nextPage(); // Calls jumpToPage (handles lock check internally if needed)
                 }
             }
-            // *** NEW: Page Rotate Button Click ***
+            // *** MODIFIED: Page Rotate Button Click ***
             else if (e.target.closest('.page-rotate-btn')) {
                  const rotateBtn = e.target.closest('.page-rotate-btn');
                  // Check if the button is on the left page (currently only place it exists)
-                 const pageDiv = rotateBtn.closest('.book-page.left');
-                 if (pageDiv && !pageDiv.classList.contains('placeholder-page')) {
-                     updateStatus("Page rotate button clicked.");
-                     setRotatedView(); // Call the function to toggle rotated view
+                 // AND ensure it's actually visible (via opacity check, though CSS pointer-events should prevent click if invisible)
+                 const btnStyle = window.getComputedStyle(rotateBtn);
+                 if (rotateBtn && btnStyle.opacity === '1') {
+                     const pageDiv = rotateBtn.closest('.book-page.left');
+                     if (pageDiv && !pageDiv.classList.contains('placeholder-page')) {
+                         updateStatus("Page rotate button clicked.");
+                         setRotatedView(); // Call the function to toggle rotated view
+                     }
                  }
             }
         });
 
-        // Keyboard Navigation (MODIFIED Esc key behavior for ALL popups)
+        // Keyboard Navigation (Unchanged)
         document.addEventListener('keydown', e => {
             if (document.body.classList.contains('loading-game-active')) return;
 
@@ -3045,7 +3120,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
             if(navAction){ e.preventDefault(); /* Slider/Toolbars managed by jumpToPage/showPageSlider */ }
         });
 
-        // Resize Handling (MODIFIED to hide ALL popups)
+        // Resize Handling (Unchanged)
         window.addEventListener('resize', ()=>{
             clearTimeout(resizeTimer);
             resizeTimer=setTimeout(()=>{
@@ -3064,54 +3139,61 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
              }, 250);
         });
 
-        // Touch Swipes (MODIFIED to ignore swipes on popups, add notes swipe, AND ADJUSTED SENSITIVITY)
+        // Touch Swipes (MODIFIED: Reduced sensitivity, kept popup ignore logic)
         let bodyTX=0, bodyTY=0, bodyTS=0;
-        // *** UPDATED Swipe Thresholds for Body ***
-        const bodySW=25, bodyST=500, bodySV=70; // Reduced bodySW from 50 to 25 for easier swiping
-
+        // *** MODIFIED: Reduced swipe width sensitivity ***
+        const bodySW=40, bodyST=500, bodySV=70;
         // Body swipe (for main reader)
         document.body.addEventListener('touchstart',e=>{
             if(document.body.classList.contains('loading-game-active')) return;
             // Ignore swipes starting on interactive elements OR ANY POPUP or Notes Container
             if(e.target.closest('#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn')){
-                bodyTX=0; bodyTY=0; return;
+                bodyTX=0; bodyTY=0; bodyTS=0; return; // Reset tracking state
             }
             if(e.touches.length===1){
                 bodyTX=e.touches[0].screenX; bodyTY=e.touches[0].screenY; bodyTS=Date.now();
             } else {
-                bodyTX=0; bodyTY=0;
+                bodyTX=0; bodyTY=0; bodyTS=0; // Reset for multi-touch
             }
         },{passive:true});
         document.body.addEventListener('touchend',e=>{
-             if(document.body.classList.contains('loading-game-active') || (bodyTX===0&&bodyTY===0))return;
+             if(document.body.classList.contains('loading-game-active') || (bodyTX===0&&bodyTY===0)) return; // No swipe start detected
+
              // Check if touchend happened inside notes container - if so, let notes handler deal with it
              if (e.target.closest('#notes-pdf-canvas-container')) {
                  bodyTX=0; bodyTY=0; bodyTS=0; // Reset body tracking
                  return;
              }
+
              if(e.changedTouches.length===1){
                  const bodyEX=e.changedTouches[0].screenX, bodyEY=e.changedTouches[0].screenY, bodyTE=Date.now()-bodyTS;
-                 if(bodyTE<bodyST){
+                 if(bodyTE<bodyST){ // Check swipe time threshold
                      const bodyDX=bodyEX-bodyTX, bodyDY=bodyEY-bodyTY, bodyAX=Math.abs(bodyDX), bodyAY=Math.abs(bodyDY);
-                     if(bodyAX>bodySW&&bodyAY<bodySV){ // Horizontal swipe detected (using updated bodySW)
-                         e.preventDefault(); // Prevent default scroll on successful swipe
-                         if(bodyDX>0){ // Swipe Right (Previous Page)
+                     if(bodyAX > bodySW && bodyAY < bodySV){ // Horizontal swipe detected (dominant axis)
+                         // e.preventDefault(); // Optional: Prevent default only if swipe is handled
+                         e.stopPropagation(); // Prevent potential parent handlers
+                         if(bodyDX > 0){ // Swipe Right (Previous Page)
+                             updateStatus("Body Swipe Right Detected -> Previous Page");
                              prevPage();
                          } else { // Swipe Left (Next Page)
+                             updateStatus("Body Swipe Left Detected -> Next Page");
                              nextPage(); // Handles lock check internally
                          }
                          // Slider/Toolbars managed by jumpToPage/showPageSlider
+                     } else {
+                         // updateStatus(`Swipe ignored: AX=${bodyAX.toFixed(0)} AY=${bodyAY.toFixed(0)} SW=${bodySW} SV=${bodySV}`);
                      }
+                 } else {
+                    // updateStatus(`Swipe ignored: Time exceeded (${bodyTE}ms)`);
                  }
              }
-             bodyTX=0; bodyTY=0; bodyTS=0;
+             bodyTX=0; bodyTY=0; bodyTS=0; // Reset tracking state regardless of outcome
         });
 
-        // *** NEW: Notes Popup Swipe ***
+        // Notes Popup Swipe (Unchanged, uses its own sensitivity vars)
         const notesCanvasContainer = document.getElementById('notes-pdf-canvas-container');
         let notesTX = 0, notesTY = 0, notesTS = 0;
-        // *** UPDATED Swipe Thresholds for Notes ***
-        const notesSW = 25, notesST = 500, notesSV = 70; // Reduced notesSW from 50 to 25
+        const notesSW = 50, notesST = 500, notesSV = 70;
 
         if (notesCanvasContainer) {
             notesCanvasContainer.addEventListener('touchstart', e => {
@@ -3139,12 +3221,14 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
                         const notesDY = notesEY - notesTY;
                         const notesAX = Math.abs(notesDX);
                         const notesAY = Math.abs(notesDY);
-                        if (notesAX > notesSW && notesAY < notesSV) { // Horizontal swipe (using updated notesSW)
-                            // e.preventDefault(); // Prevent default only if swipe successful? May not be needed inside popup.
+                        if (notesAX > notesSW && notesAY < notesSV) { // Horizontal swipe
+                            // e.preventDefault(); // Optional
                             e.stopPropagation(); // IMPORTANT: Prevent triggering body swipe listener
                             if (notesDX > 0) { // Swipe Right (Previous)
+                                updateStatus("Notes Swipe Right Detected -> Previous Notes Page");
                                 notesPrevPage();
                             } else { // Swipe Left (Next)
+                                updateStatus("Notes Swipe Left Detected -> Next Notes Page");
                                 notesNextPage();
                             }
                         }
@@ -3195,7 +3279,7 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
         updateStatus("Events setup complete");
     }
 
-    // --- Initialization (MODIFIED - Processes notes data) ---
+    // --- Initialization (MODIFIED - Calls setupLeftToolbarHover) ---
     async function init() {
         updateStatus("Initializing application...");
         document.body.classList.add('loading-game-active');
@@ -3208,9 +3292,9 @@ body.loading-game-active .page-action-btn /* Hide page action buttons too */
             // ---
 
             setupEvents();
-            setupToolbarHover(); // Setup right toolbar
-            setupLeftToolbarHover(); // *** Setup left toolbar ***
-            updateTimelockButtonVisuals(); // Set initial button state
+            setupToolbarHover(); // Setup right toolbar hover/visibility logic
+            setupLeftToolbarHover(); // *** Setup left toolbar hover/visibility logic ***
+            updateTimelockButtonVisuals(); // Set initial timelock button state
             initPageSlider();
 
             const urlParams = new URLSearchParams(window.location.search);
