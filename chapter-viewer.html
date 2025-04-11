@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1549,29 +1550,51 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 
     // --- Toolbar Logic ---
     function manageToolbar(show = null) {
-        if (!ui.rightToolbar || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+        console.log(`[Debug Toolbar] manageToolbar called. Input show: ${show}, Current appState.toolbarHover: ${appState.toolbarHover}`); // DEBUG
+        if (!ui.rightToolbar || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+            console.log(`[Debug Toolbar] manageToolbar returning early. Toolbar missing or game active.`); // DEBUG
+            return;
+        }
         clearTimeout(appState.toolbarTimer);
         const shouldShow = show ?? appState.toolbarHover;
+        console.log(`[Debug Toolbar] manageToolbar determined shouldShow: ${shouldShow}`); // DEBUG
+
         if (shouldShow) {
+            console.log(`[Debug Toolbar] manageToolbar: Showing toolbar.`); // DEBUG
             toggleVisibility(ui.rightToolbar, true);
         } else {
+            console.log(`[Debug Toolbar] manageToolbar: Setting hide timer (${TOOLBAR_HIDE_DELAY}ms).`); // DEBUG
             appState.toolbarTimer = setTimeout(() => {
+                console.log(`[Debug Toolbar] Hide timer fired. Current appState.toolbarHover: ${appState.toolbarHover}`); // DEBUG
                 if (!appState.toolbarHover) { // Re-check hover state
+                    console.log(`[Debug Toolbar] Hide timer: Hiding toolbar now.`); // DEBUG
                     toggleVisibility(ui.rightToolbar, false);
+                } else {
+                    console.log(`[Debug Toolbar] Hide timer: Aborting hide, hover is true.`); // DEBUG
                 }
             }, TOOLBAR_HIDE_DELAY);
         }
     }
 
     function setupToolbarHover() {
-        if (!ui.rightToolbar || !ui.rightToolbarTrigger) { console.error("Right Toolbar/trigger missing"); return; }
-        const enter = () => {
-            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+        if (!ui.rightToolbar || !ui.rightToolbarTrigger) {
+            console.error("Right Toolbar/trigger missing");
+            return;
+        }
+        const enter = (event) => { // Add event argument
+            console.log(`[Debug Toolbar] MOUSE ENTER detected on: ${event.currentTarget.id || event.currentTarget.className}`); // DEBUG
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                 console.log(`[Debug Toolbar] Enter ignored: Game active.`); // DEBUG
+                 return;
+            }
             appState.toolbarHover = true;
+            console.log(`[Debug Toolbar] Set appState.toolbarHover = true. Calling manageToolbar(true).`); // DEBUG
             manageToolbar(true);
         };
-        const leave = () => {
+        const leave = (event) => { // Add event argument
+            console.log(`[Debug Toolbar] MOUSE LEAVE detected on: ${event.currentTarget.id || event.currentTarget.className}`); // DEBUG
             appState.toolbarHover = false;
+            console.log(`[Debug Toolbar] Set appState.toolbarHover = false. Calling manageToolbar(false).`); // DEBUG
             manageToolbar(false);
         };
         ui.rightToolbarTrigger.addEventListener('mouseenter', enter);
@@ -1579,6 +1602,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         ui.rightToolbarTrigger.addEventListener('mouseleave', leave);
         ui.rightToolbar.addEventListener('mouseleave', leave);
         updateStatus("Right Toolbar hover setup (Top Right).");
+        console.log("[Debug Toolbar] Hover listeners attached to toolbar and trigger area."); // DEBUG
     }
 
     function manageLeftToolbar(show = null) {
@@ -2481,7 +2505,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
              // Add class to body? Optional, for styling during drag
         };
 
-        const handlePointerUpOrChange = () => {
+        const handlePointerUpOrChange = (event) => { // Added event
              if (!appState.isDraggingSlider && event.type !== 'change') return;
              const wasDragging = appState.isDraggingSlider;
              appState.isDraggingSlider = false;
