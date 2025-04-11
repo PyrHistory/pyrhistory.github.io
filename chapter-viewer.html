@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,7 +84,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     position:fixed;
     /* MODIFIED: Position top right */
     top:0;
-    right:0; /* Positions the zone on the right edge */
+    right:0;
     width:30px; /* Width of the hover area */
     height:100%; /* Cover full height for edge activation */
     z-index:9998;
@@ -905,11 +906,10 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 }
 /* --- END: Loading Game Styles --- */
 
-/* --- START: Reading Time Alert (MODIFIED for Fade Down) --- */
+/* --- START: Reading Time Alert (MODIFIED for Fade Down & Immediate Centering) --- */
 /* Fun wiggle animation (Shared - ensure translateX stays for centering) */
 @keyframes wiggle {
-  /* transform includes translateX(-50%) to maintain centering during rotation */
-  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  0%, 100% { transform: translateX(-50%) rotate(0deg); } /* Keep translateX for horizontal centering during animation */
   25% { transform: translateX(-50%) rotate(-3deg); }
   50% { transform: translateX(-50%) rotate(3deg); }
   75% { transform: translateX(-50%) rotate(-1deg); }
@@ -919,8 +919,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     position: fixed;
     bottom: 80px;
     left: 50%;
-    /* Start centered horizontally AND translated down */
-    transform: translateX(-50%) translateY(30px); /* translateX(-50%) ensures immediate centering */
+    /* MODIFIED: Start centered horizontally AND vertically in final position */
+    transform: translateX(-50%) translateY(0); /* Changed translateY from 30px to 0 */
     background: rgba(44, 62, 80, 0.9);
     color: white;
     padding: 10px 20px;
@@ -932,8 +932,8 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
     opacity: 0; /* Start invisible */
     visibility: hidden; /* Start hidden */
-    /* Transition includes transform for smooth vertical movement */
-    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s, transform 0.3s ease-in-out;
+    /* MODIFIED: Removed transform from transition */
+    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s; /* Removed 'transform 0.3s ease-in-out' */
     pointer-events: none;
     white-space: nowrap;
     animation: none; /* No animation by default */
@@ -941,9 +941,10 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 #reading-time-alert.visible {
     opacity: 1; /* Fade in */
     visibility: visible; /* Become visible */
-    /* Move to final vertical position (centered horizontally) */
-    transform: translateX(-50%) translateY(0); /* translateX(-50%) ensures centering */
-    transition-delay: 0s, 0s, 0s; /* Reset delays for fade-in/move-up */
+    /* Transform remains the same as base state now, ensuring it stays centered */
+    transform: translateX(-50%) translateY(0);
+    /* MODIFIED: Transition delay only needed for opacity/visibility now */
+    transition-delay: 0s, 0s; /* Removed third delay for transform */
     /* Apply wiggle animation ONCE when it becomes visible */
     animation: wiggle 0.5s ease-in-out 1;
 }
@@ -952,6 +953,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
     font-weight: normal;
 }
 /* --- END: Reading Time Alert --- */
+
 
 /* --- START: Iframe Popup Styles (MODIFIED) --- */
 #iframe-popup-backdrop {
@@ -1062,7 +1064,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 
 /* Wiggle animation reused from Alert (modified to only rotate) */
 /* MODIFIED Wiggle animation (Rely on external centering) */
-@keyframes wiggle-notes { /* Use a different name to avoid conflict if needed */
+@keyframes notes-wiggle { /* Renamed to avoid conflict if needed */
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(-3deg); }
   50% { transform: rotate(3deg); }
@@ -1198,7 +1200,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 /* Class added by JS after PDF load to trigger wiggle */
 #notes-instruction.wiggle-now {
     /* Apply the modified wiggle animation (rotation only) */
-    animation: wiggle-notes 0.5s ease-in-out 1;
+    animation: notes-wiggle 0.5s ease-in-out 1; /* Use renamed animation */
 }
 /* --- END: Notes Popup Styles --- */
 
@@ -3622,3 +3624,4 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+```
