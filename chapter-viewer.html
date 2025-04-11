@@ -1206,116 +1206,14 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 
 </style>
 
-</head>
-<body class="loading-game-active"> <!-- Start with loading game active -->
 
-    <!-- Loading Game Screen -->
-    <div id="loading-game-container">
-        <iframe id="game-iframe" src="/chapter2-loading-game.html" title="Loading Game"></iframe>
-        <!-- NEW: Loading Bar -->
-        <div id="game-loading-bar-container">
-            <div id="game-loading-bar"></div>
-        </div>
-        <p id="iframe-loading-text">Loading game...</p>
-    </div>
-    <!-- Go To Chapter Button (Initially hidden, shown via JS) -->
-    <button id="go-to-chapter-btn">Go to Chapter</button>
+// --- START: HTML Population ---
+(function populateInitialHTML() {
+    const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+    const clockOnIconSVG = `<svg class="icon icon-clock-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+    const clockOffIconSVG = `<svg class="icon icon-clock-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
 
-    <!-- Left Toolbar (Timelock) -->
-    <div id="left-toolbar"></div>
-    <div class="left-toolbar-trigger-area" id="left-toolbar-trigger-area"></div>
-
-    <!-- Right Toolbar (Position Modified) -->
-    <div id="new-toolbar"></div>
-    <!-- Trigger Area for Right Toolbar (Position Modified) -->
-    <div class="toolbar-trigger-area" id="toolbar-trigger-area"></div>
-
-    <!-- Fixed button to return from rotated view (Initially hidden by CSS) -->
-    <button id="return-view-fixed-btn" class="new-btn" title="Return to Previous View">↶</button>
-
-    <!-- Status Indicator (Hidden by default) -->
-    <div id="status-indicator">Status: Initializing...</div>
-
-    <!-- Main Reader Area (Initially hidden via CSS/JS) -->
-    <div class="main-container">
-        <div class="book-spread">
-            <!-- Left Page -->
-            <div class="book-page left">
-                <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
-                <div class="canvas-container">
-                    <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
-                    <div class="textLayer" id="left-text-layer"></div>
-                    <div class="annotationLayer" id="left-annotation-layer"></div>
-                    <div class="keyword-overlay-container" id="left-keyword-overlay"></div>
-                </div>
-                <div class="page-edge-nav page-edge-left"></div>
-                <div class="page-edge-nav page-edge-right"></div>
-                <div class="page-number" id="left-page-number"></div>
-                <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
-            </div>
-            <!-- Right Page (Initially placeholder) -->
-            <div class="book-page right placeholder-page">
-                 <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
-                 <div class="canvas-container">
-                    <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
-                     <div class="textLayer" id="right-text-layer"></div>
-                     <div class="annotationLayer" id="right-annotation-layer"></div>
-                     <div class="keyword-overlay-container" id="right-keyword-overlay"></div>
-                 </div>
-                <div class="page-edge-nav page-edge-left"></div>
-                <div class="page-edge-nav page-edge-right"></div>
-                <div class="page-number" id="right-page-number"></div>
-                <div class="page-loading-overlay"><div class="page-loading-spinner"></div></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Table of Contents Panel -->
-    <div class="toc-panel" id="toc-panel"></div>
-    <!-- Global Loading Overlay -->
-    <div class="loading-overlay" id="loading-overlay"></div>
-    <!-- Page Slider -->
-    <div class="page-slider-container" id="page-slider-container"></div>
-    <!-- Separate Trigger Zone for Page Slider -->
-    <div id="page-slider-trigger-zone"></div>
-
-    <!-- Keyword Definition Popup -->
-    <div class="definition-popup" id="definition-popup">
-        <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
-        <div class="definition-popup-title" id="popup-word">Keyword</div>
-        <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
-    </div>
-
-    <!-- Reading Time Alert Popup -->
-    <div id="reading-time-alert"></div>
-
-    <!-- Iframe Popup -->
-    <div id="iframe-popup-backdrop"></div>
-    <div id="iframe-popup-modal">
-        <button id="close-iframe-popup-btn" title="Close (Esc)">×</button>
-        <iframe id="popup-iframe" src="about:blank" title="Embedded Content"></iframe>
-    </div>
-
-    <!-- Notes Popup -->
-    <div id="notes-popup-backdrop"></div>
-    <div id="notes-popup-container">
-        <div id="notes-pdf-canvas-container">
-            <canvas id="notes-pdf-canvas"></canvas>
-            <button id="notes-prev-btn" class="notes-nav-btn" title="Previous Notes Page">ᐸ</button>
-            <button id="notes-next-btn" class="notes-nav-btn" title="Next Notes Page">ᐳ</button>
-        </div>
-         <div id="notes-instruction"><em>Copy these notes into your Pyr Notebook before continuing</em></div>
-    </div>
-
-<!-- Script block for initial HTML population (minimal changes) -->
-<script>
-    // --- START: HTML Population ---
-    (function populateInitialHTML() {
-        const boxIconSVG = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-        const clockOnIconSVG = `<svg class="icon icon-clock-on" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
-        const clockOffIconSVG = `<svg class="icon icon-clock-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
-
-        document.getElementById('new-toolbar').innerHTML = `
+    document.getElementById('new-toolbar').innerHTML = `
             <button class="new-btn" id="back-btn" title="Go Back">↤</button>
             <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button>
             <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
@@ -1323,17 +1221,17 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             `;
             // Note: Return button (#return-view-fixed-btn) is separate HTML outside this toolbar
 
-        document.getElementById('left-toolbar').innerHTML = `
+    document.getElementById('left-toolbar').innerHTML = `
             <button class="new-btn" id="timelock-toggle-btn" title="Toggle Reading Time Lock (On)">
                 ${clockOnIconSVG}
                 ${clockOffIconSVG}
             </button>
         `;
-        document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
-        document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
-        document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
-    })();
-    // --- END: HTML Population ---
+    document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
+    document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
+    document.getElementById('page-slider-container').innerHTML = `<div class="page-slider-track"><input type="range" id="page-slider" class="page-slider" min="1" max="1" value="1" style="--slider-percent: 0%"></div><div class="page-slider-info"><span id="current-page-display">Page 1</span> of <span id="total-pages-display">1</span></div>`;
+})();
+// --- END: HTML Population ---
 </script>
 
 <!-- Main application script block (Refactored) -->
