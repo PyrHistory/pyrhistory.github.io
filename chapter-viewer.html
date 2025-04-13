@@ -335,7 +335,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transition:height .2s;
     writing-mode: horizontal-tb !important; /* Ensure horizontal */
     position: relative; /* Ensure slider is in stacking context */
-    z-index: 2; /* Above milestones */
+    z-index: 1; /* Above milestones */
 }
 .page-slider:hover{height:8px}
 .page-slider::-webkit-slider-thumb{
@@ -351,7 +351,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     margin-top:-7px!important; /* Vertical centering for horizontal slider */
     margin-left: 0 !important; /* No horizontal margin adjustment */
     position: relative; /* Ensure thumb is in stacking context */
-    z-index: 3; /* Above slider track/milestones */
+    z-index: 4; /* Above slider track/milestones */
 }
 .page-slider:hover::-webkit-slider-thumb{width:24px!important;height:24px!important;margin-top:-8px!important}
 
@@ -381,7 +381,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border: 3px solid rgba(28, 37, 54, .9);
     box-shadow: 0 1px 6px rgba(0, 0, 0, .4);
     position: relative; /* Ensure thumb is in stacking context */
-    z-index: 3; /* Above milestones */
+    z-index: 4; /* Above milestones */
 }
 .page-slider:hover::-moz-range-thumb {width: 24px; height: 24px;}
 .page-slider::-moz-range-progress {
@@ -420,7 +420,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     font-size: 22px; /* Adjust size as needed */
     cursor: pointer;
     user-select: none;
-    z-index: 1; /* Below slider thumb and track progress gradient */
+    z-index: 3; /* Below slider thumb and above track progress gradient */
     opacity: var(--lo-greyed-out-opacity);
     filter: var(--lo-greyed-out-filter);
     transition: opacity 0.3s ease, filter 0.3s ease;
@@ -436,32 +436,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     filter: none;
 }
 /* LO Tooltip */
-#lo-tooltip {
-    position: fixed; /* Use fixed positioning relative to viewport */
-    background-color: var(--lo-tooltip-bg);
-    color: var(--text-on-dark);
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-family: var(--font-sans);
-    line-height: 1.4;
-    max-width: 250px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    z-index: 10000; /* Ensure it's above slider */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(8px); /* Start slightly below */
-    transition: opacity 0.2s ease, visibility 0s linear 0.2s, transform 0.2s ease;
-    pointer-events: none; /* Prevent tooltip from blocking hover */
-    white-space: normal; /* Allow text wrapping */
-}
-#lo-tooltip.visible {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-    transition-delay: 0s;
-}
+
 /* --- END: LO Milestone Styles --- */
 
 /* --- START: LO Achievement Pop-up Styles (MODIFIED FOR WHITE BG) --- */
@@ -1517,7 +1492,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     <div id="lo-achievement-popup">
         <!-- Content is dynamically set by JS, but provide structure -->
         <h3 id="lo-achievement-header">Congratulations 🎉 You've learned:</h3>
-        <p id="lo-achievement-text"><strong>Placeholder Learning Outcome</strong> <span style="color: #28a745;">✔</span></p>
+        <p id="lo-achievement-text"><strong>Placeholder Learning Outcome</strong></p>
         <em id="lo-achievement-tip">Teach it to a friend or family member to strengthen your understanding!</em>
         <button id="lo-continue-btn">Continue</button>
     </div>
@@ -1617,7 +1592,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         sliderTriggerZone: document.getElementById('page-slider-trigger-zone'),
         currentPageDisplay: document.getElementById('current-page-display'),
         totalPagesDisplay: document.getElementById('total-pages-display'),
-        loTooltip: document.getElementById('lo-tooltip'), // Added
+        sliderInfo: document.querySelector('.page-slider-info'), // Added
 
         tocPanel: document.getElementById('toc-panel'),
         tocList: document.getElementById('toc-list'),
@@ -1687,6 +1662,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
         learningOutcomes: [], // NEW: Store loaded LOs [{emoji, learning_outcome, page_number}, ...]
         loPopupTargetPage: null, // NEW: Store target page for after LO popup
+        originalSliderInfoText: null,
     };
     // REVERTED: Global state variables for toolbar/timer from old code
     let toolbarTimer=null;
@@ -2727,7 +2703,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         // Only hide if not dragging and not hovered
         if (!appState.isDraggingSlider && !appState.isSliderAreaHovered) {
             toggleVisibility(ui.sliderContainer, false);
-            hideLoTooltip(); // Hide LO tooltip when slider hides
         }
     }
 
@@ -2769,7 +2744,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             updateSliderInfoText(targetPageValue); // Update text dynamically
             updateSliderStyle(ui.slider, targetPageValue);
             updateMilestoneColors(targetPageValue); // Update LO colors during drag
-            hideLoTooltip(); // Hide tooltip while dragging
             // clearTimeout(appState.sliderHideTimeout); // Keep slider visible while interacting // Already done in handlePointerDown
         };
 
@@ -2778,7 +2752,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
              appState.isDraggingSlider = true;
              clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
              // Add class to body? Optional, for styling during drag
-             hideLoTooltip(); // Hide tooltip on drag start
+
         };
 
         const handlePointerUpOrChange = (event) => { // Added event
@@ -2924,6 +2898,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         });
     }
 
+        // --- NEW VERSIONS of Hover Handlers ---
+
     function handleMilestoneEnter(event) {
         const milestone = event.currentTarget;
         const loText = milestone.dataset.loText;
@@ -2932,70 +2908,41 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         if (!isPassed) {
             milestone.classList.add(CSS_CLASS.HOVER_COLORED);
         }
-        showLoTooltip(milestone, loText);
+
+        // --- Start: New Text Replacement Logic ---
+        if (ui.sliderInfo) {
+            // Only store the original text if it hasn't been stored yet
+            // AND if the current text doesn't already look like an LO (prevent rapid hover issues)
+            if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.startsWith('<em>')) {
+                appState.originalSliderInfoText = ui.sliderInfo.innerHTML;
+            }
+            // Display the Learning Outcome text (italicized)
+            // Make sure loText has a fallback in case the data attribute is missing
+            ui.sliderInfo.innerHTML = `<em>${loText || 'Learning Outcome'}</em>`;
+        }
+        // --- End: New Text Replacement Logic ---
     }
 
     function handleMilestoneLeave(event) {
         const milestone = event.currentTarget;
         milestone.classList.remove(CSS_CLASS.HOVER_COLORED);
-        hideLoTooltip();
-    }
 
-    function showLoTooltip(milestoneElement, text) {
-        if (!ui.loTooltip || !milestoneElement) return;
-
-        ui.loTooltip.textContent = text;
-        toggleVisibility(ui.loTooltip, true); // Uses updated function for fixed positioning visibility
-
-        // Position tooltip below the milestone using fixed positioning
-        const milestoneRect = milestoneElement.getBoundingClientRect();
-
-        // Calculate center of milestone relative to viewport
-        const milestoneCenterX = milestoneRect.left + milestoneRect.width / 2;
-        const milestoneBottom = milestoneRect.bottom;
-
-        // Estimate tooltip width before positioning if needed, or position then adjust
-        // Set initial position centered below milestone
-        ui.loTooltip.style.left = `${milestoneCenterX}px`; // We'll adjust with transform
-        ui.loTooltip.style.top = `${milestoneBottom + LO_TOOLTIP_OFFSET_Y}px`;
-        ui.loTooltip.style.transform = 'translateX(-50%)'; // Center horizontally
-
-        // Minor adjustments to ensure it's fully visible (optional refinement)
-        requestAnimationFrame(() => {
-            const tooltipRect = ui.loTooltip.getBoundingClientRect();
-            let finalLeft = tooltipRect.left;
-            let finalTop = tooltipRect.top;
-
-            // Prevent going off left edge
-            if (finalLeft < 5) {
-                finalLeft = 5;
-                ui.loTooltip.style.left = `${finalLeft}px`;
-                ui.loTooltip.style.transform = 'translateX(0)'; // Reset transform if bumping left edge
-            }
-            // Prevent going off right edge
-            else if (finalLeft + tooltipRect.width > window.innerWidth - 5) {
-                finalLeft = window.innerWidth - 5 - tooltipRect.width;
-                 ui.loTooltip.style.left = `${finalLeft}px`;
-                 ui.loTooltip.style.transform = 'translateX(0)'; // Reset transform if bumping right edge
-            } else {
-                 // Keep centered transform if no edge bumping
-                 ui.loTooltip.style.transform = 'translateX(-50%)';
-            }
-
-             // Prevent going off bottom edge (less likely)
-             if (finalTop + tooltipRect.height > window.innerHeight - 5) {
-                 // Option: Move it above the milestone instead
-                 finalTop = milestoneRect.top - tooltipRect.height - LO_TOOLTIP_OFFSET_Y;
-                 ui.loTooltip.style.top = `${finalTop}px`;
-             }
-        });
-    }
-
-    function hideLoTooltip() {
-        if (ui.loTooltip) {
-            toggleVisibility(ui.loTooltip, false); // Uses updated function
+        // --- Start: New Text Restoration Logic ---
+        // Restore original text if it was stored
+        if (ui.sliderInfo && appState.originalSliderInfoText !== null) {
+            ui.sliderInfo.innerHTML = appState.originalSliderInfoText;
+            appState.originalSliderInfoText = null; // Clear the stored text
+        } else if (ui.sliderInfo && appState.originalSliderInfoText === null) {
+             // Fallback: If somehow the mouseleave happened without mouseenter storing text,
+             // or if text was cleared by something else, try to reset to current page view.
+             updateSliderInfoText(parseInt(ui.slider.value, 10));
         }
+        // --- End: New Text Restoration Logic ---
     }
+    // --- END NEW VERSIONS ---
+
+
+    
     // --- END: LO Milestone Functions ---
 
         // --- NEW: LO Achievement Popup Functions ---
