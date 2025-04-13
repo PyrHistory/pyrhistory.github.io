@@ -43,7 +43,7 @@
     --lo-greyed-out-filter: grayscale(100%);
     --lo-greyed-out-opacity: 0.5;
     --lo-tooltip-bg: rgba(8, 14, 28, 0.95);
-    --lo-popup-bg: rgba(28, 37, 54, 0.95); /* Same as slider background */
+    --lo-popup-bg: rgba(28, 37, 54, 0.95); /* MODIFIED: Darker background for better contrast */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -469,10 +469,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 #lo-achievement-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(8, 14, 28, 0.7); /* Similar to iframe popup */
-    backdrop-filter: blur(4px); /* Use a slightly stronger blur */
+    background-color: rgba(8, 14, 28, 0.7); /* Dark semi-transparent */
+    backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 10020; /* High z-index, above notes */
+    z-index: 10020; /* High z-index, above other popups except maybe global loading */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
@@ -487,63 +487,67 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.95); /* Start slightly scaled down */
+    transform: translate(-50%, -50%) scale(0.95);
     width: 90%;
-    max-width: 500px; /* Similar to TOC width */
-    background-color: var(--lo-popup-bg); /* Use defined LO popup background */
-    color: var(--text-on-dark);
+    max-width: 500px; /* Limit width */
+    background-color: var(--page); /* White background like iframe/notes */
+    color: var(--text-on-page); /* Dark text */
     border-radius: 10px;
     padding: 25px 30px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.4);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3); /* Softer shadow */
     z-index: 10021; /* Above backdrop */
     opacity: 0;
     visibility: hidden;
     text-align: center;
-    font-family: var(--font-sans); /* Use sans-serif for UI */
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out, visibility 0s linear 0.3s; /* Springy transition */
+    font-family: var(--font-sans); /* Use modern font */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out, visibility 0s linear 0.3s;
 }
 #lo-achievement-popup.visible {
     opacity: 1;
     visibility: visible;
-    transform: translate(-50%, -50%) scale(1); /* Scale up to normal size */
+    transform: translate(-50%, -50%) scale(1);
     transition-delay: 0s;
 }
-#lo-achievement-popup h3 { /* "Congratulations..." */
-    font-size: 1.5rem; /* Slightly larger */
+#lo-achievement-popup h3 { /* Line 1 */
+    font-size: 1.4rem; /* Slightly smaller */
     margin-bottom: 15px;
-    color: var(--secondary); /* Use secondary color */
+    color: var(--primary); /* Use primary color */
     font-weight: 600;
 }
-#lo-achievement-popup p { /* LO text */
+#lo-achievement-popup p { /* Line 2 (LO text) */
     font-size: 1rem;
     line-height: 1.6;
     margin-bottom: 20px;
+    color: var(--text-on-page); /* Standard text color */
 }
-#lo-achievement-popup em { /* "Teach it..." */
-    display: block; /* Put on its own line */
+#lo-achievement-popup em { /* Line 3 (Tip) */
+    display: block;
     font-size: 0.9rem;
-    opacity: 0.8;
-    margin-bottom: 25px; /* Space before button */
+    opacity: 0.7; /* Slightly faded */
+    margin-bottom: 25px;
     font-style: italic;
+    color: var(--text-on-page);
 }
-#lo-continue-btn {
+#lo-continue-btn { /* Continue Button */
     padding: 10px 25px;
     font-size: 1rem;
     font-weight: bold;
     color: white;
-    background: linear-gradient(135deg, var(--accent), var(--fiery-orange)); /* Gradient button */
+    background: linear-gradient(135deg, var(--primary), #3a7cc4); /* Blue gradient */
     border: none;
-    border-radius: 20px; /* Rounded pill shape */
+    border-radius: 20px;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 #lo-continue-btn:hover {
-    background: linear-gradient(135deg, var(--fiery-orange), var(--accent)); /* Reverse gradient on hover */
-    transform: scale(1.05); /* Slight scale up */
+    background: linear-gradient(135deg, #3a7cc4, var(--primary)); /* Reversed gradient */
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 #lo-continue-btn:active {
-    transform: scale(0.98); /* Slight scale down on click */
+    transform: scale(0.98);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 /* --- END: LO Achievement Pop-up Styles --- */
 
@@ -1651,6 +1655,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         loAchievementBackdrop: document.getElementById('lo-achievement-backdrop'), // Added
         loAchievementPopup: document.getElementById('lo-achievement-popup'), // Added
         loAchievementText: document.getElementById('lo-achievement-text'), // Added
+        loAchievementTip: document.getElementById('lo-achievement-tip'), // Added for reference, styling only
         loContinueBtn: document.getElementById('lo-continue-btn'), // Added
     };
 
@@ -2443,6 +2448,32 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         }
     }
 
+    // --- NEW: Centralized LO Popup Check ---
+    /**
+     * Checks if navigating away from the currentPage is an LO trigger.
+     * If so, shows the popup and prevents immediate navigation.
+     * @param {number} currentPage - The page number being left.
+     * @param {number} targetPage - The page number being navigated to.
+     * @returns {boolean} - True if the popup was shown (navigation should halt), false otherwise.
+     */
+    function checkAndShowLoPopup(currentPage, targetPage) {
+        if (!pdfState.pdfDocument || currentPage < 1 || targetPage <= currentPage) {
+            return false; // Only trigger when moving forward from a valid page
+        }
+
+        const currentLo = appState.learningOutcomes.find(lo => lo.page_number === currentPage);
+
+        if (currentLo) {
+            // Found an LO on the current page being left. Show popup.
+            updateStatus(`LO Milestone found on page ${currentPage}. Showing achievement popup before navigating to ${targetPage}.`);
+            showLoAchievementPopup(currentLo.learning_outcome, targetPage);
+            return true; // Indicate popup was shown, navigation should stop for now
+        }
+
+        return false; // No LO trigger, proceed with navigation
+    }
+
+
     // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
@@ -2451,16 +2482,16 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         const currentActualPage = pdfState.currentPage; // *** This is the page we are *leaving* ***
         const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
-        let intendedNextPage = currentActualPage + jumpIncrement;
+        let targetPageForJump = currentActualPage + jumpIncrement;
 
         // Clamp target page if it exceeds total pages
-        if (intendedNextPage > pdfState.totalPages) {
+        if (targetPageForJump > pdfState.totalPages) {
              if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) {
                  // If in single page view and not on the last page, go to the last page
-                 intendedNextPage = pdfState.totalPages;
-             } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && intendedNextPage > pdfState.totalPages && currentActualPage % 2 !== 0) {
+                 targetPageForJump = pdfState.totalPages;
+             } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && targetPageForJump > pdfState.totalPages && currentActualPage % 2 !== 0) {
                  // If in double page view, on an odd page, and the next pair would exceed total, go to the last page (which will be shown alone)
-                 intendedNextPage = pdfState.totalPages;
+                 targetPageForJump = pdfState.totalPages;
              } else {
                  // Already on the last possible view, do nothing.
                  updateStatus("NextPage called on last view. No action.");
@@ -2468,21 +2499,15 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
              }
         }
 
-        // --- NEW: Check for LO Achievement ---
-        // Find if the CURRENT page we are on/leaving is an LO page
-        const currentLo = appState.learningOutcomes.find(lo => lo.page_number === currentActualPage);
-        if (currentLo) {
-            // Found an LO on the current page. Show the popup before navigating away.
-            updateStatus(`LO Milestone found on page ${currentActualPage}. Showing achievement popup before navigating to ${intendedNextPage}.`);
-            // Pass the LO text and the page we WOULD HAVE jumped to.
-            showLoAchievementPopup(currentLo.learning_outcome, intendedNextPage);
+        // --- NEW: Check for LO Achievement using centralized function ---
+        if (checkAndShowLoPopup(currentActualPage, targetPageForJump)) {
             return; // *** Stop nextPage execution here. Pop-up dismissal will handle the jump. ***
         }
         // --- END NEW ---
 
         // If no LO popup was triggered, proceed with the jump directly
-        if (intendedNextPage >= 1 && intendedNextPage <= pdfState.totalPages) {
-            jumpToPage(intendedNextPage); // Original jump call
+        if (targetPageForJump >= 1 && targetPageForJump <= pdfState.totalPages) {
+            jumpToPage(targetPageForJump); // Original jump call
         }
     }
 
@@ -2756,6 +2781,14 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
              const targetPageValue = parseInt(ui.slider.value, 10);
              updateStatus(`Slider action ended at value: ${targetPageValue}`);
+
+             // --- NEW: Check for LO popup before jumping via slider ---
+             if (checkAndShowLoPopup(pdfState.currentPage, targetPageValue)) {
+                 updateSliderPosition(); // Reset slider to current page if popup shown
+                 return; // Halt here, popup will handle jump
+             }
+             // --- END NEW ---
+
              jumpToPage(targetPageValue); // Navigate (calls reverted lock logic)
 
              // Restart hide timer if the mouse isn't still over the slider area
@@ -2770,7 +2803,16 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 // Remove class from body?
                 const targetPageValue = parseInt(ui.slider.value, 10);
                 updateStatus(`Slider lost capture at value: ${targetPageValue}`);
+
+                // --- NEW: Check for LO popup before jumping via slider (lost pointer) ---
+                if (checkAndShowLoPopup(pdfState.currentPage, targetPageValue)) {
+                    updateSliderPosition(); // Reset slider
+                    return; // Halt here
+                }
+                // --- END NEW ---
+
                 jumpToPage(targetPageValue); // Navigate (calls reverted lock logic)
+
                  // Restart hide timer if the mouse isn't still over the slider area
                  if (!appState.isSliderAreaHovered) {
                     startSliderHideTimer();
@@ -2866,8 +2908,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             milestone.dataset.loPage = pageNum;
 
             // Calculate position (percentage based)
-            // Position relative to the page range (1 to totalPages)
-            const percentage = pdfState.totalPages > 1 ? ((pageNum - 1) / (pdfState.totalPages - 1)) * 100 : 0;
+            const percentage = pdfState.totalPages > 1 ? ((pageNum - 1) / (pdfState.totalPages - 1)) * 100 : 0; // Handle division by zero
+            // Adjust for thumb width compensation if needed (simple percentage for now)
             milestone.style.left = `${Math.max(0, Math.min(100, percentage))}%`;
 
             // Add hover listeners
@@ -2915,18 +2957,14 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         toggleVisibility(ui.loTooltip, true);
 
         // Position tooltip below the milestone
+        // Use fixed positioning - calculate relative to viewport
         const milestoneRect = milestoneElement.getBoundingClientRect();
-        const sliderContainerRect = ui.sliderContainer.getBoundingClientRect(); // Get container bounds
-
-        // Calculate position relative to viewport first
         let tooltipLeft = milestoneRect.left + milestoneRect.width / 2 - ui.loTooltip.offsetWidth / 2;
         let tooltipTop = milestoneRect.bottom + LO_TOOLTIP_OFFSET_Y;
 
-        // Adjust to stay within slider container bounds horizontally (optional, could overflow)
-        // Use fixed positioning to handle this better
+        // Adjust to stay within viewport bounds horizontally
         tooltipLeft = Math.max(5, tooltipLeft); // Prevent going off left edge
         tooltipLeft = Math.min(window.innerWidth - ui.loTooltip.offsetWidth - 5, tooltipLeft); // Prevent going off right edge
-
 
         // Adjust to stay within viewport vertically
         tooltipTop = Math.min(window.innerHeight - ui.loTooltip.offsetHeight - 5, tooltipTop);
@@ -2974,7 +3012,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 const targetPage = appState.loPopupTargetPage;
                 appState.loPopupTargetPage = null; // Clear stored target
                 updateStatus(`LO Popup closed. Proceeding to page ${targetPage}.`);
-                jumpToPage(targetPage); // Use jumpToPage to handle view logic correctly
+                jumpToPage(targetPage); // This will handle locks etc. for the *new* page
             } else {
                  updateStatus("LO Popup closed (no target page stored).");
             }
@@ -3074,14 +3112,13 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         let loFileName = 'chapter-2.LOs.json'; // Default fallback
         try {
             const pathParts = pdfUrl.split('/');
-            const pdfFileName = pathParts.pop() || ''; // Get filename or empty string
-            // Try to extract 'chapter-N' pattern directly from filename
+            const pdfFileName = pathParts[pathParts.length - 1];
+            // Try to extract 'chapter-N' pattern
             const chapterMatch = pdfFileName.match(/chapter-(\d+)/i);
             if (chapterMatch && chapterMatch[0]) {
                 loFileName = `${chapterMatch[0]}.LOs.json`;
             } else {
                  // If not 'chapter-N', check if URL contains 'chapters/X/Y.pdf'
-                 // Use the full URL path to check the directory structure pattern
                  const pathMatch = pdfUrl.match(/chapters\/[^/]+\/(.+?)\.pdf/i);
                  if (pathMatch && pathMatch[1]) {
                      loFileName = `${pathMatch[1]}.LOs.json`;
@@ -3092,7 +3129,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             }
         } catch (e) { console.warn("Error deriving LO file name:", e); }
 
-        // Construct URL relative to PDF location (assuming it's in the same directory)
+        // Construct URL relative to PDF location (assuming it's in the same directory or sibling directory)
+        // Try assuming LO is alongside the PDF first
         let pdfDir = pdfUrl.substring(0, pdfUrl.lastIndexOf('/') + 1);
         let loUrl = pdfDir + loFileName;
 
@@ -3246,12 +3284,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             ui.goToChapterBtn.textContent = 'Loading Chapter...';
             ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
             ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE); // Remove visible if it was somehow added
-            // Ensure button is initially displayed in loading state if game is active
-            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                 ui.goToChapterBtn.style.display = 'block'; // Or appropriate display value
-                 ui.goToChapterBtn.style.opacity = '1';
-                 ui.goToChapterBtn.style.visibility = 'visible';
-            }
         }
         // --- End Button Modification ---
 
@@ -3274,7 +3306,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             pdfState.currentPage = 1; // Start at page 1
             updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
             document.title = `${pdfState.title} - Heritage History™ Reader`;
-            updateSliderTotalPages(); // Update slider max value
+            updateSliderTotalPages(); // Update slider max value (will also render milestones now)
 
             console.log("Internal Status: Processing metadata...");
             updateStatus("Fetching outline...");
@@ -3293,7 +3325,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             updateStatus(`Iframe data loaded: ${iframeDataLoaded}`);
             updateStatus(`LO data loaded: ${loLoaded}`);
 
-            // Render milestones after LO data is loaded and total pages known
+            // Re-render milestones after LO data is loaded (if total pages was already set)
             renderSliderMilestones();
 
             // Pre-scan for keywords if overlay data was loaded
@@ -3366,7 +3398,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE); // Ensure loading screen stays
             if (ui.goToChapterBtn) { // Ensure button is hidden on failure
                 ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-                ui.goToChapterBtn.style.display = 'none'; // Explicitly hide
             }
             if (ui.gameContainer) ui.gameContainer.style.display = 'none'; // Hide game elements
              if(ui.iframeLoadingText) ui.iframeLoadingText.textContent = `Error loading PDF: ${error.message}`;
@@ -3377,7 +3408,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         }
     }
 
-    // --- TOC population (MODIFIED - Uses new pdfState, but reverted lock clearing logic) ---
+    // --- TOC population (MODIFIED - Uses new pdfState, but reverted lock clearing logic, Added LO Check) ---
     function populateTOC() {
         if (!ui.tocList) return;
         ui.tocList.innerHTML = ''; // Clear previous content
@@ -3426,6 +3457,13 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                             currentPageLockStartTime = 0;
                         }
                         // *** END REVERTED ***
+
+                         // --- NEW: Check for LO popup before jumping via TOC ---
+                         if (checkAndShowLoPopup(pdfState.currentPage, targetPage)) {
+                             hideTableOfContents(); // Close TOC even if popup shown
+                             return; // Halt here, popup will handle jump
+                         }
+                         // --- END NEW ---
 
                         // Directly call jumpToPage, which handles view adjustments and updates
                         // It will use the reverted lock logic when determining the next lock state
@@ -3483,7 +3521,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             updateStatus("Definition popup suppressed in rotated mode."); return;
         }
 
-        hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
+        hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); hideLoAchievementPopup(); // Hide other popups
 
         ui.popupWord.textContent = word || "Keyword";
         ui.popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
@@ -3541,7 +3579,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         if (!ui.iframePopupBackdrop || !ui.iframePopupModal || !ui.popupIframe || !ui.closeIframePopupBtn || !url) {
             console.error("Cannot show iframe popup: Missing element or URL."); return;
         }
-        hideDefinitionPopup(); hideNotesPopupIfNeeded(); // Hide other popups
+        hideDefinitionPopup(); hideNotesPopupIfNeeded(); hideLoAchievementPopup(); // Hide other popups
 
         // Avoid reloading if already visible with the same URL
         if (ui.iframePopupModal.classList.contains(CSS_CLASS.VISIBLE) && ui.popupIframe.src === url) {
@@ -3599,7 +3637,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas) {
             console.error("Cannot show notes popup: Missing elements."); return;
         }
-        hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
+        hideDefinitionPopup(); hideIframePopupIfNeeded(); hideLoAchievementPopup(); // Hide other popups
         updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
 
         toggleVisibility(ui.notesPopupBackdrop, true);
@@ -3871,7 +3909,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 if (!pageDiv || pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE) || pageEdgeNav.style.display === 'none') return;
 
                 if (pageEdgeNav.classList.contains('page-edge-left')) { prevPage(); } // Calls reverted lock logic
-                else { nextPage(); } // Calls reverted lock logic & NEW LO check
+                else { nextPage(); } // Calls reverted lock logic & NEW LO check (which calls centralized check)
             }
             else if (rotateBtn) { // Keep rotate button logic from new code
                  const btnStyle = window.getComputedStyle(rotateBtn);
@@ -3909,13 +3947,66 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             if (isPopupActive || isInputFocused || e.ctrlKey || e.altKey || e.metaKey) return;
 
             let navAction = false;
+            let targetPage = pdfState.currentPage; // Keep track of target for LO check
+            let isMovingForward = false;
+
             switch(e.key){
-                case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; // Uses reverted lock logic & NEW LO check
-                case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; // Uses reverted lock logic
-                case 'Home': if(pdfState.totalPages > 0) jumpToPage(1); navAction = true; break; // Uses reverted lock logic
-                case 'End': if(pdfState.totalPages > 0) jumpToPage(pdfState.totalPages); navAction = true; break; // Uses reverted lock logic
+                case 'ArrowRight': case 'PageDown':
+                    // Determine target page like nextPage does
+                    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+                    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+                    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+                    const currentActualPage = pdfState.currentPage;
+                    const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
+                    let potentialTarget = currentActualPage + jumpIncrement;
+                     // Clamp target page if it exceeds total pages
+                     if (potentialTarget > pdfState.totalPages) {
+                          if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) potentialTarget = pdfState.totalPages;
+                          else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && potentialTarget > pdfState.totalPages && currentActualPage % 2 !== 0) potentialTarget = pdfState.totalPages;
+                          else potentialTarget = currentActualPage; // No change if already on last view
+                     }
+                    if (potentialTarget > currentActualPage) {
+                        targetPage = potentialTarget;
+                        isMovingForward = true;
+                        navAction = true;
+                    }
+                    break;
+                case 'ArrowLeft': case 'PageUp':
+                    prevPage(); // prevPage calls jumpToPage internally
+                    navAction = true; // Set true, but no LO check needed for backward move
+                    break;
+                case 'Home':
+                    if(pdfState.totalPages > 0) {
+                        targetPage = 1;
+                        isMovingForward = targetPage > pdfState.currentPage; // Should always be false or same
+                        navAction = true;
+                    }
+                    break;
+                case 'End':
+                    if(pdfState.totalPages > 0) {
+                        targetPage = pdfState.totalPages;
+                        isMovingForward = targetPage > pdfState.currentPage;
+                        navAction = true;
+                    }
+                    break;
             }
-            if(navAction){ e.preventDefault(); } // Prevent default scroll behavior
+
+            if(navAction){
+                 e.preventDefault(); // Prevent default scroll behavior
+                 // Perform LO check only if moving forward via keyboard
+                 if (isMovingForward) {
+                     if (checkAndShowLoPopup(pdfState.currentPage, targetPage)) {
+                         return; // Stop here if popup shown
+                     }
+                     // If no popup, proceed with jump (except for prevPage which already did it)
+                     if (e.key !== 'ArrowLeft' && e.key !== 'PageUp') {
+                        jumpToPage(targetPage);
+                     }
+                 } else if (e.key !== 'ArrowLeft' && e.key !== 'PageUp') {
+                    // Handle Home key or no change End key
+                     jumpToPage(targetPage);
+                 }
+            }
         });
 
         // --- Resize Handling ---
@@ -3988,7 +4079,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                              prevPage(); // Uses reverted lock logic
                          } else { // Swipe Left (-> Next)
                              updateStatus("Body Swipe Left Detected -> Next Page");
-                             nextPage(); // Uses reverted lock logic & NEW LO check
+                             nextPage(); // Uses reverted lock logic & NEW LO check (which calls centralized check)
                          }
                      }
                  }
@@ -4082,14 +4173,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                  !ui.definitionPopup.contains(e.target) && // Clicked outside popup
                  !e.target.closest('.keyword-highlight')) // And not on a keyword highlight
              { hideDefinitionPopup(); }
-            // NEW: Dismiss LO Achievement popup if clicking outside it
-            if (ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE) &&
-                !ui.loAchievementPopup.contains(e.target) && // Clicked outside popup
-                e.target !== ui.loAchievementBackdrop) // Exclude clicks on backdrop (handled separately)
-            {
-                // Allow backdrop click to handle hiding naturally
-                // hideLoAchievementPopup();
-            }
         }, true); // Use capture phase to catch clicks early
 
 
@@ -4133,7 +4216,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 appState.isReaderReady = false;
                 if (ui.goToChapterBtn) { // Ensure button is hidden
                      ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-                     ui.goToChapterBtn.style.display = 'none'; // Explicitly hide
                 }
                 ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE); // Exit loading state
 
@@ -4181,9 +4263,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
             if (ui.goToChapterBtn) { // Ensure button is hidden on failure
                 ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-                ui.goToChapterBtn.style.display = 'none'; // Explicitly hide
             }
-             if (ui.gameContainer) ui.gameContainer.style.display = 'none'; // Hide game elements
         }
     }
 
