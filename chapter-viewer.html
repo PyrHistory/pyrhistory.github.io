@@ -1555,6 +1555,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 <script>
 (function() { // IIFE to encapsulate scope
     'use strict';
+    let isChapterReady = false;
 
     // --- Constants ---
     const MAX_CACHE_SIZE = 20;
@@ -3360,25 +3361,35 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             await updateDisplay(); // Perform initial render (calls reverted lock logic)
 
             // --- READER IS READY ---
-            appState.isReaderReady = true; // Use appState from new code
-            updateStatus("Reader is ready!");
+    appState.isReaderReady = true; // Use appState from new code
+    updateStatus("Reader is ready!");
+    // Notify game iframe that the chapter is ready (Keep this line from new code)
+    if (ui.gameIframe?.contentWindow) {
+        try {
+            ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*');
+            updateStatus("Sent 'chapterReady' message to game iframe.");
+        } catch (e) {
+            console.error("Error posting 'chapterReady' message to iframe:", e);
+        }
+    } else {
+        console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
+    }
 
-            // --- MODIFIED: Show 'Go to Chapter' button with animation ---
-            // Use a small delay consistent with the old loading bar animation buffer
-            setTimeout(() => {
-                // Only show button if still in loading game state
-                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                    updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
-                    ui.goToChapterBtn.textContent = 'Go to Chapter';
-                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
-                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
-                }
-            }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
-            // --- End Button Modification ---
+    // --- MODIFIED: Show 'Go to Chapter' button with animation ---
+    // Use a small delay consistent with the old loading bar animation buffer
+    setTimeout(() => {
+        // Only show button if still in loading game state
+        if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+            updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
+            ui.goToChapterBtn.textContent = 'Go to Chapter';
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
+            ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
+        }
+    }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
+    // --- End Button Modification ---
 
-
-            // Notify game iframe that reader is ready (to prevent auto-restart)
-            if (ui.gameIframe?.contentWindow) {
+    // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
+    if (ui.gameIframe?.contentWindow) {
                 try {
                     ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
                     updateStatus("Sent disableRestart message to game iframe.");
