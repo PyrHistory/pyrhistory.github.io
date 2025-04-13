@@ -417,7 +417,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     position: absolute;
     top: 50%; /* Vertically center relative to track container */
     transform: translate(-50%, -50%); /* Center emoji on its position */
-    font-size: 18px; /* Adjust size as needed */
+    font-size: 22px; /* Adjust size as needed */
     cursor: pointer;
     user-select: none;
     z-index: 1; /* Below slider thumb and track progress gradient */
@@ -1517,8 +1517,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     <div id="lo-achievement-popup">
         <!-- Content is dynamically set by JS, but provide structure -->
         <h3 id="lo-achievement-header">Congratulations 🎉 You've learned:</h3>
-        <p id="lo-achievement-text"><strong>Placeholder Learning Outcome</strong> ✅</p>
-        <em id="lo-achievement-tip">Teach it to a friend or family to strengthen your understanding!</em>
+        <p id="lo-achievement-text"><strong>Placeholder Learning Outcome</strong> <span style="color: #28a745;">✔</span></p>
+        <em id="lo-achievement-tip">Teach it to a friend or family member to strengthen your understanding!</em>
         <button id="lo-continue-btn">Continue</button>
     </div>
 
@@ -2497,7 +2497,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
              if (!alreadyPassed) {
                 updateStatus(`LO Milestone found on page ${potentialLoPage}. Showing achievement popup before navigating to ${targetPageForJump}.`);
-                showLoAchievementPopup(currentLo.learning_outcome, targetPageForJump);
+                showLoAchievementPopup(currentLo, targetPageForJump);
                 return; // Stop nextPage here, popup handler will call jumpToPage
              } else {
                 updateStatus(`LO Milestone on page ${potentialLoPage} already passed. Skipping popup.`);
@@ -2998,14 +2998,37 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     }
     // --- END: LO Milestone Functions ---
 
-    // --- NEW: LO Achievement Popup Functions ---
-    function showLoAchievementPopup(loText, nextPageTarget) {
+        // --- NEW: LO Achievement Popup Functions ---
+    // ***** THIS IS THE REPLACEMENT FUNCTION *****
+    function showLoAchievementPopup(learningOutcomeObject, nextPageTarget) {
         if (!ui.loAchievementBackdrop || !ui.loAchievementPopup || !ui.loAchievementText || !ui.loContinueBtn) {
             console.error("Cannot show LO achievement popup: Missing elements.");
             // Fallback: Just navigate immediately if popup elements are missing
             jumpToPage(nextPageTarget);
             return;
         }
+
+        // Store the target page for when the popup is closed
+        appState.loPopupTargetPage = nextPageTarget;
+
+        // Extract emoji and text from the passed object (with fallbacks)
+        // This line gets the emoji (or '💡' if missing) from the object you passed in
+        const emoji = learningOutcomeObject?.emoji || '💡';
+        // This line gets the learning outcome text (or default text if missing)
+        const loText = learningOutcomeObject?.learning_outcome || "A key concept!";
+
+        // Update popup content: Put the emoji FIRST, then the bold text, then the checkmark
+        // This line constructs the string like: "🔥 <strong>Learn about fire</strong> <span...>✔</span>"
+        const formattedText = `${emoji} <strong>${loText}</strong> <span style="color: #28a745;">✔</span>`;
+        // This line sets the HTML inside the paragraph element (<p id="lo-achievement-text">)
+        ui.loAchievementText.innerHTML = formattedText; // Use innerHTML because formattedText has HTML tags
+
+        // Show the popup (this part is unchanged)
+        toggleVisibility(ui.loAchievementBackdrop, true);
+        toggleVisibility(ui.loAchievementPopup, true);
+        ui.loContinueBtn.focus(); // Focus the button for accessibility
+    }
+    // ***** END OF REPLACEMENT FUNCTION *****
 
         // Store the target page for when the popup is closed
         appState.loPopupTargetPage = nextPageTarget;
