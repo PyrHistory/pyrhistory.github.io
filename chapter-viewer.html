@@ -1,17 +1,4 @@
-
-Add a new pop up window like the one for the iframe for videos and the one for the notes pdfs, except: - have this one be a white window - pull info from the json file [chapter-chapternumber].LOs.json (e.g. chapter-2.LOs.json, which I’ve attached)
-- Have it display the following msg in the white window: 
-
-Line 1: Congratulations 🎉 You've learned [learning outcome, in bold font] ✅
-Line break
-Line 2: Teach it to a friend or family to strengthen your understanding! (in italics)
- Finally, ensure that this pop up window displays when the ‘next page’ button on the page number in the json file is click on for the first time. 
-
-Add this feature robustly and in a totally surefire way. 
-
-Make no other changes. 
-
-Give me updated code in full  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -56,7 +43,7 @@ Give me updated code in full  <!DOCTYPE html>
     --lo-greyed-out-filter: grayscale(100%);
     --lo-greyed-out-opacity: 0.5;
     --lo-tooltip-bg: rgba(8, 14, 28, 0.95);
-    --lo-popup-bg: rgba(28, 37, 54, 0.95);
+    /* --lo-popup-bg: rgba(28, 37, 54, 0.95); Replaced with white background below */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -478,11 +465,11 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 /* --- END: LO Milestone Styles --- */
 
-/* --- START: LO Achievement Pop-up Styles --- */
+/* --- START: LO Achievement Pop-up Styles (MODIFIED FOR WHITE BG) --- */
 #lo-achievement-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(8, 14, 28, 0.7);
+    background-color: rgba(8, 14, 28, 0.7); /* Keep dark backdrop */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 10020; /* High z-index */
@@ -503,11 +490,13 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transform: translate(-50%, -50%) scale(0.95);
     width: 90%;
     max-width: 500px;
-    background-color: var(--lo-popup-bg);
-    color: var(--text-on-dark);
+    /* MODIFIED: White background and dark text */
+    background-color: #FFFFFF;
+    color: #333333;
+    border: 1px solid #ddd; /* Optional subtle border */
     border-radius: 10px;
     padding: 25px 30px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.4);
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2); /* Slightly softer shadow */
     z-index: 10021; /* Above backdrop */
     opacity: 0;
     visibility: hidden;
@@ -521,24 +510,30 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transform: translate(-50%, -50%) scale(1);
     transition-delay: 0s;
 }
-#lo-achievement-popup h3 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    color: var(--secondary);
+#lo-achievement-popup h3 { /* Original text styling in HTML */
+    font-size: 1.4rem; /* Slightly smaller */
+    margin-bottom: 12px;
+    color: #222; /* Darker heading */
+    font-weight: normal; /* Remove default bold if h3 has it */
 }
-#lo-achievement-popup p {
+#lo-achievement-popup p { /* Includes the bold tag */
     font-size: 1rem;
     line-height: 1.6;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    color: #444; /* Dark grey text */
 }
-#lo-achievement-popup em {
+#lo-achievement-popup p strong { /* Style the bold part within the paragraph */
+    font-weight: bold;
+    color: #000000; /* Black */
+}
+#lo-achievement-popup em { /* The italics line */
     display: block;
     font-size: 0.9rem;
-    opacity: 0.8;
-    margin-bottom: 25px;
+    color: #666; /* Medium grey italics */
+    margin-bottom: 20px;
     font-style: italic;
 }
-#lo-continue-btn {
+#lo-continue-btn { /* Keep button styling */
     padding: 10px 25px;
     font-size: 1rem;
     font-weight: bold;
@@ -1521,8 +1516,9 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     <!-- NEW: LO Achievement Pop-up -->
     <div id="lo-achievement-backdrop"></div>
     <div id="lo-achievement-popup">
-        <h3>Congratulations 🎉 You've learned:</h3>
-        <p id="lo-achievement-text">Learning outcome text goes here.</p>
+        <!-- Content is dynamically set by JS, but provide structure -->
+        <h3 id="lo-achievement-header">Congratulations 🎉 You've learned:</h3>
+        <p id="lo-achievement-text"><strong>Placeholder Learning Outcome</strong> ✅</p>
         <em id="lo-achievement-tip">Teach it to a friend or family to strengthen your understanding!</em>
         <button id="lo-continue-btn">Continue</button>
     </div>
@@ -1660,10 +1656,12 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         statusIndicator: document.getElementById('status-indicator'), // Although hidden
 
-        loAchievementBackdrop: document.getElementById('lo-achievement-backdrop'), // Added
-        loAchievementPopup: document.getElementById('lo-achievement-popup'), // Added
-        loAchievementText: document.getElementById('lo-achievement-text'), // Added
-        loContinueBtn: document.getElementById('lo-continue-btn'), // Added
+        // NEW LO Achievement elements
+        loAchievementBackdrop: document.getElementById('lo-achievement-backdrop'),
+        loAchievementPopup: document.getElementById('lo-achievement-popup'),
+        loAchievementText: document.getElementById('lo-achievement-text'),
+        loAchievementTip: document.getElementById('lo-achievement-tip'), // Added reference to tip element
+        loContinueBtn: document.getElementById('lo-continue-btn'),
     };
 
     // --- PDF.js Setup (Keep from New Code) ---
@@ -2484,27 +2482,21 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         }
 
         // --- NEW: Check for LO Achievement ---
-        // Find the first LO milestone at OR AFTER the current page (if double view, consider both pages)
+        // Find the LO milestone for the current view's LAST page.
         let potentialLoPage = -1;
         const currentRightPage = isEffectiveDoublePageView ? currentActualPage + 1 : -1;
+        const lastPageInView = Math.max(currentActualPage, currentRightPage);
 
-        for (const lo of appState.learningOutcomes) {
-            // Check if the LO page is the current left page OR the current right page (if visible)
-            if (lo.page_number === currentActualPage || (currentRightPage > 0 && lo.page_number === currentRightPage)) {
-                potentialLoPage = lo.page_number;
-                break; // Found the LO for the current view
-            }
-        }
+        // Find the specific LO matching the last page of the *current* view
+        const currentLo = appState.learningOutcomes.find(lo => lo.page_number === lastPageInView);
 
-        if (potentialLoPage !== -1) {
-             const currentLo = appState.learningOutcomes.find(lo => lo.page_number === potentialLoPage);
-             // Check if this LO has *already been passed* (i.e., user navigated past it previously)
-             // We use furthestPage as a proxy. If furthestPage is already beyond this LO page, don't show the popup again.
-             // OR check if the milestone element already has 'lo-passed' - this is more direct
+        if (currentLo) {
+             potentialLoPage = currentLo.page_number;
+             // Check if this LO has *already been passed* using the milestone's class
              const milestoneElement = ui.loMilestonesContainer?.querySelector(`.lo-milestone[data-lo-page="${potentialLoPage}"]`);
              const alreadyPassed = milestoneElement?.classList.contains(CSS_CLASS.LO_PASSED);
 
-             if (currentLo && !alreadyPassed) {
+             if (!alreadyPassed) {
                 updateStatus(`LO Milestone found on page ${potentialLoPage}. Showing achievement popup before navigating to ${targetPageForJump}.`);
                 showLoAchievementPopup(currentLo.learning_outcome, targetPageForJump);
                 return; // Stop nextPage here, popup handler will call jumpToPage
@@ -2514,10 +2506,12 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         }
         // --- END NEW LO CHECK ---
 
-
         // If no relevant LO popup, proceed with jump directly
         if (targetPageForJump >= 1 && targetPageForJump <= pdfState.totalPages) {
             jumpToPage(targetPageForJump);
+        } else if (targetPageForJump > pdfState.totalPages) {
+            // This handles the case where the clamped targetPageForJump was the very last page
+            jumpToPage(pdfState.totalPages);
         }
     }
 
@@ -2537,7 +2531,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         // Otherwise, already on page 1, do nothing.
     }
 
-    // --- JumpToPage (REVERTED Timelock Logic, uses New Code state/UI) ---
+    // --- JumpToPage (REVERTED Timelock Logic, uses new pdfState/UI) ---
     function jumpToPage(pageNum){
         if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
             console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
@@ -2545,8 +2539,12 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         }
 
         let targetStartPage = pageNum;
-        // Ensure targetStartPage is always odd for double page view (unless it's page 1)
-        if (pdfState.isDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
+        // Ensure targetStartPage is always odd for double page view (unless it's page 1 or the very last page if odd)
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+
+        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
             targetStartPage--;
         }
 
@@ -2596,7 +2594,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             // In a real app, you might save userState.readingProgress here
         }
 
-        resetPopupStates(); // Hide any open popups
+        resetPopupStates(); // Hide any open popups (including LO popup)
 
         updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
         // showPageSlider(); // REMOVED: Do not show slider on page turn (Keep from New Code)
@@ -2902,10 +2900,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             milestone.dataset.loPage = pageNum;
 
             // Calculate position (percentage based)
-            // Note: This positions based on the *start* of the page number.
-            // The slider value represents the start of the current view (page N or N+1).
-            // The LO milestone is positioned at the page number where it *occurs*.
-            const percentage = ((pageNum - 1) / (pdfState.totalPages - 1)) * 100;
+            const percentage = pdfState.totalPages > 1 ? ((pageNum - 1) / (pdfState.totalPages - 1)) * 100 : 0;
             milestone.style.left = `${Math.max(0, Math.min(100, percentage))}%`;
 
             // Add hover listeners
@@ -2924,8 +2919,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         milestones.forEach(milestone => {
             const loPage = parseInt(milestone.dataset.loPage, 10);
-            // Color if the user's *current starting page* is GREATER than the LO page.
-            // This means the user has navigated past the page where the LO occurs.
+            // Color if the user's *current starting page* is strictly GREATER than the LO page.
+            // This means the user has navigated *past* the page where the LO occurs.
             milestone.classList.toggle(CSS_CLASS.LO_PASSED, currentPage > loPage);
         });
     }
@@ -3016,8 +3011,10 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         // Store the target page for when the popup is closed
         appState.loPopupTargetPage = nextPageTarget;
 
-        // Update popup content
-        ui.loAchievementText.textContent = loText || "A key concept!";
+        // Update popup content according to the requested format
+        // Use innerHTML to allow the bold tag
+        const formattedText = `<strong>${loText || "A key concept!"}</strong> ✅`;
+        ui.loAchievementText.innerHTML = formattedText;
 
         // Show the popup
         toggleVisibility(ui.loAchievementBackdrop, true);
@@ -3132,12 +3129,10 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     // NEW: Load Learning Outcomes Data
     async function loadLearningOutcomes(pdfUrl) {
         // Assumes LO file follows pattern like chapter-2.LOs.json
-        // Tries to derive chapter name from PDF URL, falling back to 'chapter-2' if needed.
         let loFileName = 'chapter-2.LOs.json'; // Default fallback
         try {
             const pathParts = pdfUrl.split('/');
-            const pdfFileName = pathParts[pathParts.length - 1];
-            // Try to extract 'chapter-N' pattern
+            const pdfFileName = pathParts.pop() || ''; // Get filename
             const chapterMatch = pdfFileName.match(/chapter-(\d+)/i);
             if (chapterMatch && chapterMatch[0]) {
                 loFileName = `${chapterMatch[0]}.LOs.json`;
@@ -3146,7 +3141,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             }
         } catch (e) { console.warn("Error deriving LO file name:", e); }
 
-        // Construct URL relative to PDF location (assuming it's in the same directory)
+        // Construct URL relative to the PDF's directory
         const pdfDir = pdfUrl.substring(0, pdfUrl.lastIndexOf('/') + 1);
         const loUrl = pdfDir + loFileName;
 
@@ -3172,7 +3167,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             const validLOs = [];
             let count = 0;
             data.forEach(item => {
-                if (item && typeof item.emoji === 'string' && typeof item.learning_outcome === 'string' && typeof item.page_number === 'number' && item.page_number > 0) {
+                if (item && typeof item.emoji === 'string' && typeof item.learning_outcome === 'string' && typeof item.page_number === 'number' && Number.isInteger(item.page_number) && item.page_number > 0) {
                     validLOs.push({
                         emoji: item.emoji,
                         learning_outcome: item.learning_outcome,
@@ -3184,7 +3179,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 }
             });
 
-            // Sort LOs by page number for ordered processing
+            // Sort LOs by page number for ordered processing/display
             validLOs.sort((a, b) => a.page_number - b.page_number);
             appState.learningOutcomes = validLOs;
             updateStatus(`LO data loaded successfully: ${count} valid outcomes found.`);
