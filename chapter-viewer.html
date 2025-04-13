@@ -448,18 +448,18 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 /* --- END: LO Milestone Styles --- */
 
-/* --- START: LO Achievement Pop-up Styles (MODIFIED FOR WHITE BG) --- */
+/* --- START: LO Achievement Pop-up Styles (Updated Layout/Fonts) --- */
 #lo-achievement-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(8, 14, 28, 0.7); /* Keep dark backdrop */
+    background-color: rgba(8, 14, 28, 0.7);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: 10020; /* High z-index */
+    z-index: 10020;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
-    cursor: pointer; /* Allow clicking backdrop to dismiss */
+    cursor: pointer;
 }
 #lo-achievement-backdrop.visible {
     opacity: 1;
@@ -473,18 +473,17 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transform: translate(-50%, -50%) scale(0.95);
     width: 90%;
     max-width: 500px;
-    /* MODIFIED: White background and dark text */
     background-color: #FFFFFF;
     color: #333333;
-    border: 1px solid #ddd; /* Optional subtle border */
+    border: 1px solid #ddd;
     border-radius: 10px;
     padding: 25px 30px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.2); /* Slightly softer shadow */
-    z-index: 10021; /* Above backdrop */
+    box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+    z-index: 10021;
     opacity: 0;
     visibility: hidden;
     text-align: center;
-    font-family: var(--font-sans);
+    font-family: var(--font-body); /* Base font Open Sans */
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out, visibility 0s linear 0.3s;
 }
 #lo-achievement-popup.visible {
@@ -493,35 +492,58 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     transform: translate(-50%, -50%) scale(1);
     transition-delay: 0s;
 }
-#lo-achievement-popup h3 { /* Original text styling in HTML */
-    font-size: 1.4rem; /* Slightly smaller */
-    font-family: var(--font-heading);
-    margin-bottom: 12px;
-    color: #222; /* Darker heading */
-    font-weight: normal; /* Remove default bold if h3 has it */
+#lo-achievement-popup h3 {
+    font-family: var(--font-heading); /* Roboto */
+    font-size: 1.4rem;
+    margin-bottom: 15px; /* Increased margin slightly */
+    color: #222;
+    font-weight: 700;
 }
-#lo-achievement-popup p { /* Includes the bold tag */
-    font-size: 1rem;
-    line-height: 1.6;
+
+/* Target the container paragraph for LO */
+#lo-achievement-popup p#lo-achievement-text {
     margin-bottom: 15px;
-    color: #444; /* Dark grey text */
+    padding: 0;
+    line-height: normal; /* Reset */
 }
-#lo-achievement-popup p strong { /* Style the bold part within the paragraph */
-    font-weight: bold;
-    color: #000000; /* Black */
+
+/* Style the Emoji Span */
+#lo-achievement-text .lo-popup-emoji {
+    display: block; /* Emoji on its own line */
+    font-size: 3rem;  /* Larger emoji */
+    line-height: 1;
+    margin-bottom: 10px; /* Space below emoji */
 }
-#lo-achievement-popup em { /* The italics line */
+
+/* Style the LO Text Span */
+#lo-achievement-text .lo-popup-text {
     display: block;
-    font-size: 0.9rem;
-    color: #666; /* Medium grey italics */
+    font-size: 1.1rem; /* Larger LO text */
+    line-height: 1.5;
+    color: #444;
+}
+
+/* Style the strong tag within the LO Text */
+#lo-achievement-text .lo-popup-text strong {
+    font-weight: bold;
+    color: #000000;
+}
+
+/* The "Teach it..." tip */
+#lo-achievement-popup em#lo-achievement-tip {
+    font-family: var(--font-body); /* Open Sans */
+    display: block;
+    font-size: 0.85rem; /* Smaller tip text */
+    color: #666;
     margin-bottom: 20px;
     font-style: italic;
 }
-#lo-continue-btn { /* Keep button styling */
+
+#lo-continue-btn {
+    font-family: var(--font-heading); /* Roboto */
     padding: 10px 25px;
     font-size: 1rem;
     font-weight: bold;
-    font-family: var(--font-heading);
     color: white;
     background: linear-gradient(135deg, var(--accent), var(--fiery-orange));
     border: none;
@@ -2895,10 +2917,12 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
             // --- UPDATED VERSIONS of Hover Handlers (with Fade Transition) ---
 
+        // --- UPDATED VERSION of handleMilestoneEnter (No Italics/Emoji Checkmark for passed) ---
+
     function handleMilestoneEnter(event) {
         const milestone = event.currentTarget;
         const loText = milestone.dataset.loText;
-        const isPassed = milestone.classList.contains(CSS_CLASS.LO_PASSED);
+        const isPassed = milestone.classList.contains(CSS_CLASS.LO_PASSED); // Check if LO is passed
 
         // Clear any pending fade-out/fade-in from previous hovers
         clearTimeout(appState.sliderInfoFadeTimeout);
@@ -2911,8 +2935,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         if (ui.sliderInfo) {
             // Store original text if not already stored and not currently showing an LO
-            // Check the *content* before storing to avoid overwriting during a fade
-            if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.startsWith('<em>')) {
+            if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.startsWith('<em>') && !ui.sliderInfo.innerHTML.startsWith('<strong>')) {
                 appState.originalSliderInfoText = ui.sliderInfo.innerHTML;
             }
 
@@ -2920,16 +2943,17 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             ui.sliderInfo.style.opacity = 0;
 
             // 2. Set timeout to change content *during* fade out and start fade in
-            //    Timeout duration should be slightly less than CSS transition duration
             appState.sliderInfoFadeTimeout = setTimeout(() => {
-                // Construct display text conditionally (bold/checkmarks)
+                // Construct display text conditionally
                 let displayText;
                 const fallbackText = 'Learning Outcome';
-                const checkmarkSpan = '<span style="color: #28a745;">✔</span>';
+                const checkmarkEmoji = '✅'; // Use the actual emoji
 
                 if (isPassed) {
-                    displayText = `<em><strong>${loText || fallbackText}</strong> ${checkmarkSpan}</em>`;
+                    // If passed: BOLD text (no italics) + Emoji checkmark
+                    displayText = `<strong>${loText || fallbackText}</strong> ${checkmarkEmoji}`;
                 } else {
+                    // If not passed: ITALIC text (no bold, no checkmark)
                     displayText = `<em>${loText || fallbackText}</em>`;
                 }
 
@@ -2945,6 +2969,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         }
     }
+    // --- END UPDATED VERSION ---
 
     function handleMilestoneLeave(event) {
         const milestone = event.currentTarget;
@@ -2984,55 +3009,49 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     
     // --- END: LO Milestone Functions ---
 
-        // --- NEW: LO Achievement Popup Functions ---
-    // ***** THIS IS THE REPLACEMENT FUNCTION *****
+            // --- NEW: LO Achievement Popup Functions ---
+    // ***** THIS IS THE REPLACEMENT FUNCTION (Updated for Layout) *****
     function showLoAchievementPopup(learningOutcomeObject, nextPageTarget) {
         if (!ui.loAchievementBackdrop || !ui.loAchievementPopup || !ui.loAchievementText || !ui.loContinueBtn) {
             console.error("Cannot show LO achievement popup: Missing elements.");
-            // Fallback: Just navigate immediately if popup elements are missing
             jumpToPage(nextPageTarget);
             return;
         }
 
-        // Store the target page for when the popup is closed
         appState.loPopupTargetPage = nextPageTarget;
 
-        // Extract emoji and text from the passed object (with fallbacks)
-        // This line gets the emoji (or '💡' if missing) from the object you passed in
         const emoji = learningOutcomeObject?.emoji || '💡';
-        // This line gets the learning outcome text (or default text if missing)
         const loText = learningOutcomeObject?.learning_outcome || "A key concept!";
 
-        // Update popup content: Put the emoji FIRST, then the bold text, then the checkmark
-        // This line constructs the string like: "🔥 <strong>Learn about fire</strong> <span...>✔</span>"
-        const formattedText = `${emoji} <strong>${loText}</strong> <span style="color: #28a745;">✔</span>`;
-        // This line sets the HTML inside the paragraph element (<p id="lo-achievement-text">)
-        ui.loAchievementText.innerHTML = formattedText; // Use innerHTML because formattedText has HTML tags
+        // Create HTML with spans for styling: Emoji first, then Text
+        const formattedText = `
+            <span class="lo-popup-emoji">${emoji}</span>
+            <span class="lo-popup-text"><strong>${loText}</strong></span>
+        `;
+        // Put this HTML inside the paragraph with id="lo-achievement-text"
+        ui.loAchievementText.innerHTML = formattedText;
 
-        // Show the popup (this part is unchanged)
+        // Show the popup
         toggleVisibility(ui.loAchievementBackdrop, true);
         toggleVisibility(ui.loAchievementPopup, true);
-        ui.loContinueBtn.focus(); // Focus the button for accessibility
+        ui.loContinueBtn.focus();
     }
     // ***** END OF REPLACEMENT FUNCTION *****
 
+    // --- Keep the hideLoAchievementPopup function as it is ---
     function hideLoAchievementPopup() {
-        // Check visibility before proceeding to avoid redundant calls
         if (ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE)) {
             toggleVisibility(ui.loAchievementBackdrop, false);
             toggleVisibility(ui.loAchievementPopup, false);
-
-            // If a target page was stored, navigate to it now
             if (appState.loPopupTargetPage !== null) {
                 const targetPage = appState.loPopupTargetPage;
-                appState.loPopupTargetPage = null; // Clear stored target
+                appState.loPopupTargetPage = null;
                 updateStatus(`LO Popup closed. Proceeding to page ${targetPage}.`);
                 jumpToPage(targetPage);
             } else {
                  updateStatus("LO Popup closed (no target page stored).");
             }
         } else {
-            // Ensure target is cleared even if popup wasn't visible (safety)
             appState.loPopupTargetPage = null;
         }
     }
