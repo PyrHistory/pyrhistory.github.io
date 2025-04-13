@@ -1067,10 +1067,10 @@ body:not(.loading-game-active) #loading-game-container {
 
 /* Surefire way to hide button when reader is active */
 body:not(.loading-game-active) #go-to-chapter-btn {
-    display: none !important;
     opacity: 0;
     visibility: hidden;
     animation: none !important; /* Ensure no animation plays when hidden */
+    pointer-events: none; /* Add this to prevent accidental clicks during fade */
 }
 
 /* Initially hide reader elements when game is active */
@@ -3676,33 +3676,30 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
 
     // --- Game Transition Logic (MODIFIED - Button logic changed) ---
-    function transitionToChapter() {
-    updateStatus("Transitioning to chapter (delaying class removal)..."); // Update status message
+    // --- PASTE THIS CORRECT FUNCTION IN ---
+function transitionToChapter() {
+    updateStatus("Transitioning to chapter...");
     clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
 
-    // Keep immediate actions if needed
+    // Explicitly remove visibility classes to trigger fade-out via CSS transition
+    if (ui.goToChapterBtn) {
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+        updateStatus("Removed button visibility classes to initiate fade-out.");
+    }
+
+    // Now, remove the body class (reader UI will appear)
+    ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
     window.focus(); // Try to bring focus back to the main window
 
-    // --- MODIFICATION START ---
-    // Delay the removal of the class that hides the button and the subsequent UI updates
-    const transitionDelay = 500; // Delay in milliseconds (adjust slightly if needed, 500ms should be enough for the 0.5s popUpBounce animation)
-
+    // Apply scaling/resize (can happen almost immediately after class removal)
     setTimeout(() => {
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) { // Double-check if still in loading state
-             ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE); // Remove the class HERE
-             updateStatus(`Removed loading-game-active class after ${transitionDelay}ms delay.`);
-
-             // Apply scaling and trigger resize AFTER the class is removed
-             applyCurrentViewModeStyles();
-             window.dispatchEvent(new Event('resize'));
-             updateStatus("Reader should be visible and scaled.");
-        } else {
-            // Already transitioned (e.g., user clicked button during the delay)
-            updateStatus("Transition already occurred, skipping delayed class removal/scaling.");
-        }
-    }, transitionDelay);
-    // --- MODIFICATION END ---
+        applyCurrentViewModeStyles(); // Recalculate scale for the reader view
+        window.dispatchEvent(new Event('resize')); // Trigger resize event for any listeners
+        updateStatus("Reader should be visible and scaled.");
+    }, 50); // Small delay is likely fine here
 }
+// --- END OF CORRECT FUNCTION ---
 
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
