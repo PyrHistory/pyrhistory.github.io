@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- START: Import Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;1,400&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- END: Import Google Fonts -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Heritage History™ - Digital Book Reader</title>
@@ -23,6 +28,8 @@
     --page-w:650px;
     --page-h:842px;
     --page-padding:15px;
+    --font-heading: 'Roboto', sans-serif;
+    --font-body: 'Open Sans', sans-serif;
     /* Modern Font Stack */
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
@@ -46,7 +53,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{
-    font-family: 'Georgia', serif; /* Keep base Georgia */
+    font-family: var(--font-body); /* Use Open Sans as the default */
     background-color:var(--lab-blue);
     color:var(--text-on-dark);
     height:100vh; width:100vw;
@@ -400,6 +407,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 .page-slider-info{
     font-size:12px;
+    font-family: var(--font-heading);
     color:var(--text-on-dark);
     font-weight:500;
     letter-spacing:.3px;
@@ -487,6 +495,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 #lo-achievement-popup h3 { /* Original text styling in HTML */
     font-size: 1.4rem; /* Slightly smaller */
+    font-family: var(--font-heading);
     margin-bottom: 12px;
     color: #222; /* Darker heading */
     font-weight: normal; /* Remove default bold if h3 has it */
@@ -512,6 +521,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     padding: 10px 25px;
     font-size: 1rem;
     font-weight: bold;
+    font-family: var(--font-heading);
     color: white;
     background: linear-gradient(135deg, var(--accent), var(--fiery-orange));
     border: none;
@@ -838,7 +848,7 @@ body.content-rotated-mode #return-view-fixed-btn {
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Keep New Code's Versions/Improvements) --- */
 .toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
 .toc-panel.visible{display:flex!important} /* TOC can still be shown programmatically */
-.toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;font-family:var(--font-heading);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
 .toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
 .toc-content{flex:1;padding:10px 20px;overflow-y:auto}
 .toc-chapter{padding:8px 0;border-bottom:1px solid #d8dfe6}
@@ -913,7 +923,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 
 #definition-popup { position: fixed; background: #ffffff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); padding: 14px 18px; max-width: 320px; min-width: 180px; font-family: var(--font-sans); color: #2d3748; z-index: 10002; transform-origin: top center; transform: translateY(6px) scale(0.98); opacity: 0; visibility: hidden; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s; pointer-events: none; }
 #definition-popup.visible { transform: translateY(0) scale(1); opacity: 1; visibility: visible; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s; pointer-events: auto; }
-#popup-word { font-weight: 600; font-size: 15px; margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0; }
+#popup-word { font-weight: 600; font-size: 15px; font-family: var(--font-heading); margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0; }
 #popup-definition { font-size: 14px; line-height: 1.6; max-height: 180px; overflow-y: auto; color: #4a5568; padding-right: 5px; margin-right: -5px; }
 #popup-definition::-webkit-scrollbar { width: 5px; }
 #popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
