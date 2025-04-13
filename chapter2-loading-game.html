@@ -82,6 +82,7 @@
         jumping: false,
         jumpForce: 12,
         velocity: 0,
+        jumpCount: 0, // Track number of jumps performed
         maxJumpDistance: function() {
             return gameSpeed * (2 * this.jumpForce / gravity);
         },
@@ -93,12 +94,20 @@
                 this.y = groundY - this.height;
                 this.velocity = 0;
                 this.jumping = false;
+                this.jumpCount = 0; // Reset jump count when touching ground
             }
         },
         jump: function() {
-            if (!this.jumping) {
-                this.velocity = -this.jumpForce;
+            if (this.jumpCount < 2) { // Allow up to 2 jumps
+                if (this.jumpCount === 0) {
+                    // First jump - full force
+                    this.velocity = -this.jumpForce;
+                } else {
+                    // Second jump - half force
+                    this.velocity = -this.jumpForce / 2;
+                }
                 this.jumping = true;
+                this.jumpCount++;
             }
         },
         draw: function() {
