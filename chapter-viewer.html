@@ -408,6 +408,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     white-space: normal!important; /* Allow wrapping if needed */
     margin-bottom: 0 !important; /* Reset margin */
     padding-top: 0 !important; /* Reset padding */
+    transition: opacity 0.25s ease-in-out;
 }
 /* --- END: Toolbar & Slider --- */
 
@@ -1663,6 +1664,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         learningOutcomes: [], // NEW: Store loaded LOs [{emoji, learning_outcome, page_number}, ...]
         loPopupTargetPage: null, // NEW: Store target page for after LO popup
         originalSliderInfoText: null,
+        sliderInfoFadeTimeout: null,
     };
     // REVERTED: Global state variables for toolbar/timer from old code
     let toolbarTimer=null;
@@ -2900,46 +2902,92 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         // --- NEW VERSIONS of Hover Handlers ---
 
+            // --- UPDATED VERSIONS of Hover Handlers (with Fade Transition) ---
+
     function handleMilestoneEnter(event) {
         const milestone = event.currentTarget;
         const loText = milestone.dataset.loText;
         const isPassed = milestone.classList.contains(CSS_CLASS.LO_PASSED);
 
+        // Clear any pending fade-out/fade-in from previous hovers
+        clearTimeout(appState.sliderInfoFadeTimeout);
+        appState.sliderInfoFadeTimeout = null; // Reset timeout ID
+
+        // Apply temporary coloring only if it's NOT passed
         if (!isPassed) {
             milestone.classList.add(CSS_CLASS.HOVER_COLORED);
         }
 
-        // --- Start: New Text Replacement Logic ---
         if (ui.sliderInfo) {
-            // Only store the original text if it hasn't been stored yet
-            // AND if the current text doesn't already look like an LO (prevent rapid hover issues)
+            // Store original text if not already stored and not currently showing an LO
+            // Check the *content* before storing to avoid overwriting during a fade
             if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.startsWith('<em>')) {
                 appState.originalSliderInfoText = ui.sliderInfo.innerHTML;
             }
-            // Display the Learning Outcome text (italicized)
-            // Make sure loText has a fallback in case the data attribute is missing
-            ui.sliderInfo.innerHTML = `<em>${loText || 'Learning Outcome'}</em>`;
+
+            // 1. Start fade out
+            ui.sliderInfo.style.opacity = 0;
+
+            // 2. Set timeout to change content *during* fade out and start fade in
+            //    Timeout duration should be slightly less than CSS transition duration
+            appState.sliderInfoFadeTimeout = setTimeout(() => {
+                // Construct display text conditionally (bold/checkmarks)
+                let displayText;
+                const fallbackText = 'Learning Outcome';
+                const checkmarkSpan = '<span style="color: #28a745;">✔</span>';
+
+                if (isPassed) {
+                    displayText = `<em><strong>${loText || fallbackText}</strong> ${checkmarkSpan}</em>`;
+                } else {
+                    displayText = `<em>${loText || fallbackText}</em>`;
+                }
+
+                // 3. Change the content
+                ui.sliderInfo.innerHTML = displayText;
+
+                // 4. Start fade in
+                ui.sliderInfo.style.opacity = 1; // Or back to 0.8 if that's your base
+
+                appState.sliderInfoFadeTimeout = null; // Timeout complete
+
+            }, 200); // e.g., 200ms if transition is 0.25s (250ms)
+
         }
-        // --- End: New Text Replacement Logic ---
     }
 
     function handleMilestoneLeave(event) {
         const milestone = event.currentTarget;
+
+        // Clear any pending fade-out/fade-in from enter hover
+        clearTimeout(appState.sliderInfoFadeTimeout);
+        appState.sliderInfoFadeTimeout = null;
+
         milestone.classList.remove(CSS_CLASS.HOVER_COLORED);
 
-        // --- Start: New Text Restoration Logic ---
-        // Restore original text if it was stored
+        // Only proceed if original text was actually stored (meaning we are showing LO text)
         if (ui.sliderInfo && appState.originalSliderInfoText !== null) {
-            ui.sliderInfo.innerHTML = appState.originalSliderInfoText;
-            appState.originalSliderInfoText = null; // Clear the stored text
-        } else if (ui.sliderInfo && appState.originalSliderInfoText === null) {
-             // Fallback: If somehow the mouseleave happened without mouseenter storing text,
-             // or if text was cleared by something else, try to reset to current page view.
-             updateSliderInfoText(parseInt(ui.slider.value, 10));
+
+            // 1. Start fade out (of the LO text)
+            ui.sliderInfo.style.opacity = 0;
+
+            // 2. Set timeout to restore original content and fade back in
+            appState.sliderInfoFadeTimeout = setTimeout(() => {
+                // 3. Restore original text
+                ui.sliderInfo.innerHTML = appState.originalSliderInfoText;
+                appState.originalSliderInfoText = null; // Clear the stored text
+
+                // 4. Start fade in (of the original text)
+                ui.sliderInfo.style.opacity = 1; // Or back to 0.8 if that's your base
+
+                appState.sliderInfoFadeTimeout = null; // Timeout complete
+
+            }, 200); // Match the enter timeout delay
+        } else if (ui.sliderInfo && !ui.sliderInfo.innerHTML.startsWith('<em>')) {
+             // Safety check: If mouse leaves and we weren't showing LO text, ensure opacity is correct
+             ui.sliderInfo.style.opacity = 1; // Or 0.8
         }
-        // --- End: New Text Restoration Logic ---
     }
-    // --- END NEW VERSIONS ---
+    // --- END UPDATED VERSIONS ---
 
 
     
