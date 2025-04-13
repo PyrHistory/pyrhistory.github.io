@@ -846,16 +846,6 @@ body.content-rotated-mode #return-view-fixed-btn {
 
 
 /* --- TOC, Loading, Text/Annotation Layers, Keywords (Keep New Code's Versions/Improvements) --- */
-.toc-panel{position:fixed;z-index:10000;display:none;color:var(--text-on-page); left:50%;top:50%;transform:translate(-50%,-50%);width:90%;max-width:500px;height:80vh;background:#f0f4f8;border-radius:8px;box-shadow:0 5px 25px rgba(0,0,0,.5);flex-direction:column;overflow:hidden; font-family: var(--font-sans);}
-.toc-panel.visible{display:flex!important} /* TOC can still be shown programmatically */
-.toc-header{padding:15px 20px;background:var(--primary);color:#fff;font-weight:700;font-family:var(--font-heading);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-.toc-header .notes-close{background:none;border:none;color:#fff;font-size:24px;cursor:pointer;padding:0 5px;line-height:1}
-.toc-content{flex:1;padding:10px 20px;overflow-y:auto}
-.toc-chapter{padding:8px 0;border-bottom:1px solid #d8dfe6}
-.toc-chapter-title{font-weight:700;color:var(--primary);cursor:pointer;padding:5px 0}
-.toc-chapter-title:hover,.toc-section:hover{color:var(--accent)}
-.toc-sections{padding-left:20px;margin-top:5px}
-.toc-section{padding:4px 0;cursor:pointer;color:#4a5568;font-size:.95em}
 .loading-overlay{position:fixed;inset:0;background:rgba(8,14,28,.85);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:10001;display:none;justify-content:center;align-items:center;flex-direction:column}
 .loading-overlay.visible { display: flex !important; } /* Added for JS helper */
 .loading-spinner{width:50px;height:50px;border-radius:50%;border:4px solid rgba(255,255,255,.2);border-top-color:var(--accent);animation:spin 1s linear infinite;margin-bottom:15px}
@@ -1449,8 +1439,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         </div>
     </div>
 
-    <!-- Table of Contents Panel -->
-    <div class="toc-panel" id="toc-panel"></div>
+    
     <!-- Global Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay"></div>
     <!-- Page Slider -->
@@ -1534,7 +1523,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 ${clockOffIconSVG}
             </button>
         `;
-        document.getElementById('toc-panel').innerHTML = `<div class="toc-header"><span>Table of Contents</span><button class="notes-close" id="close-toc-btn">×</button></div><div class="toc-content"><div id="toc-list">Loading...</div></div>`;
         document.getElementById('loading-overlay').innerHTML = `<div class="loading-spinner"></div><div class="loading-message">Processing...</div>`;
         // Page slider container content is now populated by JS (renderSliderMilestones) and base HTML
     })();
@@ -1604,10 +1592,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         currentPageDisplay: document.getElementById('current-page-display'),
         totalPagesDisplay: document.getElementById('total-pages-display'),
         sliderInfo: document.querySelector('.page-slider-info'), // Added
-
-        tocPanel: document.getElementById('toc-panel'),
-        tocList: document.getElementById('toc-list'),
-        closeTocBtn: document.getElementById('close-toc-btn'),
 
         loadingOverlay: document.getElementById('loading-overlay'),
         loadingMessage: document.querySelector('#loading-overlay .loading-message'),
@@ -1696,7 +1680,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         totalPages: 0,
         currentPage: 1,
         isDoublePageView: true, // Initial assumption, adjusted on load based on screen size
-        outline: [],
         pageCache: new Map(),
         currentViewports: {}, // Stores viewport used for rendering { canvasId: viewport }
         keywordDefinitions: {},
@@ -2693,8 +2676,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     }
 
     // --- UI Toggles (Keep from New Code) ---
-    function showTableOfContents() { toggleVisibility(ui.tocPanel, true); }
-    function hideTableOfContents() { toggleVisibility(ui.tocPanel, false); }
 
     function showLoading(msg = 'Processing...') {
         if (ui.loadingOverlay && ui.loadingMessage) {
@@ -3325,17 +3306,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             document.title = `${pdfState.title} - Heritage History™ Reader`;
             updateSliderTotalPages(); // Update slider max value (will also render milestones now)
 
-            console.log("Internal Status: Processing metadata...");
-            updateStatus("Fetching outline...");
-            try {
-                pdfState.outline = await pdfState.pdfDocument.getOutline();
-                populateTOC();
-            } catch (outlineError) {
-                console.warn("Could not get PDF outline:", outlineError);
-                pdfState.outline = [];
-                populateTOC(); // Populate with 'No TOC' message
-            }
-
             // Wait for overlay/iframe/LO data loading
             const [overlayLoaded, iframeDataLoaded, loLoaded] = await Promise.all([overlayPromise, iframeDataPromise, loPromise]);
             updateStatus(`Overlay data loaded: ${overlayLoaded}`);
@@ -3402,11 +3372,11 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             console.error("FATAL: Error loading PDF document:", error);
             appState.isReaderReady = false;
             // Reset all state again on critical failure
-            pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.outline=[]; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = [];
+            pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = [];
             completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); // Reverted lock reset
             pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
             document.title="Heritage History™ Reader - Error";
-            updateSliderTotalPages(); updateSliderPosition(); populateTOC();
+            updateSliderTotalPages(); updateSliderPosition(); 
             if (ui.bookSpread) {
                 ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
             }
@@ -3424,102 +3394,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
              updateStatus("loadPdf finished (background process).");
         }
     }
-
-    // --- TOC population (MODIFIED - Uses new pdfState, but reverted lock clearing logic) ---
-    function populateTOC() {
-        if (!ui.tocList) return;
-        ui.tocList.innerHTML = ''; // Clear previous content
-
-        if (!pdfState.outline || pdfState.outline.length === 0) {
-            ui.tocList.innerHTML = '<em>No table of contents found.</em>';
-            return;
-        }
-
-        const createTocItem = (item, level = 0) => {
-            const containerDiv = document.createElement('div');
-            containerDiv.className = level === 0 ? 'toc-chapter' : 'toc-section';
-
-            const titleSpan = document.createElement('span');
-            titleSpan.className = level === 0 ? 'toc-chapter-title' : ''; // Add class only for top level
-            titleSpan.textContent = item.title || 'Untitled';
-            titleSpan.style.cursor = 'pointer';
-            titleSpan.title = `Go to: ${item.title || 'Untitled'}`;
-
-            titleSpan.onclick = async (e) => {
-                e.preventDefault();
-                e.stopPropagation(); // Prevent potential parent clicks if nested
-                try {
-                    let pageIndex = -1;
-                    // Resolve destination to page index
-                    if (typeof item.dest === 'string') {
-                        const destArray = await pdfState.pdfDocument.getDestination(item.dest);
-                        if (destArray && destArray[0]) {
-                            pageIndex = await pdfState.pdfDocument.getPageIndex(destArray[0]);
-                        }
-                    } else if (Array.isArray(item.dest) && item.dest[0]) {
-                        pageIndex = await pdfState.pdfDocument.getPageIndex(item.dest[0]);
-                    } else {
-                        console.warn("Unknown TOC destination format:", item.dest);
-                    }
-
-                    if (pageIndex >= 0) {
-                        const targetPage = pageIndex + 1;
-                        updateStatus(`Jumping via TOC to page ${targetPage}`);
-
-                        // *** REVERTED: Clear any active time lock when navigating via TOC ***
-                        if (isTimeLockActive) { // Use reverted global
-                            updateStatus("Clearing active time lock due to TOC navigation.");
-                            isTimeLockActive = false;
-                            requiredReadingTime = 0;
-                            currentPageLockStartTime = 0;
-                        }
-                        // *** END REVERTED ***
-
-                        // Directly call jumpToPage, which handles view adjustments and updates
-                        // It will use the reverted lock logic when determining the next lock state
-                        jumpToPage(targetPage);
-                        hideTableOfContents(); // Close TOC panel after navigation
-
-                    } else {
-                        throw new Error(`Could not resolve page for destination: ${item.title}`);
-                    }
-                } catch (navError) {
-                    console.error("TOC navigation error:", navError);
-                    alert(`Navigation failed: ${navError.message}`); // Inform user
-                }
-            };
-
-            containerDiv.appendChild(titleSpan);
-
-            // Recursively create sub-items if they exist
-            if (item.items && item.items.length > 0) {
-                const subItemsContainer = document.createElement('div');
-                if (level === 0) subItemsContainer.className = 'toc-sections';
-                else subItemsContainer.style.paddingLeft = '15px'; // Indent sub-sections
-
-                item.items.forEach(subItem => {
-                    const subElement = createTocItem(subItem, level + 1);
-                    if (subElement) subItemsContainer.appendChild(subElement);
-                });
-
-                if (subItemsContainer.hasChildNodes()) {
-                    containerDiv.appendChild(subItemsContainer);
-                }
-            }
-            return containerDiv;
-        };
-
-        // Create and append top-level items
-        pdfState.outline.forEach(topItem => {
-            const tocElement = createTocItem(topItem);
-            if (tocElement) ui.tocList.appendChild(tocElement);
-        });
-
-        // Fallback if processing somehow resulted in no children
-        if (!ui.tocList.hasChildNodes()) {
-            ui.tocList.innerHTML = '<em>Error processing TOC data.</em>';
-        }
-     }
 
     // --- Popup Handling (Keep from New Code) ---
     function showDefinitionPopup(word, definition, rect) {
@@ -3890,7 +3764,6 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         ui.returnViewFixedBtn?.addEventListener('click', setRotatedView); // Keep new button listener
 
         // --- Popup Close Buttons & Backdrops ---
-        ui.closeTocBtn?.addEventListener('click', hideTableOfContents);
         ui.closePopupBtn?.addEventListener('click', hideDefinitionPopup);
         ui.closeIframePopupBtn?.addEventListener('click', hideIframePopup);
         ui.iframePopupBackdrop?.addEventListener('click', hideIframePopup);
