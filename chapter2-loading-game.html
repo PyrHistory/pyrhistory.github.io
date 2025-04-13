@@ -4,20 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prehistoric Runner</title>
-    <script>
-    // Pre-register spacebar handler at the highest level possible 
-    window.addEventListener('keydown', function(e) {
-        if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
-            // Prevent default space behavior (scrolling)
-            e.preventDefault();
-            // Pass event to the game through a custom event
-            window.dispatchEvent(new CustomEvent('game-jump'));
-        }
-    }, {capture: true});
-    </script>
-    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4)}#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:block;width:auto}@media (max-width:480px){#game-container{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}}@media (min-width:1200px){#game-container{max-height:380px}}</style>
+    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#start-screen{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--modal-bg);display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4);z-index:10}#start-screen h1{color:var(--accent-color);margin-bottom:2rem;text-shadow:var(--text-shadow);font-size:2rem}#start-button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1.2rem;font-weight:600;transition:all .2s ease;width:60%;max-width:200px;box-shadow:0 4px 8px rgba(0,0,0,.2)}#start-button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#start-button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4);display:none}#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:none;width:auto}@media (max-width:480px){#game-container,#start-screen{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}#start-screen h1{font-size:1.5rem}}@media (min-width:1200px){#game-container,#start-screen{max-height:380px}}</style>
 </head>
 <body>
+    <div id="start-screen">
+        <h1>Prehistoric Runner</h1>
+        <button id="start-button">Start Game</button>
+    </div>
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
         <div id="score">Score: 0</div>
@@ -27,7 +20,7 @@
             <button id="restart">Play Again</button>
         </div>
     </div>
-    <div id="instructions">Press SPACE or tap to jump</div>
+    <div id="instructions">Press SPACE or tap to jump, press twice for double jump</div>
 
     <script>
 (function(){
@@ -1050,10 +1043,46 @@
     document.addEventListener('touchstart', handleJump);
     restartButton.addEventListener('click', restartGame);
     
+    // Start game button functionality
+    const startScreen = document.getElementById('start-screen');
+    const startButton = document.getElementById('start-button');
+    const instructionsElement = document.getElementById('instructions');
+    
+    function startGame() {
+        startScreen.style.display = 'none';
+        container.style.display = 'block';
+        instructionsElement.style.display = 'block';
+        resizeCanvas();
+        restartGame();
+    }
+    
+    startButton.addEventListener('click', startGame);
+    
+    // Check for "Go to Chapter" button and handle "Play Again" button visibility
+    function checkGoToChapterButton() {
+        const goToChapterBtn = document.getElementById('go-to-chapter-btn');
+        if (goToChapterBtn && (goToChapterBtn.style.display !== 'none' && getComputedStyle(goToChapterBtn).display !== 'none')) {
+            // Hide the "Play Again" button if "Go to Chapter" button is visible
+            restartButton.style.display = 'none';
+        } else {
+            // Show the "Play Again" button if "Go to Chapter" button is not visible
+            restartButton.style.display = 'block';
+        }
+    }
+    
     // Initialize and start
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    window.onload = restartGame;
+    
+    // Check for Go to Chapter button on load and whenever game over occurs
+    window.addEventListener('load', checkGoToChapterButton);
+    
+    // Modify gameOver function to check for Go to Chapter button
+    const originalGameOver = gameOver;
+    gameOver = function() {
+        originalGameOver();
+        checkGoToChapterButton();
+    };
 })();
     </script>
 </body>
