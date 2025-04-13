@@ -3677,19 +3677,32 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
     // --- Game Transition Logic (MODIFIED - Button logic changed) ---
     function transitionToChapter() {
-        updateStatus("Transitioning to chapter...");
-        clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
-        ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
-        // Button visibility is handled by CSS based on body class removing loading-game-active
-        window.focus(); // Try to bring focus back to the main window
+    updateStatus("Transitioning to chapter (delaying class removal)..."); // Update status message
+    clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
 
-        // Allow CSS transition to finish, then apply scaling/resize
-        setTimeout(() => {
-            applyCurrentViewModeStyles(); // Recalculate scale for the reader view
-             window.dispatchEvent(new Event('resize')); // Trigger resize event for any listeners
+    // Keep immediate actions if needed
+    window.focus(); // Try to bring focus back to the main window
+
+    // --- MODIFICATION START ---
+    // Delay the removal of the class that hides the button and the subsequent UI updates
+    const transitionDelay = 500; // Delay in milliseconds (adjust slightly if needed, 500ms should be enough for the 0.5s popUpBounce animation)
+
+    setTimeout(() => {
+        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) { // Double-check if still in loading state
+             ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE); // Remove the class HERE
+             updateStatus(`Removed loading-game-active class after ${transitionDelay}ms delay.`);
+
+             // Apply scaling and trigger resize AFTER the class is removed
+             applyCurrentViewModeStyles();
+             window.dispatchEvent(new Event('resize'));
              updateStatus("Reader should be visible and scaled.");
-        }, 50); // Small delay
-    }
+        } else {
+            // Already transitioned (e.g., user clicked button during the delay)
+            updateStatus("Transition already occurred, skipping delayed class removal/scaling.");
+        }
+    }, transitionDelay);
+    // --- MODIFICATION END ---
+}
 
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
