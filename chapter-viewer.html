@@ -604,50 +604,76 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
 }
 /* --- END: REALISTIC VERTICAL CREASE EFFECT --- */
 
-/* --- START: Page Action Button Styles (e.g., Rotate) (Keep New Code's Version) --- */
+/* --- START: Page Action Button Styles (e.g., Rotate) (MODIFIED) --- */
 .page-action-btn { /* Base style for potential future page buttons */
     position: absolute;
-    z-index: 20; /* Above page content, potentially below edge nav hover */
+    z-index: 20;
     background-color: rgba(44, 62, 80, 0.7);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
-    width: 36px;
+    width: 36px; /* Base size */
     height: 36px;
-    font-size: 20px;
+    font-size: 20px; /* Base size */
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s ease;
-    opacity: 0; /* MODIFIED: Hidden by default */
-    pointer-events: none; /* MODIFIED: Not interactive by default */
+    transition: all 0.2s ease, opacity 0.2s ease, pointer-events 0.2s ease; /* Added opacity/pointer-events transition */
+    opacity: 0; /* Hidden by default */
+    pointer-events: none; /* Not interactive by default */
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 .page-action-btn:hover {
     background-color: rgba(52, 73, 94, 0.9);
-    transform: scale(1.1);
+    transform: scale(1.1); /* Keep hover scale effect */
 }
-.page-rotate-btn { /* Specific positioning for rotate button */
-    top: 10px; /* MODIFIED: Positioned inside the page */
-    right: 10px;
+
+/* Specific styles for the Rotate button: Size and Position */
+.page-rotate-btn {
+    /* 70% size */
+    width: 25px; /* 36 * 0.7 ~= 25 */
+    height: 25px;
+    font-size: 14px; /* 20 * 0.7 = 14 */
+    /* Adjusted positioning */
+    top: 5px;
+    right: 5px;
 }
-/* --- MODIFIED: Show button ONLY on hover over the direct parent page --- */
-/* Applies to both single and double page view correctly */
-.book-page:hover .page-rotate-btn {
+
+/* NEW: Invisible trigger area for rotate button hover */
+.page-rotate-hover-trigger {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 25%;  /* Covers top-right quarter horizontally */
+    height: 50%; /* Covers top half vertically */
+    z-index: 19; /* Below button (z-index 20) */
+    pointer-events: auto; /* Must capture hover */
+    /* background: rgba(0, 255, 0, 0.1); */ /* Optional: for debugging hover area */
+}
+
+/* NEW: Show rotate button when trigger area is hovered */
+/* Uses adjacent sibling selector (+) assuming trigger div is placed directly before the button in HTML */
+.page-rotate-hover-trigger:hover + .page-rotate-btn {
     opacity: 1;
     pointer-events: auto;
 }
-/* Hide button during game loading */
-body.loading-game-active .page-rotate-btn {
+
+/* Keep existing rules for hiding the button and trigger in specific modes */
+body.loading-game-active .page-rotate-btn,
+body.loading-game-active .page-rotate-hover-trigger { /* Also hide trigger */
      display: none !important;
 }
-/* Hide button in rotated mode itself */
-body.content-rotated-mode .page-rotate-btn {
+body.content-rotated-mode .page-rotate-btn,
+body.content-rotated-mode .page-rotate-hover-trigger { /* Also hide trigger */
     display: none !important;
 }
-/* Hide button on placeholder page (already handled by parent rule .placeholder-page .page-action-btn) */
+/* Hide trigger on placeholder page */
+.book-page.placeholder-page .page-rotate-hover-trigger {
+    display: none;
+}
+/* Note: .page-action-btn hiding on placeholder page is already handled by a separate rule below */
 /* --- END: Page Action Button Styles --- */
 
 /* --- START: Return from Rotated View Button (Keep New Code's Version) --- */
@@ -894,6 +920,7 @@ body.loading-game-active #iframe-popup-modal,
 body.loading-game-active #notes-popup-backdrop,
 body.loading-game-active #notes-popup-container,
 body.loading-game-active .page-action-btn, /* Hide page action buttons */
+body.loading-game-active .page-rotate-hover-trigger, /* Hide rotate button trigger */
 body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 {
     display: none !important;
@@ -1237,6 +1264,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         <div class="book-spread">
             <!-- Left Page -->
             <div class="book-page left">
+                <div class="page-rotate-hover-trigger"></div> <!-- ADDED Trigger Element -->
                 <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
                 <div class="canvas-container">
                     <canvas id="left-page-canvas" class="pdf-canvas"></canvas>
@@ -1251,6 +1279,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             </div>
             <!-- Right Page (Initially placeholder) -->
             <div class="book-page right placeholder-page">
+                 <div class="page-rotate-hover-trigger"></div> <!-- ADDED Trigger Element -->
                  <button class="page-action-btn page-rotate-btn" title="Rotate Content">↷</button>
                  <div class="canvas-container">
                     <canvas id="right-page-canvas" class="pdf-canvas"></canvas>
@@ -3333,6 +3362,10 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
 
             const pageEdgeNav = e.target.closest('.page-edge-nav');
             const rotateBtn = e.target.closest('.page-rotate-btn'); // Keep listener for new button location
+            const rotateTrigger = e.target.closest('.page-rotate-hover-trigger'); // Check if click was on trigger
+
+            // Ignore clicks on the trigger itself from causing navigation
+            if (rotateTrigger) return;
 
             if (pageEdgeNav) {
                 const pageDiv = pageEdgeNav.closest('.book-page');
@@ -3344,6 +3377,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
             }
             else if (rotateBtn) { // Keep rotate button logic from new code
                  const btnStyle = window.getComputedStyle(rotateBtn);
+                 // Button should only be clickable if visible (opacity 1, pointer-events auto)
                  if (btnStyle.opacity === '1' && btnStyle.pointerEvents !== 'none') {
                      const pageDiv = rotateBtn.closest('.book-page');
                      if (pageDiv && !pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
@@ -3409,7 +3443,7 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
         ui.body.addEventListener('touchstart', (e) => {
             if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
             // Ignore swipes starting on interactive elements
-            const ignoredElements = '#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn, #return-view-fixed-btn';
+            const ignoredElements = '#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn, #return-view-fixed-btn, .page-rotate-hover-trigger'; // Added rotate trigger
             if (e.target.closest(ignoredElements)) {
                 touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
             }
@@ -3427,6 +3461,10 @@ body.loading-game-active #return-view-fixed-btn /* Hide return view button */
              if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || touchStartTime === 0) return;
              // Ignore swipes ending within notes canvas
              if (e.target.closest('#notes-pdf-canvas-container')) {
+                 touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
+             }
+             // Ignore swipes ending on the rotate trigger
+             if (e.target.closest('.page-rotate-hover-trigger')) {
                  touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
              }
 
