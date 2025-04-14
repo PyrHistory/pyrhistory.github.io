@@ -4090,17 +4090,26 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             if (event.data && event.data.type === 'gameOver') {
                 handleGameOverFromGame(event.data.score);
             }
-            else if (event.data && event.data.type === 'gameLoaded') {
-                 if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none'; // Hide "Loading game..." text
-                 updateStatus("Game iframe reported *itself* loaded.");
-                 try {
-                     // Attempt to focus the iframe for immediate interaction
-                     if (ui.gameIframe?.contentWindow) ui.gameIframe.contentWindow.focus();
-                     updateStatus("Attempted to focus game iframe.");
-                 } catch (focusError) {
-                     console.warn("Could not focus game iframe:", focusError.message);
-                 }
-            }
+            // PASTE THIS ENTIRE BLOCK:
+else if (event.data && event.data.type === 'gameLoaded') {
+     if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none'; // Hide "Loading game..." text
+     updateStatus("Game iframe reported *itself* loaded.");
+
+     // *** NEW CODE TO FOCUS IFRAME ***
+     updateStatus("Attempting to focus game iframe for immediate interaction.");
+     try {
+         if (ui.gameIframe) { // Check if the iframe element exists in the UI cache
+             ui.gameIframe.focus(); // Give the iframe *element* focus
+             updateStatus("Successfully called focus() on game iframe element.");
+         } else {
+              console.warn("Cannot focus game iframe: ui.gameIframe element not found.");
+         }
+     } catch (focusError) {
+         // Log potential errors
+         console.warn("Could not focus game iframe:", focusError.message);
+     }
+     // *** END OF NEW CODE ***
+} // END OF BLOCK TO PASTE
         });
 
         // Listener for the iframe's initial document load (less reliable than postMessage)
