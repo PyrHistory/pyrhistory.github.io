@@ -1317,6 +1317,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     pointer-events: auto;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
+        
 }
 
 #notes-pdf-canvas {
@@ -1507,6 +1508,21 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     <div id="notes-popup-backdrop"></div>
     <div id="notes-popup-container">
         <div id="notes-pdf-canvas-container">
+            <!-- Notes Popup -->
+    <div id="notes-popup-backdrop"></div>
+    <div id="notes-popup-container">
+        <div id="notes-pdf-canvas-container">
+            <!-- NEW: Local Loader Element -->
+            <div class="notes-local-loader" style="display: none;">
+                <div class="notes-local-spinner"></div>
+                <span>Loading Notes...</span>
+            </div>
+            <canvas id="notes-pdf-canvas"></canvas>
+            <button id="notes-prev-btn" class="notes-nav-btn" title="Previous Notes Page">ᐸ</button>
+            <button id="notes-next-btn" class="notes-nav-btn" title="Next Notes Page">ᐳ</button>
+        </div>
+         <div id="notes-instruction"><em>Copy these notes into your Pyr Notebook before continuing</em></div>
+    </div>
             <canvas id="notes-pdf-canvas"></canvas>
             <button id="notes-prev-btn" class="notes-nav-btn" title="Previous Notes Page">ᐸ</button>
             <button id="notes-next-btn" class="notes-nav-btn" title="Next Notes Page">ᐳ</button>
@@ -3558,69 +3574,100 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
     // --- Notes Popup Handling (Keep from New Code) ---
     async function showNotesPopup(pdfUrl, pageNum = 1) {
-        if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas) {
-            console.error("Cannot show notes popup: Missing elements."); return;
-        }
-        hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
-        updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
-
-        toggleVisibility(ui.notesPopupBackdrop, true);
-        toggleVisibility(ui.notesPopupContainer, true); // Triggers container animation
-        // toggleVisibility(ui.sliderContainer, false); // REMOVED: Do not hide slider here
-
-        const ctx = ui.notesPdfCanvas.getContext('2d');
-        ctx.clearRect(0, 0, ui.notesPdfCanvas.width, ui.notesPdfCanvas.height);
-        ui.notesPrevBtn.disabled = true; ui.notesNextBtn.disabled = true;
-        ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Reset wiggle
-
-        // Cancel any previous loading task and destroy old document
-        if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); }
-        if (pdfState.currentNotesPdfDoc?.destroy) { try { pdfState.currentNotesPdfDoc.destroy(); } catch (e) { console.warn("Error destroying previous notes PDF", e); } }
-        pdfState.currentNotesPdfDoc = null;
-
-        try {
-            showLoading('Loading notes...');
-            pdfState.notesPdfLoadingTask = pdfjsLib.getDocument(pdfUrl);
-            pdfState.currentNotesPdfDoc = await pdfState.notesPdfLoadingTask.promise;
-            pdfState.totalNotesPages = pdfState.currentNotesPdfDoc.numPages;
-            pdfState.currentNotesPageNum = Math.max(1, Math.min(pageNum, pdfState.totalNotesPages)); // Clamp page num
-
-            updateStatus(`Notes PDF loaded: ${pdfState.totalNotesPages} pages. Displaying page ${pdfState.currentNotesPageNum}.`);
-            await renderNotesPage(pdfState.currentNotesPageNum); // Render the target page
-
-        } catch (error) {
-            console.error(`Error loading or rendering notes PDF ${pdfUrl}:`, error);
-            ctx.fillStyle = 'red'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText('Error loading notes.', ui.notesPdfCanvas.width / 2, ui.notesPdfCanvas.height / 2);
-            hideNotesPopup(); // Hide popup on error
-        } finally {
-            pdfState.notesPdfLoadingTask = null; // Clear loading task reference
-            hideLoading();
-        }
+    // *** Check for required elements including the new loader ***
+    if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas || !ui.notesLocalLoader) {
+        console.error("Cannot show notes popup: Missing elements.");
+        return;
     }
+    hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
+    updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
+
+    // *** Show popup container and backdrop (triggers CSS transitions) ***
+    toggleVisibility(ui.notesPopupBackdrop, true);
+    toggleVisibility(ui.notesPopupContainer, true);
+
+    // *** Show the LOCAL loader immediately ***
+    ui.notesLocalLoader.classList.add(CSS_CLASS.VISIBLE);
+
+    const ctx = ui.notesPdfCanvas.getContext('2d');
+    ctx.clearRect(0, 0, ui.notesPdfCanvas.width, ui.notesPdfCanvas.height);
+    ui.notesPdfCanvas.style.opacity = 0; // *** Hide canvas until rendered ***
+    ui.notesPrevBtn.disabled = true;
+    ui.notesNextBtn.disabled = true;
+    ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Reset wiggle
+
+    // Cancel any previous loading task and destroy old document
+    if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); }
+    if (pdfState.currentNotesPdfDoc?.destroy) { try { pdfState.currentNotesPdfDoc.destroy(); } catch (e) { console.warn("Error destroying previous notes PDF", e); } }
+    pdfState.currentNotesPdfDoc = null;
+    pdfState.notesPdfLoadingTask = null; // Ensure it's null initially
+
+    try {
+        // *** REMOVED global showLoading() ***
+        pdfState.notesPdfLoadingTask = pdfjsLib.getDocument(pdfUrl);
+        pdfState.currentNotesPdfDoc = await pdfState.notesPdfLoadingTask.promise;
+        pdfState.totalNotesPages = pdfState.currentNotesPdfDoc.numPages;
+        pdfState.currentNotesPageNum = Math.max(1, Math.min(pageNum, pdfState.totalNotesPages)); // Clamp page num
+
+        updateStatus(`Notes PDF loaded: ${pdfState.totalNotesPages} pages. Rendering page ${pdfState.currentNotesPageNum}.`);
+        await renderNotesPage(pdfState.currentNotesPageNum); // Render the target page
+
+        // *** Hide LOCAL loader only AFTER successful render ***
+        // (renderNotesPage now handles showing the canvas)
+        ui.notesLocalLoader.classList.remove(CSS_CLASS.VISIBLE);
+
+    } catch (error) {
+        console.error(`Error loading or rendering notes PDF ${pdfUrl}:`, error);
+        // Display error message *on the canvas* (optional)
+        ctx.fillStyle = '#8B0000'; // Dark red
+        ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Error loading notes.', ui.notesPdfCanvas.width / 2, ui.notesPdfCanvas.height / 2);
+        ui.notesPdfCanvas.style.opacity = 1; // Show error message
+
+        // Hide the popup after a short delay on error
+        setTimeout(hideNotesPopup, 1500);
+
+    } finally {
+         // *** Ensure loader is hidden in finally block as a safeguard ***
+         ui.notesLocalLoader.classList.remove(CSS_CLASS.VISIBLE);
+         pdfState.notesPdfLoadingTask = null; // Clear loading task reference
+         // *** REMOVED global hideLoading() ***
+    }
+}
 
     function hideNotesPopup() {
-        if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas) return;
-        if (ui.notesPopupContainer.classList.contains(CSS_CLASS.VISIBLE)) {
-            updateStatus("Hiding notes popup.");
-            toggleVisibility(ui.notesPopupBackdrop, false);
-            toggleVisibility(ui.notesPopupContainer, false);
+    // Check for required elements
+    if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas || !ui.notesLocalLoader) return;
 
+    if (ui.notesPopupContainer.classList.contains(CSS_CLASS.VISIBLE)) {
+        updateStatus("Hiding notes popup.");
+        toggleVisibility(ui.notesPopupBackdrop, false);
+        toggleVisibility(ui.notesPopupContainer, false);
+
+        // Hide the local loader as well when popup closes
+        ui.notesLocalLoader.classList.remove(CSS_CLASS.VISIBLE);
+
+        // Clear canvas after a short delay to allow fade out
+        setTimeout(() => {
             const ctx = ui.notesPdfCanvas.getContext('2d');
-            ctx.clearRect(0, 0, ui.notesPdfCanvas.width, ui.notesPdfCanvas.height); // Clear canvas
-            ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Ensure wiggle class is removed
-
-            // Clean up PDF resources
-            if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
-            if (pdfState.currentNotesPdfDoc?.destroy) {
-                try { pdfState.currentNotesPdfDoc.destroy(); updateStatus("Destroyed notes PDF document object."); }
-                catch (e) { console.warn("Error destroying notes PDF doc:", e); }
+            if (ctx) { // Check if context exists
+               ctx.clearRect(0, 0, ui.notesPdfCanvas.width, ui.notesPdfCanvas.height);
             }
-            pdfState.currentNotesPdfDoc = null;
-            pdfState.currentNotesPageNum = 1;
-            pdfState.totalNotesPages = 0;
+            ui.notesPdfCanvas.style.opacity = 0; // Ensure canvas is hidden
+             ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Ensure wiggle class is removed
+        }, 300); // Delay slightly longer than transition (0.25s)
+
+        // Clean up PDF resources
+        if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
+        if (pdfState.currentNotesPdfDoc?.destroy) {
+            try { pdfState.currentNotesPdfDoc.destroy(); updateStatus("Destroyed notes PDF document object."); }
+            catch (e) { console.warn("Error destroying notes PDF doc:", e); }
         }
+        pdfState.currentNotesPdfDoc = null;
+        pdfState.currentNotesPageNum = 1;
+        pdfState.totalNotesPages = 0;
     }
+}
     function hideNotesPopupIfNeeded() {
         if (ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) {
             hideNotesPopup();
@@ -3628,58 +3675,72 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     }
 
     async function renderNotesPage(pageNum) {
-        if (!pdfState.currentNotesPdfDoc || pageNum < 1 || pageNum > pdfState.totalNotesPages || !ui.notesPdfCanvas || !ui.notesPdfCanvasContainer) {
-             console.warn("Cannot render notes page: Invalid state or elements.");
-             return;
-        }
-        updateStatus(`Rendering notes page ${pageNum} of ${pdfState.totalNotesPages}`);
-        const canvas = ui.notesPdfCanvas; const ctx = canvas.getContext('2d');
-        ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Remove previous wiggle
-
-        try {
-            const page = await pdfState.currentNotesPdfDoc.getPage(pageNum);
-            const containerStyle = getComputedStyle(ui.notesPdfCanvasContainer);
-            const availableWidth = parseFloat(containerStyle.width);
-            const availableHeight = parseFloat(containerStyle.height);
-            if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
-                console.warn("Notes canvas container has invalid dimensions."); return;
-            }
-
-            const defaultViewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-            const viewport = page.getViewport({ scale: scale });
-            const outputScale = window.devicePixelRatio || 1;
-
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = `${Math.floor(viewport.width)}px`;
-            canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-            const renderContext = { canvasContext: ctx, transform: transform, viewport: viewport };
-
-            await page.render(renderContext).promise;
-            pdfState.currentNotesPageNum = pageNum; // Update state *after* successful render
-
-            // Update navigation button states
-            ui.notesPrevBtn.disabled = (pdfState.currentNotesPageNum <= 1);
-            ui.notesNextBtn.disabled = (pdfState.currentNotesPageNum >= pdfState.totalNotesPages);
-            updateStatus(`Notes page ${pageNum} rendered successfully.`);
-
-            // Trigger instruction wiggle
-            if (ui.notesInstruction) {
-                updateStatus("Triggering notes instruction wiggle.");
-                ui.notesInstruction.classList.add(CSS_CLASS.WIGGLE_NOW);
-                 // Optional: remove class after animation (CSS animation-iteration-count: 1 handles this)
-            }
-
-        } catch (error) {
-            console.error(`Error rendering notes page ${pageNum}:`, error);
-            ctx.fillStyle = 'red'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText(`Error rendering page ${pageNum}.`, canvas.width / 2, canvas.height / 2);
-            ui.notesPrevBtn.disabled = true; ui.notesNextBtn.disabled = true;
-        }
+    // Check for required elements
+    if (!pdfState.currentNotesPdfDoc || pageNum < 1 || pageNum > pdfState.totalNotesPages || !ui.notesPdfCanvas || !ui.notesPdfCanvasContainer) {
+         console.warn("Cannot render notes page: Invalid state or elements.");
+         // Optionally hide local loader here if called erroneously? Or rely on caller.
+         ui.notesLocalLoader?.classList.remove(CSS_CLASS.VISIBLE);
+         return;
     }
+    updateStatus(`Rendering notes page ${pageNum} of ${pdfState.totalNotesPages}`);
+    const canvas = ui.notesPdfCanvas; const ctx = canvas.getContext('2d');
+
+    // *** Ensure canvas is hidden initially for the render ***
+    canvas.style.opacity = 0;
+    ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Remove previous wiggle
+
+    try {
+        const page = await pdfState.currentNotesPdfDoc.getPage(pageNum);
+        // ... (viewport calculation code remains the same)
+        const containerStyle = getComputedStyle(ui.notesPdfCanvasContainer);
+        const availableWidth = parseFloat(containerStyle.width);
+        const availableHeight = parseFloat(containerStyle.height);
+        if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
+            console.warn("Notes canvas container has invalid dimensions."); return;
+        }
+        const defaultViewport = page.getViewport({ scale: 1 });
+        const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+        const viewport = page.getViewport({ scale: scale });
+        const outputScale = window.devicePixelRatio || 1;
+
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+        const renderContext = { canvasContext: ctx, transform: transform, viewport: viewport };
+
+        await page.render(renderContext).promise;
+        pdfState.currentNotesPageNum = pageNum; // Update state *after* successful render
+
+        // *** Fade in the canvas AFTER rendering is complete ***
+        canvas.style.opacity = 1; // Make canvas visible
+
+        // Update navigation button states
+        ui.notesPrevBtn.disabled = (pdfState.currentNotesPageNum <= 1);
+        ui.notesNextBtn.disabled = (pdfState.currentNotesPageNum >= pdfState.totalNotesPages);
+        updateStatus(`Notes page ${pageNum} rendered successfully.`);
+
+        // Trigger instruction wiggle (keep this)
+        if (ui.notesInstruction) {
+            updateStatus("Triggering notes instruction wiggle.");
+            // Use a slight delay to ensure canvas is visible first
+            setTimeout(() => {
+               ui.notesInstruction.classList.add(CSS_CLASS.WIGGLE_NOW);
+            }, 50);
+        }
+
+    } catch (error) {
+        console.error(`Error rendering notes page ${pageNum}:`, error);
+        ctx.fillStyle = '#8B0000'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(`Error rendering page ${pageNum}.`, canvas.width / 2, canvas.height / 2);
+        canvas.style.opacity = 1; // Show error
+        ui.notesPrevBtn.disabled = true; ui.notesNextBtn.disabled = true;
+        // Don't hide the loader here, let the calling function handle errors/popup hiding
+        throw error; // Re-throw error so showNotesPopup catch block handles it
+    }
+}
 
     function notesPrevPage() { if (pdfState.currentNotesPageNum > 1) { renderNotesPage(pdfState.currentNotesPageNum - 1); } }
     function notesNextPage() { if (pdfState.currentNotesPageNum < pdfState.totalNotesPages) { renderNotesPage(pdfState.currentNotesPageNum + 1); } }
