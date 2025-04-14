@@ -46,6 +46,12 @@
     --parchment: #f5e8c7;
     --parchment-overlay: rgba(245, 232, 199, 0.85); /* Parchment with some transparency */
 
+    /* NEW: Subtle pulse animation */
+@keyframes pulseAnimation {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  50% { transform: translateX(-50%) scale(1.03); opacity: 0.85; }
+}
+
     /* NEW: LO Colors */
     --lo-greyed-out-filter: grayscale(100%);
     --lo-tooltip-bg: rgba(8, 14, 28, 0.95);
@@ -1022,6 +1028,7 @@ body:not(.loading-game-active) #loading-game-container {
 }
 
 /* Loading state - visible, navy blue, normal size, no animation */
+/* Apply pulse animation ONLY to the loading state */
 #go-to-chapter-btn.loading-chapter {
     background-color: var(--lab-blue); /* Dark navy blue */
     background-image: none; /* Override gradient */
@@ -1030,8 +1037,19 @@ body:not(.loading-game-active) #loading-game-container {
     opacity: 1; /* Make visible */
     visibility: visible;
     transform: translateX(-50%) scale(1); /* Visible at normal size */
-    animation: none !important; /* Ensure no animation plays */
     transition-delay: 0s; /* Ensure transitions apply immediately */
+    /* ADDED THIS LINE TO APPLY ANIMATION: */
+    animation: pulseAnimation 1.8s infinite ease-in-out;
+}
+
+/* Ensure the non-loading states don't have the pulse */
+#go-to-chapter-btn:not(.loading-chapter) {
+    animation: none; /* Remove pulse if not loading */
+}
+/* Re-apply pop animation for the .visible state (if not loading) */
+#go-to-chapter-btn.visible:not(.loading-chapter) {
+    /* Use popUpBounce or none if you don't want the pop */
+    animation: popUpBounce 0.5s ease-out forwards;
 }
 
 /* Final visible state (triggered by adding .visible class) - animates in */
@@ -4093,24 +4111,24 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 handleGameOverFromGame(event.data.score);
             }
             // PASTE THIS ENTIRE BLOCK:
+// PASTE THIS ENTIRE BLOCK:
 else if (event.data && event.data.type === 'gameLoaded') {
      if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none'; // Hide "Loading game..." text
-     updateStatus("Game iframe reported *itself* loaded.");
+     updateStatus("Game iframe reported 'gameLoaded'.");
 
-     // *** NEW CODE TO FOCUS IFRAME ***
-     updateStatus("Attempting to focus game iframe for immediate interaction.");
+     // *** Tell the game iframe to focus itself ***
+     updateStatus("Sending 'focusGame' message back to iframe.");
      try {
-         if (ui.gameIframe) { // Check if the iframe element exists in the UI cache
-             ui.gameIframe.focus(); // Give the iframe *element* focus
-             updateStatus("Successfully called focus() on game iframe element.");
+         if (ui.gameIframe?.contentWindow) {
+             // IMPORTANT: Use '*' for origin during development, change for production
+             ui.gameIframe.contentWindow.postMessage({ type: 'focusGame' }, '*');
+             updateStatus("Successfully sent 'focusGame' message.");
          } else {
-              console.warn("Cannot focus game iframe: ui.gameIframe element not found.");
+              console.warn("Cannot send 'focusGame' message: Game iframe or contentWindow not accessible.");
          }
-     } catch (focusError) {
-         // Log potential errors
-         console.warn("Could not focus game iframe:", focusError.message);
+     } catch (postMessageError) {
+         console.warn("Error sending 'focusGame' message:", postMessageError);
      }
-     // *** END OF NEW CODE ***
 } // END OF BLOCK TO PASTE
         });
 
