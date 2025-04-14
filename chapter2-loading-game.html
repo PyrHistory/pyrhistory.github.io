@@ -1053,7 +1053,42 @@
     // Initialize and start
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    window.onload = restartGame;
+    // Add this listener for messages from the viewer
+window.addEventListener('message', (event) => {
+    // Basic security - replace '*' with your viewer's origin in production
+    // if (event.origin !== 'YOUR_VIEWER_ORIGIN') return;
+
+    if (event.data && event.data.type) {
+        console.log('Game received message:', event.data.type); // Optional debug
+
+        if (event.data.type === 'disableRestart') {
+            // Hide the 'Play Again' button when viewer is ready
+            if (restartButton) {
+                restartButton.style.display = 'none';
+            }
+        } else if (event.data.type === 'focusGame') {
+            // Focus the game window when told by the viewer
+            window.focus();
+        }
+    }
+});
+
+// Initialize, start game, AND tell viewer it's ready
+window.onload = () => {
+    resizeCanvas(); // Make sure canvas is sized correctly first
+    restartGame(); // Start the game logic
+
+    // Tell the parent window the game is loaded
+    console.log('Game loaded, sending gameLoaded message.');
+    if (window.parent && window.parent !== window) {
+         try {
+            // IMPORTANT: Use '*' for origin ONLY during testing. Replace with your site's actual origin for security.
+            window.parent.postMessage({ type: 'gameLoaded' }, '*');
+         } catch(e) {
+            console.error("Error posting gameLoaded message:", e);
+         }
+    }
+};
 })();
     </script>
 </body>
