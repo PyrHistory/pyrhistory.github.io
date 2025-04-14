@@ -1402,6 +1402,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     border: 1px solid rgba(0,0,0,0.1);
 }
 
+/* === START: Updated Notes Nav Button CSS === */
 .notes-nav-btn {
     position: absolute;
     top: 50%;
@@ -1419,31 +1420,56 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s, transform 0.2s;
-    z-index: 10012;
+    /* ADDED transitions for fade effect */
+    transition: background-color 0.2s, transform 0.2s, opacity 0.3s ease-out, visibility 0s linear 0.3s;
+    opacity: 1; /* Start visible */
+    visibility: visible; /* Start visible */
+    z-index: 10014; /* Ensure above loader */
     pointer-events: auto;
     user-select: none;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
     padding: 0;
+    will-change: opacity; /* Performance hint */
 }
+
+/* Rule for hover - forces visibility */
 .notes-nav-btn:hover {
     background-color: rgba(52, 73, 94, 0.9);
     transform: translateY(-50%) scale(1.1);
+    opacity: 1 !important; /* Override fade */
+    visibility: visible !important;
 }
+
+/* Rule for active state */
 .notes-nav-btn:active {
     transform: translateY(-50%) scale(1);
 }
+
+/* Rule for disabled state */
 .notes-nav-btn[disabled] {
-    opacity: 0.4;
+    opacity: 0.4 !important; /* Make sure disabled is visible but faded */
+    visibility: visible !important; /* Make sure it's visible */
     cursor: not-allowed;
     pointer-events: none;
+    background-color: rgba(44, 62, 80, 0.5); /* Dim background */
 }
+
+/* NEW RULE for the faded-out state */
+.notes-nav-btn.notes-nav-faded {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Prevent interaction when faded */
+    transition-delay: 0s, 0s; /* Apply fade immediately when class added */
+}
+
+/* Positioning rules */
 #notes-prev-btn {
     left: 5px;
 }
 #notes-next-btn {
     right: 5px;
 }
+/* === END: Updated Notes Nav Button CSS === */
 
 /* MODIFIED Notes Instruction for better centering */
 #notes-instruction {
@@ -1649,6 +1675,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 <script>
 (function() { // IIFE to encapsulate scope
     'use strict';
+    let notesNavFadeTimeout = null;
     let isChapterReady = false;
 
     // --- Constants ---
@@ -3020,6 +3047,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         // --- UPDATED VERSION of handleMilestoneEnter (No Italics/Emoji Checkmark for passed) ---
 
+        // --- UPDATED VERSION of handleMilestoneEnter (With Font Weight Change) ---
     function handleMilestoneEnter(event) {
         const milestone = event.currentTarget;
         const loText = milestone.dataset.loText;
@@ -3036,7 +3064,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
         if (ui.sliderInfo) {
             // Store original text if not already stored and not currently showing an LO
-            if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.startsWith('<em>') && !ui.sliderInfo.innerHTML.startsWith('<strong>')) {
+            // Check includes the new span possibility
+            if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.includes('<em') && !ui.sliderInfo.innerHTML.includes('<strong')) {
                 appState.originalSliderInfoText = ui.sliderInfo.innerHTML;
             }
 
@@ -3051,25 +3080,28 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 const checkmarkEmoji = '✅'; // Use the actual emoji
 
                 if (isPassed) {
-                    // If passed: BOLD text (no italics) + Emoji checkmark
+                    // If passed: BOLD text (implicitly weight 700) + Emoji checkmark
                     displayText = `<strong>${loText || fallbackText}</strong> ${checkmarkEmoji}`;
                 } else {
-                    // If not passed: ITALIC text (no bold, no checkmark)
-                    displayText = `<em>${loText || fallbackText}</em>`;
+                    // If not passed: ITALIC text WRAPPED in span with LIGHTER FONT WEIGHT (400)
+                    // Keeping <em> for italics, span for weight control.
+                    displayText = `<em><span style="font-weight: 400;">${loText || fallbackText}</span></em>`;
                 }
 
                 // 3. Change the content
                 ui.sliderInfo.innerHTML = displayText;
 
-                // 4. Start fade in
-                ui.sliderInfo.style.opacity = 1; // Or back to 0.8 if that's your base
+                // 4. Start fade in (Restore base opacity - defined in CSS as 0.8)
+                // Setting to 1 might look slightly inconsistent if base is 0.8
+                ui.sliderInfo.style.opacity = ''; // Let CSS handle base opacity (defaults to 1 if not set, or 0.8 if rule exists)
 
                 appState.sliderInfoFadeTimeout = null; // Timeout complete
 
-            }, 200); // e.g., 200ms if transition is 0.25s (250ms)
+            }, 125); // Shortened delay slightly (half of 250ms transition)
 
         }
     }
+    // --- END UPDATED VERSION ---
     // --- END UPDATED VERSION ---
 
     function handleMilestoneLeave(event) {
@@ -3716,6 +3748,13 @@ function showDefinitionPopup(word, definition, rect) {
 
     if (ui.notesPopupContainer.classList.contains(CSS_CLASS.VISIBLE)) {
         updateStatus("Hiding notes popup.");
+            // --- START: ADDED CODE ---
+    // Clear the fade timer & reset button visibility
+    clearTimeout(notesNavFadeTimeout);
+    notesNavFadeTimeout = null;
+    ui.notesPrevBtn?.classList.remove('notes-nav-faded');
+    ui.notesNextBtn?.classList.remove('notes-nav-faded');
+    // --- END: ADDED CODE ---
         toggleVisibility(ui.notesPopupBackdrop, false);
         toggleVisibility(ui.notesPopupContainer, false);
 
@@ -3796,6 +3835,11 @@ function showDefinitionPopup(word, definition, rect) {
         ui.notesPrevBtn.disabled = (pdfState.currentNotesPageNum <= 1);
         ui.notesNextBtn.disabled = (pdfState.currentNotesPageNum >= pdfState.totalNotesPages);
         updateStatus(`Notes page ${pageNum} rendered successfully.`);
+
+            // --- START: ADDED CODE ---
+    // Make buttons visible and start fade timer
+    showNotesNavAndResetTimer();
+    // --- END: ADDED CODE ---
 
         // Trigger instruction wiggle (keep this)
         if (ui.notesInstruction) {
@@ -3927,6 +3971,25 @@ function showDefinitionPopup(word, definition, rect) {
         manageLeftToolbar(false); // Hide toolbar after action (uses reverted function)
     }
 
+// Helper function to start the fade timer
+function startNotesNavFadeTimer() {
+    clearTimeout(notesNavFadeTimeout);
+    notesNavFadeTimeout = setTimeout(() => {
+        if (ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) {
+            ui.notesPrevBtn?.classList.add('notes-nav-faded');
+            ui.notesNextBtn?.classList.add('notes-nav-faded');
+        }
+    }, 3000); // 3 seconds
+}
+
+// Helper function to show buttons and reset timer
+function showNotesNavAndResetTimer() {
+    clearTimeout(notesNavFadeTimeout);
+    ui.notesPrevBtn?.classList.remove('notes-nav-faded');
+    ui.notesNextBtn?.classList.remove('notes-nav-faded');
+    startNotesNavFadeTimer();
+}
+    
     // --- Event Setup (REVERTED Timelock Toggle Listener, keeps other new listeners, MODIFIED Game/LO Listeners) ---
     function setupEvents() {
         updateStatus("Setting up events");
@@ -3963,6 +4026,14 @@ function showDefinitionPopup(word, definition, rect) {
         // --- Notes Navigation ---
         ui.notesPrevBtn?.addEventListener('click', notesPrevPage);
         ui.notesNextBtn?.addEventListener('click', notesNextPage);
+
+        // --- START: ADDED LISTENERS ---
+// Show buttons on hover/tap and reset timer
+ui.notesPrevBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+ui.notesNextBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
+// --- END: ADDED LISTENERS ---
 
         // --- Page Interaction (Edges & Rotate Button) ---
         ui.bookSpread?.addEventListener('click', (e) => {
