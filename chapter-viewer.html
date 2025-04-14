@@ -1018,7 +1018,7 @@ body:not(.loading-game-active) #loading-game-container {
     opacity: 0; /* Start hidden */
     visibility: hidden;
     animation: none; /* No animation initially */
-    transition: background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease; /* Add transitions */
+    transition: background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Add transitions, ensure visibility transition matches opacity */
 }
 
 /* Loading state - visible, navy blue, normal size, no animation */
@@ -1031,6 +1031,7 @@ body:not(.loading-game-active) #loading-game-container {
     visibility: visible;
     transform: translateX(-50%) scale(1); /* Visible at normal size */
     animation: none !important; /* Ensure no animation plays */
+    transition-delay: 0s; /* Ensure transitions apply immediately */
 }
 
 /* Final visible state (triggered by adding .visible class) - animates in */
@@ -1040,16 +1041,17 @@ body:not(.loading-game-active) #loading-game-container {
     /* Apply the fun pop-up animation */
     animation: popUpBounce 0.5s ease-out forwards;
     /* Transform is handled by animation */
+    transition-delay: 0s; /* Ensure transitions apply immediately */
 }
 
 /* Hover/Active for final state */
-#go-to-chapter-btn:not(.loading-chapter):hover {
+#go-to-chapter-btn.visible:hover { /* Target .visible specifically for hover */
     background: linear-gradient(135deg, var(--accent), var(--fiery-orange));
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(255, 255, 255, 0.25) inset;
     /* Apply hover scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(1.05);
 }
-#go-to-chapter-btn:not(.loading-chapter):active {
+#go-to-chapter-btn.visible:active { /* Target .visible specifically for active */
     /* Apply active scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(0.98);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.15) inset;
@@ -1065,13 +1067,16 @@ body:not(.loading-game-active) #loading-game-container {
      transform: translateX(-50%) scale(0.98); /* Subtle active */
  }
 
+/* ---- REMOVED THIS BLOCK ---- */
 /* Surefire way to hide button when reader is active */
-body:not(.loading-game-active) #go-to-chapter-btn {
+/* body:not(.loading-game-active) #go-to-chapter-btn {
     opacity: 0;
     visibility: hidden;
-    animation: none !important; /* Ensure no animation plays when hidden */
-    pointer-events: none; /* Add this to prevent accidental clicks during fade */
-}
+    animation: none !important; */ /* Ensure no animation plays when hidden */
+/*    pointer-events: none; */ /* Add this to prevent accidental clicks during fade */
+/* } */
+/* ---- END REMOVED BLOCK ---- */
+
 
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
@@ -1461,7 +1466,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         </div>
     </div>
 
-    
+
     <!-- Global Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay"></div>
     <!-- Page Slider -->
@@ -1538,7 +1543,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             <button class="new-btn" id="time-capsule-btn" title="Time Capsule (TOC Disabled)">${boxIconSVG}</button>
             `;
             // Note: Return button (#return-view-fixed-btn) is separate HTML outside this toolbar
-
+        // TOC Panel removed from here, handled by Time Capsule button logic elsewhere if needed
         document.getElementById('left-toolbar').innerHTML = `
             <button class="new-btn" id="timelock-toggle-btn" title="Toggle Reading Time Lock (On)">
                 ${clockOnIconSVG}
@@ -1654,6 +1659,10 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         loAchievementText: document.getElementById('lo-achievement-text'),
         loAchievementTip: document.getElementById('lo-achievement-tip'), // Added reference to tip element
         loContinueBtn: document.getElementById('lo-continue-btn'),
+
+        // Added for HTML Population (though not strictly needed if populated before script run)
+        tocList: document.getElementById('toc-list'),
+        tocToggleButton: document.getElementById('toc-toggle-btn'),
     };
 
     // --- PDF.js Setup (Keep from New Code) ---
@@ -1714,6 +1723,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         currentNotesPdfDoc: null,
         currentNotesPageNum: 1,
         totalNotesPages: 0,
+        outline: [], // Added outline property
     };
 
     const userState = {
@@ -1751,7 +1761,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
              } else if (element === ui.loAchievementBackdrop || element === ui.loAchievementPopup) {
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
              // Special handling for LO tooltip using fixed positioning
-             } else if (element === ui.loTooltip) {
+             } else if (element === ui.loTooltip) { // <-- Assuming ui.loTooltip exists
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
              } else {
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
@@ -2999,7 +3009,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
                 appState.sliderInfoFadeTimeout = null; // Timeout complete
 
             }, 200); // Match the enter timeout delay
-        } else if (ui.sliderInfo && !ui.sliderInfo.innerHTML.startsWith('<em>')) {
+        } else if (ui.sliderInfo && !ui.sliderInfo.innerHTML.startsWith('<em>') && !ui.sliderInfo.innerHTML.startsWith('<strong>')) {
              // Safety check: If mouse leaves and we weren't showing LO text, ensure opacity is correct
              ui.sliderInfo.style.opacity = 1; // Or 0.8
         }
@@ -3007,7 +3017,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     // --- END UPDATED VERSIONS ---
 
 
-    
+
     // --- END: LO Milestone Functions ---
 
             // --- NEW: LO Achievement Popup Functions ---
@@ -3293,7 +3303,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
         // --- Reset UI ---
         resetPopupStates();
         document.title = "Heritage History™ Reader";
-        ui.tocList.innerHTML = 'Loading...'; // Reset TOC display
+        // ui.tocList.innerHTML = 'Loading...'; // Reset TOC display - Removed TOC elements
         // REMOVED: ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
 
         // --- MODIFIED: Set 'Go To Chapter' button to loading state ---
@@ -3361,42 +3371,42 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             await updateDisplay(); // Perform initial render (calls reverted lock logic)
 
             // --- READER IS READY ---
-    appState.isReaderReady = true; // Use appState from new code
-    updateStatus("Reader is ready!");
-    // Notify game iframe that the chapter is ready (Keep this line from new code)
-    if (ui.gameIframe?.contentWindow) {
-        try {
-            ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*');
-            updateStatus("Sent 'chapterReady' message to game iframe.");
-        } catch (e) {
-            console.error("Error posting 'chapterReady' message to iframe:", e);
-        }
-    } else {
-        console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
-    }
-
-    // --- MODIFIED: Show 'Go to Chapter' button with animation ---
-    // Use a small delay consistent with the old loading bar animation buffer
-    setTimeout(() => {
-        // Only show button if still in loading game state
-        if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-            updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
-            ui.goToChapterBtn.textContent = 'Go to Chapter';
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
-            ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
-        }
-    }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
-    // --- End Button Modification ---
-
-    // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
-    if (ui.gameIframe?.contentWindow) {
+            appState.isReaderReady = true; // Use appState from new code
+            updateStatus("Reader is ready!");
+            // Notify game iframe that the chapter is ready (Keep this line from new code)
+            if (ui.gameIframe?.contentWindow) {
                 try {
-                    ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
-                    updateStatus("Sent disableRestart message to game iframe.");
-                } catch (e) { console.error("Error posting disableRestart message to iframe:", e); }
+                    ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*');
+                    updateStatus("Sent 'chapterReady' message to game iframe.");
+                } catch (e) {
+                    console.error("Error posting 'chapterReady' message to iframe:", e);
+                }
             } else {
-                console.warn("Cannot send disableRestart message: iframe or contentWindow not accessible.");
+                console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
             }
+
+            // --- MODIFIED: Show 'Go to Chapter' button with animation ---
+            // Use a small delay consistent with the old loading bar animation buffer
+            setTimeout(() => {
+                // Only show button if still in loading game state
+                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                    updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
+                    ui.goToChapterBtn.textContent = 'Go to Chapter';
+                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
+                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
+                }
+            }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
+            // --- End Button Modification ---
+
+            // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
+            if (ui.gameIframe?.contentWindow) {
+                        try {
+                            ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
+                            updateStatus("Sent disableRestart message to game iframe.");
+                        } catch (e) { console.error("Error posting disableRestart message to iframe:", e); }
+                    } else {
+                        console.warn("Cannot send disableRestart message: iframe or contentWindow not accessible.");
+                    }
 
         } catch (error) {
             console.error("FATAL: Error loading PDF document:", error);
@@ -3406,7 +3416,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
             completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); // Reverted lock reset
             pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
             document.title="Heritage History™ Reader - Error";
-            updateSliderTotalPages(); updateSliderPosition(); 
+            updateSliderTotalPages(); updateSliderPosition();
             if (ui.bookSpread) {
                 ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
             }
@@ -3676,30 +3686,33 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
 
     // --- Game Transition Logic (MODIFIED - Button logic changed) ---
-    // --- PASTE THIS CORRECT FUNCTION IN ---
-function transitionToChapter() {
-    updateStatus("Transitioning to chapter...");
-    clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
+    // --- UPDATED transitionToChapter function ---
+    function transitionToChapter() {
+        updateStatus("Transitioning to chapter...");
+        clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
 
-    // Explicitly remove visibility classes to trigger fade-out via CSS transition
-    if (ui.goToChapterBtn) {
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-        updateStatus("Removed button visibility classes to initiate fade-out.");
+        // 1. Explicitly remove visibility classes from the button to start its fade-out transition.
+        if (ui.goToChapterBtn) {
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+            // The button's own opacity transition (0.3s) will handle the fade out.
+            updateStatus("Removed button visibility classes to initiate fade-out.");
+        }
+
+        // 2. Remove the body class to hide the game container and reveal the reader UI.
+        //    This happens concurrently with the button fading out.
+        ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
+        window.focus(); // Try to bring focus back to the main window
+
+        // 3. Apply reader scaling/resize shortly after the body class is removed.
+        //    The reader's main container also has a fade-in transition.
+        setTimeout(() => {
+            applyCurrentViewModeStyles(); // Recalculate scale for the reader view
+            window.dispatchEvent(new Event('resize')); // Trigger resize event for any listeners
+            updateStatus("Reader should be visible and scaled.");
+        }, 50); // Delay allows transitions to start smoothly.
     }
-
-    // Now, remove the body class (reader UI will appear)
-    ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
-    window.focus(); // Try to bring focus back to the main window
-
-    // Apply scaling/resize (can happen almost immediately after class removal)
-    setTimeout(() => {
-        applyCurrentViewModeStyles(); // Recalculate scale for the reader view
-        window.dispatchEvent(new Event('resize')); // Trigger resize event for any listeners
-        updateStatus("Reader should be visible and scaled.");
-    }, 50); // Small delay is likely fine here
-}
-// --- END OF CORRECT FUNCTION ---
+    // --- END OF UPDATED FUNCTION ---
 
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
