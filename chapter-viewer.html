@@ -500,7 +500,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 #lo-achievement-popup h3 {
     font-family: var(--font-heading); /* Roboto */
-    font-size: 2rem;
+    font-size: 1.85rem;
     margin-bottom: 15px; /* Increased margin slightly */
     color: #222;
     font-weight: 700;
@@ -939,17 +939,71 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 }
 /* --- END: Disable Keyword Effects in Rotated Mode --- */
 
-#definition-popup { position: fixed; background: #ffffff; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1); padding: 14px 18px; max-width: 320px; min-width: 180px; font-family: var(--font-sans); color: #2d3748; z-index: 10002; transform-origin: top center; transform: translateY(6px) scale(0.98); opacity: 0; visibility: hidden; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s; pointer-events: none; }
-#definition-popup.visible { transform: translateY(0) scale(1); opacity: 1; visibility: visible; transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0s; pointer-events: auto; }
-#popup-word { font-weight: 600; font-size: 15px; font-family: var(--font-heading); margin: 0 0 10px 0; color: var(--primary); border-bottom: 1px solid #e2e8f0; padding: 0 0 8px 0; }
-#popup-definition { font-size: 14px; line-height: 1.6; max-height: 180px; overflow-y: auto; color: #4a5568; padding-right: 5px; margin-right: -5px; }
+/* --- UPDATED Keyword Popup Styles --- */
+#definition-popup {
+    position: fixed;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15), 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 14px 18px;
+    max-width: 320px;
+    min-width: 180px;
+    /* Font set per element below */
+    color: #2d3748; /* Default text color */
+    z-index: 10002;
+    transform-origin: top center; /* Default, might be adjusted by JS */
+    transform: translateY(6px) scale(0.98); /* Start slightly below */
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s;
+    pointer-events: none;
+    will-change: transform, opacity; /* Performance hint */
+}
+#definition-popup.visible {
+    transform: translateY(0) scale(1); /* Move to final position */
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s, 0s, 0s; /* Ensure visibility transitions correctly */
+    pointer-events: auto;
+}
+
+#popup-word {
+    font-weight: 600;
+    font-size: 15px;
+    font-family: var(--font-heading); /* MODIFIED: Use Roboto */
+    margin: 0 0 10px 0;
+    color: var(--lab-blue); /* MODIFIED: Use Dark Navy Blue */
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 0 8px 0;
+}
+
+#popup-definition {
+    font-family: var(--font-body); /* MODIFIED: Use Open Sans */
+    font-size: 14px;
+    line-height: 1.6;
+    max-height: 180px;
+    overflow-y: auto;
+    color: #4a5568; /* Keep existing definition text color */
+    padding-right: 5px; /* For scrollbar spacing */
+    margin-right: -5px; /* Offset scrollbar */
+}
 #popup-definition::-webkit-scrollbar { width: 5px; }
 #popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
-#close-popup-btn { position: absolute; top: 6px; right: 6px; cursor: pointer; font-size: 20px; font-weight: 300; color: #a0aec0; transition: color 0.2s, background-color 0.2s; background: none; border: none; padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; line-height: 1; }
+
+#close-popup-btn {
+    position: absolute; top: 6px; right: 6px;
+    cursor: pointer; font-size: 20px; font-weight: 300;
+    color: #a0aec0; transition: color 0.2s, background-color 0.2s;
+    background: none; border: none; padding: 0;
+    width: 28px; height: 28px; display: flex;
+    align-items: center; justify-content: center;
+    border-radius: 50%; line-height: 1;
+}
 #close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
-/* --- END: Custom Keyword Overlay & Popup Styles --- */
+/* --- END Updated Keyword Popup Styles --- */
+
 
 /* --- START: Loading Game Styles (MODIFIED) (Keep New Code's Version + Changes) --- */
 #loading-game-container {
@@ -3472,65 +3526,66 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     }
 
     // --- Popup Handling (Keep from New Code) ---
-    function showDefinitionPopup(word, definition, rect) {
-        if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !rect) {
-            console.error("Cannot show definition popup: Missing element or rect."); return;
-        }
-        // Do not show if in rotated mode
-        if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
-            updateStatus("Definition popup suppressed in rotated mode."); return;
-        }
-
-        hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
-
-        ui.popupWord.textContent = word || "Keyword";
-        ui.popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
-        ui.popupDefinition.scrollTop = 0; // Scroll to top
-
-        // Calculate position
-        const popupStyle = window.getComputedStyle(ui.definitionPopup);
-        const popupMaxWidth = parseFloat(popupStyle.maxWidth) || 320;
-        const defaultPopupHeight = 250; // Estimate initial height
-        const margin = 10; // Space from viewport edges
-        const verticalOffset = 10; // Space from highlight rect
-
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const highlightCenterX = rect.left + rect.width / 2;
-
-        // Try positioning above the highlight first
-        let targetLeft = highlightCenterX - (popupMaxWidth / 2);
-        let targetTop = rect.top - defaultPopupHeight - verticalOffset;
-        let transformOrigin = 'bottom center'; // Assume arrow points down
-
-        // If popup goes off top edge, position below
-        if (targetTop < margin) {
-            targetTop = rect.bottom + verticalOffset;
-            transformOrigin = 'top center'; // Arrow points up
-        }
-
-        // Adjust horizontal position to stay within viewport
-        if (targetLeft < margin) { targetLeft = margin; }
-        else if (targetLeft + popupMaxWidth > viewportWidth - margin) {
-            targetLeft = viewportWidth - popupMaxWidth - margin;
-        }
-
-        // Adjust vertical position based on actual content height (roughly)
-        const effectivePopupHeight = Math.min(defaultPopupHeight, ui.popupDefinition.scrollHeight + 60); // Add padding/title space
-        if (targetTop < margin) { // Recalculate if adjusted horizontal position caused vertical issue
-             targetTop = margin;
-        } else if (targetTop + effectivePopupHeight > viewportHeight - margin) {
-             targetTop = viewportHeight - effectivePopupHeight - margin;
-             // If we had to move it down significantly, ensure transform origin makes sense
-             if (transformOrigin === 'bottom center') transformOrigin = 'top center';
-         }
-
-        // Apply styles
-        ui.definitionPopup.style.left = `${Math.round(targetLeft)}px`;
-        ui.definitionPopup.style.top = `${Math.round(targetTop)}px`;
-        ui.definitionPopup.style.transformOrigin = transformOrigin;
-        toggleVisibility(ui.definitionPopup, true);
+    // --- UPDATED Popup Positioning Logic ---
+function showDefinitionPopup(word, definition, rect) {
+    if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !rect) {
+        console.error("Cannot show definition popup: Missing element or rect."); return;
     }
+    if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
+        updateStatus("Definition popup suppressed in rotated mode."); return;
+    }
+
+    hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
+
+    // Set content
+    ui.popupWord.textContent = word || "Keyword";
+    ui.popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
+    ui.popupDefinition.scrollTop = 0;
+
+    // Estimate popup dimensions (adjust if your popups are usually taller/wider)
+    const estPopupWidth = Math.min(ui.definitionPopup.offsetWidth || 320, 320); // Use max-width as fallback
+    const estPopupHeight = Math.min(ui.definitionPopup.offsetHeight || 200, 200); // Estimate height
+
+    // Constants for positioning
+    const margin = 10; // Space from viewport edges
+    const verticalOffset = 8; // Space between keyword and popup
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // --- Calculate Position ---
+
+    // Horizontal: Center popup over the keyword's horizontal center
+    let targetLeft = rect.left + (rect.width / 2) - (estPopupWidth / 2);
+    // Keep popup within screen horizontally
+    targetLeft = Math.max(margin, targetLeft); // Prevent left overflow
+    targetLeft = Math.min(targetLeft, viewportWidth - estPopupWidth - margin); // Prevent right overflow
+    targetLeft = Math.max(margin, targetLeft); // Re-check left after right adjustment
+
+    // Vertical: Default to above the keyword
+    let targetTop = rect.top - estPopupHeight - verticalOffset;
+    let transformOrigin = 'bottom center'; // Arrow points down from popup
+
+    // If placing above goes off-screen OR keyword is in top 40% (prefer below)
+    if (targetTop < margin || rect.top < viewportHeight * 0.4) {
+        targetTop = rect.bottom + verticalOffset; // Try below
+        transformOrigin = 'top center'; // Arrow points up from popup
+
+        // If placing below goes off bottom, clamp to bottom edge
+        if (targetTop + estPopupHeight > viewportHeight - margin) {
+            targetTop = viewportHeight - estPopupHeight - margin;
+            // If still negative after clamping to bottom, clamp to top instead
+            targetTop = Math.max(margin, targetTop);
+        }
+    }
+
+    // Apply the calculated styles
+    ui.definitionPopup.style.left = `${Math.round(targetLeft)}px`;
+    ui.definitionPopup.style.top = `${Math.round(targetTop)}px`;
+    ui.definitionPopup.style.transformOrigin = transformOrigin;
+
+    // Make it visible
+    toggleVisibility(ui.definitionPopup, true);
+}
 
     function hideDefinitionPopup() { toggleVisibility(ui.definitionPopup, false); }
 
