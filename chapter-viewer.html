@@ -4040,6 +4040,36 @@ body.right-handle-floated .toolbar-trigger-area {
         ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
         window.focus(); // Try to bring focus back to the main window
 
+// --- START: Temporarily Show Toolbars ---
+if (ui.rightToolbar && ui.leftToolbar) {
+    updateStatus("Temporarily showing toolbars for 7 seconds.");
+    ui.rightToolbar.classList.add('visible');
+    ui.leftToolbar.classList.add('visible');
+
+    // Clear any previous toolbar hide timers from hover logic (just in case)
+    clearTimeout(toolbarTimer);
+    clearTimeout(leftToolbarTimer);
+
+    setTimeout(() => {
+        // Only hide if the user ISN'T currently hovering over them
+        // We check the global hover state variables used by manageToolbar/manageLeftToolbar
+        if (!toolbarHover && ui.rightToolbar?.classList.contains('visible')) {
+            ui.rightToolbar.classList.remove('visible');
+            updateStatus("Hiding right toolbar after 7s timeout (not hovered).");
+        } else if(ui.rightToolbar?.classList.contains('visible')) {
+             updateStatus("Keeping right toolbar visible after 7s (hovered).");
+        }
+
+        if (!leftToolbarHover && ui.leftToolbar?.classList.contains('visible')) {
+            ui.leftToolbar.classList.remove('visible');
+            updateStatus("Hiding left toolbar after 7s timeout (not hovered).");
+        } else if(ui.leftToolbar?.classList.contains('visible')) {
+             updateStatus("Keeping left toolbar visible after 7s (hovered).");
+        }
+    }, 7000); // 7000 milliseconds = 7 seconds
+}
+// --- END: Temporarily Show Toolbars ---
+        
         // 3. Apply reader scaling/resize shortly after the body class is removed.
         //    The reader's main container also has a fade-in transition.
         setTimeout(() => {
@@ -4427,7 +4457,17 @@ else if (event.data && event.data.type === 'gameLoaded') {
              { hideDefinitionPopup(); }
         }, true); // Use capture phase to catch clicks early
 
-
+// --- START: Prevent Game Replay via iframe focus ---
+ui.gameIframe?.addEventListener('focus', () => {
+    // Only trigger if the reader has loaded AND the game screen is still technically active
+    if (appState.isReaderReady && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+        updateStatus("Game iframe focused after reader ready. Forcing transition to chapter.");
+        // Call the same function the button calls
+        transitionToChapter();
+    }
+}, true); // Use capture phase: true
+// --- END: Prevent Game Replay via iframe focus ---
+        
         updateStatus("Events setup complete");
     }
 
