@@ -1523,6 +1523,75 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 }
 /* --- END: Notes Popup Styles --- */
 
+/* === START: Floating Toolbar Handle Styles === */
+
+/* Define class to add to BODY when handles should float */
+/* We'll primarily use classes on the toolbars themselves,
+   but body classes can be useful for hiding triggers */
+.right-handle-floated #new-toolbar.visible,
+.left-handle-floated #left-toolbar.visible {
+  /* Keep toolbar visible if user explicitly clicked the floated handle */
+  /* But the handle itself remains floated */
+}
+
+/* Styles for the RIGHT handle when floated */
+#new-toolbar.handle-floated-top-right::before {
+  /* Positioning */
+  position: fixed; /* Detach from toolbar flow */
+  top: 10px;       /* Position from top */
+  right: 10px;      /* Position from right */
+  left: auto;       /* Override default */
+  transform: none;  /* Override default */
+  /* Sizing */
+  width: 20px;      /* Smaller width */
+  height: 25px;     /* Smaller height */
+  font-size: 14px;  /* Smaller icon */
+  /* Appearance */
+  border-radius: 4px; /* Maintain some rounding */
+  z-index: 10000;   /* Ensure above most content */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4); /* Add shadow */
+  transition: all 0.3s ease-in-out; /* Smooth transition */
+}
+
+/* Styles for the LEFT handle when floated */
+#left-toolbar.handle-floated-top-left::before {
+  /* Positioning */
+  position: fixed; /* Detach from toolbar flow */
+  top: 10px;       /* Position from top */
+  left: 10px;       /* Position from left */
+  right: auto;      /* Override default */
+  transform: none;  /* Override default */
+  /* Sizing */
+  width: 20px;      /* Smaller width */
+  height: 25px;     /* Smaller height */
+  font-size: 14px;  /* Smaller icon */
+  /* Appearance */
+  border-radius: 4px; /* Maintain some rounding */
+  z-index: 10000;   /* Ensure above most content */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4); /* Add shadow */
+  transition: all 0.3s ease-in-out; /* Smooth transition */
+}
+
+/* OPTIONAL: Hide the original hover trigger areas when handles are floated */
+body.right-handle-floated .toolbar-trigger-area {
+   /* display: none; */ /* Uncomment if hover area causes issues */
+   pointer-events: none; /* Safer than display:none */
+   /* background: rgba(0,255,0,0.1); */ /* Debug */
+}
+ body.left-handle-floated .left-toolbar-trigger-area {
+   /* display: none; */ /* Uncomment if hover area causes issues */
+   pointer-events: none; /* Safer than display:none */
+   /* background: rgba(0,0,255,0.1); */ /* Debug */
+}
+
+/* Ensure original handles have transition too */
+#new-toolbar::before,
+#left-toolbar::before {
+    transition: all 0.3s ease-in-out;
+}
+
+/* === END: Floating Toolbar Handle Styles === */
+        
 </style>
 
 </head>
@@ -2730,6 +2799,42 @@ async function createKeywordOverlays(pageNum, pageElement, viewport) {
         manageLeftToolbar(false); // Hide toolbars (using reverted function)
     }
 
+// --- START: New function to check handle state ---
+function checkAndApplyHandleState() {
+    if (!ui.bookSpread || !ui.rightToolbar || !ui.leftToolbar) return; // Elements needed
+
+    const viewportWidth = window.innerWidth;
+    const bookRect = ui.bookSpread.getBoundingClientRect();
+    // Get the CURRENT width of the book spread as displayed on screen
+    const scaledBookWidth = bookRect.width;
+
+    // Threshold: If book takes up > 85% of viewport width, float handles
+    const overlapThreshold = 0.85;
+    const shouldFloat = (scaledBookWidth > viewportWidth * overlapThreshold);
+
+    // Toggle classes on toolbars AND body
+    ui.rightToolbar.classList.toggle('handle-floated-top-right', shouldFloat);
+    ui.leftToolbar.classList.toggle('handle-floated-top-left', shouldFloat);
+    ui.body.classList.toggle('right-handle-floated', shouldFloat);
+    ui.body.classList.toggle('left-handle-floated', shouldFloat);
+
+    // Optional: Log status
+    // updateStatus(`Handles floated: ${shouldFloat} (Book: ${Math.round(scaledBookWidth)}px, Viewport: ${viewportWidth}px)`);
+
+    // If handles are floated, ensure main toolbars are hidden unless explicitly shown
+    // This prevents hover on the *edge* from showing the main bar when handle is floated
+    if (shouldFloat) {
+        // If toolbar isn't explicitly visible (via click), hide it.
+        if (!ui.rightToolbar.classList.contains('visible')) {
+            manageToolbar(false);
+        }
+         if (!ui.leftToolbar.classList.contains('visible')) {
+            manageLeftToolbar(false);
+        }
+    }
+}
+// --- END: New function ---
+    
     // --- View Modes (Keep from New Code, uses new state/UI) ---
     function applyCurrentViewModeStyles() {
         if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || !ui.bookSpread) return;
@@ -2764,6 +2869,15 @@ async function createKeywordOverlays(pageNum, pageElement, viewport) {
         ui.bookSpread.style.transformOrigin = 'center center';
         ui.bookSpread.style.transform = transformValue;
         // Visibility of #return-view-fixed-btn is controlled purely by CSS based on body classes
+
+       function applyCurrentViewModeStyles() {
+    // ... all the existing code inside this function ...
+    ui.bookSpread.style.transformOrigin = 'center center';
+    ui.bookSpread.style.transform = transformValue;
+
+    // *** ADD THIS LINE AT THE END ***
+    checkAndApplyHandleState();
+} // <-- Closing brace of applyCurrentViewModeStyles 
     }
 
     async function setRotatedView() {
@@ -4308,6 +4422,18 @@ else if (event.data && event.data.type === 'gameLoaded') {
             updateTimelockButtonVisuals(); // Set initial timelock icon state (uses reverted globals)
             initPageSlider(); // Setup slider interaction (uses reverted jump/lock logic, LO milestone rendering/interaction)
 
+async function init() {
+    // ... existing init code ...
+    initPageSlider(); // Example existing line
+
+    // *** ADD THIS LINE ***
+    // Call once after initial setup might affect layout
+    // Use timeout to ensure layout is stable after initial render/load
+    setTimeout(checkAndApplyHandleState, 500); // Check after 500ms
+
+    // ... rest of init code ...
+}
+            
             // Get PDF URL from query parameter
             const urlParams = new URLSearchParams(window.location.search);
             const pdfUrlParam = urlParams.get('pdf');
