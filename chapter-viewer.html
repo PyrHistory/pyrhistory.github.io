@@ -451,7 +451,28 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     filter: none;
 }
 /* LO Tooltip */
-
+/* Placeholder for #lo-tooltip styles if needed later */
+#lo-tooltip {
+    position: absolute; /* Positioned relative to milestones container? */
+    /* Example styles - adjust as needed */
+    background-color: var(--lo-tooltip-bg);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0s linear 0.2s;
+    pointer-events: none;
+    transform: translateY(-100%); /* Position above the milestone */
+}
+#lo-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
 /* --- END: LO Milestone Styles --- */
 
 /* --- START: LO Achievement Pop-up Styles (Updated Layout/Fonts) --- */
@@ -939,8 +960,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 }
 /* --- END: Disable Keyword Effects in Rotated Mode --- */
 
-/* --- UPDATED Keyword Popup Styles --- */
-/* === START: Replacement Keyword Popup CSS === */
+/* --- START: Replacement Keyword Popup CSS --- */ /* <<<< CONFIRMED: Correct Block Start */
 #definition-popup {
     position: fixed;
     background: #ffffff;
@@ -1025,7 +1045,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
     border-radius: 50%; line-height: 1;
 }
 #close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
-/* === END: Replacement Keyword Popup CSS === */
+/* === END: Replacement Keyword Popup CSS === */ /* <<<< CONFIRMED: Correct Block End */
 
 
 /* --- START: Loading Game Styles (MODIFIED) (Keep New Code's Version + Changes) --- */
@@ -1407,13 +1427,53 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
+    position: relative; /* Needs to be relative for nav buttons */
     margin-bottom: 10px;
     pointer-events: auto;
     overflow: hidden;
     -webkit-tap-highlight-color: transparent;
-        
+    background-color: var(--lab-blue); /* Dark background while loading */
 }
+
+/* Styles for the local loader inside the notes canvas container */
+.notes-local-loader {
+    position: absolute; /* Center over the canvas area */
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10013; /* Above canvas, below nav buttons */
+    display: flex; /* Use flex to align spinner and text */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    opacity: 0; /* Hidden by default */
+    visibility: hidden;
+    transition: opacity 0.2s ease-out, visibility 0s linear 0.2s;
+    pointer-events: none; /* Don't block clicks when hidden */
+    background: rgba(8, 14, 28, 0.8); /* Semi-transparent dark */
+    padding: 20px;
+    border-radius: 8px;
+}
+.notes-local-loader.visible { /* Show the loader */
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+}
+.notes-local-spinner {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px; /* Space between spinner and text */
+}
+/* The span inside the loader */
+.notes-local-loader span {
+    font-weight: 500;
+}
+
 
 #notes-pdf-canvas {
     max-width: 100%;
@@ -1423,6 +1483,8 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     background-color: var(--page);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(0,0,0,0.1);
+    opacity: 0; /* Start hidden */
+    transition: opacity 0.3s ease-out; /* Transition for fade-in */
 }
 
 /* === START: Updated Notes Nav Button CSS === */
@@ -1482,7 +1544,7 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     opacity: 0;
     visibility: hidden;
     pointer-events: none; /* Prevent interaction when faded */
-    transition-delay: 0s, 0s; /* Apply fade immediately when class added */
+    transition-delay: 0s, 0.3s; /* Fade immediately, hide visibility after fade */
 }
 
 /* Positioning rules */
@@ -1591,7 +1653,7 @@ body.right-handle-floated .toolbar-trigger-area {
 }
 
 /* === END: Floating Toolbar Handle Styles === */
-        
+
 </style>
 
 </head>
@@ -1678,11 +1740,12 @@ body.right-handle-floated .toolbar-trigger-area {
     <div id="page-slider-trigger-zone"></div>
 
     <!-- Keyword Definition Popup -->
-    <div class="definition-popup" id="definition-popup">
-        <button class="definition-popup-close" id="close-popup-btn" title="Close (Esc)">×</button>
-        <div class="definition-popup-title" id="popup-word">Keyword</div>
-        <div class="definition-popup-content" id="popup-definition">Loading definition...</div>
+    <div id="definition-popup"> <!-- Removed class="definition-popup" as ID is sufficient -->
+        <button id="close-popup-btn" title="Close (Esc)">×</button> <!-- Removed class="definition-popup-close" -->
+        <div id="popup-word">Keyword</div> <!-- Removed class="definition-popup-title" -->
+        <div id="popup-definition">Loading definition...</div> <!-- Removed class="definition-popup-content" -->
     </div>
+
 
     <!-- Reading Time Alert Popup -->
     <div id="reading-time-alert"></div>
@@ -1851,14 +1914,12 @@ body.right-handle-floated .toolbar-trigger-area {
         notesPrevBtn: document.getElementById('notes-prev-btn'),
         notesNextBtn: document.getElementById('notes-next-btn'),
         notesInstruction: document.getElementById('notes-instruction'),
-        notesLocalLoader: document.querySelector('#notes-pdf-canvas-container .notes-local-loader'), // *** ADD THIS LINE ***
+        notesLocalLoader: document.querySelector('#notes-pdf-canvas-container .notes-local-loader'),
 
         gameContainer: document.getElementById('loading-game-container'),
         gameIframe: document.getElementById('game-iframe'),
         goToChapterBtn: document.getElementById('go-to-chapter-btn'),
         iframeLoadingText: document.getElementById('iframe-loading-text'),
-        // REMOVED: gameLoadingBarContainer: document.getElementById('game-loading-bar-container'),
-        // REMOVED: gameLoadingBar: document.getElementById('game-loading-bar'),
 
         statusIndicator: document.getElementById('status-indicator'), // Although hidden
 
@@ -1870,8 +1931,9 @@ body.right-handle-floated .toolbar-trigger-area {
         loContinueBtn: document.getElementById('lo-continue-btn'),
 
         // Added for HTML Population (though not strictly needed if populated before script run)
-        tocList: document.getElementById('toc-list'),
-        tocToggleButton: document.getElementById('toc-toggle-btn'),
+        tocList: document.getElementById('toc-list'), // Might be null if element removed
+        tocToggleButton: document.getElementById('toc-toggle-btn'), // Might be null if element removed
+        loTooltip: document.getElementById('lo-tooltip'), // Added LO Tooltip
     };
 
     // --- PDF.js Setup (Keep from New Code) ---
@@ -1923,7 +1985,7 @@ body.right-handle-floated .toolbar-trigger-area {
         isDoublePageView: true, // Initial assumption, adjusted on load based on screen size
         pageCache: new Map(),
         currentViewports: {}, // Stores viewport used for rendering { canvasId: viewport }
-        keywordDefinitions: {},
+        keywordDefinitions: {}, // Now expects values like ["(pos)", "definition"]
         pageKeywords: {}, // { pageNumStr: [keyword1, keyword2] }
         globalFirstInstanceLocation: {}, // { keywordLower: { pageNum, itemIndex, matchIndex } }
         iframeMappings: {}, // { pageNumStr: urlString }
@@ -1970,7 +2032,7 @@ body.right-handle-floated .toolbar-trigger-area {
              } else if (element === ui.loAchievementBackdrop || element === ui.loAchievementPopup) {
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
              // Special handling for LO tooltip using fixed positioning
-             } else if (element === ui.loTooltip) { // <-- Assuming ui.loTooltip exists
+             } else if (element === ui.loTooltip) {
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
              } else {
                  element.classList.toggle(CSS_CLASS.VISIBLE, show);
@@ -2031,153 +2093,100 @@ body.right-handle-floated .toolbar-trigger-area {
     }
 
     // --- Keyword Overlays (Keep from New Code) ---
-    // Replacement createKeywordOverlays function
-async function createKeywordOverlays(pageNum, pageElement, viewport) {
-    const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
-    const overlayContainer = document.getElementById(overlayContainerId);
-    const canvasContainer = getCanvasContainer(pageElement);
+    // Replacement createKeywordOverlays function // <<<< CONFIRMED: Correct Block Start
+    async function createKeywordOverlays(pageNum, pageElement, viewport) {
+        const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
+        const overlayContainer = document.getElementById(overlayContainerId);
+        const canvasContainer = getCanvasContainer(pageElement);
 
-    if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer) {
-        console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
-    }
-    overlayContainer.innerHTML = ''; // Clear previous highlights
-
-    const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
-    if (keywordsForPage.length === 0) return;
-
-    const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
-    const lowerCaseDefs = {};
-    // Prepare definitions map expecting array format: [PoS, Definition]
-    for (const key in pdfState.keywordDefinitions) {
-        // Store the array directly under the lowercase key
-        lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key];
-    }
-
-    try {
-        const page = await pdfState.pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent({ normalizeWhitespace: true });
-        const items = textContent.items;
-
-        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-            const item = items[itemIndex];
-            const itemText = item.str;
-            const itemTextLength = itemText.length;
-            if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
-
-            keywordsForPage.forEach((originalKeyword, keywordIndex) => {
-                const keywordLower = lowerCaseKeywords[keywordIndex];
-                const definitionData = lowerCaseDefs[keywordLower]; // This is now expected to be an array
-
-                // *** Validate the new array structure ***
-                if (!Array.isArray(definitionData) || definitionData.length < 2 || typeof definitionData[1] !== 'string' || !definitionData[1]) {
-                    // console.warn(`Invalid/missing definition data for keyword: ${originalKeyword} (lowercase: ${keywordLower}) on page ${pageNum}`);
-                    return; // Skip this keyword if data format is wrong or definition is missing
-                }
-                const partOfSpeech = definitionData[0] || ''; // PoS is index 0, default to empty string
-                const actualDefinition = definitionData[1]; // Definition is index 1
-
-                const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
-                let match;
-
-                while ((match = regex.exec(itemText)) !== null) {
-                    const matchedString = match[1];
-                    const matchIndex = match.index;
-                    const matchLength = matchedString.length;
-
-                    if (matchLength === 0) { regex.lastIndex++; continue; }
-
-                    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                    const itemWidth = item.width;
-                    const itemHeight = item.height;
-                    const itemLeft = tx[4];
-                    const itemTop = tx[5] - itemHeight;
-
-                    const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
-                    const highlightWidth = (matchLength / itemTextLength) * itemWidth;
-
-                    const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
-                    const finalTop = Math.max(0, itemTop);
-                    const finalWidth = Math.max(1, highlightWidth);
-                    const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
-
-                    const highlightDiv = document.createElement('div');
-                    highlightDiv.className = 'keyword-highlight';
-                    highlightDiv.style.left = `${finalLeft}px`;
-                    highlightDiv.style.top = `${finalTop}px`;
-                    highlightDiv.style.width = `${finalWidth}px`;
-                    highlightDiv.style.height = `${finalHeight}px`;
-
-                    // *** Store keyword, PoS, and definition separately ***
-                    highlightDiv.dataset.keyword = originalKeyword;
-                    highlightDiv.dataset.pos = partOfSpeech; // Store Part of Speech
-                    highlightDiv.dataset.definition = actualDefinition; // Store Definition text
-                    highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title
-
-                    const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
-                    if (firstLoc && firstLoc.pageNum === pageNum && firstLoc.itemIndex === itemIndex && firstLoc.matchIndex === matchIndex) {
-                        highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
-                    }
-
-                    highlightDiv.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
-                        const currentHighlight = e.currentTarget;
-                        // Pass the clicked element itself to showDefinitionPopup
-                        showDefinitionPopup(currentHighlight); // *** Pass the element ***
-                    });
-                    overlayContainer.appendChild(highlightDiv);
-                }
-            });
+        if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer) {
+            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
         }
-    } catch (error) {
-        console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-        overlayContainer.innerHTML = '';
-    }
-}
-                    // Get the data array [pos, definition]
-const definitionData = lowerCaseDefs[keywordLower];
+        overlayContainer.innerHTML = ''; // Clear previous highlights
 
-// *** ADD validation for the new array structure ***
-if (!Array.isArray(definitionData) || definitionData.length < 2) {
-    console.warn(`Invalid or missing definition data array for keyword: ${originalKeyword} (lowercase: ${keywordLower})`);
-    return; // Skip this keyword if data is bad
-}
-const partOfSpeech = definitionData[0];      // Get part of speech from index 0
-const actualDefinition = definitionData[1]; // Get definition text from index 1
+        const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
+        if (keywordsForPage.length === 0) return;
 
-if (!actualDefinition) {
-    console.warn(`Missing definition text for keyword: ${originalKeyword}`);
-    return; // Skip if definition text is empty/missing
-}
-// --- End validation ---
+        const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
+        const lowerCaseDefs = {};
+        // Prepare definitions map expecting array format: [PoS, Definition]
+        for (const key in pdfState.keywordDefinitions) {
+            // Store the array directly under the lowercase key
+            lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key];
+        }
 
-highlightDiv.dataset.keyword = originalKeyword;
-highlightDiv.dataset.pos = partOfSpeech;         // *** Store Part of Speech separately ***
-highlightDiv.dataset.definition = actualDefinition; // *** Store only the definition text ***
-highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title slightly
+        try {
+            const page = await pdfState.pdfDocument.getPage(pageNum);
+            const textContent = await page.getTextContent({ normalizeWhitespace: true });
+            const items = textContent.items;
+
+            for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+                const item = items[itemIndex];
+                const itemText = item.str;
+                const itemTextLength = itemText.length;
+                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
+
+                keywordsForPage.forEach((originalKeyword, keywordIndex) => {
+                    const keywordLower = lowerCaseKeywords[keywordIndex];
+                    const definitionData = lowerCaseDefs[keywordLower]; // This is now expected to be an array
+
+                    // *** Validate the new array structure ***
+                    if (!Array.isArray(definitionData) || definitionData.length < 2 || typeof definitionData[1] !== 'string' || !definitionData[1]) {
+                        // console.warn(`Invalid/missing definition data for keyword: ${originalKeyword} (lowercase: ${keywordLower}) on page ${pageNum}`);
+                        return; // Skip this keyword if data format is wrong or definition is missing
+                    }
+                    const partOfSpeech = definitionData[0] || ''; // PoS is index 0, default to empty string
+                    const actualDefinition = definitionData[1]; // Definition is index 1
+
+                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                    let match;
+
+                    while ((match = regex.exec(itemText)) !== null) {
+                        const matchedString = match[1];
+                        const matchIndex = match.index;
+                        const matchLength = matchedString.length;
+
+                        if (matchLength === 0) { regex.lastIndex++; continue; }
+
+                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                        const itemWidth = item.width;
+                        const itemHeight = item.height;
+                        const itemLeft = tx[4];
+                        const itemTop = tx[5] - itemHeight;
+
+                        const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
+                        const highlightWidth = (matchLength / itemTextLength) * itemWidth;
+
+                        const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
+                        const finalTop = Math.max(0, itemTop);
+                        const finalWidth = Math.max(1, highlightWidth);
+                        const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
+
+                        const highlightDiv = document.createElement('div');
+                        highlightDiv.className = 'keyword-highlight';
+                        highlightDiv.style.left = `${finalLeft}px`;
+                        highlightDiv.style.top = `${finalTop}px`;
+                        highlightDiv.style.width = `${finalWidth}px`;
+                        highlightDiv.style.height = `${finalHeight}px`;
+
+                        // *** Store keyword, PoS, and definition separately ***
+                        highlightDiv.dataset.keyword = originalKeyword;
+                        highlightDiv.dataset.pos = partOfSpeech; // Store Part of Speech
+                        highlightDiv.dataset.definition = actualDefinition; // Store Definition text
+                        highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title
 
                         const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
-                        let isTheFirstInstance = false;
-                        if (firstLoc &&
-                            firstLoc.pageNum === pageNum &&
-                            firstLoc.itemIndex === itemIndex &&
-                            firstLoc.matchIndex === matchIndex) {
-                            isTheFirstInstance = true;
-                        }
-
-                        if (isTheFirstInstance) {
+                        if (firstLoc && firstLoc.pageNum === pageNum && firstLoc.itemIndex === itemIndex && firstLoc.matchIndex === matchIndex) {
                             highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
                         }
 
                         highlightDiv.addEventListener('click', (e) => {
                             e.stopPropagation();
-                            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return; // Disable in rotated mode
+                            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
                             const currentHighlight = e.currentTarget;
-                            const word = currentHighlight.dataset.keyword;
-                            const def = currentHighlight.dataset.definition;
-                            const rect = currentHighlight.getBoundingClientRect();
-                            showDefinitionPopup(word, def, rect);
+                            // Pass the clicked element itself to showDefinitionPopup
+                            showDefinitionPopup(currentHighlight); // *** Pass the element ***
                         });
                         overlayContainer.appendChild(highlightDiv);
                     }
@@ -2188,6 +2197,7 @@ highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title sligh
             overlayContainer.innerHTML = '';
         }
     }
+    // <<<< CONFIRMED: Correct Block End
 
     // --- Text & Annotation Layer Rendering (Keep from New Code) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
@@ -2868,41 +2878,41 @@ highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title sligh
     }
 
     // --- START: New function to check handle state ---
-function checkAndApplyHandleState() {
-    if (!ui.bookSpread || !ui.rightToolbar || !ui.leftToolbar) return; // Elements needed
+    function checkAndApplyHandleState() {
+        if (!ui.bookSpread || !ui.rightToolbar || !ui.leftToolbar) return; // Elements needed
 
-    const viewportWidth = window.innerWidth;
-    const bookRect = ui.bookSpread.getBoundingClientRect();
-    // Get the CURRENT width of the book spread as displayed on screen
-    const scaledBookWidth = bookRect.width;
+        const viewportWidth = window.innerWidth;
+        const bookRect = ui.bookSpread.getBoundingClientRect();
+        // Get the CURRENT width of the book spread as displayed on screen
+        const scaledBookWidth = bookRect.width;
 
-    // Threshold: If book takes up > 85% of viewport width, float handles
-    const overlapThreshold = 0.85;
-    const shouldFloat = (scaledBookWidth > viewportWidth * overlapThreshold);
+        // Threshold: If book takes up > 85% of viewport width, float handles
+        const overlapThreshold = 0.85;
+        const shouldFloat = (scaledBookWidth > viewportWidth * overlapThreshold);
 
-    // Toggle classes on toolbars AND body
-    ui.rightToolbar.classList.toggle('handle-floated-top-right', shouldFloat);
-    ui.leftToolbar.classList.toggle('handle-floated-top-left', shouldFloat);
-    ui.body.classList.toggle('right-handle-floated', shouldFloat);
-    ui.body.classList.toggle('left-handle-floated', shouldFloat);
+        // Toggle classes on toolbars AND body
+        ui.rightToolbar.classList.toggle('handle-floated-top-right', shouldFloat);
+        ui.leftToolbar.classList.toggle('handle-floated-top-left', shouldFloat);
+        ui.body.classList.toggle('right-handle-floated', shouldFloat);
+        ui.body.classList.toggle('left-handle-floated', shouldFloat);
 
-    // Optional: Log status
-    // updateStatus(`Handles floated: ${shouldFloat} (Book: ${Math.round(scaledBookWidth)}px, Viewport: ${viewportWidth}px)`);
+        // Optional: Log status
+        // updateStatus(`Handles floated: ${shouldFloat} (Book: ${Math.round(scaledBookWidth)}px, Viewport: ${viewportWidth}px)`);
 
-    // If handles are floated, ensure main toolbars are hidden unless explicitly shown
-    // This prevents hover on the *edge* from showing the main bar when handle is floated
-    if (shouldFloat) {
-        // If toolbar isn't explicitly visible (via click), hide it.
-        if (!ui.rightToolbar.classList.contains('visible')) {
-            manageToolbar(false);
-        }
-         if (!ui.leftToolbar.classList.contains('visible')) {
-            manageLeftToolbar(false);
+        // If handles are floated, ensure main toolbars are hidden unless explicitly shown
+        // This prevents hover on the *edge* from showing the main bar when handle is floated
+        if (shouldFloat) {
+            // If toolbar isn't explicitly visible (via click), hide it.
+            if (!ui.rightToolbar.classList.contains('visible')) {
+                manageToolbar(false);
+            }
+             if (!ui.leftToolbar.classList.contains('visible')) {
+                manageLeftToolbar(false);
+            }
         }
     }
-}
-// --- END: New function ---
-    
+    // --- END: New function ---
+
     // --- View Modes (Keep from New Code, uses new state/UI) ---
     function applyCurrentViewModeStyles() {
         if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || !ui.bookSpread) return;
@@ -2937,9 +2947,7 @@ function checkAndApplyHandleState() {
         ui.bookSpread.style.transformOrigin = 'center center';
         ui.bookSpread.style.transform = transformValue;
         // Visibility of #return-view-fixed-btn is controlled purely by CSS based on body classes
-    checkAndApplyHandleState();
-}
-    
+        checkAndApplyHandleState(); // Check if handles need floating after scaling
     }
 
     async function setRotatedView() {
@@ -3039,8 +3047,8 @@ function checkAndApplyHandleState() {
     }
 
     function initPageSlider() {
-        if (!ui.slider || !ui.sliderContainer || !ui.sliderTriggerZone || !ui.loMilestonesContainer) {
-            console.error("Slider elements, trigger zone, or LO container not found"); return;
+        if (!ui.slider || !ui.sliderContainer || !ui.sliderTriggerZone || !ui.loMilestonesContainer || !ui.loTooltip) {
+            console.error("Slider elements, trigger zone, LO container, or LO tooltip not found"); return;
         }
 
         setTimeout(checkAndApplyHandleState, 500);
@@ -3227,109 +3235,96 @@ function checkAndApplyHandleState() {
         });
     }
 
-        // --- NEW VERSIONS of Hover Handlers ---
-
-            // --- UPDATED VERSIONS of Hover Handlers (with Fade Transition) ---
-
-        // --- UPDATED VERSION of handleMilestoneEnter (No Italics/Emoji Checkmark for passed) ---
-
-        // --- UPDATED VERSION of handleMilestoneEnter (With Font Weight Change) ---
     function handleMilestoneEnter(event) {
         const milestone = event.currentTarget;
         const loText = milestone.dataset.loText;
         const isPassed = milestone.classList.contains(CSS_CLASS.LO_PASSED); // Check if LO is passed
-
-        // Clear any pending fade-out/fade-in from previous hovers
-        clearTimeout(appState.sliderInfoFadeTimeout);
-        appState.sliderInfoFadeTimeout = null; // Reset timeout ID
 
         // Apply temporary coloring only if it's NOT passed
         if (!isPassed) {
             milestone.classList.add(CSS_CLASS.HOVER_COLORED);
         }
 
+        if (ui.loTooltip) {
+             // Construct display text conditionally
+            let displayText;
+            const fallbackText = 'Learning Outcome';
+            const checkmarkEmoji = '✅'; // Use the actual emoji
+
+            if (isPassed) {
+                // If passed: BOLD text + Emoji checkmark
+                displayText = `<strong>${loText || fallbackText}</strong> ${checkmarkEmoji}`;
+            } else {
+                // If not passed: ITALIC text with LIGHTER FONT WEIGHT
+                displayText = `<em><span style="font-weight: 400;">${loText || fallbackText}</span></em>`;
+            }
+            ui.loTooltip.innerHTML = displayText;
+
+            // Position tooltip
+            const milestoneRect = milestone.getBoundingClientRect();
+            const tooltipRect = ui.loTooltip.getBoundingClientRect(); // Get current size
+            let left = milestoneRect.left + (milestoneRect.width / 2) - (tooltipRect.width / 2);
+            let top = milestoneRect.top - tooltipRect.height - LO_TOOLTIP_OFFSET_Y; // Position above
+
+            // Prevent viewport overflow
+            left = Math.max(5, Math.min(left, window.innerWidth - tooltipRect.width - 5));
+            top = Math.max(5, top); // Prevent top overflow
+
+            ui.loTooltip.style.left = `${left}px`;
+            ui.loTooltip.style.top = `${top}px`;
+            toggleVisibility(ui.loTooltip, true);
+        }
+
+        // Handle slider info text change (with fade)
         if (ui.sliderInfo) {
-            // Store original text if not already stored and not currently showing an LO
-            // Check includes the new span possibility
+            clearTimeout(appState.sliderInfoFadeTimeout);
+            appState.sliderInfoFadeTimeout = null; // Reset timeout ID
             if (appState.originalSliderInfoText === null && !ui.sliderInfo.innerHTML.includes('<em') && !ui.sliderInfo.innerHTML.includes('<strong')) {
                 appState.originalSliderInfoText = ui.sliderInfo.innerHTML;
             }
-
-            // 1. Start fade out
-            ui.sliderInfo.style.opacity = 0;
-
-            // 2. Set timeout to change content *during* fade out and start fade in
+            ui.sliderInfo.style.opacity = 0; // Start fade out
             appState.sliderInfoFadeTimeout = setTimeout(() => {
-                // Construct display text conditionally
-                let displayText;
+                // Use the same display text logic as the tooltip for consistency
+                let infoDisplayText;
                 const fallbackText = 'Learning Outcome';
-                const checkmarkEmoji = '✅'; // Use the actual emoji
-
-                if (isPassed) {
-                    // If passed: BOLD text (implicitly weight 700) + Emoji checkmark
-                    displayText = `<strong>${loText || fallbackText}</strong> ${checkmarkEmoji}`;
-                } else {
-                    // If not passed: ITALIC text WRAPPED in span with LIGHTER FONT WEIGHT (400)
-                    // Keeping <em> for italics, span for weight control.
-                    displayText = `<em><span style="font-weight: 400;">${loText || fallbackText}</span></em>`;
-                }
-
-                // 3. Change the content
-                ui.sliderInfo.innerHTML = displayText;
-
-                // 4. Start fade in (Restore base opacity - defined in CSS as 0.8)
-                // Setting to 1 might look slightly inconsistent if base is 0.8
-                ui.sliderInfo.style.opacity = ''; // Let CSS handle base opacity (defaults to 1 if not set, or 0.8 if rule exists)
-
-                appState.sliderInfoFadeTimeout = null; // Timeout complete
-
-            }, 125); // Shortened delay slightly (half of 250ms transition)
-
+                const checkmarkEmoji = '✅';
+                if (isPassed) { infoDisplayText = `<strong>${loText || fallbackText}</strong> ${checkmarkEmoji}`; }
+                else { infoDisplayText = `<em><span style="font-weight: 400;">${loText || fallbackText}</span></em>`; }
+                ui.sliderInfo.innerHTML = infoDisplayText;
+                ui.sliderInfo.style.opacity = ''; // Let CSS handle base opacity (fade in)
+                appState.sliderInfoFadeTimeout = null;
+            }, 125); // Short delay
         }
     }
-    // --- END UPDATED VERSION ---
-    // --- END UPDATED VERSION ---
 
     function handleMilestoneLeave(event) {
         const milestone = event.currentTarget;
-
-        // Clear any pending fade-out/fade-in from enter hover
-        clearTimeout(appState.sliderInfoFadeTimeout);
-        appState.sliderInfoFadeTimeout = null;
-
         milestone.classList.remove(CSS_CLASS.HOVER_COLORED);
 
-        // Only proceed if original text was actually stored (meaning we are showing LO text)
+        // Hide tooltip
+        if (ui.loTooltip) {
+            toggleVisibility(ui.loTooltip, false);
+        }
+
+        // Restore slider info text (with fade)
         if (ui.sliderInfo && appState.originalSliderInfoText !== null) {
-
-            // 1. Start fade out (of the LO text)
-            ui.sliderInfo.style.opacity = 0;
-
-            // 2. Set timeout to restore original content and fade back in
+            clearTimeout(appState.sliderInfoFadeTimeout);
+            appState.sliderInfoFadeTimeout = null;
+            ui.sliderInfo.style.opacity = 0; // Start fade out
             appState.sliderInfoFadeTimeout = setTimeout(() => {
-                // 3. Restore original text
                 ui.sliderInfo.innerHTML = appState.originalSliderInfoText;
-                appState.originalSliderInfoText = null; // Clear the stored text
-
-                // 4. Start fade in (of the original text)
-                ui.sliderInfo.style.opacity = 1; // Or back to 0.8 if that's your base
-
-                appState.sliderInfoFadeTimeout = null; // Timeout complete
-
-            }, 200); // Match the enter timeout delay
-        } else if (ui.sliderInfo && !ui.sliderInfo.innerHTML.startsWith('<em>') && !ui.sliderInfo.innerHTML.startsWith('<strong>')) {
+                appState.originalSliderInfoText = null; // Clear stored text
+                ui.sliderInfo.style.opacity = ''; // Let CSS handle base opacity (fade in)
+                appState.sliderInfoFadeTimeout = null;
+            }, 200); // Slightly longer delay to restore
+        } else if (ui.sliderInfo && !appState.sliderInfoFadeTimeout) {
              // Safety check: If mouse leaves and we weren't showing LO text, ensure opacity is correct
-             ui.sliderInfo.style.opacity = 1; // Or 0.8
+             ui.sliderInfo.style.opacity = ''; // Restore default opacity
         }
     }
-    // --- END UPDATED VERSIONS ---
-
-
-
     // --- END: LO Milestone Functions ---
 
-            // --- NEW: LO Achievement Popup Functions ---
-    // ***** THIS IS THE REPLACEMENT FUNCTION (Updated for Layout) *****
+    // --- NEW: LO Achievement Popup Functions ---
     function showLoAchievementPopup(learningOutcomeObject, nextPageTarget) {
         if (!ui.loAchievementBackdrop || !ui.loAchievementPopup || !ui.loAchievementText || !ui.loContinueBtn) {
             console.error("Cannot show LO achievement popup: Missing elements.");
@@ -3355,9 +3350,7 @@ function checkAndApplyHandleState() {
         toggleVisibility(ui.loAchievementPopup, true);
         ui.loContinueBtn.focus();
     }
-    // ***** END OF REPLACEMENT FUNCTION *****
 
-    // --- Keep the hideLoAchievementPopup function as it is ---
     function hideLoAchievementPopup() {
         if (ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE)) {
             toggleVisibility(ui.loAchievementBackdrop, false);
@@ -3381,28 +3374,32 @@ function checkAndApplyHandleState() {
     async function loadOverlayData(pdfUrl) {
         const overlayUrl = pdfUrl.replace(/\.pdf$/i, '.overlay.json');
         updateStatus(`Attempting to load overlay from: ${overlayUrl}`);
-        pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; // Reset
+        pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; // Reset more state
         try {
             const response = await fetch(overlayUrl);
             if (!response.ok) {
-                if (response.status !== 404) { // Don't warn for 404, it's expected if no overlay exists
-                    console.warn(`Overlay fetch failed: HTTP error ${response.status} for ${overlayUrl}`);
-                } else {
-                     updateStatus(`No overlay file found at ${overlayUrl}.`);
-                }
+                if (response.status !== 404) { console.warn(`Overlay fetch failed: HTTP ${response.status} for ${overlayUrl}`); }
+                else { updateStatus(`No overlay file found at ${overlayUrl}.`); }
                 return false;
             }
             const data = await response.json();
+            // *** MODIFICATION START: Validate new structure ***
             if (!data || typeof data.keywords !== 'object' || typeof data.pages !== 'object') {
                 console.warn("Invalid overlay structure in JSON file."); return false;
             }
-            // Process keywords (store keys as lowercase for easier matching)
+            // Process keywords expecting array format: [PoS, Definition]
             const processedKeywords = {};
             for (const [key, value] of Object.entries(data.keywords)) {
-                if (key && typeof value === 'string') { processedKeywords[key.toLowerCase()] = value; }
-                 else { console.warn(`Invalid keyword entry skipped: Key='${key}'`); }
+                 // Validate the array format for each keyword
+                if (key && Array.isArray(value) && value.length >= 2 && typeof value[1] === 'string' && value[1]) {
+                     processedKeywords[key] = value; // Store the array directly
+                } else {
+                     console.warn(`Invalid keyword entry skipped: Key='${key}', Value=${JSON.stringify(value)}. Expected ["(pos)", "definition"]`);
+                }
             }
-            pdfState.keywordDefinitions = processedKeywords;
+            pdfState.keywordDefinitions = processedKeywords; // Now stores { Keyword: ["(pos)", "definition"] }
+            // *** MODIFICATION END ***
+
             // Process page keywords (keys as strings)
             const processedPages = {};
             for (const [pageNum, pageWords] of Object.entries(data.pages)) {
@@ -3411,13 +3408,14 @@ function checkAndApplyHandleState() {
                 } else { console.warn(`Invalid page entry skipped: Page='${pageNum}'`); }
             }
             pdfState.pageKeywords = processedPages;
-            updateStatus(`Overlay loaded successfully: ${Object.keys(pdfState.keywordDefinitions).length} keywords, ${Object.keys(pdfState.pageKeywords).length} pages defined.`);
+            updateStatus(`Overlay loaded: ${Object.keys(pdfState.keywordDefinitions).length} keywords, ${Object.keys(pdfState.pageKeywords).length} pages defined.`);
             return true;
         } catch (error) {
-            console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}. Interactive keywords disabled.`);
-            pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; return false;
+            console.warn(`Overlay fetch/parse error for ${overlayUrl}: ${error.message}.`);
+            pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; return false;
         }
-     }
+    }
+
 
     async function loadIframeData(pdfUrl) {
         const iframeDataUrl = pdfUrl.replace(/\.pdf$/i, '-iframes.json');
@@ -3526,16 +3524,16 @@ function checkAndApplyHandleState() {
     async function findFirstKeywordInstances() {
         updateStatus("Starting pre-scan for first keyword instances...");
         pdfState.globalFirstInstanceLocation = {}; // Reset
-        const keywordsToFind = new Set(Object.keys(pdfState.keywordDefinitions)); // Uses the already lowercased keys
+        const lowerCaseKeywordsToFind = new Set(Object.keys(pdfState.keywordDefinitions).map(k => k.toLowerCase()));
 
-        if (keywordsToFind.size === 0 || !pdfState.pdfDocument) {
+        if (lowerCaseKeywordsToFind.size === 0 || !pdfState.pdfDocument) {
             updateStatus("Pre-scan skipped: No keywords defined or PDF not loaded.");
             return;
         }
 
         const totalPages = pdfState.pdfDocument.numPages;
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-            if (keywordsToFind.size === 0) {
+            if (lowerCaseKeywordsToFind.size === 0) {
                 updateStatus("Pre-scan finished early: All first instances found."); break;
             }
             try {
@@ -3549,35 +3547,38 @@ function checkAndApplyHandleState() {
                     if (!itemText || itemText.trim().length === 0) continue;
 
                     // Iterate over remaining keywords to find
-                    const keywordsToCheckInItem = Array.from(keywordsToFind);
-                    for (const keywordLower of keywordsToCheckInItem) {
-                        // Need the original casing for the Regex, find it in pageKeywords or fallback to keywordDefinitions key (which might differ in case)
-                        let originalKeywordForRegex = keywordLower; // Fallback
-                        const pageKwList = pdfState.pageKeywords[pageNum.toString()] || [];
-                        const foundOriginal = pageKwList.find(kw => kw.toLowerCase() === keywordLower);
-                        if (foundOriginal) {
-                            originalKeywordForRegex = foundOriginal;
-                        } else {
-                            // Attempt to find original casing from definitions (less reliable)
-                            const originalDefKey = Object.keys(pdfState.keywordDefinitions).find(k => k.toLowerCase() === keywordLower);
-                            if (originalDefKey) originalKeywordForRegex = originalDefKey;
-                        }
+                    const currentKeywordsToCheck = Array.from(lowerCaseKeywordsToFind); // Copy the set for iteration
+                    for (const keywordLower of currentKeywordsToCheck) {
+                        // Find the original casing from the definitions keys (since pageKeywords might not have it if it's not on this page)
+                         let originalKeywordForRegex = keywordLower; // Fallback
+                         const originalDefKey = Object.keys(pdfState.keywordDefinitions).find(k => k.toLowerCase() === keywordLower);
+                         if (originalDefKey) originalKeywordForRegex = originalDefKey;
 
                         // Use original casing for regex boundary check but lowercase for tracking
                         const escapedKeyword = originalKeywordForRegex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                        const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi'); // Case-insensitive search
-                        const match = regex.exec(itemText);
+                        // Ensure the regex matches the specific keyword as a whole word, case-insensitively
+                        const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                        let match;
 
-                        if (match !== null) {
-                            const matchIndex = match.index;
-                            // Store location using the lowercase keyword key
-                            pdfState.globalFirstInstanceLocation[keywordLower] = { pageNum, itemIndex, matchIndex };
-                            keywordsToFind.delete(keywordLower); // Remove found keyword
-                            if (keywordsToFind.size === 0) break; // Exit inner loop if all found
+                        // Check all matches within the current text item
+                        while ((match = regex.exec(itemText)) !== null) {
+                            // Check if we've already found this keyword
+                            if (pdfState.globalFirstInstanceLocation[keywordLower]) continue;
+
+                            // Check if the *matched* string is exactly the keyword (case-insensitive)
+                            // This avoids partial matches if the regex accidentally captures more
+                            if (match[1].toLowerCase() === keywordLower) {
+                                const matchIndex = match.index;
+                                pdfState.globalFirstInstanceLocation[keywordLower] = { pageNum, itemIndex, matchIndex };
+                                lowerCaseKeywordsToFind.delete(keywordLower); // Remove found keyword
+                                // console.log(`Found first instance of '${keywordLower}' on page ${pageNum}, item ${itemIndex}, index ${matchIndex}`);
+                                if (lowerCaseKeywordsToFind.size === 0) break; // Exit inner loop if all found
+                            }
                         }
+                         if (lowerCaseKeywordsToFind.size === 0) break; // Exit outer loop if all found
                     }
-                     if (keywordsToFind.size === 0) break; // Exit outer loop if all found
                 }
+                 if (lowerCaseKeywordsToFind.size === 0) break; // Exit page loop if all found
             } catch (error) {
                 console.warn(`Error processing page ${pageNum} during keyword pre-scan:`, error);
             }
@@ -3744,76 +3745,65 @@ function checkAndApplyHandleState() {
     }
 
     // --- Popup Handling (Keep from New Code) ---
-    // --- UPDATED Popup Positioning Logic ---
-function showDefinitionPopup(word, definition, rect) {
-    if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !rect) {
-        console.error("Cannot show definition popup: Missing element or rect."); return;
-    }
-    if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
-        updateStatus("Definition popup suppressed in rotated mode."); return;
-    }
+    // Replacement showDefinitionPopup function // <<<< CONFIRMED: Correct Block Start
+    function showDefinitionPopup(clickedHighlightElement) {
+        // Get data directly from the clicked element's dataset attributes
+        const word = clickedHighlightElement?.dataset?.keyword;
+        const pos = clickedHighlightElement?.dataset?.pos || ''; // Default to empty if missing
+        const definition = clickedHighlightElement?.dataset?.definition;
+        const rect = clickedHighlightElement?.getBoundingClientRect(); // Get rect from the element
 
-    hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
-
-    // Set content
-    // Get data from the clicked element's dataset
-const word = currentHighlight.dataset.keyword;
-const pos = currentHighlight.dataset.pos || ''; // Get part of speech, default to empty
-const def = currentHighlight.dataset.definition; // Get definition text
-
-// *** Set the innerHTML for the header with spans ***
-ui.popupWord.innerHTML = `
-    <span class="keyword-term">${word || 'Keyword'}</span>
-    <span class="part-of-speech">${pos}</span>
-`;
-// Set the definition text
-ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition not available.</span>`;
-    ui.popupDefinition.scrollTop = 0;
-
-    // Estimate popup dimensions (adjust if your popups are usually taller/wider)
-    const estPopupWidth = Math.min(ui.definitionPopup.offsetWidth || 320, 320); // Use max-width as fallback
-    const estPopupHeight = Math.min(ui.definitionPopup.offsetHeight || 200, 200); // Estimate height
-
-    // Constants for positioning
-    const margin = 10; // Space from viewport edges
-    const verticalOffset = 8; // Space between keyword and popup
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    // --- Calculate Position ---
-
-    // Horizontal: Center popup over the keyword's horizontal center
-    let targetLeft = rect.left + (rect.width / 2) - (estPopupWidth / 2);
-    // Keep popup within screen horizontally
-    targetLeft = Math.max(margin, targetLeft); // Prevent left overflow
-    targetLeft = Math.min(targetLeft, viewportWidth - estPopupWidth - margin); // Prevent right overflow
-    targetLeft = Math.max(margin, targetLeft); // Re-check left after right adjustment
-
-    // Vertical: Default to above the keyword
-    let targetTop = rect.top - estPopupHeight - verticalOffset;
-    let transformOrigin = 'bottom center'; // Arrow points down from popup
-
-    // If placing above goes off-screen OR keyword is in top 40% (prefer below)
-    if (targetTop < margin || rect.top < viewportHeight * 0.4) {
-        targetTop = rect.bottom + verticalOffset; // Try below
-        transformOrigin = 'top center'; // Arrow points up from popup
-
-        // If placing below goes off bottom, clamp to bottom edge
-        if (targetTop + estPopupHeight > viewportHeight - margin) {
-            targetTop = viewportHeight - estPopupHeight - margin;
-            // If still negative after clamping to bottom, clamp to top instead
-            targetTop = Math.max(margin, targetTop);
+        if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !word || !definition || !rect) {
+            console.error("Cannot show definition popup: Missing element, data, or rect.");
+            return;
         }
+        if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
+            updateStatus("Definition popup suppressed in rotated mode."); return;
+        }
+
+        hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
+
+        // *** Set the innerHTML for the header using spans ***
+        ui.popupWord.innerHTML = `
+            <span class="keyword-term">${word}</span>
+            <span class="part-of-speech">${pos}</span>
+        `;
+        // Set the definition text
+        ui.popupDefinition.innerHTML = definition; // Definition is already just the text
+        ui.popupDefinition.scrollTop = 0;
+
+        // --- Positioning Logic (from previous step, keep this) ---
+        const estPopupWidth = Math.min(ui.definitionPopup.offsetWidth || 320, 320);
+        const estPopupHeight = Math.min(ui.definitionPopup.offsetHeight || 200, 200);
+        const margin = 10;
+        const verticalOffset = 8;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let targetLeft = rect.left + (rect.width / 2) - (estPopupWidth / 2);
+        targetLeft = Math.max(margin, targetLeft);
+        targetLeft = Math.min(targetLeft, viewportWidth - estPopupWidth - margin);
+        targetLeft = Math.max(margin, targetLeft);
+
+        let targetTop = rect.top - estPopupHeight - verticalOffset;
+        let transformOrigin = 'bottom center';
+
+        if (targetTop < margin || rect.top < viewportHeight * 0.4) {
+            targetTop = rect.bottom + verticalOffset;
+            transformOrigin = 'top center';
+            if (targetTop + estPopupHeight > viewportHeight - margin) {
+                targetTop = viewportHeight - estPopupHeight - margin;
+                targetTop = Math.max(margin, targetTop);
+            }
+        }
+
+        ui.definitionPopup.style.left = `${Math.round(targetLeft)}px`;
+        ui.definitionPopup.style.top = `${Math.round(targetTop)}px`;
+        ui.definitionPopup.style.transformOrigin = transformOrigin;
+
+        toggleVisibility(ui.definitionPopup, true);
     }
-
-    // Apply the calculated styles
-    ui.definitionPopup.style.left = `${Math.round(targetLeft)}px`;
-    ui.definitionPopup.style.top = `${Math.round(targetTop)}px`;
-    ui.definitionPopup.style.transformOrigin = transformOrigin;
-
-    // Make it visible
-    toggleVisibility(ui.definitionPopup, true);
-}
+    // <<<< CONFIRMED: Correct Block End
 
     function hideDefinitionPopup() { toggleVisibility(ui.definitionPopup, false); }
 
@@ -3944,13 +3934,12 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
 
     if (ui.notesPopupContainer.classList.contains(CSS_CLASS.VISIBLE)) {
         updateStatus("Hiding notes popup.");
-            // --- START: ADDED CODE ---
-    // Clear the fade timer & reset button visibility
-    clearTimeout(notesNavFadeTimeout);
-    notesNavFadeTimeout = null;
-    ui.notesPrevBtn?.classList.remove('notes-nav-faded');
-    ui.notesNextBtn?.classList.remove('notes-nav-faded');
-    // --- END: ADDED CODE ---
+        // Clear the fade timer & reset button visibility
+        clearTimeout(notesNavFadeTimeout);
+        notesNavFadeTimeout = null;
+        ui.notesPrevBtn?.classList.remove('notes-nav-faded');
+        ui.notesNextBtn?.classList.remove('notes-nav-faded');
+
         toggleVisibility(ui.notesPopupBackdrop, false);
         toggleVisibility(ui.notesPopupContainer, false);
 
@@ -3986,10 +3975,9 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
 
     async function renderNotesPage(pageNum) {
     // Check for required elements
-    if (!pdfState.currentNotesPdfDoc || pageNum < 1 || pageNum > pdfState.totalNotesPages || !ui.notesPdfCanvas || !ui.notesPdfCanvasContainer) {
+    if (!pdfState.currentNotesPdfDoc || pageNum < 1 || pageNum > pdfState.totalNotesPages || !ui.notesPdfCanvas || !ui.notesPdfCanvasContainer || !ui.notesLocalLoader) {
          console.warn("Cannot render notes page: Invalid state or elements.");
-         // Optionally hide local loader here if called erroneously? Or rely on caller.
-         ui.notesLocalLoader?.classList.remove(CSS_CLASS.VISIBLE);
+         ui.notesLocalLoader?.classList.remove(CSS_CLASS.VISIBLE); // Hide loader if error
          return;
     }
     updateStatus(`Rendering notes page ${pageNum} of ${pdfState.totalNotesPages}`);
@@ -3998,15 +3986,15 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
     // *** Ensure canvas is hidden initially for the render ***
     canvas.style.opacity = 0;
     ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW); // Remove previous wiggle
+    ui.notesLocalLoader?.classList.add(CSS_CLASS.VISIBLE); // Show loader for render
 
     try {
         const page = await pdfState.currentNotesPdfDoc.getPage(pageNum);
-        // ... (viewport calculation code remains the same)
         const containerStyle = getComputedStyle(ui.notesPdfCanvasContainer);
         const availableWidth = parseFloat(containerStyle.width);
         const availableHeight = parseFloat(containerStyle.height);
         if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
-            console.warn("Notes canvas container has invalid dimensions."); return;
+            console.warn("Notes canvas container has invalid dimensions."); throw new Error("Invalid container dimensions");
         }
         const defaultViewport = page.getViewport({ scale: 1 });
         const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
@@ -4032,10 +4020,8 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
         ui.notesNextBtn.disabled = (pdfState.currentNotesPageNum >= pdfState.totalNotesPages);
         updateStatus(`Notes page ${pageNum} rendered successfully.`);
 
-            // --- START: ADDED CODE ---
-    // Make buttons visible and start fade timer
-    showNotesNavAndResetTimer();
-    // --- END: ADDED CODE ---
+        // Make buttons visible and start fade timer
+        showNotesNavAndResetTimer();
 
         // Trigger instruction wiggle (keep this)
         if (ui.notesInstruction) {
@@ -4052,8 +4038,9 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
         ctx.fillText(`Error rendering page ${pageNum}.`, canvas.width / 2, canvas.height / 2);
         canvas.style.opacity = 1; // Show error
         ui.notesPrevBtn.disabled = true; ui.notesNextBtn.disabled = true;
-        // Don't hide the loader here, let the calling function handle errors/popup hiding
         throw error; // Re-throw error so showNotesPopup catch block handles it
+    } finally {
+        ui.notesLocalLoader?.classList.remove(CSS_CLASS.VISIBLE); // Hide loader after render attempt
     }
 }
 
@@ -4062,7 +4049,6 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
 
 
     // --- Game Transition Logic (MODIFIED - Button logic changed) ---
-    // --- UPDATED transitionToChapter function ---
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
@@ -4088,7 +4074,6 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
             updateStatus("Reader should be visible and scaled.");
         }, 50); // Delay allows transitions to start smoothly.
     }
-    // --- END OF UPDATED FUNCTION ---
 
     function handleGameOverFromGame(score) {
         updateStatus(`Game over message received. Score: ${score}`);
@@ -4157,8 +4142,7 @@ ui.popupDefinition.innerHTML = def || `<span style="color: #e74c3c;">Definition 
             requiredReadingTime = 0;
             currentPageLockStartTime = 0;
             clearTimeout(appState.alertTimeout); // Hide any active alert (use appState timer var from new code)
-            const alertDiv = document.getElementById('reading-time-alert');
-            if (alertDiv) alertDiv.classList.remove('visible');
+            toggleVisibility(ui.readingTimeAlert, false); // Hide alert visually
         } else if (isTimelockGloballyEnabled) {
             // If turning the timelock ON, re-evaluate the lock state for the current view immediately.
             updateStatus("Timelock globally enabled, re-evaluating lock state for current view.");
@@ -4185,7 +4169,7 @@ function showNotesNavAndResetTimer() {
     ui.notesNextBtn?.classList.remove('notes-nav-faded');
     startNotesNavFadeTimer();
 }
-    
+
     // --- Event Setup (REVERTED Timelock Toggle Listener, keeps other new listeners, MODIFIED Game/LO Listeners) ---
     function setupEvents() {
         updateStatus("Setting up events");
@@ -4223,13 +4207,13 @@ function showNotesNavAndResetTimer() {
         ui.notesPrevBtn?.addEventListener('click', notesPrevPage);
         ui.notesNextBtn?.addEventListener('click', notesNextPage);
 
-        // --- START: ADDED LISTENERS ---
-// Show buttons on hover/tap and reset timer
-ui.notesPrevBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-ui.notesNextBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
-// --- END: ADDED LISTENERS ---
+        // --- START: ADDED LISTENERS for Notes Nav Fade ---
+        // Show buttons on hover/tap and reset timer
+        ui.notesPrevBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesNextBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
+        // --- END: ADDED LISTENERS ---
 
         // --- Page Interaction (Edges & Rotate Button) ---
         ui.bookSpread?.addEventListener('click', (e) => {
