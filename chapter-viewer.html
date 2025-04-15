@@ -2836,48 +2836,53 @@ function checkAndApplyHandleState() {
 // --- END: New function ---
     
     // --- View Modes (Keep from New Code, uses new state/UI) ---
-    function applyCurrentViewModeStyles() {
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || !ui.bookSpread) return;
+    // --- Corrected applyCurrentViewModeStyles Function ---
+function applyCurrentViewModeStyles() {
+    // Check if elements exist and not in game mode
+    if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || !ui.bookSpread) {
+        // If called when not ready, ensure float classes are removed just in case
+        ui.rightToolbar?.classList.remove('handle-floated-top-right');
+        ui.leftToolbar?.classList.remove('handle-floated-top-left');
+        ui.body.classList.remove('right-handle-floated');
+        ui.body.classList.remove('left-handle-floated');
+        return;
+    }
 
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isEffectiveSinglePage = isFullscreen || isContentRotated || !pdfState.isDoublePageView;
+    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+    const isEffectiveSinglePage = isFullscreen || isContentRotated || !pdfState.isDoublePageView;
 
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const bookWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
-        const bookHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const bookWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-w'));
+    const bookHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-h'));
 
-        let scale = 1;
-        let transformValue = 'translate(-50%, -50%)'; // Base centering
+    let scale = 1;
+    let transformValue = 'translate(-50%, -50%)'; // Base centering
 
-        if (isContentRotated) {
-            // Calculate scale based on rotated dimensions
-            const scaleX = viewportWidth / bookHeight;
-            const scaleY = viewportHeight / bookWidth;
-            scale = Math.min(scaleX, scaleY) * 0.98; // Add padding
-            transformValue = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
-        } else {
-            // Calculate scale based on normal dimensions
-            const totalWidth = isEffectiveSinglePage ? bookWidth : bookWidth * 2;
-            const scaleX = viewportWidth / totalWidth;
-            const scaleY = viewportHeight / bookHeight;
-            scale = Math.min(scaleX, scaleY) * 0.98; // Add padding
-            transformValue = `translate(-50%, -50%) scale(${scale})`;
-        }
+    if (isContentRotated) {
+        // Calculate scale based on rotated dimensions
+        const scaleX = viewportWidth / bookHeight;
+        const scaleY = viewportHeight / bookWidth;
+        scale = Math.min(scaleX, scaleY) * 0.98; // Add padding
+        transformValue = `translate(-50%, -50%) rotate(90deg) scale(${scale})`;
+    } else {
+        // Calculate scale based on normal dimensions
+        const totalWidth = isEffectiveSinglePage ? bookWidth : bookWidth * 2;
+        const scaleX = viewportWidth / totalWidth;
+        const scaleY = viewportHeight / bookHeight;
+        scale = Math.min(scaleX, scaleY) * 0.98; // Add padding
+        transformValue = `translate(-50%, -50%) scale(${scale})`;
+    }
 
-        ui.bookSpread.style.transformOrigin = 'center center';
-        ui.bookSpread.style.transform = transformValue;
-        // Visibility of #return-view-fixed-btn is controlled purely by CSS based on body classes
-
-       function applyCurrentViewModeStyles() {
-    // ... all the existing code inside this function ...
+    // Apply the scale and transform
     ui.bookSpread.style.transformOrigin = 'center center';
     ui.bookSpread.style.transform = transformValue;
 
-    // *** ADD THIS LINE AT THE END ***
+    // *** Call the handle check AFTER applying the transform ***
     checkAndApplyHandleState();
-} // <-- Closing brace of applyCurrentViewModeStyles 
+}
+// --- END of Corrected applyCurrentViewModeStyles ---
     }
 
     async function setRotatedView() {
