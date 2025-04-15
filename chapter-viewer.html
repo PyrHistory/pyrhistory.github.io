@@ -940,6 +940,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 /* --- END: Disable Keyword Effects in Rotated Mode --- */
 
 /* --- UPDATED Keyword Popup Styles --- */
+/* === START: Replacement Keyword Popup CSS === */
 #definition-popup {
     position: fixed;
     background: #ffffff;
@@ -948,50 +949,72 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
     padding: 14px 18px;
     max-width: 320px;
     min-width: 180px;
-    /* Font set per element below */
-    color: #2d3748; /* Default text color */
+    color: #2d3748;
     z-index: 10002;
-    transform-origin: top center; /* Default, might be adjusted by JS */
-    transform: translateY(6px) scale(0.98); /* Start slightly below */
+    transform-origin: top center;
+    transform: translateY(6px) scale(0.98);
     opacity: 0;
     visibility: hidden;
     transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1), visibility 0s linear 0.18s;
     pointer-events: none;
-    will-change: transform, opacity; /* Performance hint */
+    will-change: transform, opacity;
 }
 #definition-popup.visible {
-    transform: translateY(0) scale(1); /* Move to final position */
+    transform: translateY(0) scale(1);
     opacity: 1;
     visibility: visible;
-    transition-delay: 0s, 0s, 0s; /* Ensure visibility transitions correctly */
+    transition-delay: 0s, 0s, 0s;
     pointer-events: auto;
 }
 
+/* Style for the header containing keyword + PoS */
 #popup-word {
-    font-weight: 600;
-    font-size: 15px;
-    font-family: var(--font-heading); /* MODIFIED: Use Roboto */
+    display: flex;
+    justify-content: space-between; /* Push items apart */
+    align-items: baseline;      /* Align text baselines */
     margin: 0 0 10px 0;
-    color: var(--lab-blue); /* MODIFIED: Use Dark Navy Blue */
     border-bottom: 1px solid #e2e8f0;
     padding: 0 0 8px 0;
+    font-family: var(--font-heading); /* Roboto */
+    font-size: 15px;
+    font-weight: 600;
 }
 
+/* Style for the keyword term itself */
+#popup-word .keyword-term {
+    color: #1c1e66; /* NEW Blue color */
+    flex-grow: 1;      /* Allow it to take space */
+    padding-right: 10px; /* Space before PoS */
+}
+
+/* Style for the Part of Speech */
+#popup-word .part-of-speech {
+    color: #777777; /* Grey color */
+    font-family: var(--font-heading); /* Roboto */
+    font-size: 0.85em; /* Slightly smaller */
+    font-weight: 400;  /* Normal weight */
+    white-space: nowrap; /* Prevent wrapping */
+    flex-shrink: 0;  /* Don't let it shrink */
+    margin-left: 10px; /* Space from keyword */
+}
+
+/* Style for the definition text */
 #popup-definition {
-    font-family: var(--font-body); /* MODIFIED: Use Open Sans */
+    font-family: var(--font-body); /* Open Sans */
     font-size: 14px;
     line-height: 1.6;
     max-height: 180px;
     overflow-y: auto;
-    color: #4a5568; /* Keep existing definition text color */
-    padding-right: 5px; /* For scrollbar spacing */
-    margin-right: -5px; /* Offset scrollbar */
+    color: #4a5568;
+    padding-right: 5px;
+    margin-right: -5px;
 }
 #popup-definition::-webkit-scrollbar { width: 5px; }
 #popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
 
+/* Close button style (no change needed) */
 #close-popup-btn {
     position: absolute; top: 6px; right: 6px;
     cursor: pointer; font-size: 20px; font-weight: 300;
@@ -1002,7 +1025,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
     border-radius: 50%; line-height: 1;
 }
 #close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
-/* --- END Updated Keyword Popup Styles --- */
+/* === END: Replacement Keyword Popup CSS === */
 
 
 /* --- START: Loading Game Styles (MODIFIED) (Keep New Code's Version + Changes) --- */
@@ -1939,125 +1962,110 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
     }
 
     // --- Keyword Overlays (Keep from New Code) ---
-    async function createKeywordOverlays(pageNum, pageElement, viewport) {
-        const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
-        const overlayContainer = document.getElementById(overlayContainerId); // ui.leftKeywordOverlay / ui.rightKeywordOverlay
-        const canvasContainer = getCanvasContainer(pageElement);
+    // Replacement createKeywordOverlays function
+async function createKeywordOverlays(pageNum, pageElement, viewport) {
+    const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
+    const overlayContainer = document.getElementById(overlayContainerId);
+    const canvasContainer = getCanvasContainer(pageElement);
 
-        if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer) {
-            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
-        }
-        overlayContainer.innerHTML = ''; // Clear previous highlights
+    if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer) {
+        console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
+    }
+    overlayContainer.innerHTML = ''; // Clear previous highlights
 
-        const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
-        if (keywordsForPage.length === 0) {
-            return; // No keywords for this page
-        }
+    const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
+    if (keywordsForPage.length === 0) return;
 
-        const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
-        const lowerCaseDefs = {};
-        for (const key in pdfState.keywordDefinitions) { lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key]; }
+    const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
+    const lowerCaseDefs = {};
+    // Prepare definitions map expecting array format: [PoS, Definition]
+    for (const key in pdfState.keywordDefinitions) {
+        // Store the array directly under the lowercase key
+        lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key];
+    }
 
-        try {
-            const page = await pdfState.pdfDocument.getPage(pageNum);
-            const textContent = await page.getTextContent({ normalizeWhitespace: true });
+    try {
+        const page = await pdfState.pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent({ normalizeWhitespace: true });
+        const items = textContent.items;
 
-            const items = textContent.items;
-            for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-                const item = items[itemIndex];
-                const itemText = item.str;
-                const itemTextLength = itemText.length;
-                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
+        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            const item = items[itemIndex];
+            const itemText = item.str;
+            const itemTextLength = itemText.length;
+            if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
 
-                keywordsForPage.forEach((originalKeyword, keywordIndex) => {
-                    const keywordLower = lowerCaseKeywords[keywordIndex];
-                    const definition = lowerCaseDefs[keywordLower];
-                    if (!definition) return;
+            keywordsForPage.forEach((originalKeyword, keywordIndex) => {
+                const keywordLower = lowerCaseKeywords[keywordIndex];
+                const definitionData = lowerCaseDefs[keywordLower]; // This is now expected to be an array
 
-                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
-                    let match;
+                // *** Validate the new array structure ***
+                if (!Array.isArray(definitionData) || definitionData.length < 2 || typeof definitionData[1] !== 'string' || !definitionData[1]) {
+                    // console.warn(`Invalid/missing definition data for keyword: ${originalKeyword} (lowercase: ${keywordLower}) on page ${pageNum}`);
+                    return; // Skip this keyword if data format is wrong or definition is missing
+                }
+                const partOfSpeech = definitionData[0] || ''; // PoS is index 0, default to empty string
+                const actualDefinition = definitionData[1]; // Definition is index 1
 
-                    while ((match = regex.exec(itemText)) !== null) {
-                        const matchedString = match[1];
-                        const matchIndex = match.index;
-                        const matchLength = matchedString.length;
+                const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                let match;
 
-                        if (matchLength === 0) {
-                            regex.lastIndex++; continue;
-                        }
+                while ((match = regex.exec(itemText)) !== null) {
+                    const matchedString = match[1];
+                    const matchIndex = match.index;
+                    const matchLength = matchedString.length;
 
-                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                        const itemWidth = item.width;
-                        const itemHeight = item.height;
-                        const itemLeft = tx[4];
-                        const itemTop = tx[5] - itemHeight; // Adjust based on baseline
+                    if (matchLength === 0) { regex.lastIndex++; continue; }
 
-                        const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
-                        const highlightWidth = (matchLength / itemTextLength) * itemWidth;
+                    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                    const itemWidth = item.width;
+                    const itemHeight = item.height;
+                    const itemLeft = tx[4];
+                    const itemTop = tx[5] - itemHeight;
 
-                        const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
-                        const finalTop = Math.max(0, itemTop);
-                        const finalWidth = Math.max(1, highlightWidth);
-                        const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
+                    const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
+                    const highlightWidth = (matchLength / itemTextLength) * itemWidth;
 
+                    const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
+                    const finalTop = Math.max(0, itemTop);
+                    const finalWidth = Math.max(1, highlightWidth);
+                    const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
 
-                        const highlightDiv = document.createElement('div');
-                        highlightDiv.className = 'keyword-highlight';
-                        highlightDiv.style.left = `${finalLeft}px`;
-                        highlightDiv.style.top = `${finalTop}px`;
-                        highlightDiv.style.width = `${finalWidth}px`;
-                        highlightDiv.style.height = `${finalHeight}px`;
-                        highlightDiv.dataset.keyword = originalKeyword;
-                        highlightDiv.dataset.definition = definition;
-                        highlightDiv.title = `Definition: ${originalKeyword}`;
+                    const highlightDiv = document.createElement('div');
+                    highlightDiv.className = 'keyword-highlight';
+                    highlightDiv.style.left = `${finalLeft}px`;
+                    highlightDiv.style.top = `${finalTop}px`;
+                    highlightDiv.style.width = `${finalWidth}px`;
+                    highlightDiv.style.height = `${finalHeight}px`;
 
-                        const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
-                        let isTheFirstInstance = false;
-                        if (firstLoc &&
-                            firstLoc.pageNum === pageNum &&
-                            firstLoc.itemIndex === itemIndex &&
-                            firstLoc.matchIndex === matchIndex) {
-                            isTheFirstInstance = true;
-                        }
+                    // *** Store keyword, PoS, and definition separately ***
+                    highlightDiv.dataset.keyword = originalKeyword;
+                    highlightDiv.dataset.pos = partOfSpeech; // Store Part of Speech
+                    highlightDiv.dataset.definition = actualDefinition; // Store Definition text
+                    highlightDiv.title = `${originalKeyword} ${partOfSpeech}`; // Update title
 
-                        if (isTheFirstInstance) {
-                            highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
-                        }
-
-                        highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return; // Disable in rotated mode
-                            const currentHighlight = e.currentTarget;
-                            const word = currentHighlight.dataset.keyword;
-                            const def = currentHighlight.dataset.definition;
-                            const rect = currentHighlight.getBoundingClientRect();
-                            showDefinitionPopup(word, def, rect);
-                        });
-                        overlayContainer.appendChild(highlightDiv);
+                    const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
+                    if (firstLoc && firstLoc.pageNum === pageNum && firstLoc.itemIndex === itemIndex && firstLoc.matchIndex === matchIndex) {
+                        highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
                     }
-                });
-            }
-        } catch (error) {
-            console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = '';
-        }
-    }
 
-    // --- Text & Annotation Layer Rendering (Keep from New Code) ---
-    async function renderAndEnhanceTextLayer(page, container, viewport) {
-      if (!page || !container || !viewport) return;
-      container.innerHTML = '';
-      // Style applied via CSS, no need to set here
-      try {
-        const textContent = await page.getTextContent({normalizeWhitespace: true});
-        const renderTask = pdfjsLib.renderTextLayer({ textContent, container, viewport });
-        await renderTask.promise;
-      } catch (error) {
-        console.error(`Error rendering base text layer for page ${page.pageNumber}:`, error);
-        container.innerHTML = '';
-      }
+                    highlightDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
+                        const currentHighlight = e.currentTarget;
+                        // Pass the clicked element itself to showDefinitionPopup
+                        showDefinitionPopup(currentHighlight); // *** Pass the element ***
+                    });
+                    overlayContainer.appendChild(highlightDiv);
+                }
+            });
+        }
+    } catch (error) {
+        console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
+        overlayContainer.innerHTML = '';
     }
+}
 
     async function renderAnnotationLayer(page, container, viewport) {
         if (!page || !container || !viewport) { console.warn("Skipping annotation layer: params missing."); return }
@@ -3559,9 +3567,17 @@ body.loading-game-active #lo-achievement-popup /* Hide LO popup */
 
     // --- Popup Handling (Keep from New Code) ---
     // --- UPDATED Popup Positioning Logic ---
-function showDefinitionPopup(word, definition, rect) {
-    if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !rect) {
-        console.error("Cannot show definition popup: Missing element or rect."); return;
+// Replacement showDefinitionPopup function
+function showDefinitionPopup(clickedHighlightElement) {
+    // Get data directly from the clicked element's dataset attributes
+    const word = clickedHighlightElement?.dataset?.keyword;
+    const pos = clickedHighlightElement?.dataset?.pos || ''; // Default to empty if missing
+    const definition = clickedHighlightElement?.dataset?.definition;
+    const rect = clickedHighlightElement?.getBoundingClientRect(); // Get rect from the element
+
+    if (!ui.definitionPopup || !ui.popupWord || !ui.popupDefinition || !ui.closePopupBtn || !word || !definition || !rect) {
+        console.error("Cannot show definition popup: Missing element, data, or rect.");
+        return;
     }
     if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
         updateStatus("Definition popup suppressed in rotated mode."); return;
@@ -3569,53 +3585,44 @@ function showDefinitionPopup(word, definition, rect) {
 
     hideIframePopupIfNeeded(); hideNotesPopupIfNeeded(); // Hide other popups
 
-    // Set content
-    ui.popupWord.textContent = word || "Keyword";
-    ui.popupDefinition.innerHTML = definition || `<span style="color: #e74c3c;">Definition not available.</span>`;
+    // *** Set the innerHTML for the header using spans ***
+    ui.popupWord.innerHTML = `
+        <span class="keyword-term">${word}</span>
+        <span class="part-of-speech">${pos}</span>
+    `;
+    // Set the definition text
+    ui.popupDefinition.innerHTML = definition; // Definition is already just the text
     ui.popupDefinition.scrollTop = 0;
 
-    // Estimate popup dimensions (adjust if your popups are usually taller/wider)
-    const estPopupWidth = Math.min(ui.definitionPopup.offsetWidth || 320, 320); // Use max-width as fallback
-    const estPopupHeight = Math.min(ui.definitionPopup.offsetHeight || 200, 200); // Estimate height
-
-    // Constants for positioning
-    const margin = 10; // Space from viewport edges
-    const verticalOffset = 8; // Space between keyword and popup
+    // --- Positioning Logic (from previous step, keep this) ---
+    const estPopupWidth = Math.min(ui.definitionPopup.offsetWidth || 320, 320);
+    const estPopupHeight = Math.min(ui.definitionPopup.offsetHeight || 200, 200);
+    const margin = 10;
+    const verticalOffset = 8;
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // --- Calculate Position ---
-
-    // Horizontal: Center popup over the keyword's horizontal center
     let targetLeft = rect.left + (rect.width / 2) - (estPopupWidth / 2);
-    // Keep popup within screen horizontally
-    targetLeft = Math.max(margin, targetLeft); // Prevent left overflow
-    targetLeft = Math.min(targetLeft, viewportWidth - estPopupWidth - margin); // Prevent right overflow
-    targetLeft = Math.max(margin, targetLeft); // Re-check left after right adjustment
+    targetLeft = Math.max(margin, targetLeft);
+    targetLeft = Math.min(targetLeft, viewportWidth - estPopupWidth - margin);
+    targetLeft = Math.max(margin, targetLeft);
 
-    // Vertical: Default to above the keyword
     let targetTop = rect.top - estPopupHeight - verticalOffset;
-    let transformOrigin = 'bottom center'; // Arrow points down from popup
+    let transformOrigin = 'bottom center';
 
-    // If placing above goes off-screen OR keyword is in top 40% (prefer below)
     if (targetTop < margin || rect.top < viewportHeight * 0.4) {
-        targetTop = rect.bottom + verticalOffset; // Try below
-        transformOrigin = 'top center'; // Arrow points up from popup
-
-        // If placing below goes off bottom, clamp to bottom edge
+        targetTop = rect.bottom + verticalOffset;
+        transformOrigin = 'top center';
         if (targetTop + estPopupHeight > viewportHeight - margin) {
             targetTop = viewportHeight - estPopupHeight - margin;
-            // If still negative after clamping to bottom, clamp to top instead
             targetTop = Math.max(margin, targetTop);
         }
     }
 
-    // Apply the calculated styles
     ui.definitionPopup.style.left = `${Math.round(targetLeft)}px`;
     ui.definitionPopup.style.top = `${Math.round(targetTop)}px`;
     ui.definitionPopup.style.transformOrigin = transformOrigin;
 
-    // Make it visible
     toggleVisibility(ui.definitionPopup, true);
 }
 
