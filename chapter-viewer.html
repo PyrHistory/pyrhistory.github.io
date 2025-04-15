@@ -1654,6 +1654,71 @@ body.right-handle-floated .toolbar-trigger-area {
 
 /* === END: Floating Toolbar Handle Styles === */
 
+/* === START: Toolbar Glow/Popout Feature === */
+
+/* 1. Style the invisible hover areas */
+.glow-trigger {
+    position: fixed;    /* Stick to the screen edge */
+    top: 0;
+    height: 100%;       /* Full height */
+    width: 25px;       /* How wide the hover area is */
+    z-index: 9997;      /* Below toolbars (9999) but above content */
+    pointer-events: none; /* Can't hover it yet */
+    opacity: 0;         /* Invisible */
+    transition: opacity 0.3s ease-in-out, box-shadow 0.4s ease-in-out 0.2s; /* Smooth fading */
+    /* Glow effect (starts transparent) */
+    box-shadow: 0 0 15px 5px rgba(245, 166, 35, 0);
+}
+#left-glow-trigger {
+    left: 0;
+    /* Glow pointing inwards from the left */
+    box-shadow: 5px 0 15px 3px rgba(245, 166, 35, 0);
+}
+#right-glow-trigger {
+    right: 0;
+    /* Glow pointing inwards from the right */
+    box-shadow: -5px 0 15px 3px rgba(245, 166, 35, 0);
+}
+
+/* 2. Styles for when the glow effect IS active */
+body.toolbars-glow-active .glow-trigger {
+    pointer-events: auto; /* NOW you can hover it */
+    opacity: 1;         /* Make the area hoverable (glow fades in below) */
+}
+body.toolbars-glow-active #left-glow-trigger {
+     box-shadow: 3px 0 12px 2px rgba(245, 166, 35, 0.35); /* Faint orange glow */
+}
+body.toolbars-glow-active #right-glow-trigger {
+     box-shadow: -3px 0 12px 2px rgba(245, 166, 35, 0.35); /* Faint orange glow */
+}
+
+/* 3. Hide the ORIGINAL toolbar hover areas when glow is active */
+body.toolbars-glow-active .toolbar-trigger-area,
+body.toolbars-glow-active .left-toolbar-trigger-area {
+    pointer-events: none; /* Prevent interference */
+    display: none; /* Hide them completely */
+}
+
+/* 4. Style to FORCE toolbars visible (for the first 10s) */
+#left-toolbar.force-visible {
+    left: 0 !important; /* Slide in */
+}
+#new-toolbar.force-visible {
+    right: 0 !important; /* Slide in */
+}
+
+/* 5. Don't show glow if handles are already 'floated' on small screens */
+body.left-handle-floated #left-glow-trigger,
+body.right-handle-floated #right-glow-trigger {
+    display: none !important; /* Hide the glow area */
+}
+
+/* 6. Ensure toolbars are above the book pages */
+.book-spread {
+    z-index: 10; /* Lower than toolbars (9999) and triggers (9997) */
+}
+/* === END: Toolbar Glow/Popout Feature === */
+        
 </style>
 
 </head>
@@ -1934,6 +1999,8 @@ body.right-handle-floated .toolbar-trigger-area {
         tocList: document.getElementById('toc-list'), // Might be null if element removed
         tocToggleButton: document.getElementById('toc-toggle-btn'), // Might be null if element removed
         loTooltip: document.getElementById('lo-tooltip'), // Added LO Tooltip
+        leftGlowTrigger: document.getElementById('left-glow-trigger'),   // <-- ADD THIS
+        rightGlowTrigger: document.getElementById('right-glow-trigger'), // <-- ADD THIS
     };
 
     // --- PDF.js Setup (Keep from New Code) ---
@@ -1955,6 +2022,8 @@ body.right-handle-floated .toolbar-trigger-area {
         gameOverTimeoutId: null,
         alertTimeout: null,
         alertWiggleTimeout: null,
+        toolbarsCanGlow: false, // Track if the 10s period is over
+        initialToolbarVisibilityTimeout: null, // Store the timeout ID
         isDraggingSlider: false,
         pagePadding: 15, // Default, updated on init
         isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
@@ -2077,12 +2146,132 @@ body.right-handle-floated .toolbar-trigger-area {
 
 
     // --- Toolbar Logic (REVERTED from Old Code) ---
-    function manageToolbar(s=null){const t=document.getElementById('new-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(toolbarTimer);const show=s??toolbarHover;if(show){t.classList.add('visible')}else{toolbarTimer=setTimeout(()=>{if(!toolbarHover)t.classList.remove('visible')},500)}}
-    function setupToolbarHover(){const t=document.getElementById('new-toolbar'),a=document.getElementById('toolbar-trigger-area'),h=t;if(!t||!a){console.error("Right Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; toolbarHover=true;manageToolbar(true)};const leave=()=>{toolbarHover=false;manageToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;/* Removed rotated check as handle is always vertical now */ if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=true; if(c){toolbarHover=!t.classList.contains('visible');manageToolbar()}});updateStatus("Right Toolbar setup.")}
+    function manageToolbar(show = null) {
+    const toolbar = ui.rightToolbar;
+    if (!toolbar || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+
+    clearTimeout(toolbarTimer); // Always clear hide timer
+
+    const shouldShow = show ?? toolbarHover;
+
+    if (shouldShow) {
+        toolbar.classList.add(CSS_CLASS.VISIBLE); // Show it
+    } else {
+        // If glow mode is ON, hide instantly. Otherwise, use the old timer.
+        if (appState.toolbarsCanGlow) {
+             toolbar.classList.remove(CSS_CLASS.VISIBLE); // Hide NOW
+        } else {
+            // Original timer logic (only runs when glow is OFF)
+            toolbarTimer = setTimeout(() => {
+                if (!toolbarHover) toolbar.classList.remove(CSS_CLASS.VISIBLE);
+            }, TOOLBAR_HIDE_DELAY);
+        }
+    }
+}
+    function setupToolbarHover(){
+    const toolbar = ui.rightToolbar;
+    const trigger = ui.rightToolbarTrigger; // Original trigger
+    const glowTrigger = ui.rightGlowTrigger; // New glow trigger
+
+    if(!toolbar || !trigger || !glowTrigger) { console.error("Right Toolbar/trigger/glow missing"); return; }
+
+    // Function to show the toolbar
+    const enter = () => {
+        if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+        toolbarHover = true; // Track hover state
+        clearTimeout(toolbarTimer); // Stop any pending hide
+        toolbar.classList.add(CSS_CLASS.VISIBLE); // Show immediately
+    };
+
+    // Function to handle leaving hover
+    const leave = () => {
+        toolbarHover = false; // Track hover state
+        // Hide based on whether glow mode is active or not
+        manageToolbar(false);
+    };
+
+    // ** Listeners **
+    // Original Trigger: Only works when glow is OFF
+    trigger?.addEventListener('mouseenter', () => { if (!appState.toolbarsCanGlow) enter(); });
+    trigger?.addEventListener('mouseleave', () => { if (!appState.toolbarsCanGlow) leave(); });
+
+    // Toolbar itself: Always works
+    toolbar?.addEventListener('mouseenter', enter);
+    toolbar?.addEventListener('mouseleave', leave);
+
+    // Glow Trigger: Only works when glow is ON
+    glowTrigger?.addEventListener('mouseenter', () => { if (appState.toolbarsCanGlow) enter(); });
+    // No mouseleave needed on glowTrigger itself, leaving the toolbar handles hiding
+
+    // Toolbar Click: (Existing logic - no changes needed here)
+    toolbar?.addEventListener('click', e=>{ if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return; if(e.target.closest('.new-btn'))return; const r=toolbar.getBoundingClientRect(); let c=!1; const w=25; if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX<r.left&&e.clientX>=r.left-w)c=!0; if(c){toolbarHover=!toolbar.classList.contains(CSS_CLASS.VISIBLE); manageToolbar()}});
+
+    updateStatus("Right Toolbar hover setup (modified for glow).");
+}
 
     // --- Left Toolbar Logic (REVERTED from Old Code) ---
-    function manageLeftToolbar(s=null){const t=document.getElementById('left-toolbar');if(!t || document.body.classList.contains('loading-game-active'))return;clearTimeout(leftToolbarTimer);const show=s??leftToolbarHover;if(show){t.classList.add('visible')}else{leftToolbarTimer=setTimeout(()=>{if(!leftToolbarHover)t.classList.remove('visible')},500)}}
-    function setupLeftToolbarHover(){const t=document.getElementById('left-toolbar'),a=document.getElementById('left-toolbar-trigger-area'),h=t;if(!t||!a){console.error("Left Toolbar/trigger missing");return}const enter=()=>{if(document.body.classList.contains('loading-game-active')) return; leftToolbarHover=true;manageLeftToolbar(true)};const leave=()=>{leftToolbarHover=false;manageLeftToolbar(false)};a.addEventListener('mouseenter',enter);t.addEventListener('mouseenter',enter);a.addEventListener('mouseleave',leave);t.addEventListener('mouseleave',leave);h.addEventListener('click',e=>{if(document.body.classList.contains('loading-game-active')) return; if(e.target.closest('.new-btn'))return;const r=h.getBoundingClientRect();let c=false;const w=25;if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX>r.right&&e.clientX<=r.right+w)c=true; if(c){leftToolbarHover=!t.classList.contains('visible');manageLeftToolbar()}});updateStatus("Left Toolbar setup.")}
+    function manageLeftToolbar(show = null) {
+    const toolbar = ui.leftToolbar;
+    if (!toolbar || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+
+    clearTimeout(leftToolbarTimer); // Always clear hide timer
+
+    const shouldShow = show ?? leftToolbarHover;
+
+    if (shouldShow) {
+        toolbar.classList.add(CSS_CLASS.VISIBLE); // Show it
+    } else {
+         // If glow mode is ON, hide instantly. Otherwise, use the old timer.
+        if (appState.toolbarsCanGlow) {
+             toolbar.classList.remove(CSS_CLASS.VISIBLE); // Hide NOW
+        } else {
+            // Original timer logic (only runs when glow is OFF)
+            leftToolbarTimer = setTimeout(() => {
+                if (!leftToolbarHover) toolbar.classList.remove(CSS_CLASS.VISIBLE);
+            }, TOOLBAR_HIDE_DELAY); // Use same delay
+        }
+    }
+}
+    function setupLeftToolbarHover() {
+    const toolbar = ui.leftToolbar;
+    const trigger = ui.leftToolbarTrigger; // Original trigger
+    const glowTrigger = ui.leftGlowTrigger; // New glow trigger
+
+    if (!toolbar || !trigger || !glowTrigger) { console.error("Left Toolbar/trigger/glow missing"); return; }
+
+    // Function to show the toolbar
+    const enter = () => {
+         if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+         leftToolbarHover = true; // Track hover state
+         clearTimeout(leftToolbarTimer); // Stop any pending hide
+         toolbar.classList.add(CSS_CLASS.VISIBLE); // Show immediately
+    };
+
+    // Function to handle leaving hover
+    const leave = () => {
+         leftToolbarHover = false; // Track hover state
+         // Hide based on whether glow mode is active or not
+         manageLeftToolbar(false);
+    };
+
+    // ** Listeners **
+    // Original Trigger: Only works when glow is OFF
+    trigger?.addEventListener('mouseenter', () => { if (!appState.toolbarsCanGlow) enter(); });
+    trigger?.addEventListener('mouseleave', () => { if (!appState.toolbarsCanGlow) leave(); });
+
+    // Toolbar itself: Always works
+    toolbar?.addEventListener('mouseenter', enter);
+    toolbar?.addEventListener('mouseleave', leave);
+
+    // Glow Trigger: Only works when glow is ON
+    glowTrigger?.addEventListener('mouseenter', () => { if (appState.toolbarsCanGlow) enter(); });
+     // No mouseleave needed on glowTrigger itself, leaving the toolbar handles hiding
+
+    // Toolbar Click: (Existing logic - no changes needed here)
+    toolbar?.addEventListener('click', e=>{ if(ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return; if(e.target.closest('.new-btn'))return; const r=toolbar.getBoundingClientRect(); let c=!1; const w=25; if(e.clientY>=r.top&&e.clientY<=r.bottom&&e.clientX>r.right&&e.clientX<=r.right+w)c=!0; if(c){leftToolbarHover=!toolbar.classList.contains(CSS_CLASS.VISIBLE); manageLeftToolbar()}});
+
+    updateStatus("Left Toolbar hover setup (modified for glow).");
+}
     // --- END Reverted Toolbar Logic ---
 
     // --- Caching (Keep from New Code) ---
@@ -3590,7 +3779,11 @@ body.right-handle-floated .toolbar-trigger-area {
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
         // --- Reset State ---
-        pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = []; // Reset LOs
+        pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = [];appState.toolbarsCanGlow = false; // Add this line
+clearTimeout(appState.initialToolbarVisibilityTimeout); // Add this line
+ui.body.classList.remove('toolbars-glow-active'); // Add this line
+ui.leftToolbar?.classList.remove('force-visible'); // Add this line
+ui.rightToolbar?.classList.remove('force-visible'); // Add this line // Reset LOs
         if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
         pdfState.totalPages = 0; pdfState.currentPage = 1; pdfState.title = "No Document"; pdfState.isDoublePageView = true; // Reset intended view
 
@@ -4065,6 +4258,35 @@ body.right-handle-floated .toolbar-trigger-area {
         //    This happens concurrently with the button fading out.
         ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
         window.focus(); // Try to bring focus back to the main window
+        // --- START: New Toolbar Visibility Logic ---
+if (appState.isReaderReady) { // Only if reader loaded okay
+     updateStatus("Forcing toolbars visible for 10 seconds.");
+     clearTimeout(appState.initialToolbarVisibilityTimeout); // Clear old timer if any
+     appState.toolbarsCanGlow = false; // Turn OFF glow mode
+     ui.body.classList.remove('toolbars-glow-active'); // Remove glow class
+
+     // Add 'force-visible' class to show toolbars NOW
+     ui.leftToolbar?.classList.add('force-visible');
+     ui.rightToolbar?.classList.add('force-visible');
+
+     // Start the 10-second timer
+     appState.initialToolbarVisibilityTimeout = setTimeout(() => {
+         updateStatus("10 second visibility finished. Hiding toolbars, enabling glow.");
+         // Remove 'force-visible'
+         ui.leftToolbar?.classList.remove('force-visible');
+         ui.rightToolbar?.classList.remove('force-visible');
+
+         // Enable glow mode
+         appState.toolbarsCanGlow = true;
+         ui.body.classList.add('toolbars-glow-active');
+
+         // Hide toolbars if the mouse isn't hovering them right now
+         if (!leftToolbarHover) manageLeftToolbar(false);
+         if (!toolbarHover) manageToolbar(false);
+
+     }, 10000); // 10000 milliseconds = 10 seconds
+ }
+ // --- END: New Toolbar Visibility Logic ---
 
         // 3. Apply reader scaling/resize shortly after the body class is removed.
         //    The reader's main container also has a fade-in transition.
@@ -4550,5 +4772,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 })(); // End of IIFE
 </script>
+   <div id="left-glow-trigger" class="glow-trigger"></div>
+    <div id="right-glow-trigger" class="glow-trigger"></div> 
 </body>
 </html>
