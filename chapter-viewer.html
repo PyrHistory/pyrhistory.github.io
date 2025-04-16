@@ -1136,17 +1136,6 @@ body:not(.loading-game-active) #loading-game-container {
      transform: translateX(-50%) scale(0.98); /* Subtle active */
  }
 
-/* ---- REMOVED THIS BLOCK ---- */
-/* Surefire way to hide button when reader is active */
-/* body:not(.loading-game-active) #go-to-chapter-btn {
-    opacity: 0;
-    visibility: hidden;
-    animation: none !important; */ /* Ensure no animation plays when hidden */
-/*    pointer-events: none; */ /* Add this to prevent accidental clicks during fade */
-/* } */
-/* ---- END REMOVED BLOCK ---- */
-
-
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
 body.loading-game-active .toolbar-trigger-area,
@@ -3638,17 +3627,28 @@ body.right-handle-floated .toolbar-trigger-area {
                 console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
             }
 
-                    // --- MODIFIED: Update button state directly when reader is ready ---
+                            // --- MODIFIED & GUARDED: Update button state only if still on loading screen ---
         if (ui.goToChapterBtn) {
-            // Check if the button is currently in the "Loading..." state
-            if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
-                updateStatus("Reader ready, updating button text and class.");
-                ui.goToChapterBtn.textContent = 'Go to Chapter';
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add class to trigger final animation
+            // *** ADD THIS CHECK for body class ***
+            // Only proceed if the loading game screen is still active
+            if (document.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                // Check if the button is currently in the "Loading..." state
+                if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
+                    updateStatus("Reader ready AND loading screen active. Updating button to 'Go to Chapter' state.");
+                    ui.goToChapterBtn.textContent = 'Go to Chapter';
+                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add class to trigger final animation
+                } else {
+                    // This case should be less common now with the click guard,
+                    // but handles edge cases where the class might be missing unexpectedly.
+                    updateStatus("Reader ready AND loading screen active, but button wasn't in loading state. Ensuring final state.");
+                     ui.goToChapterBtn.textContent = 'Go to Chapter';
+                     ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Ensure loading is off
+                     ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);    // Ensure visible is on
+                }
             } else {
-                // If it's not in loading state (e.g., already hidden by transition), do nothing.
-                updateStatus("Reader ready, but button wasn't in loading state (likely already transitioned or hidden).");
+                // If loading game screen is NOT active, the transition has already started. Do nothing.
+                updateStatus("Reader ready, but loading screen is NOT active (transition likely started). Skipping button update.");
             }
         }
         // --- End Button Modification ---
@@ -4644,7 +4644,16 @@ function showNotesNavAndResetTimer() {
 
 
         // --- Game Event Listeners (MODIFIED Button Logic) ---
-        ui.goToChapterBtn?.addEventListener('click', transitionToChapter);
+        ui.goToChapterBtn?.addEventListener('click', () => {
+    // *** ADD THIS CHECK ***
+    // Only transition if the button is NOT in the loading state.
+    if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
+        console.log("[Button Click] Ignored: Chapter is still loading."); // Optional log
+        return; // Do nothing if loading
+    }
+    // If not loading, proceed with the transition
+    transitionToChapter();
+});
 
         window.addEventListener('message', (event) => {
             // Basic security check: ensure message is from the iframe source
