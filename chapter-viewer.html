@@ -2665,14 +2665,14 @@ body.right-handle-floated .toolbar-trigger-area {
     }
 
     // --- Reading Time Alert (Keep from New Code - Trigger logic reverted in checkReadingTimeLock) ---
-    function showReadingTimeAlert() {
+    function showReadingTimeAlert(message = '<em>Please read the text first!</em>') {
         // Only show alert if timelock is globally enabled and blocking
         if (!isTimelockGloballyEnabled) return; // Use reverted global variable
 
         clearTimeout(appState.alertTimeout);
         clearTimeout(appState.alertWiggleTimeout);
 
-        ui.readingTimeAlert.innerHTML = '<em>Please read the text first!</em>';
+        ui.readingTimeAlert.innerHTML = message;
         toggleVisibility(ui.readingTimeAlert, true); // Add .visible class (triggers fade-in/move-up and wiggle)
 
         // Timeout to hide the alert (triggers fade-out/move-down)
@@ -3909,7 +3909,7 @@ if (isTimelockGloballyEnabled && isTimeLockActive && currentLockType === 'iframe
     const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
     if (elapsedSeconds < requiredReadingTime) {
         updateStatus(`Iframe timelock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Preventing close.`);
-        showReadingTimeAlert(); // Show the generic alert
+        showReadingTimeAlert('<em>Please watch the video first!</em>'); // Show the video-specific alert
         return; // *** Prevent closing ***
     } else {
         updateStatus(`Iframe timelock COMPLETED (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s). Allowing close.`);
@@ -4062,6 +4062,22 @@ if (isTimelockGloballyEnabled && isTimeLockActive && currentLockType === 'notes'
     if (elapsedSeconds < requiredReadingTime) {
         updateStatus(`Notes timelock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Preventing close.`);
         showReadingTimeAlert(); // Show the generic alert
+
+        // --- Trigger Wiggle on Blocked Close ---
+        if (ui.notesInstruction) {
+            // Ensure animation restarts if triggered again quickly
+            ui.notesInstruction.classList.remove(CSS_CLASS.WIGGLE_NOW);
+            void ui.notesInstruction.offsetWidth; // Force reflow
+
+            ui.notesInstruction.classList.add(CSS_CLASS.WIGGLE_NOW);
+            updateStatus("Triggering notes instruction wiggle (blocked close).");
+            // Optional: remove class after animation duration if CSS doesn't handle it (usually iteration-count: 1 does)
+            // setTimeout(() => {
+            //    ui.notesInstruction?.classList.remove(CSS_CLASS.WIGGLE_NOW);
+            // }, 500); // Match CSS animation duration if needed
+        }
+        // --- End Trigger Wiggle ---
+        return; // *** Prevent closing ***
         return; // *** Prevent closing ***
     } else {
         updateStatus(`Notes timelock COMPLETED (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s). Allowing close.`);
