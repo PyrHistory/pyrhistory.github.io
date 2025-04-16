@@ -3777,23 +3777,6 @@ function calculateVideoDuration(url) {
                     ui.goToChapterBtn.textContent = 'Go to Chapter';
                     ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
                     ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
-
-                                    // *** ADDED: Disable iframe input ***
-                if (ui.gameIframe) {
-                    ui.gameIframe.classList.add('iframe-inactive');
-                    // Try to remove focus to prevent keyboard input
-                    ui.gameIframe.blur();
-                     // More robust: tell the iframe's content to blur itself
-                    if (ui.gameIframe.contentWindow) {
-                        try {
-                            ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
-                            updateStatus("Sent 'blurYourself' message to game iframe.");
-                        } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
-                    }
-                    updateStatus("Disabled game iframe input.");
-                }
-                // *** END ADDED ***
-                    
                 }
             }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
             // --- End Button Modification ---
@@ -4354,6 +4337,21 @@ if (ui.rightToolbar && ui.leftToolbar) {
              console.error("'Go to Chapter' button not found!");
         }
 
+        if (ui.gameIframe) {
+            ui.gameIframe.classList.add('iframe-inactive');
+            // Try to remove focus to prevent keyboard input
+            ui.gameIframe.blur();
+            // More robust: tell the iframe's content to blur itself
+            if (ui.gameIframe.contentWindow) {
+                try {
+                    ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
+                    updateStatus("Sent 'blurYourself' message to game iframe.");
+                } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
+            }
+            updateStatus("Disabled game iframe input (Game Over).");
+        }
+
+        
         // If reader is already loaded, start timer for automatic transition
         if (appState.isReaderReady) { // Use appState from new code
             updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
