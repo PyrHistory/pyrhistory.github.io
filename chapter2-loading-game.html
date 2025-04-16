@@ -62,6 +62,7 @@
     let playing = true;
     let obstacleInterval = 1500;
     let difficultyFactor = 1;
+    let restartDisabled = false;
     
     // Optimization: Pre-created object pools
     const obstaclePool = [];
@@ -994,6 +995,7 @@
         gameSpeed = 6;
         playing = true;
         difficultyFactor = 1;
+        restartDisabled = false;
         
         // Return obstacles to pool
         while(obstacles.length > 0) {
@@ -1034,7 +1036,7 @@
     function handleJump(event) {
         if (playing) {
             player.jump();
-        } else {
+        } else if (!restartDisabled) {
             restartGame();
         }
         if (event) event.preventDefault();
@@ -1066,6 +1068,7 @@ window.addEventListener('message', (event) => {
             if (restartButton) {
                 restartButton.style.display = 'none';
             }
+            restartDisabled = true;
         } else if (event.data.type === 'focusGame') {
             // Focus the game window when told by the viewer
             window.focus();
