@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prehistoric Runner Optimized</title>
+    <title>Prehistoric Runner</title>
     <script>
     // Pre-register spacebar handler at the highest level possible
     window.addEventListener('keydown', function(e) {
         if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
-            e.preventDefault(); // Prevent default space behavior (scrolling)
-            // Pass event to the game through a custom event
-            window.dispatchEvent(new CustomEvent('game-jump-intent'));
+            // Prevent default space behavior (scrolling)
+            e.preventDefault();
+            // Pass event to the game through a custom event (using a more specific name now)
+            window.dispatchEvent(new CustomEvent('game-perform-jump'));
         }
-    }, {capture: true, passive: false}); // Explicitly not passive for preventDefault
+    }, {capture: true});
     </script>
-    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4)}#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%; image-rendering: -moz-crisp-edges; image-rendering: -webkit-crisp-edges; image-rendering: pixelated; image-rendering: crisp-edges;}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:block;width:auto}@media (max-width:480px){#game-container{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}}@media (min-width:1200px){#game-container{max-height:380px}}</style>
+    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4); image-rendering: pixelated; /* Optional: Can improve performance for pixel-art style on some browsers */ image-rendering: crisp-edges; /* Optional: Alternative crisp rendering */ }#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:block;width:auto}@media (max-width:480px){#game-container{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}}@media (min-width:1200px){#game-container{max-height:380px}}</style>
 </head>
 <body>
     <div id="game-container">
@@ -30,260 +31,253 @@
 
     <script>
 (function(){
-    'use strict'; // Enable strict mode
-
-    // --- Cache DOM elements ---
+    // Cache DOM elements
     const container = document.getElementById('game-container');
     const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: Disable alpha if not needed for main canvas
     const scoreElement = document.getElementById('score');
     const gameOverElement = document.getElementById('game-over');
     const finalScoreElement = document.getElementById('final-score');
     const restartButton = document.getElementById('restart');
-    const instructionsElement = document.getElementById('instructions'); // Cache instructions
+    const instructionsElement = document.getElementById('instructions'); // Cache instructions element
 
-    // --- Canvas/Game Dimensions ---
-    let canvasWidth, canvasHeight, groundY;
+    // Game dimensions (updated in resizeCanvas)
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+    let groundY = 0;
 
-    // --- Game State Variables ---
+    // Game constants and variables
+    const TARGET_FPS = 60;
+    const TIME_STEP = 1000 / TARGET_FPS; // Milliseconds per frame at target FPS
+
+    const BASE_GRAVITY = 0.5 * TARGET_FPS * TARGET_FPS / 1000; // Adjusted for per-second acceleration
+    const BASE_JUMP_FORCE = 12 * TARGET_FPS / 1000; // Adjusted for per-second velocity
+    const BASE_GAME_SPEED = 6 * TARGET_FPS; // Pixels per second at start
+    const GAME_SPEED_INCREMENT = 0.3 * TARGET_FPS; // Pixels per second increase per 5 points
+    const DIFFICULTY_INCREMENT = 0.2; // Factor increase per 15 points
+    const MAX_DIFFICULTY_FACTOR = 2.5;
+
     let score = 0;
-    let currentScoreDisplay = 0; // To optimize DOM updates
-    let gameSpeed = 250; // Pixels per second
-    let baseGameSpeed = 250;
-    const gravity = 900; // Pixels per second squared
-    let playing = false; // Start paused
-    let obstacleInterval = 1.5; // Seconds
-    let difficultyFactor = 1.0;
+    let baseGameSpeedCurrent = BASE_GAME_SPEED; // Base speed that increases over time
+    let playing = false; // Start paused until restartGame is called
+    let difficultyFactor = 1;
     let restartDisabled = false;
-    let animationFrameId = null;
+    let animationFrameId;
     let lastTime = 0;
+    let accumulator = 0; // For fixed time step loop
+
+    // Timers for spawning elements (in milliseconds)
     let obstacleTimer = 0;
     let cloudTimer = 0;
     let backgroundTimer = 0;
-    let multiObstacleChance = 0.0;
-    let timeAccumulator = 0; // Accumulator for score/difficulty increases
+    let currentObstacleInterval = 1500; // Initial interval
 
-    // --- Constants and Cached Values ---
-    const PI2 = Math.PI * 2;
-    const GROUND_HEIGHT = 30;
-    const PLAYER_INITIAL_X = 50;
-    const OBSTACLE_POOL_SIZE = 10;
-    const CLOUD_POOL_SIZE = 10;
-    const BACKGROUND_POOL_SIZE = 5;
-    const JUMP_VELOCITY = -450; // Pixels per second
-    const DOUBLE_JUMP_VELOCITY = -250; // Pixels per second
-    const TARGET_FPS = 60;
-    const TIME_STEP = 1 / TARGET_FPS; // Fixed time step for physics
-
-    // --- Object Pools ---
+    // Object Pools
     const obstaclePool = [];
     const cloudPool = [];
     const backgroundElementPool = [];
-    const activeObstacles = [];
-    const activeClouds = [];
-    const activeBackgroundElements = [];
 
-    // --- Cached Gradient ---
+    // Cached calculations & reusable values
+    const PI2 = Math.PI * 2;
+
+    // Pre-create reusable sky gradient object
     const skyGradient = {
         gradient: null,
-        colors: ['#87CEEB', '#E0F7FF'],
+        colors: ['#87CEEB', '#E0F7FF'], // Original colors
         create: function() {
-            if (!ctx || groundY <= 0) return 'skyblue'; // Fallback
-            this.gradient = ctx.createLinearGradient(0, 0, 0, groundY);
-            this.gradient.addColorStop(0, this.colors[0]);
-            this.gradient.addColorStop(1, this.colors[1]);
-            return this.gradient;
-        },
-        get: function() {
-            return this.gradient || this.create();
+            if (canvasHeight > 0) { // Ensure canvas dimensions are set
+                 // Optimization: Create gradient only once or when dimensions change
+                this.gradient = ctx.createLinearGradient(0, 0, 0, groundY);
+                this.gradient.addColorStop(0, this.colors[0]);
+                this.gradient.addColorStop(1, this.colors[1]);
+            }
         }
     };
 
-    // --- Ground Object ---
+    // Ground
     const ground = {
-        y: 0,
+        y: 0, // Set during updateGameDimensions
+        height: 30, // Define ground height
         color: '#8B4513',
         grassColor: '#32CD32',
         grassHeight: 5,
         draw: function() {
+            // Ground base
             ctx.fillStyle = this.color;
-            ctx.fillRect(0, this.y, canvasWidth, canvasHeight - this.y);
+            ctx.fillRect(0, this.y, canvasWidth, this.height);
+            // Grass top
             ctx.fillStyle = this.grassColor;
             ctx.fillRect(0, this.y, canvasWidth, this.grassHeight);
         }
     };
 
-    // --- Player Object ---
+    // Player
     const player = {
-        x: PLAYER_INITIAL_X,
-        y: 0,
+        x: 50,
+        y: 0, // Set during updateGameDimensions
         width: 30,
         height: 40,
-        velocityY: 0,
+        jumping: false,
+        velocity: 0, // Vertical velocity in pixels per second
         jumpCount: 0,
-        maxJumps: 2,
-        colorBody: '#8B5A2B',
-        colorEyes: 'white',
-        colorPupils: 'black',
-        colorMouth: '#A52A2A',
-        colorSpearWood: '#8B4513',
-        colorSpearHead: '#A9A9A9',
+        maxJumps: 2, // Allow double jump
 
-        maxJumpDistance: function() {
-            // Approximate calculation: time to apex * horizontal speed * 2
-            const timeToApex = -JUMP_VELOCITY / gravity;
-            return gameSpeed * (2 * timeToApex);
-        },
+        // Colors (cached)
+        skinColor: '#8B5A2B',
+        eyeColor: 'white',
+        pupilColor: 'black',
+        mouthColorJumping: '#A52A2A',
+        mouthColorResting: '#A52A2A', // Same color, just drawn differently
+        spearWoodColor: '#8B4513',
+        spearHeadColor: '#A9A9A9',
 
-        update: function(dt) {
+        update: function(deltaTime) { // deltaTime in seconds
             // Apply gravity
-            this.velocityY += gravity * dt;
-            this.y += this.velocityY * dt;
+            this.velocity += BASE_GRAVITY * deltaTime;
+            // Update position
+            this.y += this.velocity * deltaTime;
 
-            // Ground collision
-            if (this.y + this.height >= groundY) {
-                this.y = groundY - this.height;
-                this.velocityY = 0;
-                if (this.jumpCount > 0) { // Only reset if actually airborne before
-                    this.jumpCount = 0;
-                }
+            const groundLevel = groundY - this.height;
+            // Check for ground collision
+            if (this.y >= groundLevel) {
+                this.y = groundLevel;
+                this.velocity = 0;
+                this.jumping = false;
+                this.jumpCount = 0;
             }
         },
-
         jump: function() {
             if (this.jumpCount < this.maxJumps) {
-                this.velocityY = (this.jumpCount === 0) ? JUMP_VELOCITY : DOUBLE_JUMP_VELOCITY;
+                const jumpForceMultiplier = (this.jumpCount === 0) ? 1 : 0.6; // Second jump is weaker
+                this.velocity = -BASE_JUMP_FORCE * 1000 * jumpForceMultiplier; // Apply base jump force (convert back briefly)
+                this.jumping = true;
                 this.jumpCount++;
             }
         },
-
-        isOnGround: function() {
-            // Use a small epsilon for floating point comparison
-            return this.y + this.height >= groundY - 0.1;
-        },
-
         draw: function() {
             const headRadius = 6;
+            const bodyHeight = 20;
+            const legHeight = this.height - (headRadius * 2) - bodyHeight;
             const centerX = this.x + this.width / 2;
-            const onGround = this.isOnGround();
-            const jumping = !onGround;
+            const headY = this.y + headRadius;
+            const bodyTopY = this.y + headRadius * 2;
+            const bodyBottomY = bodyTopY + bodyHeight;
 
-            // --- Batch drawing by color ---
-
-            // Body Color
-            ctx.fillStyle = this.colorBody;
-            ctx.strokeStyle = this.colorBody;
-            ctx.lineWidth = 2;
-
-            // Head
+            // Draw Head (Skin Color)
+            ctx.fillStyle = this.skinColor;
             ctx.beginPath();
-            ctx.arc(centerX, this.y + headRadius, headRadius, 0, PI2);
+            ctx.arc(centerX, headY, headRadius, 0, PI2);
             ctx.fill();
 
-            // Body
+            // Draw Eyes (White)
+            ctx.fillStyle = this.eyeColor;
             ctx.beginPath();
-            ctx.moveTo(centerX, this.y + headRadius * 2);
-            ctx.lineTo(centerX, this.y + headRadius * 2 + 20); // Torso line
-            ctx.stroke();
-
-            // Arms
-            ctx.beginPath();
-            ctx.moveTo(centerX, this.y + headRadius * 2 + 5); // Shoulder point
-            if (jumping) {
-                ctx.lineTo(centerX - 8, this.y + headRadius * 2); // Left arm up
-                ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
-                ctx.lineTo(centerX + 8, this.y + headRadius * 2); // Right arm up
-            } else {
-                // Running arms (simplified cycle for performance)
-                const armPhase = Math.floor(Date.now() / 150) % 2;
-                if (armPhase === 0) {
-                    ctx.lineTo(centerX - 12, this.y + headRadius * 2 + 8); // Left arm back
-                    ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
-                    ctx.lineTo(centerX + 12, this.y + headRadius * 2 + 1); // Right arm forward (holding spear)
-                } else {
-                    ctx.lineTo(centerX - 10, this.y + headRadius * 2 + 1); // Left arm forward
-                    ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
-                    ctx.lineTo(centerX + 10, this.y + headRadius * 2 + 8); // Right arm back
-                }
-            }
-            ctx.stroke();
-
-            // Legs
-             ctx.beginPath();
-             ctx.moveTo(centerX, this.y + headRadius * 2 + 20); // Hip point
-            if (jumping) {
-                ctx.lineTo(centerX - 10, this.y + this.height); // Left leg jump
-                ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
-                ctx.lineTo(centerX + 10, this.y + this.height); // Right leg jump
-            } else {
-                 const runCycle = Math.floor(Date.now() / 100) % 2; // Original cycle
-                 if (runCycle === 0) {
-                    ctx.lineTo(centerX - 10, this.y + this.height); // Left leg back
-                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
-                    ctx.lineTo(centerX + 8, this.y + this.height - 5); // Right leg front
-                 } else {
-                    ctx.lineTo(centerX - 8, this.y + this.height - 5); // Left leg front
-                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
-                    ctx.lineTo(centerX + 10, this.y + this.height); // Right leg back
-                 }
-            }
-             ctx.stroke();
-
-            // Eyes (White)
-            ctx.fillStyle = this.colorEyes;
-            ctx.beginPath();
-            ctx.arc(centerX - 2, this.y + headRadius - 1, 1.5, 0, PI2); // Left eye
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(centerX + 2, this.y + headRadius - 1, 1.5, 0, PI2); // Right eye
+            ctx.arc(centerX - 2, headY - 1, 1.5, 0, PI2); // Left eye
+            ctx.arc(centerX + 2, headY - 1, 1.5, 0, PI2); // Right eye
             ctx.fill();
 
-            // Pupils (Black)
-            ctx.fillStyle = this.colorPupils;
+            // Draw Pupils (Black)
+            ctx.fillStyle = this.pupilColor;
             ctx.beginPath();
-            ctx.arc(centerX - 2, this.y + headRadius - 1, 0.8, 0, PI2); // Left pupil
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(centerX + 2, this.y + headRadius - 1, 0.8, 0, PI2); // Right pupil
+            ctx.arc(centerX - 2, headY - 1, 0.8, 0, PI2); // Left pupil
+            ctx.arc(centerX + 2, headY - 1, 0.8, 0, PI2); // Right pupil
             ctx.fill();
 
-            // Mouth
-            if (jumping) {
-                ctx.fillStyle = this.colorMouth;
+            // Draw Mouth
+            if (this.jumping) {
+                ctx.fillStyle = this.mouthColorJumping;
                 ctx.beginPath();
-                ctx.arc(centerX, this.y + headRadius + 2, 1.5, 0, PI2); // Open mouth
+                ctx.arc(centerX, headY + 2, 1.5, 0, PI2);
                 ctx.fill();
             } else {
-                ctx.strokeStyle = this.colorMouth;
+                ctx.strokeStyle = this.mouthColorResting;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(centerX - 2, this.y + headRadius + 2);
-                ctx.lineTo(centerX + 2, this.y + headRadius + 2); // Closed mouth line
+                ctx.moveTo(centerX - 2, headY + 2);
+                ctx.lineTo(centerX + 2, headY + 2);
+                ctx.stroke();
+            }
+
+            // --- Batch Stroked Body Parts (Skin Color) ---
+            ctx.strokeStyle = this.skinColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            // Body - vertical line
+            ctx.moveTo(centerX, bodyTopY);
+            ctx.lineTo(centerX, bodyBottomY);
+
+            // Arms
+            const armY = bodyTopY + 5;
+            if (this.jumping) {
+                ctx.moveTo(centerX, armY);
+                ctx.lineTo(centerX - 8, armY - 5); // Upward angle
+                ctx.moveTo(centerX, armY);
+                ctx.lineTo(centerX + 8, armY - 5); // Upward angle
+            } else {
+                // Running arms
+                ctx.moveTo(centerX, armY);
+                ctx.lineTo(centerX - 12, armY + 3); // Backward angle
+                ctx.moveTo(centerX, armY);
+                ctx.lineTo(centerX + 12, armY - 4); // Forward angle (holding spear)
+            }
+
+            // Legs
+            const legTopY = bodyBottomY;
+            const legBottomY = this.y + this.height; // Use calculated bottom
+
+            if (this.jumping) {
+                // Splayed legs
+                ctx.moveTo(centerX, legTopY);
+                ctx.lineTo(centerX - 10, legBottomY);
+                ctx.moveTo(centerX, legTopY);
+                ctx.lineTo(centerX + 10, legBottomY);
+            } else {
+                // Running legs animation
+                const runCycle = (Date.now() / 100) & 1; // Keep fast modulo
+                if (runCycle === 0) {
+                    ctx.moveTo(centerX, legTopY);
+                    ctx.lineTo(centerX - 10, legBottomY); // Back leg straight
+                    ctx.moveTo(centerX, legTopY);
+                    ctx.lineTo(centerX + 8, legBottomY - 5); // Front leg bent
+                } else {
+                    ctx.moveTo(centerX, legTopY);
+                    ctx.lineTo(centerX - 8, legBottomY - 5); // Back leg bent
+                    ctx.moveTo(centerX, legTopY);
+                    ctx.lineTo(centerX + 10, legBottomY); // Front leg straight
+                }
+            }
+            // Stroke all body parts drawn so far
+            ctx.stroke();
+            // --- End Stroked Batch ---
+
+            // Draw Spear (only when running)
+            if (!this.jumping) {
+                const spearX = centerX + 12; // Position relative to player center
+                const spearY = bodyTopY + 1;  // Position relative to player body/arm
+                const spearLength = 18;
+                const spearEndX = spearX + spearLength;
+                const spearEndY = spearY - 3;
+
+                // Spear Shaft (Brown)
+                ctx.strokeStyle = this.spearWoodColor;
+                ctx.lineWidth = 2; // Consistent with body
+                ctx.beginPath();
+                ctx.moveTo(spearX, spearY);
+                ctx.lineTo(spearEndX, spearEndY);
                 ctx.stroke();
 
-                // Spear (only when running)
-                const spearHandX = centerX + 12;
-                const spearHandY = this.y + headRadius * 2 + 1;
-                const spearTipX = spearHandX + 18;
-                const spearTipY = spearHandY - 3;
-
-                ctx.strokeStyle = this.colorSpearWood;
-                ctx.lineWidth = 2; // Keep consistent
+                // Spear Head (Gray)
+                ctx.fillStyle = this.spearHeadColor;
                 ctx.beginPath();
-                ctx.moveTo(spearHandX, spearHandY);
-                ctx.lineTo(spearTipX, spearTipY);
-                ctx.stroke();
-
-                ctx.fillStyle = this.colorSpearHead;
-                ctx.beginPath();
-                ctx.moveTo(spearTipX, spearTipY);
-                ctx.lineTo(spearTipX + 7, spearTipY - 2); // Spear point
-                ctx.lineTo(spearTipX + 2, spearTipY + 7); // Spear barb
+                ctx.moveTo(spearEndX, spearEndY);
+                ctx.lineTo(spearEndX + 7, spearEndY - 2); // Pointy end
+                ctx.lineTo(spearEndX + 2, spearEndY + 5); // Bottom edge
                 ctx.closePath();
                 ctx.fill();
             }
         },
-        // AABB collision check
+        // Optimization: Simplified Bounding Box Collision
         checkCollision: function(obstacle) {
             return (
                 this.x < obstacle.x + obstacle.width &&
@@ -294,446 +288,827 @@
         }
     };
 
-    // --- Obstacle Definitions ---
-    // Store drawing functions directly to avoid switch/if-else inside draw loop
-    const obstacleDrawFunctions = {
-        fossil: function(obs) { /* ... fossil drawing logic ... */ ctx.fillStyle = '#D2B48C'; ctx.fillRect(obs.x, obs.y, obs.width, obs.height); ctx.fillStyle='white'; ctx.fillRect(obs.x+5, obs.y+5, obs.width-10, obs.height-10); },
-        boulder: function(obs) { /* ... boulder drawing logic ... */ ctx.fillStyle = '#696969'; ctx.beginPath(); ctx.arc(obs.x + obs.width/2, obs.y + obs.height/2, obs.width/2, 0, PI2); ctx.fill(); },
-        tarpit: function(obs) { /* ... tarpit drawing logic ... */ ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.ellipse(obs.x + obs.width/2, obs.y + obs.height, obs.width/2, obs.height/2, 0, 0, PI2); ctx.fill(); },
-        lava: function(obs) { /* ... lava drawing logic ... */ ctx.fillStyle = '#FF4500'; ctx.beginPath(); ctx.ellipse(obs.x + obs.width/2, obs.y + obs.height, obs.width/2, obs.height/2, 0, 0, PI2); ctx.fill(); },
-        sabertooth: function(obs) { /* ... sabertooth drawing logic ... */ ctx.fillStyle = '#C87533'; ctx.fillRect(obs.x, obs.y, obs.width, obs.height); },
-        mammoth: function(obs) { /* ... mammoth drawing logic ... */ ctx.fillStyle = '#654321'; ctx.fillRect(obs.x, obs.y, obs.width, obs.height); }
-        // NOTE: Keep the detailed drawing logic from your original code here.
-        // For brevity, I've put placeholders. Make sure to copy the actual drawing code.
-    };
-
+    // Obstacle definitions
     const obstacleTypes = [
-        { name: 'fossil', width: 40, height: 20, isAnimal: false },
-        { name: 'boulder', width: 35, height: 35, isAnimal: false },
-        { name: 'tarpit', width: 50, height: 15, isAnimal: false },
-        { name: 'lava', width: 45, height: 20, isAnimal: false },
-        { name: 'sabertooth', width: 50, height: 40, isAnimal: true, speedMultiplier: 1.3 }, // Moves faster
-        { name: 'mammoth', width: 60, height: 50, isAnimal: true, speedMultiplier: 0.7 }  // Moves slower
+        { name: 'fossil', width: 40, height: 20, isAnimal: false, speedMultiplier: 1 },
+        { name: 'boulder', width: 35, height: 35, isAnimal: false, speedMultiplier: 1 },
+        { name: 'tarpit', width: 50, height: 15, isAnimal: false, speedMultiplier: 1 },
+        { name: 'lava', width: 45, height: 20, isAnimal: false, speedMultiplier: 1 },
+        { name: 'sabertooth', width: 50, height: 40, isAnimal: true, speedMultiplier: 1.3 }, // Faster
+        { name: 'mammoth', width: 60, height: 50, isAnimal: true, speedMultiplier: 0.7 } // Slower
     ];
+    const activeObstacles = []; // Renamed from 'obstacles'
 
-
-    // --- Obstacle Factory & Management ---
-    function createObstacleInstance(type) {
+    // --- Obstacle Creation and Management ---
+    function getObstacleFromPool() {
+        if (obstaclePool.length > 0) {
+            return obstaclePool.pop();
+        }
+        // Create a new object if pool is empty
         return {
             x: 0, y: 0, width: 0, height: 0,
-            type: type.name,
-            passed: false,
-            isAnimal: type.isAnimal,
-            speedMultiplier: type.speedMultiplier || 1.0, // Default to 1 if not specified
-            drawFunc: obstacleDrawFunctions[type.name], // Cache draw function
-            update: function(dt, currentSpeed) {
-                if (this.isAnimal) {
-                    // Animal specific movement (adjust based on dt)
-                    this.x -= currentSpeed * this.speedMultiplier * dt;
-                } else {
-                    // Standard obstacle movement
-                    this.x -= currentSpeed * dt;
-                }
+            type: '', passed: false, isAnimal: false,
+            speedMultiplier: 1,
+            // Add update and draw methods directly here (or prototype if preferred)
+            update: function(gameSpeedPxPerSec, deltaTime) {
+                this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
+                // Note: Pacing logic for animals was removed in original code, keeping it that way.
+                // If pacing needed re-adding, it would go here using deltaTime.
             },
-            draw: function() {
-                this.drawFunc(this);
-            },
-            reset: function(selectedType) { // Method to reset pooled object
-                 this.x = canvasWidth;
-                 this.y = groundY - selectedType.height;
-                 this.width = selectedType.width;
-                 this.height = selectedType.height;
-                 this.type = selectedType.name;
-                 this.passed = false;
-                 this.isAnimal = selectedType.isAnimal;
-                 this.speedMultiplier = selectedType.speedMultiplier || 1.0;
-                 this.drawFunc = obstacleDrawFunctions[selectedType.name];
-            }
+            draw: function() { drawObstacle(this); } // Delegate drawing
         };
     }
 
-    function initPools() {
-        for (let i = 0; i < OBSTACLE_POOL_SIZE; i++) {
-            obstaclePool.push(createObstacleInstance(obstacleTypes[0])); // Initial type doesn't matter much
+    function returnObstacleToPool(obstacle) {
+        obstaclePool.push(obstacle);
+    }
+
+    function spawnObstacle() {
+        const typeIndex = Math.floor(Math.random() * obstacleTypes.length);
+        const type = obstacleTypes[typeIndex];
+        const obstacle = getObstacleFromPool();
+
+        obstacle.x = canvasWidth;
+        obstacle.y = groundY - type.height; // Position on top of the ground
+        obstacle.width = type.width;
+        obstacle.height = type.height;
+        obstacle.type = type.name;
+        obstacle.passed = false;
+        obstacle.isAnimal = type.isAnimal;
+        obstacle.speedMultiplier = type.speedMultiplier;
+        // Removed animal-specific properties like direction, paceSpeed etc. as they weren't used in the provided update logic
+
+        activeObstacles.push(obstacle);
+    }
+
+    // Centralized obstacle drawing function for better management and potential batching
+    function drawObstacle(obs) {
+        // Optimization: Batch drawing by color where possible within each type
+        ctx.save(); // Save context state if changing many properties like fill/stroke/linewidth
+        ctx.translate(obs.x, obs.y); // Translate origin to obstacle position for simpler drawing coords
+
+        switch(obs.type) {
+            case 'fossil':
+                // Draw fossil (Simplified representation for brevity, focusing on batching)
+                ctx.fillStyle = '#D2B48C'; // Main rock color
+                ctx.fillRect(0, obs.height / 2, obs.width, obs.height / 2); // Bottom part
+                ctx.beginPath();
+                ctx.moveTo(0, obs.height/2); // Placeholder top shape
+                ctx.lineTo(obs.width/2, 0);
+                ctx.lineTo(obs.width, obs.height/2);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#F5F5DC'; // Bone color
+                // Draw simplified bones (e.g., circles/rects)
+                ctx.fillRect(obs.width*0.2, obs.height*0.1, obs.width*0.6, obs.height*0.4);
+                break;
+
+            case 'boulder':
+                // Draw boulder (using the bumpy shape)
+                const centerX = obs.width / 2;
+                const centerY = obs.height / 2;
+                const radius = obs.width / 2;
+
+                // Main boulder shape (Gray)
+                ctx.fillStyle = '#696969';
+                ctx.beginPath();
+                ctx.moveTo(centerX + radius, centerY);
+                for (let i = 0, len = 12; i < len; i++) {
+                    const angle = (PI2 * i) / len;
+                    const bumpFactor = 0.8 + Math.random() * 0.4; // Keep random bumps
+                    const x = centerX + radius * bumpFactor * Math.cos(angle);
+                    const y = centerY + radius * bumpFactor * Math.sin(angle);
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                // Details (Darker Gray) - Batch stroke calls
+                ctx.strokeStyle = '#505050';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                // Crack 1
+                ctx.moveTo(centerX - radius * 0.5, centerY - radius * 0.5);
+                ctx.quadraticCurveTo(centerX, centerY + radius * 0.3, centerX + radius * 0.6, centerY - radius * 0.2);
+                // Crack 2
+                ctx.moveTo(centerX - radius * 0.2, centerY + radius * 0.3);
+                ctx.lineTo(centerX - radius * 0.5, centerY + radius * 0.5);
+                // Crack 3
+                ctx.moveTo(centerX + radius * 0.3, centerY - radius * 0.3);
+                ctx.lineTo(centerX + radius * 0.5, centerY - radius * 0.6);
+                ctx.stroke(); // Stroke all cracks at once
+
+                // Small detail fill (Lighter Gray)
+                ctx.fillStyle = '#777777';
+                ctx.beginPath();
+                ctx.arc(centerX - radius * 0.4, centerY - radius * 0.4, radius * 0.15, 0, PI2);
+                ctx.fill();
+                break;
+
+             case 'tarpit':
+                // Draw tarpit (ellipses)
+                const tarCenterX = obs.width / 2;
+                const tarCenterY = obs.height; // Bottom edge for ellipse center
+
+                // Outer edge (Brown)
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.ellipse(tarCenterX, tarCenterY, obs.width / 2 + 5, obs.height / 2 + 2, 0, 0, PI2);
+                ctx.fill();
+
+                // Main tar (Black)
+                ctx.fillStyle = '#1A1A1A';
+                ctx.beginPath();
+                ctx.ellipse(tarCenterX, tarCenterY, obs.width / 2, obs.height / 2, 0, 0, PI2);
+                ctx.fill();
+
+                // Highlights/Bubbles (Dark Gray/Gray) - batch fills
+                ctx.fillStyle = 'rgba(40, 40, 40, 0.6)'; // Highlight
+                ctx.beginPath();
+                ctx.ellipse(tarCenterX - 5, tarCenterY - 2, obs.width / 3, obs.height / 4, 0, 0, PI2);
+                ctx.fill();
+
+                ctx.fillStyle = '#2D2D2D'; // Dark bubble color
+                // Simplified bubbles - draw all dark parts
+                ctx.beginPath();
+                for (let i = 0; i < 3; i++) {
+                    ctx.arc(obs.width*0.2 + i*obs.width*0.3, tarCenterY - 5, 3, 0, PI2);
+                }
+                ctx.fill();
+
+                 ctx.fillStyle = '#3A3A3A'; // Light bubble tops
+                 // Simplified bubbles - draw all light parts
+                 ctx.beginPath();
+                 for (let i = 0; i < 3; i++) {
+                     ctx.arc(obs.width*0.2 + i*obs.width*0.3 - 1, tarCenterY - 5 - 1, 1, 0, PI2);
+                 }
+                 ctx.fill();
+
+                // Bone (Light Brown)
+                ctx.fillStyle = '#C4A484';
+                ctx.beginPath(); // Simple bone shape
+                ctx.moveTo(obs.width/4, obs.height - 5);
+                ctx.lineTo(obs.width/4 + 15, obs.height - 12);
+                ctx.lineTo(obs.width/4 + 17, obs.height - 10);
+                ctx.lineTo(obs.width/4 + 2, obs.height - 3);
+                ctx.closePath();
+                ctx.fill();
+                break;
+
+            case 'lava':
+                // Draw lava
+                const lavaCenterX = obs.width / 2;
+                const lavaCenterY = obs.height;
+
+                // Outer rock edge (Dark Brown/Gray)
+                ctx.fillStyle = '#4D3B36';
+                ctx.beginPath();
+                ctx.ellipse(lavaCenterX, lavaCenterY, obs.width/2 + 7, obs.height/2 + 3, 0, 0, PI2);
+                ctx.fill();
+
+                // Lava Gradient Fill
+                const gradient = ctx.createRadialGradient(
+                    lavaCenterX, lavaCenterY - 5, 0, // Inner center (bright)
+                    lavaCenterX, lavaCenterY, obs.width/2 // Outer edge (darker)
+                );
+                gradient.addColorStop(0, '#FFCC00');
+                gradient.addColorStop(0.4, '#FF4500');
+                gradient.addColorStop(0.8, '#8B0000');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.ellipse(lavaCenterX, lavaCenterY, obs.width/2, obs.height/2, 0, 0, PI2);
+                ctx.fill();
+
+                // Bright Spots (batch fills)
+                ctx.fillStyle = '#FFFF00'; // Brightest yellow
+                ctx.beginPath();
+                 // Draw a few spots
+                ctx.arc(lavaCenterX - 10, lavaCenterY - 4, 3, 0, PI2);
+                ctx.arc(lavaCenterX + 5, lavaCenterY - 7, 4, 0, PI2);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFA500'; // Orange
+                ctx.beginPath();
+                // Draw a few spots
+                ctx.arc(lavaCenterX + 15, lavaCenterY - 5, 3, 0, PI2);
+                ctx.arc(lavaCenterX, lavaCenterY - 3, 2, 0, PI2);
+                ctx.fill();
+                break;
+
+             case 'sabertooth':
+                // Draw sabertooth (Simplified blocky style retained)
+                ctx.fillStyle = '#C87533'; // Main body color
+                ctx.fillRect(10, 22, obs.width - 20, obs.height - 32); // Body
+                ctx.fillRect(2, 15, 16, 12); // Head (assuming facing left initially)
+                ctx.fillRect(12, obs.height - 10, 8, 10); // Front Leg
+                ctx.fillRect(obs.width - 20, obs.height - 10, 8, 10); // Back Leg
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(obs.width - 10, 25);
+                ctx.lineTo(obs.width, 20);
+                ctx.lineTo(obs.width, 25);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = 'black'; // Eye
+                ctx.fillRect(6, 18, 2, 2);
+
+                ctx.fillStyle = 'white'; // Tusks (batch)
+                ctx.beginPath();
+                // Tusk 1
+                ctx.moveTo(2, 22); ctx.lineTo(2, 30); ctx.lineTo(4, 30); ctx.lineTo(4, 22); ctx.closePath();
+                 // Tusk 2
+                ctx.moveTo(6, 22); ctx.lineTo(6, 28); ctx.lineTo(8, 28); ctx.lineTo(8, 22); ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#9E5D28'; // Stripes (batch)
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    ctx.rect(15 + i * 7, 25, 4, 4);
+                }
+                ctx.fill();
+                break;
+
+            case 'mammoth':
+                // Draw mammoth (Simplified blocky style retained)
+                ctx.fillStyle = '#654321'; // Main body color
+                ctx.fillRect(10, 15, obs.width - 20, obs.height - 25); // Body
+                ctx.fillRect(5, 5, 20, 15); // Head (assuming facing left initially)
+                ctx.fillRect(15, obs.height - 10, 10, 10); // Front Leg
+                ctx.fillRect(obs.width - 25, obs.height - 10, 10, 10); // Back Leg
+                // Trunk
+                ctx.fillRect(0, 15, 5, 10);
+                ctx.fillRect(-5, 22, 5, 8);
+
+
+                ctx.fillStyle = 'black'; // Eye
+                ctx.fillRect(10, 10, 2, 2);
+
+                ctx.fillStyle = 'ivory'; // Tusks (use a standard color name or hex)
+                ctx.beginPath();
+                ctx.moveTo(10, 20);
+                ctx.lineTo(-5, 15);
+                ctx.lineTo(-5, 18);
+                ctx.lineTo(10, 23);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.strokeStyle = '#7E5835'; // Fur lines
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    ctx.moveTo(15 + i * 8, 15);
+                    ctx.lineTo(15 + i * 8, 8);
+                }
+                ctx.stroke();
+                break;
         }
-        // TODO: Initialize cloud and background element pools similarly
+        ctx.restore(); // Restore context state
     }
 
-    function getObstacle() {
-        const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
-        let obstacle;
-        if (obstaclePool.length > 0) {
-            obstacle = obstaclePool.pop();
-            obstacle.reset(type); // Reset the state of the pooled object
-        } else {
-            // Pool empty, create a new one (should happen rarely with proper pool size)
-            console.warn("Obstacle pool empty, creating new instance.");
-            obstacle = createObstacleInstance(type);
-            obstacle.reset(type); // Set initial state
+
+    // --- Background Elements ---
+    const elementTypes = [
+        { name: 'mountain', width: 100, height: 80, speedMultiplier: 0.4 }, // Slower parallax
+        { name: 'tree', width: 15, height: 50, speedMultiplier: 0.5 },
+        { name: 'volcano', width: 80, height: 100, speedMultiplier: 0.35 } // Slowest
+    ];
+    const activeBackgroundElements = []; // Renamed
+
+    function getBackgroundElementFromPool() {
+        if (backgroundElementPool.length > 0) {
+            return backgroundElementPool.pop();
         }
-        return obstacle;
+        return {
+             x: 0, y: 0, width: 0, height: 0,
+             type: '', speedMultiplier: 0,
+             update: function(gameSpeedPxPerSec, deltaTime) {
+                 this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
+             },
+             draw: function() { drawBackgroundElement(this); }
+        };
     }
 
-    function returnObstacle(obstacle) {
-        if (obstaclePool.length < OBSTACLE_POOL_SIZE) {
-            obstaclePool.push(obstacle);
-        } // else discard, pool is full (optional)
+    function returnBackgroundElementToPool(element) {
+        backgroundElementPool.push(element);
     }
 
-    // --- Background Elements & Clouds (Simplified for brevity, apply pooling like obstacles) ---
-     function createCloudInstance() {
-         // ... similar to createObstacleInstance
-         return { x: 0, y: 0, width: 0, height: 0, speed: 0, draw: function(){/*...*/}, reset: function(){/*...*/} };
-     }
-     function getCloud() {
-         // ... use cloudPool ...
-         let cloud = createCloudInstance(); // Placeholder
-         cloud.x = canvasWidth;
-         cloud.y = Math.random() * (groundY * 0.5);
-         cloud.width = 40 + Math.random() * 60;
-         cloud.height = 20 + Math.random() * 30;
-         cloud.speed = gameSpeed * (0.1 + Math.random() * 0.15); // Adjust speed relative to gameSpeed
-         cloud.draw = function() {
-             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-             // Simple rects for performance, or use original arc code
-             ctx.fillRect(this.x, this.y, this.width, this.height);
-            // Original arc code:
-            // ctx.beginPath();
-            // ctx.arc(this.x + this.width / 4, this.y + this.height / 2, this.height / 2, 0, PI2);
-            // ctx.arc(this.x + this.width / 2, this.y + this.height / 1.5, 0, PI2);
-            // ctx.arc(this.x + (this.width / 4) * 3, this.y + this.height / 2, this.height / 2, 0, PI2);
-            // ctx.fill();
+     function spawnBackgroundElement() {
+        const typeIndex = Math.floor(Math.random() * elementTypes.length);
+        const type = elementTypes[typeIndex];
+        const element = getBackgroundElementFromPool();
+
+        element.x = canvasWidth;
+        element.width = type.width;
+        element.height = type.height;
+        element.y = groundY - type.height; // Place on ground
+        element.type = type.name;
+        element.speedMultiplier = type.speedMultiplier;
+
+        activeBackgroundElements.push(element);
+    }
+
+    // Centralized background drawing
+    function drawBackgroundElement(el) {
+        ctx.save();
+        ctx.translate(el.x, el.y);
+
+        switch(el.type) {
+            case 'mountain':
+                // Main Mountain (Gray)
+                ctx.fillStyle = '#A9A9A9';
+                ctx.beginPath();
+                ctx.moveTo(0, el.height);
+                ctx.lineTo(el.width / 2, 0);
+                ctx.lineTo(el.width, el.height);
+                ctx.closePath();
+                ctx.fill();
+
+                // Snow Cap (White)
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(el.width / 2 - 15, 25); // Adjusted shape slightly
+                ctx.lineTo(el.width / 2, 0);
+                ctx.lineTo(el.width / 2 + 15, 25);
+                ctx.closePath(); // Close the snow cap path
+                ctx.fill();
+                break;
+
+            case 'tree':
+                 // Trunk (Brown)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(el.width / 2 - 5, el.height / 2, 10, el.height / 2);
+
+                // Leaves (Green - batch fills)
+                ctx.fillStyle = '#006400';
+                ctx.beginPath();
+                // Lower leaves section
+                ctx.moveTo(0, el.height / 2);
+                ctx.lineTo(el.width / 2, 0);
+                ctx.lineTo(el.width, el.height / 2);
+                ctx.closePath();
+                 // Upper leaves section (slightly higher)
+                 ctx.moveTo(el.width * 0.1, el.height / 3);
+                 ctx.lineTo(el.width / 2, -el.height / 4); // Pointier top
+                 ctx.lineTo(el.width * 0.9, el.height / 3);
+                 ctx.closePath();
+                ctx.fill(); // Fill both leaf sections
+                break;
+
+            case 'volcano':
+                // Main Cone (Brown)
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(0, el.height);
+                ctx.lineTo(el.width / 2, 0);
+                ctx.lineTo(el.width, el.height);
+                ctx.closePath();
+                ctx.fill();
+
+                // Lava Top (Orange/Red)
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.ellipse(el.width / 2, 15, el.width * 0.2, el.height * 0.1, 0, 0, PI2); // Elliptical top
+                ctx.fill();
+
+                // Smoke/Ash (Dark Gray, semi-transparent)
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.5)';
+                ctx.beginPath();
+                ctx.arc(el.width/2 - 5, 5, 8, 0, PI2); // Puff 1
+                ctx.arc(el.width/2 + 5, 2, 10, 0, PI2); // Puff 2
+                ctx.fill();
+                break;
+        }
+        ctx.restore();
+    }
+
+    // --- Clouds ---
+    const activeClouds = []; // Renamed
+    function getCloudFromPool() {
+        if (cloudPool.length > 0) {
+            return cloudPool.pop();
+        }
+         return {
+             x: 0, y: 0, width: 0, height: 0, speedMultiplier: 0,
+             update: function(gameSpeedPxPerSec, deltaTime) {
+                 this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
+             },
+             draw: function() { drawCloud(this); }
          };
-         return cloud;
-     }
-     function returnCloud(cloud) { /* ... push to cloudPool ... */ }
-     // --- Background Elements (Similar pooling needed) ---
+    }
+    function returnCloudToPool(cloud) {
+        cloudPool.push(cloud);
+    }
+
+    function spawnCloud() {
+        const cloud = getCloudFromPool();
+        cloud.width = 40 + Math.random() * 60;
+        cloud.height = 20 + Math.random() * 30;
+        cloud.x = canvasWidth;
+        cloud.y = Math.random() * (groundY * 0.4); // Keep clouds in upper 40%
+        cloud.speedMultiplier = 0.2 + Math.random() * 0.2; // Cloud parallax speed
+
+        activeClouds.push(cloud);
+    }
+
+    function drawCloud(cloud) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.beginPath();
+        // Simplified cloud shape with fewer arcs for performance
+        const arcRadius = cloud.height / 2;
+        ctx.arc(cloud.x + arcRadius, cloud.y + arcRadius, arcRadius, Math.PI * 0.5, Math.PI * 1.5); // Left part
+        ctx.arc(cloud.x + cloud.width - arcRadius, cloud.y + arcRadius, arcRadius, Math.PI * 1.5, Math.PI * 0.5); // Right part
+        ctx.closePath(); // Connect top and bottom lines implicitly
+        // Optional: Add a middle arc for fluffiness if needed, but keep it simple
+        // ctx.arc(cloud.x + cloud.width / 2, cloud.y + arcRadius * 0.5, arcRadius * 0.8, Math.PI, 0); // Top middle arc
+        ctx.fill();
+    }
 
 
-    // --- Game Logic Functions ---
+    // --- Game State & Loop ---
 
     function updateGameDimensions() {
-        groundY = canvasHeight - GROUND_HEIGHT;
+        groundY = canvasHeight - ground.height;
         ground.y = groundY;
-        // Only reset player Y if not jumping - avoids snapping mid-air on resize
-        if (player.isOnGround()) {
-             player.y = groundY - player.height;
-        }
-        skyGradient.create(); // Recreate gradient for new height
-        // Force obstacle positions update if needed (optional)
-        activeObstacles.forEach(obs => obs.y = groundY - obs.height);
+        player.y = groundY - player.height; // Reset player Y position relative to ground
+        skyGradient.create(); // Recreate gradient when dimensions change
     }
 
     function resizeCanvas() {
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
-        canvasWidth = canvas.width;
-        canvasHeight = canvas.height;
-        // Disable image smoothing for crisp pixel art
-        ctx.imageSmoothingEnabled = false;
-        updateGameDimensions();
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Check if size actually changed to avoid unnecessary redraws/recalculations
+        if (canvas.width !== containerWidth || canvas.height !== containerHeight) {
+            canvas.width = containerWidth;
+            canvas.height = containerHeight;
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            updateGameDimensions();
+            // console.log(`Canvas resized to: ${canvasWidth}x${canvasHeight}`);
+        }
     }
 
     function getRandomObstacleInterval() {
-        // Interval scales inversely with difficultyFactor and slightly with speed
-        const speedFactor = baseGameSpeed / gameSpeed; // Faster speed = shorter interval potential
-        const minGapTime = Math.max(0.8, 1.4 * speedFactor / difficultyFactor); // e.g., 0.8s min
-        const maxGapTime = Math.max(minGapTime + 0.5, 2.5 * speedFactor / (difficultyFactor * 0.9)); // e.g., 2.5s max base
-        return minGapTime + Math.random() * (maxGapTime - minGapTime);
+        const baseMinGapTime = 1.2; // seconds
+        const baseMaxGapTime = 2.5; // seconds
+        const speedFactor = baseGameSpeedCurrent / BASE_GAME_SPEED; // How much faster than start speed
+        // Reduce gap time as speed increases, but maintain a minimum gap
+        const minGap = Math.max(baseMinGapTime / (difficultyFactor * speedFactor), 0.5); // Min 0.5 sec gap
+        const maxGap = Math.max(baseMaxGapTime / (difficultyFactor * speedFactor * 0.9), minGap + 0.3); // Ensure max > min
+        return (minGap + Math.random() * (maxGap - minGap)) * 1000; // Convert to ms
     }
 
-    function spawnObstacleSet() {
-         const firstObstacle = getObstacle();
-         activeObstacles.push(firstObstacle);
-         obstacleTimer = 0; // Reset timer after spawning
-         obstacleInterval = getRandomObstacleInterval(); // Get next interval
+    function update(deltaTime) { // deltaTime in seconds
+        const gameSpeedPxPerSec = baseGameSpeedCurrent * difficultyFactor;
 
-         multiObstacleChance = Math.min(score / 30 * 0.1, 0.6); // Adjust calculation if needed
+        // --- Update Background Elements ---
+        backgroundTimer += deltaTime * 1000; // Timer uses ms
+        if (backgroundTimer > 4000 / (gameSpeedPxPerSec / BASE_GAME_SPEED)) { // Spawn faster as game speeds up
+             spawnBackgroundElement();
+             backgroundTimer = 0;
+        }
+        for (let i = activeBackgroundElements.length - 1; i >= 0; i--) {
+            const element = activeBackgroundElements[i];
+            element.update(gameSpeedPxPerSec, deltaTime);
+            if (element.x + element.width < 0) {
+                returnBackgroundElementToPool(element);
+                activeBackgroundElements.splice(i, 1);
+            }
+        }
 
-         // Simple multi-obstacle logic (adjust gap based on time/speed)
-         if (Math.random() < multiObstacleChance) {
-             const minSafeGapTime = 0.6; // Minimum time gap player needs to jump
-             const additionalGapTime = 0.2 + Math.random() * 0.4; // Random extra gap
-             const gapTime = minSafeGapTime + additionalGapTime;
-             const gapDistance = gameSpeed * gapTime;
+        // --- Update Clouds ---
+        cloudTimer += deltaTime * 1000;
+        if (cloudTimer > 5000 / (gameSpeedPxPerSec / BASE_GAME_SPEED)) { // Spawn faster
+             spawnCloud();
+             cloudTimer = 0;
+        }
+        for (let i = activeClouds.length - 1; i >= 0; i--) {
+            const cloud = activeClouds[i];
+            cloud.update(gameSpeedPxPerSec, deltaTime);
+            if (cloud.x + cloud.width < 0) {
+                returnCloudToPool(cloud);
+                activeClouds.splice(i, 1);
+            }
+        }
 
-             const secondObstacle = getObstacle();
-             secondObstacle.x = firstObstacle.x + firstObstacle.width + gapDistance;
-             activeObstacles.push(secondObstacle);
+        // --- Update Player ---
+        player.update(deltaTime);
 
-             // Optional third obstacle
-             if (score > 20 && Math.random() < multiObstacleChance * 0.7) {
-                 const thirdObstacle = getObstacle();
-                 const gapTime2 = minSafeGapTime + 0.2 + Math.random() * 0.3;
-                 thirdObstacle.x = secondObstacle.x + secondObstacle.width + gameSpeed * gapTime2;
-                 activeObstacles.push(thirdObstacle);
+        // --- Update Obstacles ---
+        obstacleTimer += deltaTime * 1000;
+        if (obstacleTimer > currentObstacleInterval) {
+             spawnObstacle();
+             // Potentially spawn multiple obstacles based on score/difficulty
+             const multiObstacleChance = Math.min(score / 30, 0.6); // Chance increases with score
+             if (Math.random() < multiObstacleChance && activeObstacles.length > 0) {
+                 // Simple approach: add a delay then spawn another
+                 // A more robust approach would calculate safe spacing based on jump distance
+                 setTimeout(spawnObstacle, 300 + Math.random() * 200); // Spawn 2nd slightly later
+
+                 if (score > 20 && Math.random() < multiObstacleChance * 0.7) {
+                     setTimeout(spawnObstacle, 600 + Math.random() * 300); // Spawn 3rd even later
+                 }
              }
-         }
-    }
 
-    function update(dt) {
-        if (!playing) return;
-
-        // --- Update Timers ---
-        obstacleTimer += dt;
-        cloudTimer += dt;
-        backgroundTimer += dt;
-        timeAccumulator += dt;
-
-        // --- Spawning ---
-        if (obstacleTimer >= obstacleInterval) {
-            spawnObstacleSet(); // Handles timer reset and next interval calculation
+             obstacleTimer = 0;
+             currentObstacleInterval = getRandomObstacleInterval();
         }
 
-        // TODO: Add Cloud and Background Element Spawning using their timers and pools
-
-        if (cloudTimer > 3.0) { // Example: spawn cloud every 3 seconds
-            activeClouds.push(getCloud());
-            cloudTimer = 0;
-        }
-
-        // --- Update Entities ---
-        player.update(dt);
-
-        // Update active obstacles
+        let collisionDetected = false;
         for (let i = activeObstacles.length - 1; i >= 0; i--) {
             const obstacle = activeObstacles[i];
-            obstacle.update(dt, gameSpeed);
+            obstacle.update(gameSpeedPxPerSec, deltaTime);
 
-            // Scoring
+            // Check collision
+            if (!collisionDetected && player.checkCollision(obstacle)) {
+                collisionDetected = true; // Set flag, but continue updating/removing obstacles
+                gameOver();
+                // Don't return yet, let drawing happen for the collision frame
+            }
+
+            // Score points & increase difficulty
             if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
                 score++;
+                scoreElement.textContent = `Score: ${score}`;
                 obstacle.passed = true;
-                // Defer DOM update
+
+                // Increase base game speed every 5 points
+                if (score > 0 && score % 5 === 0) {
+                    baseGameSpeedCurrent += GAME_SPEED_INCREMENT;
+                    // console.log("Speed increased to:", baseGameSpeedCurrent / TARGET_FPS);
+                }
+
+                // Increase difficulty factor every 15 points
+                if (score > 0 && score % 15 === 0) {
+                    difficultyFactor = Math.min(difficultyFactor + DIFFICULTY_INCREMENT, MAX_DIFFICULTY_FACTOR);
+                     // console.log("Difficulty increased to:", difficultyFactor);
+                }
             }
 
-            // Collision Check
-            if (player.checkCollision(obstacle)) {
-                gameOver();
-                return; // Stop update on collision
-            }
-
-            // Culling (return to pool)
+            // Remove off-screen obstacles
             if (obstacle.x + obstacle.width < 0) {
-                returnObstacle(activeObstacles.splice(i, 1)[0]);
+                returnObstacleToPool(obstacle);
+                activeObstacles.splice(i, 1);
             }
-        }
-
-         // Update active clouds
-         for (let i = activeClouds.length - 1; i >= 0; i--) {
-             const cloud = activeClouds[i];
-             cloud.x -= cloud.speed * dt;
-             if (cloud.x + cloud.width < 0) {
-                 // TODO: Return cloud to pool
-                 activeClouds.splice(i, 1); // Placeholder removal
-             }
-         }
-         // TODO: Update active background elements
-
-
-        // --- Update Score Display (Optimized) ---
-        if (score !== currentScoreDisplay) {
-            currentScoreDisplay = score;
-            scoreElement.textContent = `Score: ${currentScoreDisplay}`;
-        }
-
-        // --- Increase Difficulty (Time-based) ---
-        if (timeAccumulator >= 5.0) { // Increase every 5 seconds
-            timeAccumulator -= 5.0; // Use subtraction to handle overshoot
-
-            gameSpeed = Math.min(gameSpeed + 10, 700); // Increase speed, cap at 700 px/s
-            difficultyFactor = Math.min(difficultyFactor + 0.05, 2.5); // Increase difficulty factor
-            // console.log(`Speed: ${gameSpeed.toFixed(1)}, Difficulty: ${difficultyFactor.toFixed(2)}`);
-
-            // Recalculate next obstacle interval based on new difficulty/speed
-             if (obstacleTimer >= obstacleInterval) {
-                // If a spawn was already due, calculate next interval immediately
-                obstacleInterval = getRandomObstacleInterval();
-             } else {
-                 // If spawn wasn't due, adjust remaining time proportionally (optional, can be complex)
-                 // Or simply let the current interval finish and the *next* one will be shorter.
-             }
         }
     }
 
     function draw() {
-        // Clear canvas
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        // --- Clear Canvas ---
+        // Optimization: Using sky color/gradient as background effectively clears previous frame
+        // ctx.clearRect(0, 0, canvasWidth, canvasHeight); // Less efficient if sky covers everything
 
-        // Draw Sky
-        ctx.fillStyle = skyGradient.get();
-        ctx.fillRect(0, 0, canvasWidth, groundY);
+        // --- Draw Sky ---
+        if (skyGradient.gradient) {
+            ctx.fillStyle = skyGradient.gradient;
+        } else {
+            ctx.fillStyle = skyGradient.colors[0]; // Fallback solid color
+        }
+        ctx.fillRect(0, 0, canvasWidth, groundY); // Draw sky down to ground level
 
-        // Draw Background Elements (Back to Front)
-        activeBackgroundElements.forEach(el => el.draw());
+        // --- Draw Background Elements ---
+        // Draw farther elements first (mountains/volcanoes before trees) for correct layering
+        // Simple loop order works if spawn order is random enough, or sort by type/speedMultiplier if needed
+        for (const element of activeBackgroundElements) {
+            element.draw();
+        }
 
-        // Draw Clouds
-        activeClouds.forEach(cloud => cloud.draw());
+        // --- Draw Clouds ---
+        for (const cloud of activeClouds) {
+            cloud.draw();
+        }
 
-        // Draw Ground
+        // --- Draw Ground ---
         ground.draw();
 
-        // Draw Obstacles
-        activeObstacles.forEach(obstacle => obstacle.draw());
+        // --- Draw Obstacles ---
+        for (const obstacle of activeObstacles) {
+            obstacle.draw();
+        }
 
-        // Draw Player
+        // --- Draw Player ---
         player.draw();
     }
 
     function gameLoop(timestamp) {
-        if (!lastTime) {
-            lastTime = timestamp;
-        }
-        let deltaTime = (timestamp - lastTime) / 1000; // Delta time in seconds
+        if (!playing) return; // Stop loop if game over
+
+        // --- Calculate Delta Time ---
+        const deltaTime = (timestamp - lastTime) / 1000; // Delta time in seconds
         lastTime = timestamp;
+        accumulator += deltaTime;
 
-        // --- Game Update Logic (Fixed Time Step - Optional but good for physics) ---
-        // Accumulate time and update in fixed steps to prevent physics glitches at varying frame rates
-        let accumulatedTime = deltaTime;
-        while (accumulatedTime >= TIME_STEP) {
-            update(TIME_STEP); // Update using fixed step
-            accumulatedTime -= TIME_STEP;
+        // --- Check for Resize ---
+        // Check resize less frequently or via event listener if preferred
+        if (timestamp % 100 < 17) { // Rough check ~once per 6 frames
+             resizeCanvas();
         }
-        // Handle the remainder time step if needed, or simply carry it over (less critical for this game)
-        // update(accumulatedTime); // Option: Update with remaining time
 
-        // --- Drawing ---
+
+        // --- Fixed Time Step Update ---
+        // Ensures physics/game logic runs consistently regardless of frame rate fluctuations
+        while (accumulator >= TIME_STEP / 1000) {
+             update(TIME_STEP / 1000); // Update with fixed step time in seconds
+             accumulator -= TIME_STEP / 1000;
+        }
+
+        // --- Draw ---
+        // Drawing happens every frame, regardless of update steps
         draw();
 
-        // --- Loop ---
-        if (playing) {
-            animationFrameId = requestAnimationFrame(gameLoop);
-        }
+        // --- Request Next Frame ---
+        animationFrameId = requestAnimationFrame(gameLoop);
     }
 
     function gameOver() {
         if (!playing) return; // Prevent multiple calls
         playing = false;
-        cancelAnimationFrame(animationFrameId);
         finalScoreElement.textContent = score;
         gameOverElement.style.display = 'block';
         instructionsElement.style.display = 'none'; // Hide instructions on game over
-        // Maybe add a slight delay before restart is enabled?
-        setTimeout(() => { restartButton.disabled = false; }, 500);
-        restartButton.focus(); // Focus the button
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null; // Clear ID
+        }
+        // console.log("Game Over! Score:", score);
     }
 
-    function resetGame() {
+    function restartGame() {
+        // console.log("Restarting game...");
         score = 0;
-        currentScoreDisplay = -1; // Force score update on first frame
-        gameSpeed = baseGameSpeed;
-        difficultyFactor = 1.0;
-        player.y = groundY - player.height;
-        player.velocityY = 0;
+        baseGameSpeedCurrent = BASE_GAME_SPEED; // Reset speed
+        difficultyFactor = 1;
+        restartDisabled = false; // Re-enable restart button functionality if it was disabled
+
+        // Clear active elements and return to pools
+        while(activeObstacles.length > 0) returnObstacleToPool(activeObstacles.pop());
+        while(activeClouds.length > 0) returnCloudToPool(activeClouds.pop());
+        while(activeBackgroundElements.length > 0) returnBackgroundElementToPool(activeBackgroundElements.pop());
+
+        // Reset player state
+        updateGameDimensions(); // Recalculate positions based on current canvas size
+        player.velocity = 0;
+        player.jumping = false;
         player.jumpCount = 0;
-        obstacleTimer = 0; // Reset timers
-        cloudTimer = 0;
-        backgroundTimer = 0;
-        timeAccumulator = 0;
-        obstacleInterval = 1.5; // Initial interval
 
-        // Clear active arrays and return objects to pools
-        while (activeObstacles.length > 0) returnObstacle(activeObstacles.pop());
-        while (activeClouds.length > 0) returnCloud(activeClouds.pop()); // Assuming returnCloud is implemented
-        // while (activeBackgroundElements.length > 0) returnBackgroundElement(activeBackgroundElements.pop());
-
+        // Reset UI
+        scoreElement.textContent = `Score: ${score}`;
         gameOverElement.style.display = 'none';
         instructionsElement.style.display = 'block'; // Show instructions again
-        restartButton.disabled = true; // Disable button briefly
 
-        // Prefill with some initial background elements/clouds if desired
-        // spawnInitialScenery();
-    }
+        // Reset timers and intervals
+        currentObstacleInterval = getRandomObstacleInterval();
+        obstacleTimer = currentObstacleInterval; // Start timer full so first obstacle spawns quickly
+        cloudTimer = 0;
+        backgroundTimer = 0;
+        accumulator = 0; // Reset accumulator for fixed step loop
 
-    function startGame() {
-        if (playing) return;
-        resetGame();
+        // Start game loop
         playing = true;
-        lastTime = 0; // Reset lastTime for accurate delta on first frame
-        if (animationFrameId) cancelAnimationFrame(animationFrameId); // Clear previous loop if any
+        lastTime = performance.now(); // Use performance.now for higher precision timing
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId); // Clear any existing loop
+        }
         animationFrameId = requestAnimationFrame(gameLoop);
-        instructionsElement.style.display = 'none'; // Hide instructions on start
-    }
 
-    // --- Event Handlers ---
-    function handleJumpIntent() {
-        if (playing) {
-            player.jump();
-        } else if (!restartDisabled && !gameOverElement.style.display || gameOverElement.style.display === 'block') {
-            // Start game if game over screen is shown OR if it's not playing and not disabled
-             startGame();
+        // Hide restart button if needed immediately after restart (e.g., controlled by parent)
+        if (window.parent && window.parent !== window) {
+            // Optional: Inform parent game has restarted if necessary
+            // window.parent.postMessage({ type: 'gameRestarted' }, '*');
         }
     }
 
-    // --- Initialization ---
-    function init() {
-        console.log('Initializing game...');
-        // Attach listeners
-        window.addEventListener('resize', resizeCanvas, false);
-        window.addEventListener('game-jump-intent', handleJumpIntent, false); // Listen for custom event
-        document.addEventListener('touchstart', handleJumpIntent, { passive: true }); // Use passive: true if not calling preventDefault
-        restartButton.addEventListener('click', startGame, false);
+    // --- Event Listeners ---
+    function handleJumpInput(event) {
+        if (playing) {
+            player.jump();
+        } else if (gameOverElement.style.display === 'block' && !restartDisabled) {
+            // Only allow jump input to restart if the game over screen is visible
+            // And the restart button isn't explicitly disabled (by parent message)
+            // restartGame(); // Let the button handle restart clicks
+        }
+        if (event) event.preventDefault(); // Prevent space scroll / touch scroll
+    }
 
-        // Message listeners from parent
-        window.addEventListener('message', (event) => {
-            // Basic security - replace '*' with your viewer's origin in production
-            // if (event.origin !== 'YOUR_VIEWER_ORIGIN') return;
-             try { // Add try-catch for potential cross-origin issues
-                if (event.data && event.data.type) {
-                    console.log('Game received message:', event.data.type);
-                    switch(event.data.type) {
-                        case 'disableRestart':
-                            if (restartButton) restartButton.style.display = 'none';
-                            restartDisabled = true;
-                            break;
-                        case 'focusGame':
-                            window.focus(); // Focus the iframe window
-                             canvas.focus(); // Attempt to focus canvas
-                            break;
-                        case 'blurYourself':
-                             if (document.activeElement && document.activeElement !== document.body) {
-                                 document.activeElement.blur();
-                             }
-                             window.blur(); // Blur the iframe window
-                            break;
-                        // Add other message handlers if needed
-                    }
+    // Listen to the custom jump event dispatched by the top-level spacebar handler
+    window.addEventListener('game-perform-jump', handleJumpInput);
+    // Touch input for jump
+    container.addEventListener('touchstart', handleJumpInput, { passive: false }); // passive:false needed for preventDefault
+    // Restart button click
+    restartButton.addEventListener('click', () => {
+        if (!restartDisabled) {
+            restartGame();
+        }
+    });
+
+    // Window resize listener
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- Message Listener from Parent ---
+    window.addEventListener('message', (event) => {
+        // Basic security - replace '*' with your viewer's origin in production
+        // if (event.origin !== 'YOUR_VIEWER_ORIGIN') return;
+
+        if (event.data && event.data.type) {
+            console.log('Game received message:', event.data.type); // Optional debug
+
+            if (event.data.type === 'disableRestart') {
+                // Hide the 'Play Again' button when viewer is ready
+                if (restartButton) {
+                    restartButton.style.display = 'none';
                 }
-            } catch (e) {
-                console.error("Error processing message:", e);
+                restartDisabled = true; // Logic flag
+            } else if (event.data.type === 'focusGame') {
+                // Focus the game window/canvas when told by the viewer
+                // Focusing canvas can help capture key events if needed, window.focus is general
+                canvas.focus(); // Attempt focus on canvas first
+                window.focus(); // Fallback or general focus
+            } else if (event.data.type === 'blurYourself') {
+                console.log('Game received blurYourself message.');
+                if (document.activeElement && document.activeElement !== document.body) {
+                    document.activeElement.blur();
+                }
+                window.blur(); // General blur for the iframe window
             }
-        });
+        }
+    });
 
-        // Initial setup
-        resizeCanvas(); // Set initial size
-        initPools();    // Initialize object pools
-        resetGame();    // Set initial game state (but don't start loop yet)
-        draw();         // Draw initial frame (player on ground, score 0)
-        instructionsElement.style.display = 'block'; // Ensure instructions are visible initially
+    // --- Initialization ---
+    window.onload = () => {
+        console.log("Window loaded.");
+        resizeCanvas(); // Initial size calculation
+
+        // Don't start the game immediately; wait for interaction or message?
+        // Let's start it paused, showing instructions. A click/tap/space will start it via restartGame.
+        playing = false; // Ensure game starts paused
+        instructionsElement.style.display = 'block';
+        gameOverElement.style.display = 'none'; // Ensure game over is hidden
+        draw(); // Draw initial static frame (sky, ground, player idle)
 
         // Tell the parent window the game is loaded and ready
         console.log('Game initialized, sending gameLoaded message.');
         if (window.parent && window.parent !== window) {
              try {
-                window.parent.postMessage({ type: 'gameLoaded' }, '*'); // Use specific origin in production
+                // IMPORTANT: Use '*' for origin ONLY during testing. Replace with your site's actual origin for security.
+                window.parent.postMessage({ type: 'gameLoaded' }, '*');
+                console.log("gameLoaded message sent.");
              } catch(e) {
                 console.error("Error posting gameLoaded message:", e);
              }
         } else {
-            console.warn("Not running in an iframe or cannot access parent.");
-             // Optionally start the game automatically if not in iframe
-             // instructionsElement.textContent = "Press SPACE or tap to START";
+             console.log("No parent window detected or same window.");
+             // Optionally auto-start if not in an iframe
+             // restartGame();
         }
-    }
 
-    // --- Start ---
-    // Use window.onload OR DOMContentLoaded
-     window.addEventListener('load', init);
-     // OR: document.addEventListener('DOMContentLoaded', init); // Use if you don't need images loaded
+         // Add a listener to start the game on the first interaction if not already started
+         const startGameHandler = () => {
+            if (!playing && gameOverElement.style.display === 'none') {
+                restartGame();
+                // Remove this listener after the first start
+                window.removeEventListener('game-perform-jump', startGameHandler);
+                container.removeEventListener('touchstart', startGameHandler);
+            }
+         };
+         window.addEventListener('game-perform-jump', startGameHandler);
+         container.addEventListener('touchstart', startGameHandler, { passive: false });
+
+    };
 
 })();
     </script>
-       <!-- Message listener script (already included in the main script, keep only one) -->
-       <!-- Make sure the message listener logic inside the main IIFE is correct -->
+        <!-- Add this script just before </body> (kept from original) -->
+    <script>
+        // This script seems redundant as the main game script now handles these messages
+        // but keeping it just in case it serves a subtle purpose or for comparison.
+        // The main script's message handler is more integrated.
+        /*
+        window.addEventListener('message', (event) => {
+            // Basic security: Check origin in production if needed
+            // if (event.origin !== 'YOUR_EXPECTED_ORIGIN') return;
+
+            if (event.data && event.data.type === 'blurYourself') {
+                console.log('Game (secondary script) received blurYourself message.');
+                // Try blurring the body or the currently focused element within the iframe
+                if (document.activeElement && document.activeElement !== document.body) {
+                    document.activeElement.blur();
+                }
+                document.body.blur(); // Attempt to blur body as well
+            }
+
+            if (event.data && event.data.type === 'focusGame') {
+                console.log('Game (secondary script) received focusGame message.');
+                const gameCanvas = document.getElementById('game-canvas'); // Use correct ID
+                if (gameCanvas) {
+                    gameCanvas.focus();
+                } else {
+                     window.focus(); // Fallback
+                }
+            }
+        });
+        */
+    </script>
 </body>
 </html>
