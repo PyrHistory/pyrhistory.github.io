@@ -27,6 +27,7 @@
     --header-h:60px;
     --page-w:650px;
     --page-h:842px;
+    --gradient-flame: linear-gradient(90deg, var(--fiery-orange), var(--accent), var(--fiery-orange)); /* Orange -> Amber -> Orange */
     --page-padding:15px;
     --font-heading: 'Roboto', sans-serif;
     --font-body: 'Open Sans', sans-serif;
@@ -522,10 +523,22 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 /* Style the LO Text Span */
 #lo-achievement-text .lo-popup-text {
-    display: block;
-    font-size: 1.1rem; /* Larger LO text */
+    display: block; /* Keep as block */
+    font-size: 1.0rem; /* <<< ADJUSTED: Slightly smaller font size */
     line-height: 1.5;
-    color: #444;
+    /* --- Start: Gradient & Shimmer Styles --- */
+    background: var(--gradient-flame); /* Apply the base gradient */
+    background-size: 300% 100%; /* Make background wider than element */
+    -webkit-background-clip: text; /* Clip background to text shape (WebKit) */
+    background-clip: text;          /* Clip background to text shape (Standard) */
+    color: transparent;             /* Make the text itself transparent */
+    animation: shimmerText 2.5s infinite linear; /* Apply animation */
+    /* --- End: Gradient & Shimmer Styles --- */
+    /* Ensure text alignment works if needed (already centered by parent) */
+    /* text-align: center; */ /* Likely not needed due to parent style */
+    /* Add margin if needed to adjust spacing after font size change */
+    margin-top: 5px; /* Optional: Adjust spacing if needed */
+    margin-bottom: 5px; /* Optional: Adjust spacing if needed */
 }
 
 /* Style the strong tag within the LO Text */
@@ -1627,6 +1640,16 @@ body.right-handle-floated .toolbar-trigger-area {
 #left-toolbar.visible + #left-toolbar-trigger-area::after {
     opacity: 0 !important; /* Force hide */
     transition: opacity 0.1s linear; /* Faster fade out */
+}
+
+        /* Keyframes for the text shimmer effect */
+@keyframes shimmerText {
+    0% {
+        background-position: 150% 50%; /* Start with gradient shifted right */
+    }
+    100% {
+        background-position: -50% 50%; /* End with gradient shifted left */
+    }
 }
         
 </style>
@@ -3585,7 +3608,7 @@ body.right-handle-floated .toolbar-trigger-area {
         userState.readingProgress.furthestPage = 1;
         // --- Reset UI ---
         resetPopupStates();
-        document.title = "Heritage History™ Reader";
+        document.title = "Pyr Course Viewer";
         // ui.tocList.innerHTML = 'Loading...'; // Reset TOC display - Removed TOC elements
         // REMOVED: ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
 
@@ -3616,7 +3639,7 @@ body.right-handle-floated .toolbar-trigger-area {
             pdfState.totalPages = pdfState.pdfDocument.numPages;
             pdfState.currentPage = 1; // Start at page 1
             updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
-            document.title = `${pdfState.title} - Heritage History™ Reader`;
+            document.title = `${pdfState.title} - Pyr Course Viewer`;
             updateSliderTotalPages(); // Update slider max value (will also render milestones now)
 
             // Wait for overlay/iframe/LO data loading
@@ -3698,7 +3721,7 @@ body.right-handle-floated .toolbar-trigger-area {
             pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = [];
             completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); // Reverted lock reset
             pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
-            document.title="Heritage History™ Reader - Error";
+            document.title="Pyr Course Viewer - Error";
             updateSliderTotalPages(); updateSliderPosition();
             if (ui.bookSpread) {
                 ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
