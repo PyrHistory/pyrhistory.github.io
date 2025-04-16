@@ -1091,5 +1091,39 @@ window.onload = () => {
 };
 })();
     </script>
+        <!-- Add this script just before </body> -->
+    <script>
+        window.addEventListener('message', (event) => {
+            // Basic security: Check origin in production if needed
+            // if (event.origin !== 'YOUR_EXPECTED_ORIGIN') return;
+
+            if (event.data && event.data.type === 'blurYourself') {
+                console.log('Game received blurYourself message.');
+                // Try blurring the body or the currently focused element within the iframe
+                if (document.activeElement && document.activeElement !== document.body) {
+                    document.activeElement.blur();
+                }
+                document.body.blur(); // Attempt to blur body as well
+            }
+
+            // --- Add this part IF your game has an explicit FOCUS function ---
+            if (event.data && event.data.type === 'focusGame') {
+                console.log('Game received focusGame message.');
+                // If your game has a canvas or main element that needs focus:
+                const gameCanvas = document.getElementById('gameCanvas'); // Or your game's main element ID
+                if (gameCanvas) {
+                    gameCanvas.focus();
+                } else {
+                     window.focus(); // Fallback
+                }
+                // Or call a specific focus function if your game library provides one:
+                // if (typeof gameInstance !== 'undefined' && gameInstance.focus) {
+                //     gameInstance.focus();
+                // }
+            }
+             // --- End optional focus part ---
+
+        });
+    </script>
 </body>
 </html>
