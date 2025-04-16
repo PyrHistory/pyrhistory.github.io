@@ -3559,12 +3559,12 @@ body.right-handle-floated .toolbar-trigger-area {
         // ui.tocList.innerHTML = 'Loading...'; // Reset TOC display - Removed TOC elements
         // REMOVED: ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
 
-        // --- MODIFIED: Set 'Go To Chapter' button to loading state ---
+                // --- MODIFIED: Set 'Go To Chapter' button to loading state ---
         if (ui.goToChapterBtn) {
             updateStatus("Setting button to 'Loading Chapter...' state.");
             ui.goToChapterBtn.textContent = 'Loading Chapter...';
-            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE); // Remove visible if it was somehow added
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE); // Ensure final 'visible' class is off
+            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER); // Add loading class (CSS makes this visible)
         }
         // --- End Button Modification ---
 
@@ -3638,18 +3638,20 @@ body.right-handle-floated .toolbar-trigger-area {
                 console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
             }
 
-            // --- MODIFIED: Show 'Go to Chapter' button with animation ---
-            // Use a small delay consistent with the old loading bar animation buffer
-            setTimeout(() => {
-                // Only show button if still in loading game state
-                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                    updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
-                    ui.goToChapterBtn.textContent = 'Go to Chapter';
-                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
-                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
-                }
-            }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
-            // --- End Button Modification ---
+                    // --- MODIFIED: Update button state directly when reader is ready ---
+        if (ui.goToChapterBtn) {
+            // Check if the button is currently in the "Loading..." state
+            if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
+                updateStatus("Reader ready, updating button text and class.");
+                ui.goToChapterBtn.textContent = 'Go to Chapter';
+                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add class to trigger final animation
+            } else {
+                // If it's not in loading state (e.g., already hidden by transition), do nothing.
+                updateStatus("Reader ready, but button wasn't in loading state (likely already transitioned or hidden).");
+            }
+        }
+        // --- End Button Modification ---
 
             // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
             if (ui.gameIframe?.contentWindow) {
@@ -4039,11 +4041,13 @@ body.right-handle-floated .toolbar-trigger-area {
 
         // 1. Explicitly remove visibility classes from the button to start its fade-out transition.
         if (ui.goToChapterBtn) {
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-            // The button's own opacity transition (0.3s) will handle the fade out.
-            updateStatus("Removed button visibility classes to initiate fade-out.");
-        }
+        // --- Ensure BOTH classes are removed ---
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+        // ---------------------------------------
+        // The button's own opacity transition (0.3s) will handle the fade out.
+        updateStatus("Removed button visibility classes to initiate fade-out.");
+    }
 
         // 2. Remove the body class to hide the game container and reveal the reader UI.
         //    This happens concurrently with the button fading out.
@@ -4090,45 +4094,32 @@ if (ui.rightToolbar && ui.leftToolbar) {
     }
 
     function handleGameOverFromGame(score) {
-        updateStatus(`Game over message received. Score: ${score}`);
+    updateStatus(`Game over message received. Score: ${score}`);
 
-        // Always show the 'Go to Chapter' button on game over, if not already visible in loading state
-        if (ui.goToChapterBtn && !ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
-            // If reader is already ready, show the animated button
-            if (appState.isReaderReady) {
-                ui.goToChapterBtn.textContent = 'Go to Chapter';
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Ensure this is removed
-                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Trigger animation
-                updateStatus("Made 'Go to Chapter' button visible (Game Over - Reader Ready).");
+    // If reader is already loaded, start timer for automatic transition
+    if (appState.isReaderReady) { // Use appState from new code
+        updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
+        // Try to disable game restart as a safeguard
+        if (ui.gameIframe?.contentWindow) {
+            try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
+             catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
+        }
+        clearTimeout(appState.gameOverTimeoutId); // Clear any existing timer
+        appState.gameOverTimeoutId = setTimeout(() => {
+            // Check if we are *still* in the loading game state before transitioning
+            // This prevents transitioning again if the user clicked the button manually first
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+               updateStatus("Game over timeout finished, transitioning now.");
+               transitionToChapter();
             } else {
-                // If reader isn't ready yet, show the static "Loading..." button
-                ui.goToChapterBtn.textContent = 'Loading Chapter...';
-                ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-                 updateStatus("Made 'Loading Chapter...' button visible (Game Over - Reader Not Ready).");
+               updateStatus("Game over timeout finished, but transition already occurred.");
             }
-        } else if (ui.goToChapterBtn) {
-             updateStatus("'Go to Chapter' button already visible in loading state.");
-        } else {
-             console.error("'Go to Chapter' button not found!");
-        }
-
-        // If reader is already loaded, start timer for automatic transition
-        if (appState.isReaderReady) { // Use appState from new code
-            updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
-            // Try to disable game restart as a safeguard
-            if (ui.gameIframe?.contentWindow) {
-                try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
-                 catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
-            }
-            clearTimeout(appState.gameOverTimeoutId); // Clear any existing timer
-            appState.gameOverTimeoutId = setTimeout(() => {
-                updateStatus("Game over timeout finished, transitioning now.");
-                transitionToChapter(); // Transition hides the button via body class
-            }, GAME_OVER_TRANSITION_DELAY);
-        } else {
-            updateStatus("Game over occurred, but reader is not ready yet. Button made visible for manual transition.");
-        }
+        }, GAME_OVER_TRANSITION_DELAY);
+    } else {
+        updateStatus("Game over occurred, but reader is not ready yet. Waiting for manual transition via button.");
+        // Button state is handled by loadPdf now.
     }
+}
 
     // --- Timelock UI and Toggle (REVERTED from Old Code) ---
     function updateTimelockButtonVisuals() { // REVERTED
