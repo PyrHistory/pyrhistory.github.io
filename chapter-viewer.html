@@ -1056,86 +1056,96 @@ body:not(.loading-game-active) #loading-game-container {
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
-/* --- START: Modified Go To Chapter Button CSS --- */
-
-/* Base Button Style - HIDDEN BY DEFAULT using display: none */
+/* Base state - hidden, scaled down */
 #go-to-chapter-btn {
-    display: none; /* HIDDEN BY DEFAULT */
     position: fixed;
     bottom: 30px;
     left: 50%;
+    transform: translateX(-50%) scale(0.8); /* Start scaled down for pop */
     z-index: 10001;
     padding: 12px 25px;
     font-size: 1.1rem;
     font-weight: bold;
-    cursor: pointer;
+    color: white;
+    background: linear-gradient(135deg, var(--fiery-orange), var(--accent)); /* Default final background */
     border: none;
     border-radius: 25px;
-    /* Keep transitions for opacity/transform/colors for smooth state changes */
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out, background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-    /* Start slightly scaled down and faded for entry animation */
-    transform: translateX(-50%) scale(0.9);
-    opacity: 0;
-    /* Ensure no animation runs by default */
-    animation: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(255, 255, 255, 0.2) inset;
+    opacity: 0; /* Start hidden */
+    visibility: hidden;
+    animation: none; /* No animation initially */
+    transition: background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Add transitions, ensure visibility transition matches opacity */
 }
 
-/* --- Visibility Rule --- */
-/* SHOW the button ONLY when body has class AND button has its state class */
-body.loading-game-active #go-to-chapter-btn.loading-chapter,
-body.loading-game-active #go-to-chapter-btn.visible {
-    display: block; /* Or inline-block/flex if needed */
-    opacity: 1; /* Make it fully visible */
-    /* The transform below depends on the specific state (loading or visible) */
-}
-
-/* --- State 1: Loading Appearance --- */
-body.loading-game-active #go-to-chapter-btn.loading-chapter {
+/* Loading state - visible, navy blue, normal size, no animation */
+/* Apply pulse animation ONLY to the loading state */
+#go-to-chapter-btn.loading-chapter {
     background-color: var(--lab-blue); /* Dark navy blue */
     background-image: none; /* Override gradient */
     color: var(--text-on-dark); /* White text */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); /* Simpler shadow */
-    transform: translateX(-50%) scale(1); /* Ensure normal size */
-    animation: pulseAnimation 1.8s infinite ease-in-out; /* Apply pulse */
+    opacity: 1; /* Make visible */
+    visibility: visible;
+    transform: translateX(-50%) scale(1); /* Visible at normal size */
+    transition-delay: 0s; /* Ensure transitions apply immediately */
+    /* ADDED THIS LINE TO APPLY ANIMATION: */
+    animation: pulseAnimation 1.8s infinite ease-in-out;
 }
 
-/* --- State 2: Ready Appearance --- */
-body.loading-game-active #go-to-chapter-btn.visible {
-    background: linear-gradient(135deg, var(--fiery-orange), var(--accent)); /* Default final background */
-    color: white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(255, 255, 255, 0.2) inset;
-    /* Apply pop animation - transform handled by animation */
+/* Ensure the non-loading states don't have the pulse */
+#go-to-chapter-btn:not(.loading-chapter) {
+    animation: none; /* Remove pulse if not loading */
+}
+/* Re-apply pop animation for the .visible state (if not loading) */
+#go-to-chapter-btn.visible:not(.loading-chapter) {
+    /* Use popUpBounce or none if you don't want the pop */
     animation: popUpBounce 0.5s ease-out forwards;
-     /* Ensure final transform state from animation is correct */
-     transform: translateX(-50%) scale(1);
 }
 
-/* --- Hover/Active States (Scoped to body class) --- */
+/* Final visible state (triggered by adding .visible class) - animates in */
+#go-to-chapter-btn.visible {
+    opacity: 1; /* Ensure visible */
+    visibility: visible;
+    /* Apply the fun pop-up animation */
+    animation: popUpBounce 0.5s ease-out forwards;
+    /* Transform is handled by animation */
+    transition-delay: 0s; /* Ensure transitions apply immediately */
+}
 
-/* Loading State Hover/Active */
-body.loading-game-active #go-to-chapter-btn.loading-chapter:hover {
-     background-color: #0b1221; /* Slightly lighter navy */
-     transform: translateX(-50%) scale(1.03); /* Subtle hover */
- }
- body.loading-game-active #go-to-chapter-btn.loading-chapter:active {
-     background-color: #060a14; /* Slightly darker navy */
-     transform: translateX(-50%) scale(0.98); /* Subtle active */
- }
-
-/* Ready State Hover/Active */
-body.loading-game-active #go-to-chapter-btn.visible:hover {
+/* Hover/Active for final state */
+#go-to-chapter-btn.visible:hover { /* Target .visible specifically for hover */
     background: linear-gradient(135deg, var(--accent), var(--fiery-orange));
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(255, 255, 255, 0.25) inset;
     /* Apply hover scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(1.05);
 }
-body.loading-game-active #go-to-chapter-btn.visible:active {
+#go-to-chapter-btn.visible:active { /* Target .visible specifically for active */
     /* Apply active scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(0.98);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.15) inset;
 }
 
-/* --- END: Modified Go To Chapter Button CSS --- */
+/* Hover/Active for loading state */
+#go-to-chapter-btn.loading-chapter:hover {
+     background-color: #0b1221; /* Slightly lighter navy */
+     transform: translateX(-50%) scale(1.03); /* Subtle hover */
+ }
+ #go-to-chapter-btn.loading-chapter:active {
+     background-color: #060a14; /* Slightly darker navy */
+     transform: translateX(-50%) scale(0.98); /* Subtle active */
+ }
+
+/* ---- REMOVED THIS BLOCK ---- */
+/* Surefire way to hide button when reader is active */
+/* body:not(.loading-game-active) #go-to-chapter-btn {
+    opacity: 0;
+    visibility: hidden;
+    animation: none !important; */ /* Ensure no animation plays when hidden */
+/*    pointer-events: none; */ /* Add this to prevent accidental clicks during fade */
+/* } */
+/* ---- END REMOVED BLOCK ---- */
+
 
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
@@ -1941,6 +1951,7 @@ body.right-handle-floated .toolbar-trigger-area {
         sliderHideTimeout: null,
         gameOverTimeoutId: null,
         alertTimeout: null,
+        alertWiggleTimeout: null,
         isDraggingSlider: false,
         pagePadding: 15, // Default, updated on init
         isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
@@ -1948,13 +1959,6 @@ body.right-handle-floated .toolbar-trigger-area {
         loPopupTargetPage: null, // NEW: Store target page for after LO popup
         originalSliderInfoText: null,
         sliderInfoFadeTimeout: null,
-        activeLock: {
-            type: null,        // 'page', 'notes', 'video', or null if inactive
-            startTime: 0,      // Timestamp when the lock started
-            duration: 0,       // Required duration in seconds
-            triggerPage: null, // The page number that triggered this lock
-            isComplete: false  // Tracks if the current lock instance passed its check (internal use)
-        },
     };
     // REVERTED: Global state variables for toolbar/timer from old code
     let toolbarTimer=null;
@@ -1964,7 +1968,11 @@ body.right-handle-floated .toolbar-trigger-area {
 
     // REVERTED: Timelock state variables from old code
     let isTimelockGloballyEnabled = true;
+    let currentPageLockStartTime = 0;
+    let requiredReadingTime = 0;
+    let isTimeLockActive = false;
     let completedTimeLockPages = new Set();
+    let currentLockType = null; // NEW: Tracks what the current lock applies to ('pdf', 'notes', 'iframe', or null)
 
     // --- State related to PDF/Notes/Keywords (Keep from New Code) ---
     const pdfState = {
@@ -2468,75 +2476,85 @@ body.right-handle-floated .toolbar-trigger-area {
              if (leftEdgeNavRight) leftEdgeNavRight.style.display = ''; // Show right edge of the single page
         }
 
-                // --- Calculate and potentially set page lock ---
-        // Always reset any previous lock before checking/setting a new one for the new view
-        resetActiveLock();
-
-        // Only proceed if timelock is globally enabled
+        // *** REVERTED: Calculate and set reading time lock based on EFFECTIVE view mode ***
+        // *** ONLY if timelock is globally enabled ***
         if (isTimelockGloballyEnabled) {
-            let lockPageToCheck = leftPageNum; // Page number used as key for completion status
-            let calculatedTime = 0;
-
             if (isEffectiveDoublePageView) {
                 // --- Double Page View Lock Logic ---
                 const leftViewport = pdfState.currentViewports['left-page-canvas'];
-                const rightViewport = pdfState.currentViewports['right-page-canvas']; // May be null
+                const rightViewport = pdfState.currentViewports['right-page-canvas']; // Will be null if right page isn't rendered
 
                 let timeLeft = 0;
                 if (leftPageNum >= 1 && leftPageNum <= pdfState.totalPages && leftViewport) {
                     timeLeft = await calculatePageReadingTime(leftPageNum, leftViewport);
                 }
                 let timeRight = 0;
-                // Only add right page time if it was actually rendered (actualRightPageNum > 0)
+                // Only add right page time if it was actually rendered (not placeholder)
                 if (actualRightPageNum > 0 && rightViewport) {
                     timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
                 }
-                calculatedTime = timeLeft + timeRight;
-                // Lock associated with the ODD starting page of the pair
-                lockPageToCheck = leftPageNum; // Already should be odd if > 1
+
+                const timeForPair = timeLeft + timeRight;
+                const firstPageOfCurrentPair = leftPageNum; // Lock associated with the ODD starting page
+
+                if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
+                    updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
+                    // isTimeLockActive remains false
+                } else if (timeForPair > 0) {
+                    requiredReadingTime = timeForPair; // Set required time for the pair
+                    currentPageLockStartTime = Date.now();
+                    isTimeLockActive = true; // Activate lock for the PAIR
+                    currentLockType = 'pdf';
+                    updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
+                } else {
+                    updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
+                    // isTimeLockActive remains false
+                }
+                // --- End Double Page View Lock Logic ---
 
             } else {
                 // --- Single Page / Rotated View Lock Logic ---
-                // Lock only applies if the current page is EVEN
-                if (leftPageNum > 0 && leftPageNum % 2 === 0) {
-                    lockPageToCheck = leftPageNum;
-                    const singleViewport = pdfState.currentViewports['left-page-canvas'];
-                    if (singleViewport) {
-                        calculatedTime = await calculatePageReadingTime(leftPageNum, singleViewport);
+                const currentPageNum = leftPageNum; // The single page being displayed
+                const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
+
+                if (isEvenPage) {
+                    // Only potentially lock if the *current* page is EVEN
+                    if (completedTimeLockPages.has(currentPageNum)) {
+                        updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
+                        // isTimeLockActive remains false
+                    } else {
+                        const singlePageViewPort = pdfState.currentViewports['left-page-canvas'];
+                        let timeSingle = 0;
+                        if (currentPageNum >= 1 && currentPageNum <= pdfState.totalPages && singlePageViewPort) {
+                            timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
+                        }
+
+                        if (timeSingle > 0) {
+                            requiredReadingTime = timeSingle; // Store single EVEN page time
+                            currentPageLockStartTime = Date.now();
+                            isTimeLockActive = true; // Activate lock for this EVEN page
+                            currentLockType = 'pdf';
+                            updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
+                        } else {
+                            updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
+                            // isTimeLockActive remains false
+                        }
                     }
                 } else {
                     // Current page is odd or invalid, no lock needed when viewing it in single view
-                    calculatedTime = 0; // Ensure no lock is set
-                     updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${leftPageNum}.`);
+                    updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
+                    // isTimeLockActive remains false
                 }
-            }
-
-            // Check if this specific page/pair lock has already been completed
-            if (completedTimeLockPages.has(lockPageToCheck)) {
-                updateStatus(`Page lock previously completed for page/pair ${lockPageToCheck}. Skipping set.`);
-            } else if (calculatedTime > 0) {
-                // Set the new page lock state
-                appState.activeLock.type = 'page';
-                appState.activeLock.startTime = Date.now();
-                appState.activeLock.duration = calculatedTime;
-                appState.activeLock.triggerPage = lockPageToCheck;
-                updateStatus(`Time lock SET (Type: Page) for page/pair ${lockPageToCheck}. Duration: ${calculatedTime}s`);
-            } else {
-                 updateStatus(`Time lock NOT SET for page/pair ${lockPageToCheck} (time=0 or already completed).`);
+                // --- End Single Page / Rotated View Lock Logic ---
             }
         } else {
-            // Timelock is globally disabled
-            updateStatus("Time lock globally DISABLED. Skipping page lock calculation/set.");
+            // Timelock is globally disabled, ensure no lock is set
+            isTimeLockActive = false;
+            requiredReadingTime = 0;
+            currentPageLockStartTime = 0;
+            updateStatus("Time lock globally DISABLED. Skipping lock calculation/set.");
         }
-        // --- End Page Lock Calculation/Setting ---
-
-        // --- Final Updates ---
-        updateSliderPosition(); // Updates slider position, text, and LO milestone colors
-        preloadAdjacentPages(pdfState.currentPage);
-        applyCurrentViewModeStyles(); // Apply scaling/rotation
-
-        // --- Check for Popups (Keep from New Code) ---
-        // ... (rest of updateDisplay function remains the same) ...
+        // --- End REVERTED Reading Time Logic ---
 
         // --- Final Updates ---
         updateSliderPosition(); // Updates slider position, text, and LO milestone colors
@@ -2666,6 +2684,59 @@ body.right-handle-floated .toolbar-trigger-area {
         // No need for separate timer if animation-iteration-count: 1
     }
 
+
+    // --- Reading Time Lock Check (REVERTED from Old Code) ---
+    function checkReadingTimeLock() {
+        // Called by jumpToPage only when moving forward.
+
+        // *** FIRST: Check if timelock is globally enabled ***
+        if (!isTimelockGloballyEnabled) {
+            updateStatus(`Time lock check: Globally DISABLED. Allowing navigation.`);
+            return false; // Not blocking
+        }
+
+        if (!isTimeLockActive) {
+            // No lock is currently active (either pair or single even page), so allow navigation.
+            updateStatus(`Time lock check: Lock is INACTIVE. Allowing navigation.`);
+            return false; // Not blocking
+        }
+
+            // *** ADD THIS CHECK: Only block PDF nav if the lock is for PDF ***
+    if (currentLockType !== null && currentLockType !== 'pdf') {
+        updateStatus(`Time lock check (PDF Nav): Active lock is for '${currentLockType}', not PDF. Allowing PDF navigation.`);
+        return false; // Don't block PDF nav because of an active popup lock
+    }
+
+        // A lock IS active.
+        const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
+        // 'pdfState.currentPage' holds the page number the active lock is associated with
+        // (odd start for pair lock, even page num for single lock) as set by updateDisplay.
+        const lockAssociatedPage = pdfState.currentPage;
+
+        if (elapsedSeconds < requiredReadingTime) {
+            // Time is NOT up. Block navigation.
+            updateStatus(`Time lock ACTIVE (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Blocking forward nav.`);
+            showReadingTimeAlert(); // Alert will only show if globally enabled due to its own check
+            return true; // Indicate lock IS preventing navigation
+        } else {
+            // Time IS up. Allow navigation and handle completion.
+            updateStatus(`Time lock FINISHED (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Allowing forward nav.`);
+
+            // Mark completion for this page/pair permanently in the Set using the associated page number.
+            if (!completedTimeLockPages.has(lockAssociatedPage)) {
+                completedTimeLockPages.add(lockAssociatedPage);
+                updateStatus(`Page/Pair ${lockAssociatedPage} added to completed time lock set.`);
+            }
+
+            // Important: Deactivate lock for this *specific check*.
+            // updateDisplay will reset isTimeLockActive anyway before potentially setting a new one for the *next* page view.
+            isTimeLockActive = false; // Lock is passed/completed *for this navigation attempt*.
+            requiredReadingTime = 0; // Reset required time as well
+            currentPageLockStartTime = 0;
+            return false; // Indicate lock is NOT preventing navigation for this attempt
+        }
+    }
+
     // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
@@ -2770,27 +2841,29 @@ body.right-handle-floated .toolbar-trigger-area {
 
         const isMovingForward = targetStartPage > currentStartPage;
 
-                // --- Check Active Lock ---
+        // *** REVERTED Lock Check Logic ***
         if (isMovingForward) {
-            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking active lock...`);
-            if (checkActiveLock('navigateForward')) { // Use the new central check function
-                updateStatus(`Navigation blocked by active lock.`);
-                // Reset slider if it triggered the block
+            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
+            if (checkReadingTimeLock()) { // Calls the reverted function
+                updateStatus(`Navigation blocked by time lock.`);
                 if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
-                    updateSliderPosition();
+                    updateSliderPosition(); // Reset slider if it triggered the block
                 }
                 return; // Block the jump
             }
-            updateStatus(`Active lock passed/inactive. Proceeding with jump.`);
+            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
         } else { // Moving backward
-            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Clearing any active lock.`);
-            // Backward navigation always clears the current lock regardless of its state
-            resetActiveLock();
+            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
+            // Clear any active lock if moving backward (using reverted globals)
+            if (isTimeLockActive) {
+                 currentLockType = null; // *** Reset type ***
+                 updateStatus("Clearing active time lock due to backward navigation.");
+                 isTimeLockActive = false;
+                 requiredReadingTime = 0;
+                 currentPageLockStartTime = 0;
+            }
         }
-        // --- End Lock Check ---
-
-        // --- Perform Navigation (Uses New Code State) ---
-        // ... (rest of jumpToPage remains the same) ...
+        // *** End REVERTED Lock Check Logic ***
 
         // --- Perform Navigation (Uses New Code State) ---
         updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
@@ -2951,6 +3024,63 @@ body.right-handle-floated .toolbar-trigger-area {
         updateSliderTotalPages(); updateSliderPosition(); // Update slider value and text
     }
 
+// --- NEW: Calculate Video Duration for Timelock ---
+function calculateVideoDuration(url) {
+    const DEFAULT_VIDEO_LOCK_TIME = 60; // Default seconds if times can't be parsed
+    try {
+        const urlObj = new URL(url);
+        const params = urlObj.searchParams;
+
+        // Common parameters (YouTube: t=start_seconds, Vimeo: t=start_seconds)
+        // YouTube also uses start=seconds, end=seconds in embed URLs often
+        let startTime = null;
+        let endTime = null;
+
+        if (params.has('start')) {
+            startTime = parseInt(params.get('start'), 10);
+        } else if (params.has('t')) {
+             // Handle formats like 1m30s or just seconds
+             const tParam = params.get('t');
+             if (tParam.includes('m') || tParam.includes('s')) {
+                 let totalSeconds = 0;
+                 const minutesMatch = tParam.match(/(\d+)m/);
+                 const secondsMatch = tParam.match(/(\d+)s/);
+                 if (minutesMatch) totalSeconds += parseInt(minutesMatch[1], 10) * 60;
+                 if (secondsMatch) totalSeconds += parseInt(secondsMatch[1], 10);
+                 startTime = totalSeconds > 0 ? totalSeconds : null;
+             } else {
+                 startTime = parseInt(tParam, 10);
+             }
+        }
+
+        if (params.has('end')) {
+            endTime = parseInt(params.get('end'), 10);
+        }
+
+        // Clean up NaN values
+        startTime = isNaN(startTime) ? null : startTime;
+        endTime = isNaN(endTime) ? null : endTime;
+
+        if (startTime !== null && endTime !== null && endTime > startTime) {
+            updateStatus(`Timelock duration from start/end params: ${endTime - startTime}s`);
+            return endTime - startTime;
+        } else if (startTime !== null) {
+            // If only start time is given, we can't know the intended end. Use default.
+            updateStatus(`Timelock duration using default (only start time found).`);
+            return DEFAULT_VIDEO_LOCK_TIME;
+        } else {
+            // No valid start/end times found. Use default.
+            // We cannot reliably get the video length from the parent window.
+            updateStatus(`Timelock duration using default (no time params found).`);
+            return DEFAULT_VIDEO_LOCK_TIME;
+        }
+    } catch (e) {
+        console.warn("Error parsing video URL for timelock duration, using default.", e);
+        return DEFAULT_VIDEO_LOCK_TIME;
+    }
+}
+// --- End NEW Video Duration Calculation ---
+    
     // --- UI Toggles (Keep from New Code) ---
 
     function showLoading(msg = 'Processing...') {
@@ -3549,15 +3679,14 @@ body.right-handle-floated .toolbar-trigger-area {
         // ui.tocList.innerHTML = 'Loading...'; // Reset TOC display - Removed TOC elements
         // REMOVED: ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
 
-                        // --- Set Button to Loading State ---
+        // --- MODIFIED: Set 'Go To Chapter' button to loading state ---
         if (ui.goToChapterBtn) {
-            updateStatus("Setting button internal state to 'Loading Chapter...'.");
+            updateStatus("Setting button to 'Loading Chapter...' state.");
             ui.goToChapterBtn.textContent = 'Loading Chapter...';
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
             ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-            // CSS now controls actual display based on body.loading-game-active
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE); // Remove visible if it was somehow added
         }
-        // --- End Button State ---
+        // --- End Button Modification ---
 
         let filename = "Document";
         try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
@@ -3629,15 +3758,18 @@ body.right-handle-floated .toolbar-trigger-area {
                 console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
             }
 
-                                    // --- Set Button to Ready State (If it exists) ---
-        if (ui.goToChapterBtn) {
-             updateStatus("Reader ready. Setting button internal state to 'Go to Chapter'.");
-             ui.goToChapterBtn.textContent = 'Go to Chapter';
-             ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-             ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
-             // CSS will handle making it appear/animate *if* body.loading-game-active is still present.
-        }
-        // --- End Button State ---
+            // --- MODIFIED: Show 'Go to Chapter' button with animation ---
+            // Use a small delay consistent with the old loading bar animation buffer
+            setTimeout(() => {
+                // Only show button if still in loading game state
+                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                    updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
+                    ui.goToChapterBtn.textContent = 'Go to Chapter';
+                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
+                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
+                }
+            }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
+            // --- End Button Modification ---
 
             // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
             if (ui.gameIframe?.contentWindow) {
@@ -3752,42 +3884,67 @@ body.right-handle-floated .toolbar-trigger-area {
         }
 
         updateStatus(`Showing iframe popup for URL: ${url}`);
-        // *** Activate Video Lock (if globally enabled) ***
-        if (isTimelockGloballyEnabled) {
-            const videoDuration = calculateVideoLockDuration(url); // Get duration
-            if (videoDuration > 0) {
-                updateStatus(`Setting video lock. Duration: ${videoDuration}s`);
-                resetActiveLock(); // Clear any previous lock
-                appState.activeLock.type = 'video';
-                appState.activeLock.startTime = Date.now();
-                appState.activeLock.duration = videoDuration;
-                appState.activeLock.triggerPage = pdfState.currentPage; // Page that triggered the video
-            } else {
-                 updateStatus(`Calculated video duration is 0. Skipping video lock activation.`);
-            }
-        } else {
-             updateStatus("Timelock globally disabled. Skipping video lock activation.");
-        }
-        // *** End Lock Activation ***
         ui.popupIframe.src = url;
         toggleVisibility(ui.iframePopupBackdrop, true);
         toggleVisibility(ui.iframePopupModal, true);
+            // --- Activate Iframe Timelock (if globally enabled) ---
+    if (isTimelockGloballyEnabled) {
+        requiredReadingTime = calculateVideoDuration(url); // Calculate duration
+        currentPageLockStartTime = Date.now();
+        isTimeLockActive = true;
+        currentLockType = 'iframe';
+        updateStatus(`Iframe timelock ACTIVATED. Type: ${currentLockType}, Duration: ${requiredReadingTime}s`);
+    } else {
+        // Ensure lock is inactive if globally disabled when popup opens
+        isTimeLockActive = false;
+        currentLockType = null;
+        updateStatus(`Iframe timelock NOT ACTIVATED (Globally disabled).`);
+    }
+    // --- End Iframe Timelock Activation ---
     }
 
     function hideIframePopup() {
-        if (checkActiveLock('closeVideo')) {
-            updateStatus("Cannot close iframe popup: Active lock.");
-            return; // Prevent hiding
-        }
+        // --- Timelock Check ---
+if (isTimelockGloballyEnabled && isTimeLockActive && currentLockType === 'iframe') {
+    const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
+    if (elapsedSeconds < requiredReadingTime) {
+        updateStatus(`Iframe timelock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Preventing close.`);
+        showReadingTimeAlert(); // Show the generic alert
+        return; // *** Prevent closing ***
+    } else {
+        updateStatus(`Iframe timelock COMPLETED (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s). Allowing close.`);
+        // Lock is finished, reset state before proceeding to close
+        isTimeLockActive = false;
+        currentLockType = null;
+        requiredReadingTime = 0;
+        currentPageLockStartTime = 0;
+    }
+} else if (currentLockType === 'iframe') {
+     // Lock type was 'iframe' but it wasn't active, ensure state is reset.
+     updateStatus("Iframe timelock was inactive or globally disabled. Resetting state.");
+     isTimeLockActive = false;
+     currentLockType = null;
+     requiredReadingTime = 0;
+     currentPageLockStartTime = 0;
+}
+// --- End Timelock Check ---
         if (!ui.iframePopupBackdrop || !ui.iframePopupModal || !ui.popupIframe) return;
         if (ui.iframePopupModal.classList.contains(CSS_CLASS.VISIBLE)) {
              updateStatus("Hiding iframe popup.");
              toggleVisibility(ui.iframePopupBackdrop, false);
              toggleVisibility(ui.iframePopupModal, false);
+            // Final cleanup: Ensure lock state is reset if it was for iframe
+if (currentLockType === 'iframe') {
+     isTimeLockActive = false;
+     currentLockType = null;
+     requiredReadingTime = 0;
+     currentPageLockStartTime = 0;
+}
              ui.popupIframe.src = 'about:blank'; // Clear content to free resources
         }
     }
     function hideIframePopupIfNeeded() {
+        
         if (ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE)) {
             hideIframePopup();
         }
@@ -3828,20 +3985,6 @@ body.right-handle-floated .toolbar-trigger-area {
     hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
     updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
 
-        // *** Activate Notes Lock (if globally enabled) ***
-        if (isTimelockGloballyEnabled) {
-            const notesDuration = 45; // Fixed duration for notes
-            updateStatus(`Setting notes lock. Duration: ${notesDuration}s`);
-            resetActiveLock(); // Clear any previous lock
-            appState.activeLock.type = 'notes';
-            appState.activeLock.startTime = Date.now();
-            appState.activeLock.duration = notesDuration;
-            appState.activeLock.triggerPage = pdfState.currentPage; // Page that triggered the notes
-        } else {
-             updateStatus("Timelock globally disabled. Skipping notes lock activation.");
-        }
-        // *** End Lock Activation ***
-
     // *** Show popup container and backdrop (triggers CSS transitions) ***
     toggleVisibility(ui.notesPopupBackdrop, true);
     toggleVisibility(ui.notesPopupContainer, true);
@@ -3863,20 +4006,36 @@ body.right-handle-floated .toolbar-trigger-area {
     pdfState.notesPdfLoadingTask = null; // Ensure it's null initially
 
     try {
-        // *** REMOVED global showLoading() ***
-        pdfState.notesPdfLoadingTask = pdfjsLib.getDocument(pdfUrl);
-        pdfState.currentNotesPdfDoc = await pdfState.notesPdfLoadingTask.promise;
-        pdfState.totalNotesPages = pdfState.currentNotesPdfDoc.numPages;
-        pdfState.currentNotesPageNum = Math.max(1, Math.min(pageNum, pdfState.totalNotesPages)); // Clamp page num
+    // *** REMOVED global showLoading() ***
+    pdfState.notesPdfLoadingTask = pdfjsLib.getDocument(pdfUrl);
+    pdfState.currentNotesPdfDoc = await pdfState.notesPdfLoadingTask.promise;
+    pdfState.totalNotesPages = pdfState.currentNotesPdfDoc.numPages;
+    pdfState.currentNotesPageNum = Math.max(1, Math.min(pageNum, pdfState.totalNotesPages)); // Clamp page num
 
-        updateStatus(`Notes PDF loaded: ${pdfState.totalNotesPages} pages. Rendering page ${pdfState.currentNotesPageNum}.`);
-        await renderNotesPage(pdfState.currentNotesPageNum); // Render the target page
+    updateStatus(`Notes PDF loaded: ${pdfState.totalNotesPages} pages. Rendering page ${pdfState.currentNotesPageNum}.`);
+    await renderNotesPage(pdfState.currentNotesPageNum); // Render the target page
 
-        // *** Hide LOCAL loader only AFTER successful render ***
-        // (renderNotesPage now handles showing the canvas)
-        ui.notesLocalLoader.classList.remove(CSS_CLASS.VISIBLE);
+    // --- Activate Notes Timelock (if globally enabled) ---
+    if (isTimelockGloballyEnabled) {
+        requiredReadingTime = 45; // Fixed 45 seconds for notes
+        currentPageLockStartTime = Date.now();
+        isTimeLockActive = true;
+        currentLockType = 'notes';
+        updateStatus(`Notes timelock ACTIVATED. Type: ${currentLockType}, Duration: ${requiredReadingTime}s`);
+    } else {
+        // Ensure lock is inactive if globally disabled when popup opens
+        isTimeLockActive = false;
+        currentLockType = null;
+         updateStatus(`Notes timelock NOT ACTIVATED (Globally disabled).`);
+    }
+    // --- End Notes Timelock Activation ---
 
-    } catch (error) {
+
+    // *** Hide LOCAL loader only AFTER successful render ***
+    // (renderNotesPage now handles showing the canvas)
+    ui.notesLocalLoader.classList.remove(CSS_CLASS.VISIBLE);
+
+} catch (error) {
         console.error(`Error loading or rendering notes PDF ${pdfUrl}:`, error);
         // Display error message *on the canvas* (optional)
         ctx.fillStyle = '#8B0000'; // Dark red
@@ -3897,10 +4056,30 @@ body.right-handle-floated .toolbar-trigger-area {
 
     function hideNotesPopup() {
 
-    if (checkActiveLock('closeNotes')) {
-        updateStatus("Cannot close notes popup: Active lock.");
-        return; // Prevent hiding
-        }
+    // --- Timelock Check ---
+if (isTimelockGloballyEnabled && isTimeLockActive && currentLockType === 'notes') {
+    const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
+    if (elapsedSeconds < requiredReadingTime) {
+        updateStatus(`Notes timelock ACTIVE: ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Preventing close.`);
+        showReadingTimeAlert(); // Show the generic alert
+        return; // *** Prevent closing ***
+    } else {
+        updateStatus(`Notes timelock COMPLETED (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s). Allowing close.`);
+        // Lock is finished for this popup instance, reset state before proceeding to close
+        isTimeLockActive = false;
+        currentLockType = null;
+        requiredReadingTime = 0;
+        currentPageLockStartTime = 0;
+    }
+} else if (currentLockType === 'notes') {
+     // Lock type was 'notes' but it wasn't active (e.g., globally disabled after opening), ensure state is reset.
+     updateStatus("Notes timelock was inactive or globally disabled. Resetting state.");
+     isTimeLockActive = false;
+     currentLockType = null;
+     requiredReadingTime = 0;
+     currentPageLockStartTime = 0;
+}
+// --- End Timelock Check ---
     // Check for required elements
     if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas || !ui.notesLocalLoader) return;
 
@@ -3929,6 +4108,14 @@ body.right-handle-floated .toolbar-trigger-area {
         }, 300); // Delay slightly longer than transition (0.25s)
 
         // Clean up PDF resources
+
+    // Final cleanup: Ensure lock state is reset if it was for notes
+if (currentLockType === 'notes') {
+     isTimeLockActive = false;
+     currentLockType = null;
+     requiredReadingTime = 0;
+     currentPageLockStartTime = 0;
+}
         if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
         if (pdfState.currentNotesPdfDoc?.destroy) {
             try { pdfState.currentNotesPdfDoc.destroy(); updateStatus("Destroyed notes PDF document object."); }
@@ -4025,6 +4212,14 @@ body.right-handle-floated .toolbar-trigger-area {
         updateStatus("Transitioning to chapter...");
         clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
 
+        // 1. Explicitly remove visibility classes from the button to start its fade-out transition.
+        if (ui.goToChapterBtn) {
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+            // The button's own opacity transition (0.3s) will handle the fade out.
+            updateStatus("Removed button visibility classes to initiate fade-out.");
+        }
+
         // 2. Remove the body class to hide the game container and reveal the reader UI.
         //    This happens concurrently with the button fading out.
         ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
@@ -4070,32 +4265,45 @@ if (ui.rightToolbar && ui.leftToolbar) {
     }
 
     function handleGameOverFromGame(score) {
-    updateStatus(`Game over message received. Score: ${score}`);
+        updateStatus(`Game over message received. Score: ${score}`);
 
-    // If reader is already loaded, start timer for automatic transition
-    if (appState.isReaderReady) { // Use appState from new code
-        updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
-        // Try to disable game restart as a safeguard
-        if (ui.gameIframe?.contentWindow) {
-            try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
-             catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
-        }
-        clearTimeout(appState.gameOverTimeoutId); // Clear any existing timer
-        appState.gameOverTimeoutId = setTimeout(() => {
-            // Check if we are *still* in the loading game state before transitioning
-            // This prevents transitioning again if the user clicked the button manually first
-            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-               updateStatus("Game over timeout finished, transitioning now.");
-               transitionToChapter();
+        // Always show the 'Go to Chapter' button on game over, if not already visible in loading state
+        if (ui.goToChapterBtn && !ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
+            // If reader is already ready, show the animated button
+            if (appState.isReaderReady) {
+                ui.goToChapterBtn.textContent = 'Go to Chapter';
+                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Ensure this is removed
+                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Trigger animation
+                updateStatus("Made 'Go to Chapter' button visible (Game Over - Reader Ready).");
             } else {
-               updateStatus("Game over timeout finished, but transition already occurred.");
+                // If reader isn't ready yet, show the static "Loading..." button
+                ui.goToChapterBtn.textContent = 'Loading Chapter...';
+                ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
+                 updateStatus("Made 'Loading Chapter...' button visible (Game Over - Reader Not Ready).");
             }
-        }, GAME_OVER_TRANSITION_DELAY);
-    } else {
-        updateStatus("Game over occurred, but reader is not ready yet. Waiting for manual transition via button.");
-        // Button state is handled by loadPdf now.
+        } else if (ui.goToChapterBtn) {
+             updateStatus("'Go to Chapter' button already visible in loading state.");
+        } else {
+             console.error("'Go to Chapter' button not found!");
+        }
+
+        // If reader is already loaded, start timer for automatic transition
+        if (appState.isReaderReady) { // Use appState from new code
+            updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
+            // Try to disable game restart as a safeguard
+            if (ui.gameIframe?.contentWindow) {
+                try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
+                 catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
+            }
+            clearTimeout(appState.gameOverTimeoutId); // Clear any existing timer
+            appState.gameOverTimeoutId = setTimeout(() => {
+                updateStatus("Game over timeout finished, transitioning now.");
+                transitionToChapter(); // Transition hides the button via body class
+            }, GAME_OVER_TRANSITION_DELAY);
+        } else {
+            updateStatus("Game over occurred, but reader is not ready yet. Button made visible for manual transition.");
+        }
     }
-}
 
     // --- Timelock UI and Toggle (REVERTED from Old Code) ---
     function updateTimelockButtonVisuals() { // REVERTED
@@ -4111,239 +4319,27 @@ if (ui.rightToolbar && ui.leftToolbar) {
         }
     }
 
-        function toggleTimelock() {
-        isTimelockGloballyEnabled = !isTimelockGloballyEnabled;
+    function toggleTimelock() { // REVERTED
+        isTimelockGloballyEnabled = !isTimelockGloballyEnabled; // Uses reverted global
         updateStatus(`Timelock globally ${isTimelockGloballyEnabled ? 'ENABLED' : 'DISABLED'}`);
         updateTimelockButtonVisuals();
 
-        // If turning the timelock OFF, immediately clear any active lock.
-        if (!isTimelockGloballyEnabled) {
-            if (appState.activeLock.type) {
-                updateStatus("Timelock globally disabled, clearing current active lock.");
-                resetActiveLock();
-            }
-            // Hide any active alert
-            clearTimeout(appState.alertTimeout);
-            toggleVisibility(ui.readingTimeAlert, false);
-        } else {
-            // If turning the timelock ON, re-evaluate lock state for the *current* view.
-            // This is primarily for page locks, as popups trigger their own locks.
-            updateStatus("Timelock globally enabled, re-evaluating potential page lock for current view.");
-            // Call a function that specifically checks and sets the page lock if applicable
-            checkAndSetPageLockForCurrentView();
+        // If turning the timelock OFF, immediately deactivate any *current* lock.
+        if (!isTimelockGloballyEnabled && isTimeLockActive) { // Uses reverted globals
+        updateStatus("Timelock globally disabled, clearing current active lock.");
+        isTimeLockActive = false;
+        requiredReadingTime = 0;
+        currentPageLockStartTime = 0;
+        currentLockType = null; // Reset type when disabling lock globally
+        clearTimeout(appState.alertTimeout); // Hide any active alert (use appState timer var from new code)
+        toggleVisibility(ui.readingTimeAlert, false); // Hide alert visually
+    } else if (isTimelockGloballyEnabled) {
+            // If turning the timelock ON, re-evaluate the lock state for the current view immediately.
+            updateStatus("Timelock globally enabled, re-evaluating lock state for current view.");
+            updateDisplay(); // Re-run updateDisplay to potentially set a lock (calls reverted lock logic)
         }
-        manageLeftToolbar(false); // Hide toolbar after action
+        manageLeftToolbar(false); // Hide toolbar after action (uses reverted function)
     }
-
-    // --- NEW helper function called by toggleTimelock when enabling ---
-    async function checkAndSetPageLockForCurrentView() {
-        if (!isTimelockGloballyEnabled || !pdfState.pdfDocument || !pdfState.currentPage) return;
-
-        const currentPageNum = pdfState.currentPage;
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-
-        let lockPageToCheck = currentPageNum;
-        let pageTime = 0;
-        let viewport = pdfState.currentViewports['left-page-canvas'];
-
-        if (isEffectiveDoublePageView) {
-             // For double page view, the lock is associated with the *odd* starting page.
-            // Time calculation needs both pages if the right one exists.
-            lockPageToCheck = (currentPageNum % 2 === 0) ? currentPageNum - 1 : currentPageNum; // Should already be odd, but ensure
-            const leftViewport = pdfState.currentViewports['left-page-canvas'];
-            const rightViewport = pdfState.currentViewports['right-page-canvas'];
-            const rightPageNum = currentPageNum + 1;
-            let timeLeft = 0, timeRight = 0;
-
-            if (leftViewport && currentPageNum <= pdfState.totalPages) {
-                timeLeft = await calculatePageReadingTime(currentPageNum, leftViewport);
-            }
-            // Check if right page exists and is rendered (not placeholder)
-            if (rightViewport && rightPageNum <= pdfState.totalPages) {
-                timeRight = await calculatePageReadingTime(rightPageNum, rightViewport);
-            }
-            pageTime = timeLeft + timeRight;
-
-        } else {
-            // Single Page / Rotated View: Lock only applies to EVEN pages.
-            if (currentPageNum % 2 !== 0) {
-                 updateStatus(`Page ${currentPageNum} is odd, no page lock needed in single view.`);
-                 return; // No lock for odd pages in single view
-            }
-             lockPageToCheck = currentPageNum;
-            if (viewport) {
-                pageTime = await calculatePageReadingTime(currentPageNum, viewport);
-            }
-        }
-
-        // Check if this page/pair lock is already completed
-        if (completedTimeLockPages.has(lockPageToCheck)) {
-             updateStatus(`Page lock for ${lockPageToCheck} already completed. No new lock set.`);
-             return;
-        }
-
-        // Set the lock if time > 0
-        if (pageTime > 0) {
-            updateStatus(`Setting page lock for page/pair ${lockPageToCheck}. Duration: ${pageTime}s`);
-            resetActiveLock(); // Clear any previous lock first
-            appState.activeLock.type = 'page';
-            appState.activeLock.startTime = Date.now();
-            appState.activeLock.duration = pageTime;
-            appState.activeLock.triggerPage = lockPageToCheck;
-        } else {
-             updateStatus(`Calculated page time is 0 for ${lockPageToCheck}. No page lock set.`);
-        }
-    }
-
-        // --- NEW: Lock System Helper Functions ---
-
-    function resetActiveLock() {
-        // Clears any active lock state
-        appState.activeLock.type = null;
-        appState.activeLock.startTime = 0;
-        appState.activeLock.duration = 0;
-        appState.activeLock.triggerPage = null;
-        appState.activeLock.isComplete = false;
-        // console.log("Active lock reset."); // Debug log
-    }
-
-    function showTimelockAlert(lockType, remainingTime) {
-        if (!isTimelockGloballyEnabled) return; // Don't show if globally disabled
-
-        clearTimeout(appState.alertTimeout);
-        // Removed wiggle timeout reference as it wasn't used
-
-        let message = 'Please wait!';
-        if (lockType === 'page') {
-            message = `<em>Please read the text first!</em> (${Math.ceil(remainingTime)}s left)`;
-        } else if (lockType === 'notes') {
-            message = `<em>Please review the notes first!</em> (${Math.ceil(remainingTime)}s left)`;
-        } else if (lockType === 'video') {
-            message = `<em>Please watch the video first!</em> (${Math.ceil(remainingTime)}s left)`;
-        } else {
-            message = `<em>Action blocked by timer!</em> (${Math.ceil(remainingTime)}s left)`;
-        }
-
-        ui.readingTimeAlert.innerHTML = message;
-        toggleVisibility(ui.readingTimeAlert, true); // Add .visible class
-
-        appState.alertTimeout = setTimeout(() => {
-            toggleVisibility(ui.readingTimeAlert, false);
-        }, READING_TIME_ALERT_DURATION);
-    }
-
-    function checkActiveLock(actionContext = 'unknown') {
-        // Returns true if blocked, false if allowed.
-        // actionContext helps debugging: 'navigateForward', 'navigateBackward', 'closeNotes', 'closeVideo'
-
-        const lock = appState.activeLock;
-
-        // Case 1: Timelock is globally off, or no lock is active
-        if (!isTimelockGloballyEnabled || !lock.type) {
-            // updateStatus(`Lock check (${actionContext}): Not active or globally disabled. Allowed.`);
-            return false; // Not blocking
-        }
-
-        // Case 2: A lock is active, check the time
-        const elapsedSeconds = (Date.now() - lock.startTime) / 1000;
-
-        if (elapsedSeconds >= lock.duration) {
-            // Time is up! Lock is completed.
-            updateStatus(`Lock check (${actionContext}): Lock type '${lock.type}' completed (${elapsedSeconds.toFixed(1)}s / ${lock.duration}s). Allowed.`);
-
-            // Mark page locks as permanently completed
-            if (lock.type === 'page' && lock.triggerPage) {
-                if (!completedTimeLockPages.has(lock.triggerPage)) {
-                    completedTimeLockPages.add(lock.triggerPage);
-                    updateStatus(`Page ${lock.triggerPage} added to completed time lock set.`);
-                }
-            }
-
-            // Reset the lock state *after* checking
-            resetActiveLock();
-            return false; // Not blocking
-        } else {
-            // Time is *not* up. Block the action.
-            const remainingTime = lock.duration - elapsedSeconds;
-            updateStatus(`Lock check (${actionContext}): Lock type '${lock.type}' ACTIVE. Blocking action (${elapsedSeconds.toFixed(1)}s / ${lock.duration}s).`);
-            showTimelockAlert(lock.type, remainingTime);
-            return true; // Blocking
-        }
-    }
-
-    // Helper to parse video duration from URL params (start/end in seconds)
-    function calculateVideoLockDuration(url) {
-        const defaultDuration = 60; // Default fallback duration in seconds
-        let startTime = null;
-        let endTime = null;
-
-        try {
-            const urlObj = new URL(url, window.location.origin); // Need base for relative URLs
-            const params = urlObj.searchParams;
-
-            // Check for YouTube style t=start[,end] (e.g., t=30s or t=1m30s,1m45s)
-            const timeParam = params.get('t');
-            if (timeParam) {
-                const parts = timeParam.split(',');
-                // Basic parsing (assumes seconds or simple formats like 1m30s - needs more robust parser for complex cases)
-                const parseTime = (tStr) => {
-                    if (!tStr) return null;
-                    let seconds = 0;
-                    if (tStr.includes('m')) {
-                        const mParts = tStr.split('m');
-                        seconds += parseInt(mParts[0], 10) * 60;
-                        if (mParts[1]) seconds += parseInt(mParts[1].replace('s',''), 10);
-                    } else {
-                        seconds = parseInt(tStr.replace('s',''), 10);
-                    }
-                    return isNaN(seconds) ? null : seconds;
-                };
-                startTime = parseTime(parts[0]);
-                if (parts.length > 1) {
-                    endTime = parseTime(parts[1]);
-                }
-                 // If only start time is given, maybe default end time? Or rely on start/end params below?
-                 // For now, if only 't=start' is given, it implies watching from start.
-            }
-
-            // Check for start= and end= params (overwrite 't' if present)
-            const startParam = params.get('start');
-            const endParam = params.get('end');
-
-            if (startParam !== null) {
-                const parsedStart = parseInt(startParam, 10);
-                if (!isNaN(parsedStart)) startTime = parsedStart;
-            }
-            if (endParam !== null) {
-                const parsedEnd = parseInt(endParam, 10);
-                if (!isNaN(parsedEnd)) endTime = parsedEnd;
-            }
-
-            // Calculate duration
-            if (startTime !== null && endTime !== null && endTime > startTime) {
-                updateStatus(`Video duration calculated from start/end params: ${endTime - startTime}s`);
-                return endTime - startTime;
-            } else if (startTime !== null && endTime === null) {
-                // Start time specified, but no end time - maybe watch till end?
-                // Cannot determine duration without iframe communication or end param. Use default.
-                 updateStatus(`Video start time found, but no end time. Using default duration: ${defaultDuration}s`);
-                 return defaultDuration;
-            } else {
-                 // No valid parameters found.
-                 updateStatus(`No valid start/end time parameters found in URL: ${url}. Using default duration: ${defaultDuration}s`);
-                 return defaultDuration;
-            }
-
-        } catch (e) {
-            console.warn("Error parsing video URL:", e);
-            updateStatus(`Error parsing URL. Using default video duration: ${defaultDuration}s`);
-            return defaultDuration;
-        }
-    }
-
-    // --- END: New Lock System Helpers ---
 
 // Helper function to start the fade timer
 // Helper function to start the fade timer IF screen is narrow
@@ -4620,16 +4616,7 @@ function showNotesNavAndResetTimer() {
 
 
         // --- Game Event Listeners (MODIFIED Button Logic) ---
-        ui.goToChapterBtn?.addEventListener('click', () => {
-    // *** KEEP THIS CHECK ***
-    // Only transition if the button is NOT in the loading state.
-    if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
-        console.log("[Button Click] Ignored: Chapter is still loading."); // Optional log
-        return; // Do nothing if loading
-    }
-    // If not loading (i.e., .visible class is present), proceed.
-    transitionToChapter();
-});
+        ui.goToChapterBtn?.addEventListener('click', transitionToChapter);
 
         window.addEventListener('message', (event) => {
             // Basic security check: ensure message is from the iframe source
@@ -4784,3 +4771,4 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
