@@ -1056,85 +1056,86 @@ body:not(.loading-game-active) #loading-game-container {
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
-/* Base state - hidden, scaled down */
+/* --- START: Modified Go To Chapter Button CSS --- */
+
+/* Base Button Style - HIDDEN BY DEFAULT using display: none */
 #go-to-chapter-btn {
+    display: none; /* HIDDEN BY DEFAULT */
     position: fixed;
     bottom: 30px;
     left: 50%;
-    transform: translateX(-50%) scale(0.8); /* Start scaled down for pop */
     z-index: 10001;
     padding: 12px 25px;
     font-size: 1.1rem;
     font-weight: bold;
-    color: white;
-    background: linear-gradient(135deg, var(--fiery-orange), var(--accent)); /* Default final background */
+    cursor: pointer;
     border: none;
     border-radius: 25px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(255, 255, 255, 0.2) inset;
-    opacity: 0; /* Start hidden */
-    visibility: hidden;
-    animation: none; /* No animation initially */
-    transition: background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, visibility 0s linear 0.3s; /* Add transitions, ensure visibility transition matches opacity */
+    /* Keep transitions for opacity/transform/colors for smooth state changes */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, background-color 0.3s ease, background-image 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    /* Start slightly scaled down and faded for entry animation */
+    transform: translateX(-50%) scale(0.9);
+    opacity: 0;
+    /* Ensure no animation runs by default */
+    animation: none;
 }
 
-/* Loading state - visible, navy blue, normal size, no animation */
-/* Apply pulse animation ONLY to the loading state */
-#go-to-chapter-btn.loading-chapter {
+/* --- Visibility Rule --- */
+/* SHOW the button ONLY when body has class AND button has its state class */
+body.loading-game-active #go-to-chapter-btn.loading-chapter,
+body.loading-game-active #go-to-chapter-btn.visible {
+    display: block; /* Or inline-block/flex if needed */
+    opacity: 1; /* Make it fully visible */
+    /* The transform below depends on the specific state (loading or visible) */
+}
+
+/* --- State 1: Loading Appearance --- */
+body.loading-game-active #go-to-chapter-btn.loading-chapter {
     background-color: var(--lab-blue); /* Dark navy blue */
     background-image: none; /* Override gradient */
     color: var(--text-on-dark); /* White text */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); /* Simpler shadow */
-    opacity: 1; /* Make visible */
-    visibility: visible;
-    transform: translateX(-50%) scale(1); /* Visible at normal size */
-    transition-delay: 0s; /* Ensure transitions apply immediately */
-    /* ADDED THIS LINE TO APPLY ANIMATION: */
-    animation: pulseAnimation 1.8s infinite ease-in-out;
+    transform: translateX(-50%) scale(1); /* Ensure normal size */
+    animation: pulseAnimation 1.8s infinite ease-in-out; /* Apply pulse */
 }
 
-/* Ensure the non-loading states don't have the pulse */
-#go-to-chapter-btn:not(.loading-chapter) {
-    animation: none; /* Remove pulse if not loading */
-}
-/* Re-apply pop animation for the .visible state (if not loading) */
-#go-to-chapter-btn.visible:not(.loading-chapter) {
-    /* Use popUpBounce or none if you don't want the pop */
+/* --- State 2: Ready Appearance --- */
+body.loading-game-active #go-to-chapter-btn.visible {
+    background: linear-gradient(135deg, var(--fiery-orange), var(--accent)); /* Default final background */
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(255, 255, 255, 0.2) inset;
+    /* Apply pop animation - transform handled by animation */
     animation: popUpBounce 0.5s ease-out forwards;
+     /* Ensure final transform state from animation is correct */
+     transform: translateX(-50%) scale(1);
 }
 
-/* Final visible state (triggered by adding .visible class) - animates in */
-#go-to-chapter-btn.visible {
-    opacity: 1; /* Ensure visible */
-    visibility: visible;
-    /* Apply the fun pop-up animation */
-    animation: popUpBounce 0.5s ease-out forwards;
-    /* Transform is handled by animation */
-    transition-delay: 0s; /* Ensure transitions apply immediately */
-}
+/* --- Hover/Active States (Scoped to body class) --- */
 
-/* Hover/Active for final state */
-#go-to-chapter-btn.visible:hover { /* Target .visible specifically for hover */
+/* Loading State Hover/Active */
+body.loading-game-active #go-to-chapter-btn.loading-chapter:hover {
+     background-color: #0b1221; /* Slightly lighter navy */
+     transform: translateX(-50%) scale(1.03); /* Subtle hover */
+ }
+ body.loading-game-active #go-to-chapter-btn.loading-chapter:active {
+     background-color: #060a14; /* Slightly darker navy */
+     transform: translateX(-50%) scale(0.98); /* Subtle active */
+ }
+
+/* Ready State Hover/Active */
+body.loading-game-active #go-to-chapter-btn.visible:hover {
     background: linear-gradient(135deg, var(--accent), var(--fiery-orange));
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(255, 255, 255, 0.25) inset;
     /* Apply hover scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(1.05);
 }
-#go-to-chapter-btn.visible:active { /* Target .visible specifically for active */
+body.loading-game-active #go-to-chapter-btn.visible:active {
     /* Apply active scale ON TOP of the final animation state */
     transform: translateX(-50%) scale(0.98);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(255, 255, 255, 0.15) inset;
 }
 
-/* Hover/Active for loading state */
-#go-to-chapter-btn.loading-chapter:hover {
-     background-color: #0b1221; /* Slightly lighter navy */
-     transform: translateX(-50%) scale(1.03); /* Subtle hover */
- }
- #go-to-chapter-btn.loading-chapter:active {
-     background-color: #060a14; /* Slightly darker navy */
-     transform: translateX(-50%) scale(0.98); /* Subtle active */
- }
+/* --- END: Modified Go To Chapter Button CSS --- */
 
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
@@ -3548,14 +3549,15 @@ body.right-handle-floated .toolbar-trigger-area {
         // ui.tocList.innerHTML = 'Loading...'; // Reset TOC display - Removed TOC elements
         // REMOVED: ui.gameLoadingBar.style.width = '0%'; // Reset loading bar
 
-                // --- MODIFIED: Set 'Go To Chapter' button to loading state ---
+                        // --- Set Button to Loading State ---
         if (ui.goToChapterBtn) {
-            updateStatus("Setting button to 'Loading Chapter...' state.");
+            updateStatus("Setting button internal state to 'Loading Chapter...'.");
             ui.goToChapterBtn.textContent = 'Loading Chapter...';
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE); // Ensure final 'visible' class is off
-            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER); // Add loading class (CSS makes this visible)
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
+            // CSS now controls actual display based on body.loading-game-active
         }
-        // --- End Button Modification ---
+        // --- End Button State ---
 
         let filename = "Document";
         try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
@@ -3627,31 +3629,15 @@ body.right-handle-floated .toolbar-trigger-area {
                 console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
             }
 
-                            // --- MODIFIED & GUARDED: Update button state only if still on loading screen ---
+                                    // --- Set Button to Ready State (If it exists) ---
         if (ui.goToChapterBtn) {
-            // *** ADD THIS CHECK for body class ***
-            // Only proceed if the loading game screen is still active
-            if (document.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                // Check if the button is currently in the "Loading..." state
-                if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
-                    updateStatus("Reader ready AND loading screen active. Updating button to 'Go to Chapter' state.");
-                    ui.goToChapterBtn.textContent = 'Go to Chapter';
-                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add class to trigger final animation
-                } else {
-                    // This case should be less common now with the click guard,
-                    // but handles edge cases where the class might be missing unexpectedly.
-                    updateStatus("Reader ready AND loading screen active, but button wasn't in loading state. Ensuring final state.");
-                     ui.goToChapterBtn.textContent = 'Go to Chapter';
-                     ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Ensure loading is off
-                     ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);    // Ensure visible is on
-                }
-            } else {
-                // If loading game screen is NOT active, the transition has already started. Do nothing.
-                updateStatus("Reader ready, but loading screen is NOT active (transition likely started). Skipping button update.");
-            }
+             updateStatus("Reader ready. Setting button internal state to 'Go to Chapter'.");
+             ui.goToChapterBtn.textContent = 'Go to Chapter';
+             ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+             ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
+             // CSS will handle making it appear/animate *if* body.loading-game-active is still present.
         }
-        // --- End Button Modification ---
+        // --- End Button State ---
 
             // Notify game iframe that reader is ready (to prevent auto-restart) (Keep this block from new code)
             if (ui.gameIframe?.contentWindow) {
@@ -4038,16 +4024,6 @@ body.right-handle-floated .toolbar-trigger-area {
     function transitionToChapter() {
         updateStatus("Transitioning to chapter...");
         clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
-
-        // 1. Explicitly remove visibility classes from the button to start its fade-out transition.
-        if (ui.goToChapterBtn) {
-        // --- Ensure BOTH classes are removed ---
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-        // ---------------------------------------
-        // The button's own opacity transition (0.3s) will handle the fade out.
-        updateStatus("Removed button visibility classes to initiate fade-out.");
-    }
 
         // 2. Remove the body class to hide the game container and reveal the reader UI.
         //    This happens concurrently with the button fading out.
@@ -4645,13 +4621,13 @@ function showNotesNavAndResetTimer() {
 
         // --- Game Event Listeners (MODIFIED Button Logic) ---
         ui.goToChapterBtn?.addEventListener('click', () => {
-    // *** ADD THIS CHECK ***
+    // *** KEEP THIS CHECK ***
     // Only transition if the button is NOT in the loading state.
     if (ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
         console.log("[Button Click] Ignored: Chapter is still loading."); // Optional log
         return; // Do nothing if loading
     }
-    // If not loading, proceed with the transition
+    // If not loading (i.e., .visible class is present), proceed.
     transitionToChapter();
 });
 
