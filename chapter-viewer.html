@@ -742,8 +742,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay,.book-page.right.placeholder-page .page-action-btn{display:none} /* Hide page action buttons on placeholder */
 
 /* Gutter shadow effect only in double page view */
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; }
+/*body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
+body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; } */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
 /* --- START: REALISTIC VERTICAL CREASE EFFECT (Keep New Code's Version) --- */
@@ -833,6 +833,14 @@ body.content-rotated-mode .page-rotate-btn,
 body.content-rotated-mode .page-rotate-hover-trigger { /* Also hide trigger */
     display: none !important;
 }
+
+/* NEW: Disable interaction with game iframe when Go To Chapter btn is visible */
+body.loading-game-active #game-iframe.iframe-inactive {
+    pointer-events: none;
+    /* Optional: Add visual indication like slight opacity */
+    /* opacity: 0.7; */
+}
+        
 /* Hide trigger on placeholder page */
 .book-page.placeholder-page .page-rotate-hover-trigger {
     display: none;
@@ -3767,6 +3775,23 @@ function calculateVideoDuration(url) {
                     ui.goToChapterBtn.textContent = 'Go to Chapter';
                     ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Remove loading state
                     ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Add visible to trigger pop animation
+
+                                    // *** ADDED: Disable iframe input ***
+                if (ui.gameIframe) {
+                    ui.gameIframe.classList.add('iframe-inactive');
+                    // Try to remove focus to prevent keyboard input
+                    ui.gameIframe.blur();
+                     // More robust: tell the iframe's content to blur itself
+                    if (ui.gameIframe.contentWindow) {
+                        try {
+                            ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
+                            updateStatus("Sent 'blurYourself' message to game iframe.");
+                        } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
+                    }
+                    updateStatus("Disabled game iframe input.");
+                }
+                // *** END ADDED ***
+                    
                 }
             }, LOADING_BAR_ANIMATION_BUFFER); // Use buffer for timing
             // --- End Button Modification ---
@@ -4241,6 +4266,13 @@ if (currentLockType === 'notes') {
         ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
         window.focus(); // Try to bring focus back to the main window
 
+        // *** ADDED: Re-enable iframe input (though it's hidden now) ***
+    if (ui.gameIframe) {
+        ui.gameIframe.classList.remove('iframe-inactive');
+        updateStatus("Re-enabled game iframe input class (though hidden).");
+    }
+    // *** END ADDED ***
+
 // --- START: Temporarily Show Toolbars ---
 if (ui.rightToolbar && ui.leftToolbar) {
     updateStatus("Temporarily showing toolbars for 7 seconds.");
@@ -4297,6 +4329,23 @@ if (ui.rightToolbar && ui.leftToolbar) {
                 ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
                  updateStatus("Made 'Loading Chapter...' button visible (Game Over - Reader Not Ready).");
             }
+
+            // *** ADDED: Disable iframe input ***
+        if (ui.gameIframe) {
+            ui.gameIframe.classList.add('iframe-inactive');
+            // Try to remove focus to prevent keyboard input
+            ui.gameIframe.blur();
+             // More robust: tell the iframe's content to blur itself
+            if (ui.gameIframe.contentWindow) {
+                try {
+                    ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
+                     updateStatus("Sent 'blurYourself' message to game iframe.");
+                } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
+            }
+            updateStatus("Disabled game iframe input (Game Over).");
+        }
+        // *** END ADDED ***
+            
         } else if (ui.goToChapterBtn) {
              updateStatus("'Go to Chapter' button already visible in loading state.");
         } else {
