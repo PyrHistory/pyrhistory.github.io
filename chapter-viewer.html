@@ -895,6 +895,7 @@ body.content-rotated-mode #return-view-fixed-btn {
     height: 1.5px;  /* Make it slightly thicker but still subtle */
     background: linear-gradient(to right, var(--fiery-orange), var(--accent)); /* This is the target gradient */
     pointer-events: none; /* Prevent interaction with the line itself */
+    min-height: 1px;
     border-radius: 1px; /* Slightly rounded ends */
     opacity: 0.54; /* UPDATED: Was 0.9, now 60% of that (0.9 * 0.6) */
     transition: opacity 0.2s ease-out; /* Allow transition if needed */
@@ -962,7 +963,7 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 
 /* Style for the Part of Speech */
 #popup-word .part-of-speech {
-    color: #777777; /* Grey color */
+    color: #f97315; /* Orange color */
     font-family: var(--font-heading); /* Roboto */
     font-size: 0.85em; /* Slightly smaller */
     font-weight: 400;  /* Normal weight */
@@ -986,19 +987,6 @@ body.content-rotated-mode .keyword-highlight.first-keyword-instance::after {
 #popup-definition::-webkit-scrollbar-track { background: #edf2f7; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px;}
 #popup-definition::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
-
-/* Close button style (no change needed) */
-#close-popup-btn {
-    position: absolute; top: 6px; right: 6px;
-    cursor: pointer; font-size: 20px; font-weight: 300;
-    color: #a0aec0; transition: color 0.2s, background-color 0.2s;
-    background: none; border: none; padding: 0;
-    width: 28px; height: 28px; display: flex;
-    align-items: center; justify-content: center;
-    border-radius: 50%; line-height: 1;
-}
-#close-popup-btn:hover { color: #4a5568; background-color: #edf2f7; }
-/* === END: Replacement Keyword Popup CSS === */ /* <<<< CONFIRMED: Correct Block End */
 
 
 /* --- START: Loading Game Styles (MODIFIED) (Keep New Code's Version + Changes) --- */
@@ -1728,7 +1716,6 @@ body.right-handle-floated .toolbar-trigger-area {
 
     <!-- Keyword Definition Popup -->
     <div id="definition-popup"> <!-- Removed class="definition-popup" as ID is sufficient -->
-        <button id="close-popup-btn" title="Close (Esc)">×</button> <!-- Removed class="definition-popup-close" -->
         <div id="popup-word">Keyword</div> <!-- Removed class="definition-popup-title" -->
         <div id="popup-definition">Loading definition...</div> <!-- Removed class="definition-popup-content" -->
     </div>
@@ -4232,7 +4219,6 @@ function showNotesNavAndResetTimer() {
         ui.returnViewFixedBtn?.addEventListener('click', setRotatedView); // Keep new button listener
 
         // --- Popup Close Buttons & Backdrops ---
-        ui.closePopupBtn?.addEventListener('click', hideDefinitionPopup);
         ui.closeIframePopupBtn?.addEventListener('click', hideIframePopup);
         ui.iframePopupBackdrop?.addEventListener('click', hideIframePopup);
         ui.notesPopupBackdrop?.addEventListener('click', hideNotesPopup);
