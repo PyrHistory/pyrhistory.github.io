@@ -28,7 +28,7 @@
     --page-w:650px;
     --page-h:842px;
     --gradient-flame: linear-gradient(90deg, var(--fiery-orange), var(--accent), var(--fiery-orange)); /* Orange -> Amber -> Orange */
-    --page-padding:7px;
+    --page-padding:15px;
     --font-heading: 'Roboto', sans-serif;
     --font-body: 'Open Sans', sans-serif;
     /* Modern Font Stack */
@@ -526,8 +526,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     display: block; /* Keep as block */
     font-size: 1.0rem; /* <<< ADJUSTED: Slightly smaller font size */
     line-height: 1.5;
-    position: relative; /* <<< ADDED for ::after positioning */
-    /* --- Start: Gradient & Shimmer Styles (for TEXT) --- */
+    /* --- Start: Gradient & Shimmer Styles --- */
     background: var(--gradient-flame); /* Apply the base gradient */
     background-size: 300% 100%; /* Make background wider than element */
     -webkit-background-clip: text; /* Clip background to text shape (WebKit) */
@@ -537,25 +536,9 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     /* --- End: Gradient & Shimmer Styles --- */
     /* Ensure text alignment works if needed (already centered by parent) */
     /* text-align: center; */ /* Likely not needed due to parent style */
-    /* Add margin if needed to adjust spacing if needed */
+    /* Add margin if needed to adjust spacing after font size change */
     margin-top: 5px; /* Optional: Adjust spacing if needed */
     margin-bottom: 5px; /* Optional: Adjust spacing if needed */
-}
-
-/* NEW: Add flashing gradient underline to LO popup text */
-#lo-achievement-text .lo-popup-text::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -1px; /* Adjust slightly if needed */
-    width: 100%;
-    height: 1.5px; /* Match keyword underline thickness */
-    background: var(--gradient-flame); /* Use the fiery gradient */
-    background-size: 300% 100%; /* Required for shimmer */
-    pointer-events: none;
-    border-radius: 1px;
-    opacity: 0.9; /* Make it quite visible */
-    animation: shimmerText 2.5s infinite linear; /* Apply the SAME shimmer animation */
 }
 
 /* Style the strong tag within the LO Text */
@@ -912,15 +895,7 @@ body.content-rotated-mode #return-view-fixed-btn {
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
 /* Hover effect still applies to ALL keyword highlights (when not in rotated mode) */
-/* Hover effect still applies to ALL keyword highlights (when not in rotated mode) */
-.keyword-highlight:hover {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Keep existing box-shadow */
-
-    /* Replace the old background property with these three: */
-    background-image: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); /* Apply gradient as image */
-    background-size: 300% 100%; /* Make the gradient wider for the shimmer */
-    animation: shimmerText 2.5s infinite linear; /* Apply the existing shimmer animation */
-}
+.keyword-highlight:hover { background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
 
 /* --- START: MODIFIED UNDERLINE RULE --- */
 /* Underline now ONLY applies if the 'first-keyword-instance' class is present */
@@ -4812,4 +4787,3 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
-
