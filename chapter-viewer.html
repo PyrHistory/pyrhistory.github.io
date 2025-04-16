@@ -526,7 +526,8 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     display: block; /* Keep as block */
     font-size: 1.0rem; /* <<< ADJUSTED: Slightly smaller font size */
     line-height: 1.5;
-    /* --- Start: Gradient & Shimmer Styles --- */
+    position: relative; /* <<< ADDED for ::after positioning */
+    /* --- Start: Gradient & Shimmer Styles (for TEXT) --- */
     background: var(--gradient-flame); /* Apply the base gradient */
     background-size: 300% 100%; /* Make background wider than element */
     -webkit-background-clip: text; /* Clip background to text shape (WebKit) */
@@ -536,9 +537,25 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     /* --- End: Gradient & Shimmer Styles --- */
     /* Ensure text alignment works if needed (already centered by parent) */
     /* text-align: center; */ /* Likely not needed due to parent style */
-    /* Add margin if needed to adjust spacing after font size change */
+    /* Add margin if needed to adjust spacing if needed */
     margin-top: 5px; /* Optional: Adjust spacing if needed */
     margin-bottom: 5px; /* Optional: Adjust spacing if needed */
+}
+
+/* NEW: Add flashing gradient underline to LO popup text */
+#lo-achievement-text .lo-popup-text::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px; /* Adjust slightly if needed */
+    width: 100%;
+    height: 1.5px; /* Match keyword underline thickness */
+    background: var(--gradient-flame); /* Use the fiery gradient */
+    background-size: 300% 100%; /* Required for shimmer */
+    pointer-events: none;
+    border-radius: 1px;
+    opacity: 0.9; /* Make it quite visible */
+    animation: shimmerText 2.5s infinite linear; /* Apply the SAME shimmer animation */
 }
 
 /* Style the strong tag within the LO Text */
