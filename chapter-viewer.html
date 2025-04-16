@@ -16,15 +16,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.5.207/pdf_viewer.css">
     <style>
 :root{
-    --primary:#4a90e2;
-    --secondary:#50e3c2;
     --accent:#f5a623; /* Amber/Orange */
     --fiery-orange: #f97316; /* Adjusted fiery orange */
     --lab-blue:#080e1c; /* Dark Navy Blue */
     --page:#fff;
     --text-on-dark:rgba(255,255,255,.9);
-    --text-on-page:#333;
-    --header-h:60px;
     --page-w:650px;
     --page-h:842px;
     --gradient-flame: linear-gradient(90deg, var(--fiery-orange), var(--accent), var(--fiery-orange)); /* Orange -> Amber -> Orange */
@@ -35,13 +31,8 @@
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
     /* Add these variables if not defined elsewhere, based on the time-capsule example */
-    --scroll: rgba(44,62,80,.8); /* Example value, adjust if needed */
-    --text-light-bg-primary: var(--text-on-dark); /* Example value */
     --gradient-time-capsule: linear-gradient(45deg, #f5a623, #f97316, #c553eb, #38bdf8); /* Example gradient */
     --radius-full: 50%; /* Define if not already defined */
-    --text-dark: #fff; /* Example value for hover */
-    --space-sm: 8px; /* Example value */
-    --space-xs: 4px; /* Example value */
 
     /* NEW: Parchment color */
     --parchment: #f5e8c7;
@@ -547,19 +538,10 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     color: #080e1c;
     text-decoration: underline; 
     text-decoration-color: #ffaa75; 
-    text-decoration-thickness: 1.5px;
+    text-decoration-thickness: 1.6px;
     line-height: 1.1;     
 }
 
-        /* Style the strong tag within the LO Text */
-#lo-achievement-text .lo-popup-text strong {
-    font-weight: bold;
-    color: #080e1c;
-    display: inline-block;      /* Allows padding-bottom to work reliably */
-    border-bottom: 2px solid #f97316; /* 2px thick orange border */
-    padding-bottom: 1.23px;      /* Creates 3px space below text before the border starts */
-    line-height: 1.2;          /* Optional: Adjust for spacing */
-}
 
 /* The "Teach it..." tip */
 #lo-achievement-popup em#lo-achievement-tip {
@@ -655,8 +637,6 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 /* --- END: Left Toolbar for Timelock --- */
 
-
-/* --- REMOVED/COMMENTED OUT: Original .rotated-mode UI repositioning --- */
 
 /* Reader container (Keep New Code's Version) */
 .main-container{
@@ -756,8 +736,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page{width:var(--pag
 .book-page.right.placeholder-page .canvas-container,.book-page.right.placeholder-page .page-edge-nav,.book-page.right.placeholder-page .page-loading-overlay,.book-page.right.placeholder-page .page-action-btn{display:none} /* Hide page action buttons on placeholder */
 
 /* Gutter shadow effect only in double page view */
-/*body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.left .canvas-container::after { content: ''; position: absolute; top: 0; right: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to left, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 0 2px 2px 0; }
-body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right:not(.placeholder-page) .canvas-container::before { content: ''; position: absolute; top: 0; left: calc(0px - var(--page-padding)); width: 15px; height: 100%; background: linear-gradient(to right, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0)); pointer-events: none; z-index: 5; border-radius: 2px 0 0 2px; } */
 body:not(.fullscreen-mode):not(.content-rotated-mode) .book-page.right.placeholder-page { border-left: 1px solid rgba(0,0,0,.1) !important; }
 
 /* --- START: REALISTIC VERTICAL CREASE EFFECT (Keep New Code's Version) --- */
@@ -1157,17 +1135,6 @@ body:not(.loading-game-active) #loading-game-container {
      background-color: #060a14; /* Slightly darker navy */
      transform: translateX(-50%) scale(0.98); /* Subtle active */
  }
-
-/* ---- REMOVED THIS BLOCK ---- */
-/* Surefire way to hide button when reader is active */
-/* body:not(.loading-game-active) #go-to-chapter-btn {
-    opacity: 0;
-    visibility: hidden;
-    animation: none !important; */ /* Ensure no animation plays when hidden */
-/*    pointer-events: none; */ /* Add this to prevent accidental clicks during fade */
-/* } */
-/* ---- END REMOVED BLOCK ---- */
-
 
 /* Initially hide reader elements when game is active */
 body.loading-game-active #new-toolbar,
@@ -1657,13 +1624,6 @@ body.right-handle-floated .toolbar-trigger-area {
     transform: translate(-50%, -50%) scale(1); /* Scale up to full size */
 }
 
-/* --- (Optional) Hide Glow if Toolbar is Visible --- */
-#new-toolbar.visible + #toolbar-trigger-area::after,
-#left-toolbar.visible + #left-toolbar-trigger-area::after {
-    opacity: 0 !important; /* Force hide */
-    transition: opacity 0.1s linear; /* Faster fade out */
-}
-
         /* Keyframes for the text shimmer effect */
 @keyframes shimmerText {
     0% {
@@ -1950,8 +1910,6 @@ body.right-handle-floated .toolbar-trigger-area {
         loContinueBtn: document.getElementById('lo-continue-btn'),
 
         // Added for HTML Population (though not strictly needed if populated before script run)
-        tocList: document.getElementById('toc-list'), // Might be null if element removed
-        tocToggleButton: document.getElementById('toc-toggle-btn'), // Might be null if element removed
         loTooltip: document.getElementById('lo-tooltip'), // Added LO Tooltip
     };
 
