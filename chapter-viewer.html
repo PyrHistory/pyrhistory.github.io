@@ -1951,7 +1951,6 @@ body.right-handle-floated .toolbar-trigger-area {
         sliderHideTimeout: null,
         gameOverTimeoutId: null,
         alertTimeout: null,
-        alertWiggleTimeout: null,
         isDraggingSlider: false,
         pagePadding: 15, // Default, updated on init
         isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
@@ -1959,6 +1958,13 @@ body.right-handle-floated .toolbar-trigger-area {
         loPopupTargetPage: null, // NEW: Store target page for after LO popup
         originalSliderInfoText: null,
         sliderInfoFadeTimeout: null,
+        activeLock: {
+            type: null,        // 'page', 'notes', 'video', or null if inactive
+            startTime: 0,      // Timestamp when the lock started
+            duration: 0,       // Required duration in seconds
+            triggerPage: null, // The page number that triggered this lock
+            isComplete: false  // Tracks if the current lock instance passed its check (internal use)
+        },
     };
     // REVERTED: Global state variables for toolbar/timer from old code
     let toolbarTimer=null;
@@ -1968,9 +1974,6 @@ body.right-handle-floated .toolbar-trigger-area {
 
     // REVERTED: Timelock state variables from old code
     let isTimelockGloballyEnabled = true;
-    let currentPageLockStartTime = 0;
-    let requiredReadingTime = 0;
-    let isTimeLockActive = false;
     let completedTimeLockPages = new Set();
 
     // --- State related to PDF/Notes/Keywords (Keep from New Code) ---
@@ -2475,83 +2478,75 @@ body.right-handle-floated .toolbar-trigger-area {
              if (leftEdgeNavRight) leftEdgeNavRight.style.display = ''; // Show right edge of the single page
         }
 
-        // *** REVERTED: Calculate and set reading time lock based on EFFECTIVE view mode ***
-        // *** ONLY if timelock is globally enabled ***
+                // --- Calculate and potentially set page lock ---
+        // Always reset any previous lock before checking/setting a new one for the new view
+        resetActiveLock();
+
+        // Only proceed if timelock is globally enabled
         if (isTimelockGloballyEnabled) {
+            let lockPageToCheck = leftPageNum; // Page number used as key for completion status
+            let calculatedTime = 0;
+
             if (isEffectiveDoublePageView) {
                 // --- Double Page View Lock Logic ---
                 const leftViewport = pdfState.currentViewports['left-page-canvas'];
-                const rightViewport = pdfState.currentViewports['right-page-canvas']; // Will be null if right page isn't rendered
+                const rightViewport = pdfState.currentViewports['right-page-canvas']; // May be null
 
                 let timeLeft = 0;
                 if (leftPageNum >= 1 && leftPageNum <= pdfState.totalPages && leftViewport) {
                     timeLeft = await calculatePageReadingTime(leftPageNum, leftViewport);
                 }
                 let timeRight = 0;
-                // Only add right page time if it was actually rendered (not placeholder)
+                // Only add right page time if it was actually rendered (actualRightPageNum > 0)
                 if (actualRightPageNum > 0 && rightViewport) {
                     timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
                 }
-
-                const timeForPair = timeLeft + timeRight;
-                const firstPageOfCurrentPair = leftPageNum; // Lock associated with the ODD starting page
-
-                if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
-                    updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
-                    // isTimeLockActive remains false
-                } else if (timeForPair > 0) {
-                    requiredReadingTime = timeForPair; // Set required time for the pair
-                    currentPageLockStartTime = Date.now();
-                    isTimeLockActive = true; // Activate lock for the PAIR
-                    updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
-                } else {
-                    updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
-                    // isTimeLockActive remains false
-                }
-                // --- End Double Page View Lock Logic ---
+                calculatedTime = timeLeft + timeRight;
+                // Lock associated with the ODD starting page of the pair
+                lockPageToCheck = leftPageNum; // Already should be odd if > 1
 
             } else {
                 // --- Single Page / Rotated View Lock Logic ---
-                const currentPageNum = leftPageNum; // The single page being displayed
-                const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
-
-                if (isEvenPage) {
-                    // Only potentially lock if the *current* page is EVEN
-                    if (completedTimeLockPages.has(currentPageNum)) {
-                        updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
-                        // isTimeLockActive remains false
-                    } else {
-                        const singlePageViewPort = pdfState.currentViewports['left-page-canvas'];
-                        let timeSingle = 0;
-                        if (currentPageNum >= 1 && currentPageNum <= pdfState.totalPages && singlePageViewPort) {
-                            timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
-                        }
-
-                        if (timeSingle > 0) {
-                            requiredReadingTime = timeSingle; // Store single EVEN page time
-                            currentPageLockStartTime = Date.now();
-                            isTimeLockActive = true; // Activate lock for this EVEN page
-                            updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
-                        } else {
-                            updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
-                            // isTimeLockActive remains false
-                        }
+                // Lock only applies if the current page is EVEN
+                if (leftPageNum > 0 && leftPageNum % 2 === 0) {
+                    lockPageToCheck = leftPageNum;
+                    const singleViewport = pdfState.currentViewports['left-page-canvas'];
+                    if (singleViewport) {
+                        calculatedTime = await calculatePageReadingTime(leftPageNum, singleViewport);
                     }
                 } else {
                     // Current page is odd or invalid, no lock needed when viewing it in single view
-                    updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
-                    // isTimeLockActive remains false
+                    calculatedTime = 0; // Ensure no lock is set
+                     updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${leftPageNum}.`);
                 }
-                // --- End Single Page / Rotated View Lock Logic ---
+            }
+
+            // Check if this specific page/pair lock has already been completed
+            if (completedTimeLockPages.has(lockPageToCheck)) {
+                updateStatus(`Page lock previously completed for page/pair ${lockPageToCheck}. Skipping set.`);
+            } else if (calculatedTime > 0) {
+                // Set the new page lock state
+                appState.activeLock.type = 'page';
+                appState.activeLock.startTime = Date.now();
+                appState.activeLock.duration = calculatedTime;
+                appState.activeLock.triggerPage = lockPageToCheck;
+                updateStatus(`Time lock SET (Type: Page) for page/pair ${lockPageToCheck}. Duration: ${calculatedTime}s`);
+            } else {
+                 updateStatus(`Time lock NOT SET for page/pair ${lockPageToCheck} (time=0 or already completed).`);
             }
         } else {
-            // Timelock is globally disabled, ensure no lock is set
-            isTimeLockActive = false;
-            requiredReadingTime = 0;
-            currentPageLockStartTime = 0;
-            updateStatus("Time lock globally DISABLED. Skipping lock calculation/set.");
+            // Timelock is globally disabled
+            updateStatus("Time lock globally DISABLED. Skipping page lock calculation/set.");
         }
-        // --- End REVERTED Reading Time Logic ---
+        // --- End Page Lock Calculation/Setting ---
+
+        // --- Final Updates ---
+        updateSliderPosition(); // Updates slider position, text, and LO milestone colors
+        preloadAdjacentPages(pdfState.currentPage);
+        applyCurrentViewModeStyles(); // Apply scaling/rotation
+
+        // --- Check for Popups (Keep from New Code) ---
+        // ... (rest of updateDisplay function remains the same) ...
 
         // --- Final Updates ---
         updateSliderPosition(); // Updates slider position, text, and LO milestone colors
@@ -2681,53 +2676,6 @@ body.right-handle-floated .toolbar-trigger-area {
         // No need for separate timer if animation-iteration-count: 1
     }
 
-
-    // --- Reading Time Lock Check (REVERTED from Old Code) ---
-    function checkReadingTimeLock() {
-        // Called by jumpToPage only when moving forward.
-
-        // *** FIRST: Check if timelock is globally enabled ***
-        if (!isTimelockGloballyEnabled) {
-            updateStatus(`Time lock check: Globally DISABLED. Allowing navigation.`);
-            return false; // Not blocking
-        }
-
-        if (!isTimeLockActive) {
-            // No lock is currently active (either pair or single even page), so allow navigation.
-            updateStatus(`Time lock check: Lock is INACTIVE. Allowing navigation.`);
-            return false; // Not blocking
-        }
-
-        // A lock IS active.
-        const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
-        // 'pdfState.currentPage' holds the page number the active lock is associated with
-        // (odd start for pair lock, even page num for single lock) as set by updateDisplay.
-        const lockAssociatedPage = pdfState.currentPage;
-
-        if (elapsedSeconds < requiredReadingTime) {
-            // Time is NOT up. Block navigation.
-            updateStatus(`Time lock ACTIVE (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Blocking forward nav.`);
-            showReadingTimeAlert(); // Alert will only show if globally enabled due to its own check
-            return true; // Indicate lock IS preventing navigation
-        } else {
-            // Time IS up. Allow navigation and handle completion.
-            updateStatus(`Time lock FINISHED (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Allowing forward nav.`);
-
-            // Mark completion for this page/pair permanently in the Set using the associated page number.
-            if (!completedTimeLockPages.has(lockAssociatedPage)) {
-                completedTimeLockPages.add(lockAssociatedPage);
-                updateStatus(`Page/Pair ${lockAssociatedPage} added to completed time lock set.`);
-            }
-
-            // Important: Deactivate lock for this *specific check*.
-            // updateDisplay will reset isTimeLockActive anyway before potentially setting a new one for the *next* page view.
-            isTimeLockActive = false; // Lock is passed/completed *for this navigation attempt*.
-            requiredReadingTime = 0; // Reset required time as well
-            currentPageLockStartTime = 0;
-            return false; // Indicate lock is NOT preventing navigation for this attempt
-        }
-    }
-
     // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
@@ -2832,28 +2780,27 @@ body.right-handle-floated .toolbar-trigger-area {
 
         const isMovingForward = targetStartPage > currentStartPage;
 
-        // *** REVERTED Lock Check Logic ***
+                // --- Check Active Lock ---
         if (isMovingForward) {
-            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
-            if (checkReadingTimeLock()) { // Calls the reverted function
-                updateStatus(`Navigation blocked by time lock.`);
+            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking active lock...`);
+            if (checkActiveLock('navigateForward')) { // Use the new central check function
+                updateStatus(`Navigation blocked by active lock.`);
+                // Reset slider if it triggered the block
                 if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
-                    updateSliderPosition(); // Reset slider if it triggered the block
+                    updateSliderPosition();
                 }
                 return; // Block the jump
             }
-            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
+            updateStatus(`Active lock passed/inactive. Proceeding with jump.`);
         } else { // Moving backward
-            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
-            // Clear any active lock if moving backward (using reverted globals)
-            if (isTimeLockActive) {
-                 updateStatus("Clearing active time lock due to backward navigation.");
-                 isTimeLockActive = false;
-                 requiredReadingTime = 0;
-                 currentPageLockStartTime = 0;
-            }
+            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Clearing any active lock.`);
+            // Backward navigation always clears the current lock regardless of its state
+            resetActiveLock();
         }
-        // *** End REVERTED Lock Check Logic ***
+        // --- End Lock Check ---
+
+        // --- Perform Navigation (Uses New Code State) ---
+        // ... (rest of jumpToPage remains the same) ...
 
         // --- Perform Navigation (Uses New Code State) ---
         updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
@@ -3817,12 +3764,33 @@ body.right-handle-floated .toolbar-trigger-area {
         }
 
         updateStatus(`Showing iframe popup for URL: ${url}`);
+        // *** Activate Video Lock (if globally enabled) ***
+        if (isTimelockGloballyEnabled) {
+            const videoDuration = calculateVideoLockDuration(url); // Get duration
+            if (videoDuration > 0) {
+                updateStatus(`Setting video lock. Duration: ${videoDuration}s`);
+                resetActiveLock(); // Clear any previous lock
+                appState.activeLock.type = 'video';
+                appState.activeLock.startTime = Date.now();
+                appState.activeLock.duration = videoDuration;
+                appState.activeLock.triggerPage = pdfState.currentPage; // Page that triggered the video
+            } else {
+                 updateStatus(`Calculated video duration is 0. Skipping video lock activation.`);
+            }
+        } else {
+             updateStatus("Timelock globally disabled. Skipping video lock activation.");
+        }
+        // *** End Lock Activation ***
         ui.popupIframe.src = url;
         toggleVisibility(ui.iframePopupBackdrop, true);
         toggleVisibility(ui.iframePopupModal, true);
     }
 
     function hideIframePopup() {
+        if (checkActiveLock('closeVideo')) {
+            updateStatus("Cannot close iframe popup: Active lock.");
+            return; // Prevent hiding
+        }
         if (!ui.iframePopupBackdrop || !ui.iframePopupModal || !ui.popupIframe) return;
         if (ui.iframePopupModal.classList.contains(CSS_CLASS.VISIBLE)) {
              updateStatus("Hiding iframe popup.");
@@ -3871,6 +3839,20 @@ body.right-handle-floated .toolbar-trigger-area {
     }
     hideDefinitionPopup(); hideIframePopupIfNeeded(); // Hide other popups
     updateStatus(`Showing notes popup for PDF: ${pdfUrl}, page: ${pageNum}`);
+
+        // *** Activate Notes Lock (if globally enabled) ***
+        if (isTimelockGloballyEnabled) {
+            const notesDuration = 45; // Fixed duration for notes
+            updateStatus(`Setting notes lock. Duration: ${notesDuration}s`);
+            resetActiveLock(); // Clear any previous lock
+            appState.activeLock.type = 'notes';
+            appState.activeLock.startTime = Date.now();
+            appState.activeLock.duration = notesDuration;
+            appState.activeLock.triggerPage = pdfState.currentPage; // Page that triggered the notes
+        } else {
+             updateStatus("Timelock globally disabled. Skipping notes lock activation.");
+        }
+        // *** End Lock Activation ***
 
     // *** Show popup container and backdrop (triggers CSS transitions) ***
     toggleVisibility(ui.notesPopupBackdrop, true);
@@ -3926,6 +3908,11 @@ body.right-handle-floated .toolbar-trigger-area {
 }
 
     function hideNotesPopup() {
+
+    if (checkActiveLock('closeNotes')) {
+        updateStatus("Cannot close notes popup: Active lock.");
+        return; // Prevent hiding
+        }
     // Check for required elements
     if (!ui.notesPopupBackdrop || !ui.notesPopupContainer || !ui.notesPdfCanvas || !ui.notesLocalLoader) return;
 
@@ -4157,26 +4144,239 @@ if (ui.rightToolbar && ui.leftToolbar) {
         }
     }
 
-    function toggleTimelock() { // REVERTED
-        isTimelockGloballyEnabled = !isTimelockGloballyEnabled; // Uses reverted global
+        function toggleTimelock() {
+        isTimelockGloballyEnabled = !isTimelockGloballyEnabled;
         updateStatus(`Timelock globally ${isTimelockGloballyEnabled ? 'ENABLED' : 'DISABLED'}`);
         updateTimelockButtonVisuals();
 
-        // If turning the timelock OFF, immediately deactivate any *current* lock.
-        if (!isTimelockGloballyEnabled && isTimeLockActive) { // Uses reverted globals
-            updateStatus("Timelock globally disabled, clearing current active lock.");
-            isTimeLockActive = false;
-            requiredReadingTime = 0;
-            currentPageLockStartTime = 0;
-            clearTimeout(appState.alertTimeout); // Hide any active alert (use appState timer var from new code)
-            toggleVisibility(ui.readingTimeAlert, false); // Hide alert visually
-        } else if (isTimelockGloballyEnabled) {
-            // If turning the timelock ON, re-evaluate the lock state for the current view immediately.
-            updateStatus("Timelock globally enabled, re-evaluating lock state for current view.");
-            updateDisplay(); // Re-run updateDisplay to potentially set a lock (calls reverted lock logic)
+        // If turning the timelock OFF, immediately clear any active lock.
+        if (!isTimelockGloballyEnabled) {
+            if (appState.activeLock.type) {
+                updateStatus("Timelock globally disabled, clearing current active lock.");
+                resetActiveLock();
+            }
+            // Hide any active alert
+            clearTimeout(appState.alertTimeout);
+            toggleVisibility(ui.readingTimeAlert, false);
+        } else {
+            // If turning the timelock ON, re-evaluate lock state for the *current* view.
+            // This is primarily for page locks, as popups trigger their own locks.
+            updateStatus("Timelock globally enabled, re-evaluating potential page lock for current view.");
+            // Call a function that specifically checks and sets the page lock if applicable
+            checkAndSetPageLockForCurrentView();
         }
-        manageLeftToolbar(false); // Hide toolbar after action (uses reverted function)
+        manageLeftToolbar(false); // Hide toolbar after action
     }
+
+    // --- NEW helper function called by toggleTimelock when enabling ---
+    async function checkAndSetPageLockForCurrentView() {
+        if (!isTimelockGloballyEnabled || !pdfState.pdfDocument || !pdfState.currentPage) return;
+
+        const currentPageNum = pdfState.currentPage;
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+
+        let lockPageToCheck = currentPageNum;
+        let pageTime = 0;
+        let viewport = pdfState.currentViewports['left-page-canvas'];
+
+        if (isEffectiveDoublePageView) {
+             // For double page view, the lock is associated with the *odd* starting page.
+            // Time calculation needs both pages if the right one exists.
+            lockPageToCheck = (currentPageNum % 2 === 0) ? currentPageNum - 1 : currentPageNum; // Should already be odd, but ensure
+            const leftViewport = pdfState.currentViewports['left-page-canvas'];
+            const rightViewport = pdfState.currentViewports['right-page-canvas'];
+            const rightPageNum = currentPageNum + 1;
+            let timeLeft = 0, timeRight = 0;
+
+            if (leftViewport && currentPageNum <= pdfState.totalPages) {
+                timeLeft = await calculatePageReadingTime(currentPageNum, leftViewport);
+            }
+            // Check if right page exists and is rendered (not placeholder)
+            if (rightViewport && rightPageNum <= pdfState.totalPages) {
+                timeRight = await calculatePageReadingTime(rightPageNum, rightViewport);
+            }
+            pageTime = timeLeft + timeRight;
+
+        } else {
+            // Single Page / Rotated View: Lock only applies to EVEN pages.
+            if (currentPageNum % 2 !== 0) {
+                 updateStatus(`Page ${currentPageNum} is odd, no page lock needed in single view.`);
+                 return; // No lock for odd pages in single view
+            }
+             lockPageToCheck = currentPageNum;
+            if (viewport) {
+                pageTime = await calculatePageReadingTime(currentPageNum, viewport);
+            }
+        }
+
+        // Check if this page/pair lock is already completed
+        if (completedTimeLockPages.has(lockPageToCheck)) {
+             updateStatus(`Page lock for ${lockPageToCheck} already completed. No new lock set.`);
+             return;
+        }
+
+        // Set the lock if time > 0
+        if (pageTime > 0) {
+            updateStatus(`Setting page lock for page/pair ${lockPageToCheck}. Duration: ${pageTime}s`);
+            resetActiveLock(); // Clear any previous lock first
+            appState.activeLock.type = 'page';
+            appState.activeLock.startTime = Date.now();
+            appState.activeLock.duration = pageTime;
+            appState.activeLock.triggerPage = lockPageToCheck;
+        } else {
+             updateStatus(`Calculated page time is 0 for ${lockPageToCheck}. No page lock set.`);
+        }
+    }
+
+        // --- NEW: Lock System Helper Functions ---
+
+    function resetActiveLock() {
+        // Clears any active lock state
+        appState.activeLock.type = null;
+        appState.activeLock.startTime = 0;
+        appState.activeLock.duration = 0;
+        appState.activeLock.triggerPage = null;
+        appState.activeLock.isComplete = false;
+        // console.log("Active lock reset."); // Debug log
+    }
+
+    function showTimelockAlert(lockType, remainingTime) {
+        if (!isTimelockGloballyEnabled) return; // Don't show if globally disabled
+
+        clearTimeout(appState.alertTimeout);
+        // Removed wiggle timeout reference as it wasn't used
+
+        let message = 'Please wait!';
+        if (lockType === 'page') {
+            message = `<em>Please read the text first!</em> (${Math.ceil(remainingTime)}s left)`;
+        } else if (lockType === 'notes') {
+            message = `<em>Please review the notes first!</em> (${Math.ceil(remainingTime)}s left)`;
+        } else if (lockType === 'video') {
+            message = `<em>Please watch the video first!</em> (${Math.ceil(remainingTime)}s left)`;
+        } else {
+            message = `<em>Action blocked by timer!</em> (${Math.ceil(remainingTime)}s left)`;
+        }
+
+        ui.readingTimeAlert.innerHTML = message;
+        toggleVisibility(ui.readingTimeAlert, true); // Add .visible class
+
+        appState.alertTimeout = setTimeout(() => {
+            toggleVisibility(ui.readingTimeAlert, false);
+        }, READING_TIME_ALERT_DURATION);
+    }
+
+    function checkActiveLock(actionContext = 'unknown') {
+        // Returns true if blocked, false if allowed.
+        // actionContext helps debugging: 'navigateForward', 'navigateBackward', 'closeNotes', 'closeVideo'
+
+        const lock = appState.activeLock;
+
+        // Case 1: Timelock is globally off, or no lock is active
+        if (!isTimelockGloballyEnabled || !lock.type) {
+            // updateStatus(`Lock check (${actionContext}): Not active or globally disabled. Allowed.`);
+            return false; // Not blocking
+        }
+
+        // Case 2: A lock is active, check the time
+        const elapsedSeconds = (Date.now() - lock.startTime) / 1000;
+
+        if (elapsedSeconds >= lock.duration) {
+            // Time is up! Lock is completed.
+            updateStatus(`Lock check (${actionContext}): Lock type '${lock.type}' completed (${elapsedSeconds.toFixed(1)}s / ${lock.duration}s). Allowed.`);
+
+            // Mark page locks as permanently completed
+            if (lock.type === 'page' && lock.triggerPage) {
+                if (!completedTimeLockPages.has(lock.triggerPage)) {
+                    completedTimeLockPages.add(lock.triggerPage);
+                    updateStatus(`Page ${lock.triggerPage} added to completed time lock set.`);
+                }
+            }
+
+            // Reset the lock state *after* checking
+            resetActiveLock();
+            return false; // Not blocking
+        } else {
+            // Time is *not* up. Block the action.
+            const remainingTime = lock.duration - elapsedSeconds;
+            updateStatus(`Lock check (${actionContext}): Lock type '${lock.type}' ACTIVE. Blocking action (${elapsedSeconds.toFixed(1)}s / ${lock.duration}s).`);
+            showTimelockAlert(lock.type, remainingTime);
+            return true; // Blocking
+        }
+    }
+
+    // Helper to parse video duration from URL params (start/end in seconds)
+    function calculateVideoLockDuration(url) {
+        const defaultDuration = 60; // Default fallback duration in seconds
+        let startTime = null;
+        let endTime = null;
+
+        try {
+            const urlObj = new URL(url, window.location.origin); // Need base for relative URLs
+            const params = urlObj.searchParams;
+
+            // Check for YouTube style t=start[,end] (e.g., t=30s or t=1m30s,1m45s)
+            const timeParam = params.get('t');
+            if (timeParam) {
+                const parts = timeParam.split(',');
+                // Basic parsing (assumes seconds or simple formats like 1m30s - needs more robust parser for complex cases)
+                const parseTime = (tStr) => {
+                    if (!tStr) return null;
+                    let seconds = 0;
+                    if (tStr.includes('m')) {
+                        const mParts = tStr.split('m');
+                        seconds += parseInt(mParts[0], 10) * 60;
+                        if (mParts[1]) seconds += parseInt(mParts[1].replace('s',''), 10);
+                    } else {
+                        seconds = parseInt(tStr.replace('s',''), 10);
+                    }
+                    return isNaN(seconds) ? null : seconds;
+                };
+                startTime = parseTime(parts[0]);
+                if (parts.length > 1) {
+                    endTime = parseTime(parts[1]);
+                }
+                 // If only start time is given, maybe default end time? Or rely on start/end params below?
+                 // For now, if only 't=start' is given, it implies watching from start.
+            }
+
+            // Check for start= and end= params (overwrite 't' if present)
+            const startParam = params.get('start');
+            const endParam = params.get('end');
+
+            if (startParam !== null) {
+                const parsedStart = parseInt(startParam, 10);
+                if (!isNaN(parsedStart)) startTime = parsedStart;
+            }
+            if (endParam !== null) {
+                const parsedEnd = parseInt(endParam, 10);
+                if (!isNaN(parsedEnd)) endTime = parsedEnd;
+            }
+
+            // Calculate duration
+            if (startTime !== null && endTime !== null && endTime > startTime) {
+                updateStatus(`Video duration calculated from start/end params: ${endTime - startTime}s`);
+                return endTime - startTime;
+            } else if (startTime !== null && endTime === null) {
+                // Start time specified, but no end time - maybe watch till end?
+                // Cannot determine duration without iframe communication or end param. Use default.
+                 updateStatus(`Video start time found, but no end time. Using default duration: ${defaultDuration}s`);
+                 return defaultDuration;
+            } else {
+                 // No valid parameters found.
+                 updateStatus(`No valid start/end time parameters found in URL: ${url}. Using default duration: ${defaultDuration}s`);
+                 return defaultDuration;
+            }
+
+        } catch (e) {
+            console.warn("Error parsing video URL:", e);
+            updateStatus(`Error parsing URL. Using default video duration: ${defaultDuration}s`);
+            return defaultDuration;
+        }
+    }
+
+    // --- END: New Lock System Helpers ---
 
 // Helper function to start the fade timer
 // Helper function to start the fade timer IF screen is narrow
