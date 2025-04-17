@@ -3246,43 +3246,45 @@ function calculateVideoDuration(url) {
         }
     }
 
-    function updateSliderPosition(currentPageForSlider) { // Takes page number as argument
-    // Ensure all necessary UI elements and the PDF state are ready
-    if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay && pdfState.totalPages > 0 && currentPageForSlider !== undefined) {
-
-        // *** THE FIX IS HERE ***
-        // Use the passed argument, clamp it for safety between 1 and totalPages
-        const currentPage = Math.max(1, Math.min(currentPageForSlider, pdfState.totalPages));
-
-        // Update the slider handle's position
-        ui.slider.value = currentPage;
-
-        // Update the display text (Page X or X-Y) using the correct current page
-        updateSliderInfoText(currentPage);
-
-        // Update the slider's track fill style
-        updateSliderStyle(ui.slider, currentPage);
-
-        // Update the Learning Outcome milestone colors based on the correct current page
-        updateMilestoneColors(currentPage);
-
-    } else if (ui.slider) {
-        // Fallback if PDF isn't fully loaded, state is invalid, or no page number was passed
-        // Reset slider to minimum and display default text
-        const minPage = parseInt(ui.slider.min || 1);
-        const resetPage = pdfState.currentPage > 0 ? Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages)) : minPage; // Use current state if available, else min
-        ui.slider.value = resetPage;
-        updateSliderInfoText(resetPage);
-        updateSliderStyle(ui.slider, resetPage);
-        updateMilestoneColors(resetPage);
-        // Ensure total pages display is also reset or appropriate
-         if(ui.totalPagesDisplay) ui.totalPagesDisplay.textContent = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
-        // Log if this fallback is triggered unexpectedly without a page number
-        if (currentPageForSlider === undefined && pdfState.totalPages > 0) {
-             console.warn("updateSliderPosition called without page number argument during active state.");
+        function updateSliderPosition(currentPageForSlider) { // Takes page number as argument
+        // Ensure all necessary UI elements and the PDF state are ready
+        if (!ui.slider || !ui.currentPageDisplay || !ui.totalPagesDisplay) {
+             console.warn("updateSliderPosition: Missing UI elements.");
+             return; // Exit if essential UI is missing
         }
+
+        let pageToUpdate = 1; // Default fallback
+
+        // Determine the page number to use for the update
+        if (pdfState.totalPages > 0 && currentPageForSlider !== undefined && currentPageForSlider !== null) {
+            // Prioritize the passed argument if valid
+            pageToUpdate = Math.max(1, Math.min(currentPageForSlider, pdfState.totalPages));
+        } else if (pdfState.totalPages > 0) {
+            // Fallback to current state if argument missing/invalid but PDF is loaded
+            pageToUpdate = Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages));
+             if (currentPageForSlider === undefined && appState.isReaderReady) {
+                 // Only warn if called without argument when reader should be ready
+                 console.warn("updateSliderPosition called without page number argument during active state. Using pdfState.currentPage as fallback.");
+             }
+        } else {
+            // Fallback if PDF isn't loaded or totalPages is 0
+            pageToUpdate = parseInt(ui.slider.min || 1);
+        }
+
+        // --- Perform the UI Updates ---
+
+        // 1. Update the slider handle's numerical value
+        ui.slider.value = pageToUpdate;
+
+        // 2. Update the display text (e.g., "Page 5" or "Page 6-7")
+        updateSliderInfoText(pageToUpdate); // Use the determined page number
+
+        // 3. Update the slider's track fill style (visual progress)
+        updateSliderStyle(ui.slider, pageToUpdate); // Use the determined page number
+
+        // 4. Update the Learning Outcome milestone colors
+        updateMilestoneColors(pageToUpdate); // Use the determined page number
     }
-}
 
     // Updates the slider's track fill percentage
     function updateSliderStyle(slider, value) {
