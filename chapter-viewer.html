@@ -1578,62 +1578,6 @@ body.right-handle-floated .toolbar-trigger-area {
 
 /* === END: Floating Toolbar Handle Styles === */
 
-/* --- Hover Glow Effect for Toolbar Triggers --- */
-
-/* Ensure Trigger Areas are set up for positioning */
-#toolbar-trigger-area,
-#left-toolbar-trigger-area {
-    position: fixed; /* Must be fixed */
-    width: 30px;
-    height: 100%;
-    top: 0;
-    z-index: 9998;
-    pointer-events: auto; /* Critical for hover */
-    /* Remove any background/border from the trigger area itself */
-    background: transparent;
-    border: none;
-}
-#toolbar-trigger-area { right: 0; }
-#left-toolbar-trigger-area { left: 0; }
-/* NEW: Adjust Right Toolbar Trigger in Double Page View */
-body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
-    top: 60px;                 /* Lower the top edge */
-    height: calc(100% - 60px); /* Reduce height to keep bottom edge in place */
-}
-
-
-/* Common Glow Styles (Hidden by default) */
-#toolbar-trigger-area::after,
-#left-toolbar-trigger-area::after {
-    content: '';
-    position: absolute;
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    width: 60px;  /* Width of the glow */
-    height: 90px; /* Height of the glow (slightly taller) */
-    /* Create the orange glow gradient */
-    background: radial-gradient(
-        ellipse at center,
-        rgba(245, 166, 35, 0.6) 0%,  /* Orange --accent with alpha */
-        rgba(249, 115, 22, 0.4) 40%, /* Fiery orange with alpha */
-        rgba(249, 115, 22, 0) 70%   /* Transparent edge */
-    );
-    border-radius: 50%; /* Make it elliptical/circular */
-    filter: blur(15px); /* Soften the glow */
-    /* Start hidden */
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.8); /* Center and slightly scaled down */
-    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-    pointer-events: none; /* Glow itself doesn't intercept clicks */
-    z-index: -1; /* Behind potential trigger content */
-}
-
-/* Show Glow on Trigger Area Hover */
-#toolbar-trigger-area:hover::after,
-#left-toolbar-trigger-area:hover::after {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1); /* Scale up to full size */
-}
 
         /* Keyframes for the text shimmer effect */
 @keyframes shimmerText {
