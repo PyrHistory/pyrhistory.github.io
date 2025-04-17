@@ -2881,6 +2881,7 @@ body.right-handle-floated .toolbar-trigger-area {
         // --- Perform Navigation (Uses New Code State) ---
         updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
         pdfState.currentPage = targetStartPage;
+        updateSliderPosition(targetStartPage);
 
         // Update furthest read page if moving forward (tracks highest *starting* page of a view)
         if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
@@ -2891,8 +2892,6 @@ body.right-handle-floated .toolbar-trigger-area {
 
         resetPopupStates(); // Hide any open popups (including LO popup)
 
-        updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
-        // showPageSlider(); // REMOVED: Do not show slider on page turn (Keep from New Code)
         manageToolbar(false); // Hide toolbars (using reverted function)
         manageLeftToolbar(false); // Hide toolbars (using reverted function)
     }
