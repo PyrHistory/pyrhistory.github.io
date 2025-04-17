@@ -2566,7 +2566,6 @@ body.right-handle-floated .toolbar-trigger-area {
     // --- End REVERTED/MODIFIED Reading Time Logic ---
 
     // --- Final Updates ---
-    updateSliderPosition(); // Updates slider position, text, and LO milestone colors
     preloadAdjacentPages(pdfState.currentPage);
     applyCurrentViewModeStyles(); // Apply scaling/rotation
 
@@ -2881,7 +2880,8 @@ body.right-handle-floated .toolbar-trigger-area {
         // --- Perform Navigation (Uses New Code State) ---
         updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
         pdfState.currentPage = targetStartPage;
-
+        updateSliderPosition(targetStartPage);
+        
         // Update furthest read page if moving forward (tracks highest *starting* page of a view)
         if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
             userState.readingProgress.furthestPage = targetStartPage;
@@ -2892,7 +2892,6 @@ body.right-handle-floated .toolbar-trigger-area {
         resetPopupStates(); // Hide any open popups (including LO popup)
 
         updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
-        // showPageSlider(); // REMOVED: Do not show slider on page turn (Keep from New Code)
         manageToolbar(false); // Hide toolbars (using reverted function)
         manageLeftToolbar(false); // Hide toolbars (using reverted function)
     }
@@ -3247,13 +3246,13 @@ function calculateVideoDuration(url) {
         }
     }
 
-    function updateSliderPosition() {
+    function updateSliderPosition(currentPageForSlider) { // Takes page number as argument
     // Ensure all necessary UI elements and the PDF state are ready
-    if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay && pdfState.totalPages > 0) {
+    if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay && pdfState.totalPages > 0 && currentPageForSlider !== undefined) {
+
         // *** THE FIX IS HERE ***
-        // Read the definitive current page directly from the state right before updating UI.
-        // Clamp the value between 1 and totalPages just in case.
-        const currentPage = Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages));
+        // Use the passed argument, clamp it for safety between 1 and totalPages
+        const currentPage = Math.max(1, Math.min(currentPageForSlider, pdfState.totalPages));
 
         // Update the slider handle's position
         ui.slider.value = currentPage;
@@ -3266,16 +3265,22 @@ function calculateVideoDuration(url) {
 
         // Update the Learning Outcome milestone colors based on the correct current page
         updateMilestoneColors(currentPage);
+
     } else if (ui.slider) {
-        // Fallback if PDF isn't fully loaded or state is invalid
+        // Fallback if PDF isn't fully loaded, state is invalid, or no page number was passed
         // Reset slider to minimum and display default text
         const minPage = parseInt(ui.slider.min || 1);
-        ui.slider.value = minPage;
-        updateSliderInfoText(minPage);
-        updateSliderStyle(ui.slider, minPage);
-        updateMilestoneColors(minPage);
+        const resetPage = pdfState.currentPage > 0 ? Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages)) : minPage; // Use current state if available, else min
+        ui.slider.value = resetPage;
+        updateSliderInfoText(resetPage);
+        updateSliderStyle(ui.slider, resetPage);
+        updateMilestoneColors(resetPage);
         // Ensure total pages display is also reset or appropriate
          if(ui.totalPagesDisplay) ui.totalPagesDisplay.textContent = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
+        // Log if this fallback is triggered unexpectedly without a page number
+        if (currentPageForSlider === undefined && pdfState.totalPages > 0) {
+             console.warn("updateSliderPosition called without page number argument during active state.");
+        }
     }
 }
 
