@@ -3257,14 +3257,36 @@ function calculateVideoDuration(url) {
     }
 
     function updateSliderPosition() {
-        if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay) {
-            const currentPage = pdfState.currentPage > 0 ? pdfState.currentPage : 1;
-            ui.slider.value = currentPage; // Set slider handle position
-            updateSliderInfoText(currentPage); // Update display text based on current view mode
-            updateSliderStyle(ui.slider, currentPage); // Update track fill
-            updateMilestoneColors(currentPage); // Update LO milestone colors
-        }
+    // Ensure all necessary UI elements and the PDF state are ready
+    if (ui.slider && ui.currentPageDisplay && ui.totalPagesDisplay && pdfState.totalPages > 0) {
+        // *** THE FIX IS HERE ***
+        // Read the definitive current page directly from the state right before updating UI.
+        // Clamp the value between 1 and totalPages just in case.
+        const currentPage = Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages));
+
+        // Update the slider handle's position
+        ui.slider.value = currentPage;
+
+        // Update the display text (Page X or X-Y) using the correct current page
+        updateSliderInfoText(currentPage);
+
+        // Update the slider's track fill style
+        updateSliderStyle(ui.slider, currentPage);
+
+        // Update the Learning Outcome milestone colors based on the correct current page
+        updateMilestoneColors(currentPage);
+    } else if (ui.slider) {
+        // Fallback if PDF isn't fully loaded or state is invalid
+        // Reset slider to minimum and display default text
+        const minPage = parseInt(ui.slider.min || 1);
+        ui.slider.value = minPage;
+        updateSliderInfoText(minPage);
+        updateSliderStyle(ui.slider, minPage);
+        updateMilestoneColors(minPage);
+        // Ensure total pages display is also reset or appropriate
+         if(ui.totalPagesDisplay) ui.totalPagesDisplay.textContent = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
     }
+}
 
     // Updates the slider's track fill percentage
     function updateSliderStyle(slider, value) {
