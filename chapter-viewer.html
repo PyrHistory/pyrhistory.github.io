@@ -806,7 +806,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     height: 20%; /* Covers top half vertically */
     z-index: 19; /* Below button (z-index 20) */
     pointer-events: auto; /* Must capture hover */
-    cursor: pointer;
 }
 
 /* NEW: Disable rotate hover trigger in single page (fullscreen) mode */
@@ -1596,6 +1595,11 @@ body.right-handle-floated .toolbar-trigger-area {
 }
 #toolbar-trigger-area { right: 0; }
 #left-toolbar-trigger-area { left: 0; }
+/* NEW: Adjust Right Toolbar Trigger in Double Page View */
+body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
+    top: 60px;                 /* Lower the top edge */
+    height: calc(100% - 60px); /* Reduce height to keep bottom edge in place */
+}
 
 
 /* Common Glow Styles (Hidden by default) */
