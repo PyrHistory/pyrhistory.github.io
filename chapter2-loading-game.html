@@ -5,17 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prehistoric Runner</title>
     <script>
-    // Pre-register spacebar handler at the highest level possible
+    // Pre-register spacebar handler at the highest level possible 
     window.addEventListener('keydown', function(e) {
         if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
             // Prevent default space behavior (scrolling)
             e.preventDefault();
-            // Pass event to the game through a custom event (using a more specific name now)
-            window.dispatchEvent(new CustomEvent('game-perform-jump'));
+            // Pass event to the game through a custom event
+            window.dispatchEvent(new CustomEvent('game-jump'));
         }
     }, {capture: true});
     </script>
-    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4); image-rendering: pixelated; /* Optional: Can improve performance for pixel-art style on some browsers */ image-rendering: crisp-edges; /* Optional: Alternative crisp rendering */ }#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:block;width:auto}@media (max-width:480px){#game-container{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}}@media (min-width:1200px){#game-container{max-height:380px}}</style>
+    <style>:root{--primary-bg:#3A2618;--game-bg:#87CEEB;--accent-color:#FF8C42;--button-color:#4CAF50;--button-hover:#45a049;--text-light:#FFF;--text-shadow:0 2px 4px rgba(0,0,0,.5);--modal-bg:rgba(34,34,34,.9);--modal-border:rgba(255,255,255,.1);--modal-shadow:0 8px 32px rgba(0,0,0,.3)}*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;background:var(--primary-bg);font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow:hidden;padding:1rem}#game-container{position:relative;width:100%;max-width:800px;height:60vh;max-height:300px;background-color:var(--game-bg);overflow:hidden;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.4)}#game-canvas{position:absolute;top:0;left:0;z-index:1;width:100%;height:100%}#score{position:absolute;top:1rem;right:1rem;font-size:1.25rem;font-weight:600;color:var(--text-light);z-index:2;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;letter-spacing:.5px}#game-over{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background-color:var(--modal-bg);color:var(--text-light);padding:1.5rem;border-radius:12px;text-align:center;z-index:3;display:none;width:80%;max-width:300px;box-shadow:var(--modal-shadow);border:1px solid var(--modal-border);backdrop-filter:blur(4px)}#game-over h2{margin-bottom:.8rem;font-size:1.75rem;letter-spacing:1px;color:var(--accent-color)}#game-over p{margin-bottom:1.2rem;font-size:1.1rem}#game-over button{padding:.75rem 1.5rem;background:linear-gradient(to bottom,#FF8C42,#FF5E00);border:none;color:#fff;cursor:pointer;border-radius:6px;font-size:1rem;font-weight:600;transition:all .2s ease;width:80%;box-shadow:0 4px 8px rgba(0,0,0,.2)}#game-over button:hover{background:linear-gradient(to bottom,#FFA557,#FF7E29);transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.2)}#game-over button:active{transform:translateY(0);box-shadow:0 2px 4px rgba(0,0,0,.2)}#instructions{color:var(--text-light);font-size:.9rem;text-shadow:var(--text-shadow);background-color:rgba(0,0,0,.3);padding:.4rem .8rem;border-radius:20px;text-align:center;white-space:nowrap;margin-top:1rem;display:block;width:auto}@media (max-width:480px){#game-container{height:50vh}#score{font-size:1rem;padding:.3rem .6rem}#instructions{font-size:.8rem;padding:.3rem .6rem;margin-top:.8rem}#game-over h2{font-size:1.5rem}#game-over p{font-size:1rem}#game-over button{font-size:.9rem;padding:.6rem 1.2rem}}@media (min-width:1200px){#game-container{max-height:380px}}</style>
 </head>
 <body>
     <div id="game-container">
@@ -34,1063 +34,1071 @@
     // Cache DOM elements
     const container = document.getElementById('game-container');
     const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: Disable alpha if not needed for main canvas
+    const ctx = canvas.getContext('2d');
     const scoreElement = document.getElementById('score');
     const gameOverElement = document.getElementById('game-over');
     const finalScoreElement = document.getElementById('final-score');
     const restartButton = document.getElementById('restart');
-    const instructionsElement = document.getElementById('instructions'); // Cache instructions element
-
-    // Game dimensions (updated in resizeCanvas)
-    let canvasWidth = 0;
-    let canvasHeight = 0;
-    let groundY = 0;
-
-    // Game constants and variables
-    const TARGET_FPS = 60;
-    const TIME_STEP = 1000 / TARGET_FPS; // Milliseconds per frame at target FPS
-
-    const BASE_GRAVITY = 0.5 * TARGET_FPS * TARGET_FPS / 1000; // Adjusted for per-second acceleration
-    const BASE_JUMP_FORCE = 12 * TARGET_FPS / 1000; // Adjusted for per-second velocity
-    const BASE_GAME_SPEED = 6 * TARGET_FPS; // Pixels per second at start
-    const GAME_SPEED_INCREMENT = 0.3 * TARGET_FPS; // Pixels per second increase per 5 points
-    const DIFFICULTY_INCREMENT = 0.2; // Factor increase per 15 points
-    const MAX_DIFFICULTY_FACTOR = 2.5;
-
+    
+    // Pre-cache variable assignments to avoid lookups
+    let canvasWidth, canvasHeight, groundY;
+    
+    // Pre-create reusable objects
+    const skyGradient = {
+        gradient: null,
+        colors: ['#87CEEB', '#E0F7FF'],
+        create: function() {
+            this.gradient = ctx.createLinearGradient(0, 0, 0, groundY);
+            this.gradient.addColorStop(0, this.colors[0]);
+            this.gradient.addColorStop(1, this.colors[1]);
+            return this.gradient;
+        }
+    };
+    
+    // Game variables
     let score = 0;
-    let baseGameSpeedCurrent = BASE_GAME_SPEED; // Base speed that increases over time
-    let playing = false; // Start paused until restartGame is called
+    let gameSpeed = 6;
+    const gravity = 0.5;
+    let playing = true;
+    let obstacleInterval = 1500;
     let difficultyFactor = 1;
-    let restartDisabled = false;
-    let animationFrameId;
-    let lastTime = 0;
-    let accumulator = 0; // For fixed time step loop
-
-    // Timers for spawning elements (in milliseconds)
-    let obstacleTimer = 0;
-    let cloudTimer = 0;
-    let backgroundTimer = 0;
-    let currentObstacleInterval = 1500; // Initial interval
-
-    // Object Pools
+    
+    // Optimization: Pre-created object pools
     const obstaclePool = [];
     const cloudPool = [];
     const backgroundElementPool = [];
-
-    // Cached calculations & reusable values
+    
+    // Optimization: Cached calculations
     const PI2 = Math.PI * 2;
-
-    // Pre-create reusable sky gradient object
-    const skyGradient = {
-        gradient: null,
-        colors: ['#87CEEB', '#E0F7FF'], // Original colors
-        create: function() {
-            if (canvasHeight > 0) { // Ensure canvas dimensions are set
-                 // Optimization: Create gradient only once or when dimensions change
-                this.gradient = ctx.createLinearGradient(0, 0, 0, groundY);
-                this.gradient.addColorStop(0, this.colors[0]);
-                this.gradient.addColorStop(1, this.colors[1]);
-            }
-        }
-    };
-
+    
     // Ground
     const ground = {
-        y: 0, // Set during updateGameDimensions
-        height: 30, // Define ground height
-        color: '#8B4513',
-        grassColor: '#32CD32',
-        grassHeight: 5,
+        y: 0, // Will be set during initialization
         draw: function() {
-            // Ground base
-            ctx.fillStyle = this.color;
-            ctx.fillRect(0, this.y, canvasWidth, this.height);
-            // Grass top
-            ctx.fillStyle = this.grassColor;
-            ctx.fillRect(0, this.y, canvasWidth, this.grassHeight);
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, this.y, canvasWidth, canvasHeight - this.y);
+            
+            // Draw grass
+            ctx.fillStyle = '#32CD32';
+            ctx.fillRect(0, this.y, canvasWidth, 5);
         }
     };
-
+    
     // Player
     const player = {
         x: 50,
-        y: 0, // Set during updateGameDimensions
+        y: 0, // Will be set during initialization
         width: 30,
         height: 40,
         jumping: false,
-        velocity: 0, // Vertical velocity in pixels per second
-        jumpCount: 0,
-        maxJumps: 2, // Allow double jump
-
-        // Colors (cached)
-        skinColor: '#8B5A2B',
-        eyeColor: 'white',
-        pupilColor: 'black',
-        mouthColorJumping: '#A52A2A',
-        mouthColorResting: '#A52A2A', // Same color, just drawn differently
-        spearWoodColor: '#8B4513',
-        spearHeadColor: '#A9A9A9',
-
-        update: function(deltaTime) { // deltaTime in seconds
-            // Apply gravity
-            this.velocity += BASE_GRAVITY * deltaTime;
-            // Update position
-            this.y += this.velocity * deltaTime;
-
-            const groundLevel = groundY - this.height;
-            // Check for ground collision
-            if (this.y >= groundLevel) {
-                this.y = groundLevel;
+        jumpForce: 12,
+        velocity: 0,
+        jumpCount: 0, // Track number of jumps performed
+        maxJumpDistance: function() {
+            return gameSpeed * (2 * this.jumpForce / gravity);
+        },
+        update: function() {
+            this.velocity += gravity;
+            this.y += this.velocity;
+            
+            if (this.y + this.height > groundY) {
+                this.y = groundY - this.height;
                 this.velocity = 0;
                 this.jumping = false;
-                this.jumpCount = 0;
+                this.jumpCount = 0; // Reset jump count when touching ground
             }
         },
         jump: function() {
-            if (this.jumpCount < this.maxJumps) {
-                const jumpForceMultiplier = (this.jumpCount === 0) ? 1 : 0.6; // Second jump is weaker
-                this.velocity = -BASE_JUMP_FORCE * 1000 * jumpForceMultiplier; // Apply base jump force (convert back briefly)
+            if (this.jumpCount < 2) { // Allow up to 2 jumps
+                if (this.jumpCount === 0) {
+                    // First jump - full force
+                    this.velocity = -this.jumpForce;
+                } else {
+                    // Second jump - half force
+                    this.velocity = -this.jumpForce / 2;
+                }
                 this.jumping = true;
                 this.jumpCount++;
             }
         },
         draw: function() {
             const headRadius = 6;
-            const bodyHeight = 20;
-            const legHeight = this.height - (headRadius * 2) - bodyHeight;
             const centerX = this.x + this.width / 2;
-            const headY = this.y + headRadius;
-            const bodyTopY = this.y + headRadius * 2;
-            const bodyBottomY = bodyTopY + bodyHeight;
-
-            // Draw Head (Skin Color)
-            ctx.fillStyle = this.skinColor;
+            
+            // Optimization: Batch similar drawing operations
+            
+            // Draw head
+            ctx.fillStyle = '#8B5A2B';
             ctx.beginPath();
-            ctx.arc(centerX, headY, headRadius, 0, PI2);
+            ctx.arc(centerX, this.y + headRadius, headRadius, 0, PI2);
             ctx.fill();
-
-            // Draw Eyes (White)
-            ctx.fillStyle = this.eyeColor;
+            
+            // Draw all white elements
+            ctx.fillStyle = 'white';
+            
+            // Eyes
             ctx.beginPath();
-            ctx.arc(centerX - 2, headY - 1, 1.5, 0, PI2); // Left eye
-            ctx.arc(centerX + 2, headY - 1, 1.5, 0, PI2); // Right eye
+            ctx.arc(centerX - 2, this.y + headRadius - 1, 1.5, 0, PI2);
             ctx.fill();
-
-            // Draw Pupils (Black)
-            ctx.fillStyle = this.pupilColor;
+            
             ctx.beginPath();
-            ctx.arc(centerX - 2, headY - 1, 0.8, 0, PI2); // Left pupil
-            ctx.arc(centerX + 2, headY - 1, 0.8, 0, PI2); // Right pupil
+            ctx.arc(centerX + 2, this.y + headRadius - 1, 1.5, 0, PI2);
             ctx.fill();
-
-            // Draw Mouth
+            
+            // Draw all black elements
+            ctx.fillStyle = 'black';
+            
+            // Pupils
+            ctx.beginPath();
+            ctx.arc(centerX - 2, this.y + headRadius - 1, 0.8, 0, PI2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(centerX + 2, this.y + headRadius - 1, 0.8, 0, PI2);
+            ctx.fill();
+            
+            // Mouth based on state
             if (this.jumping) {
-                ctx.fillStyle = this.mouthColorJumping;
+                ctx.fillStyle = '#A52A2A';
                 ctx.beginPath();
-                ctx.arc(centerX, headY + 2, 1.5, 0, PI2);
+                ctx.arc(centerX, this.y + headRadius + 2, 1.5, 0, PI2);
                 ctx.fill();
             } else {
-                ctx.strokeStyle = this.mouthColorResting;
+                ctx.strokeStyle = '#A52A2A';
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.moveTo(centerX - 2, headY + 2);
-                ctx.lineTo(centerX + 2, headY + 2);
+                ctx.moveTo(centerX - 2, this.y + headRadius + 2);
+                ctx.lineTo(centerX + 2, this.y + headRadius + 2);
                 ctx.stroke();
             }
-
-            // --- Batch Stroked Body Parts (Skin Color) ---
-            ctx.strokeStyle = this.skinColor;
+            
+            // Body parts
+            ctx.strokeStyle = '#8B5A2B';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-
+            
             // Body - vertical line
-            ctx.moveTo(centerX, bodyTopY);
-            ctx.lineTo(centerX, bodyBottomY);
-
-            // Arms
-            const armY = bodyTopY + 5;
-            if (this.jumping) {
-                ctx.moveTo(centerX, armY);
-                ctx.lineTo(centerX - 8, armY - 5); // Upward angle
-                ctx.moveTo(centerX, armY);
-                ctx.lineTo(centerX + 8, armY - 5); // Upward angle
-            } else {
-                // Running arms
-                ctx.moveTo(centerX, armY);
-                ctx.lineTo(centerX - 12, armY + 3); // Backward angle
-                ctx.moveTo(centerX, armY);
-                ctx.lineTo(centerX + 12, armY - 4); // Forward angle (holding spear)
-            }
-
-            // Legs
-            const legTopY = bodyBottomY;
-            const legBottomY = this.y + this.height; // Use calculated bottom
-
-            if (this.jumping) {
-                // Splayed legs
-                ctx.moveTo(centerX, legTopY);
-                ctx.lineTo(centerX - 10, legBottomY);
-                ctx.moveTo(centerX, legTopY);
-                ctx.lineTo(centerX + 10, legBottomY);
-            } else {
-                // Running legs animation
-                const runCycle = (Date.now() / 100) & 1; // Keep fast modulo
-                if (runCycle === 0) {
-                    ctx.moveTo(centerX, legTopY);
-                    ctx.lineTo(centerX - 10, legBottomY); // Back leg straight
-                    ctx.moveTo(centerX, legTopY);
-                    ctx.lineTo(centerX + 8, legBottomY - 5); // Front leg bent
-                } else {
-                    ctx.moveTo(centerX, legTopY);
-                    ctx.lineTo(centerX - 8, legBottomY - 5); // Back leg bent
-                    ctx.moveTo(centerX, legTopY);
-                    ctx.lineTo(centerX + 10, legBottomY); // Front leg straight
-                }
-            }
-            // Stroke all body parts drawn so far
+            ctx.beginPath();
+            ctx.moveTo(centerX, this.y + headRadius * 2);
+            ctx.lineTo(centerX, this.y + headRadius * 2 + 20);
             ctx.stroke();
-            // --- End Stroked Batch ---
-
-            // Draw Spear (only when running)
-            if (!this.jumping) {
-                const spearX = centerX + 12; // Position relative to player center
-                const spearY = bodyTopY + 1;  // Position relative to player body/arm
-                const spearLength = 18;
-                const spearEndX = spearX + spearLength;
-                const spearEndY = spearY - 3;
-
-                // Spear Shaft (Brown)
-                ctx.strokeStyle = this.spearWoodColor;
-                ctx.lineWidth = 2; // Consistent with body
+            
+            // Arms
+            if (this.jumping) {
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
+                ctx.lineTo(centerX - 8, this.y + headRadius * 2);
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
+                ctx.lineTo(centerX + 8, this.y + headRadius * 2);
+                ctx.stroke();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
+                ctx.lineTo(centerX - 12, this.y + headRadius * 2 + 8);
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 5);
+                ctx.lineTo(centerX + 12, this.y + headRadius * 2 + 1);
+                ctx.stroke();
+            }
+            
+            // Legs
+            if (this.jumping) {
+                ctx.beginPath();
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                ctx.lineTo(centerX - 10, this.y + this.height);
+                ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                ctx.lineTo(centerX + 10, this.y + this.height);
+                ctx.stroke();
+            } else {
+                const runCycle = (Date.now() / 100) & 1; // Optimization: Faster modulo for power of 2
+                
+                ctx.beginPath();
+                if (runCycle === 0) {
+                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                    ctx.lineTo(centerX - 10, this.y + this.height);
+                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                    ctx.lineTo(centerX + 8, this.y + this.height - 5);
+                } else {
+                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                    ctx.lineTo(centerX - 8, this.y + this.height - 5);
+                    ctx.moveTo(centerX, this.y + headRadius * 2 + 20);
+                    ctx.lineTo(centerX + 10, this.y + this.height);
+                }
+                ctx.stroke();
+                
+                // Spear when running
+                const spearX = centerX + 12;
+                const spearY = this.y + headRadius * 2 + 1;
+                
+                ctx.strokeStyle = '#8B4513';
                 ctx.beginPath();
                 ctx.moveTo(spearX, spearY);
-                ctx.lineTo(spearEndX, spearEndY);
+                ctx.lineTo(spearX + 18, spearY - 3);
                 ctx.stroke();
-
-                // Spear Head (Gray)
-                ctx.fillStyle = this.spearHeadColor;
+                
+                ctx.fillStyle = '#A9A9A9';
                 ctx.beginPath();
-                ctx.moveTo(spearEndX, spearEndY);
-                ctx.lineTo(spearEndX + 7, spearEndY - 2); // Pointy end
-                ctx.lineTo(spearEndX + 2, spearEndY + 5); // Bottom edge
+                ctx.moveTo(spearX + 18, spearY - 3);
+                ctx.lineTo(spearX + 25, spearY - 5);
+                ctx.lineTo(spearX + 20, spearY + 2);
                 ctx.closePath();
                 ctx.fill();
             }
         },
-        // Optimization: Simplified Bounding Box Collision
         checkCollision: function(obstacle) {
-            return (
-                this.x < obstacle.x + obstacle.width &&
-                this.x + this.width > obstacle.x &&
-                this.y < obstacle.y + obstacle.height &&
-                this.y + this.height > obstacle.y
+            // Optimization: Faster collision detection
+            return !(
+                this.x + this.width < obstacle.x ||
+                this.x > obstacle.x + obstacle.width ||
+                this.y + this.height < obstacle.y ||
+                this.y > obstacle.y + obstacle.height
             );
         }
     };
-
-    // Obstacle definitions
+    
+    // Obstacle types - predefine
     const obstacleTypes = [
-        { name: 'fossil', width: 40, height: 20, isAnimal: false, speedMultiplier: 1 },
-        { name: 'boulder', width: 35, height: 35, isAnimal: false, speedMultiplier: 1 },
-        { name: 'tarpit', width: 50, height: 15, isAnimal: false, speedMultiplier: 1 },
-        { name: 'lava', width: 45, height: 20, isAnimal: false, speedMultiplier: 1 },
-        { name: 'sabertooth', width: 50, height: 40, isAnimal: true, speedMultiplier: 1.3 }, // Faster
-        { name: 'mammoth', width: 60, height: 50, isAnimal: true, speedMultiplier: 0.7 } // Slower
+        { name: 'fossil', width: 40, height: 20, isAnimal: false },
+        { name: 'boulder', width: 35, height: 35, isAnimal: false },
+        { name: 'tarpit', width: 50, height: 15, isAnimal: false },
+        { name: 'lava', width: 45, height: 20, isAnimal: false },
+        { name: 'sabertooth', width: 50, height: 40, isAnimal: true },
+        { name: 'mammoth', width: 60, height: 50, isAnimal: true }
     ];
-    const activeObstacles = []; // Renamed from 'obstacles'
-
-    // --- Obstacle Creation and Management ---
-    function getObstacleFromPool() {
+    
+    // Active obstacles
+    const obstacles = [];
+    
+    // Get obstacle from pool or create new
+    function getObstacle() {
         if (obstaclePool.length > 0) {
-            return obstaclePool.pop();
+            const obstacle = obstaclePool.pop();
+            const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+            
+            obstacle.x = canvasWidth;
+            obstacle.y = groundY - type.height;
+            obstacle.width = type.width;
+            obstacle.height = type.height;
+            obstacle.type = type.name;
+            obstacle.passed = false;
+            obstacle.isAnimal = type.isAnimal;
+            obstacle.direction = type.name === 'mammoth' ? 1 : -1;
+            obstacle.paceSpeed = 2;
+            obstacle.paceDistance = 20;
+            obstacle.initialX = canvasWidth;
+            
+            return obstacle;
         }
-        // Create a new object if pool is empty
+        return createObstacle();
+    }
+    
+    // Create new obstacle
+    function createObstacle() {
+        const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
         return {
-            x: 0, y: 0, width: 0, height: 0,
-            type: '', passed: false, isAnimal: false,
-            speedMultiplier: 1,
-            // Add update and draw methods directly here (or prototype if preferred)
-            update: function(gameSpeedPxPerSec, deltaTime) {
-                this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
-                // Note: Pacing logic for animals was removed in original code, keeping it that way.
-                // If pacing needed re-adding, it would go here using deltaTime.
+            x: canvasWidth,
+            y: groundY - type.height,
+            width: type.width,
+            height: type.height,
+            type: type.name,
+            passed: false,
+            isAnimal: type.isAnimal,
+            direction: type.name === 'mammoth' ? 1 : -1,
+            paceSpeed: 2,
+            paceDistance: 20,
+            initialX: canvasWidth,
+            update: function() {
+                if (this.isAnimal) {
+                    if (this.type === 'mammoth') {
+                        this.direction = 1;
+                        this.x -= gameSpeed * 0.7;
+                    } 
+                    else if (this.type === 'sabertooth') {
+                        this.direction = -1;
+                        this.x -= gameSpeed * 1.3;
+                    }
+                    else {
+                        if (this.direction === -1) {
+                            if (this.x < this.initialX - this.paceDistance) {
+                                this.direction = 1;
+                            }
+                        } else {
+                            if (this.x > this.initialX + this.paceDistance) {
+                                this.direction = -1;
+                            }
+                        }
+                        this.x += this.direction * this.paceSpeed;
+                    }
+                }
             },
-            draw: function() { drawObstacle(this); } // Delegate drawing
+            draw: function() {
+                // Optimization: Use switch for better performance than if-else chain
+                switch(this.type) {
+                    case 'fossil':
+                        // Draw fossil
+                        ctx.fillStyle = '#D2B48C';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y + this.height);
+                        ctx.lineTo(this.x, this.y + this.height/2);
+                        ctx.lineTo(this.x + this.width/4, this.y + this.height/2 - 3);
+                        ctx.lineTo(this.x + this.width/2, this.y + this.height/2);
+                        ctx.lineTo(this.x + 3*this.width/4, this.y + this.height/2 - 2);
+                        ctx.lineTo(this.x + this.width, this.y + this.height/2);
+                        ctx.lineTo(this.x + this.width, this.y + this.height);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#F5F5DC';
+                        ctx.beginPath();
+                        ctx.arc(this.x + 10, this.y + this.height/2 - 2, 6, 0, PI2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#D2B48C';
+                        ctx.beginPath();
+                        ctx.arc(this.x + 12, this.y + this.height/2 - 4, 2, 0, PI2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#F5F5DC';
+                        for (let i = 0; i < 5; i++) {
+                            ctx.beginPath();
+                            ctx.arc(this.x + 15 + i * 6, this.y + this.height/2, 3, 0, PI2);
+                            ctx.fill();
+                        }
+                        
+                        ctx.strokeStyle = '#F5F5DC';
+                        ctx.lineWidth = 2;
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + 15 + i * 10, this.y + this.height/2);
+                            ctx.quadraticCurveTo(
+                                this.x + 15 + i * 10, this.y + this.height/2 + 10, 
+                                this.x + 20 + i * 10, this.y + this.height/2 + 8
+                            );
+                            ctx.stroke();
+                        }
+                        break;
+                        
+                    case 'boulder':
+                        // Draw boulder
+                        const centerX = this.x + this.width / 2;
+                        const centerY = this.y + this.height / 2;
+                        const radius = this.width / 2;
+                        
+                        ctx.fillStyle = '#696969';
+                        ctx.beginPath();
+                        ctx.moveTo(centerX + radius, centerY);
+                        
+                        for (let i = 0, len = 12; i < len; i++) {
+                            const angle = (PI2 * i) / len;
+                            const bumpFactor = 0.8 + Math.random() * 0.4;
+                            const x = centerX + radius * bumpFactor * Math.cos(angle);
+                            const y = centerY + radius * bumpFactor * Math.sin(angle);
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        ctx.strokeStyle = '#505050';
+                        ctx.lineWidth = 1;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(centerX - radius * 0.5, centerY - radius * 0.5);
+                        ctx.quadraticCurveTo(
+                            centerX, centerY + radius * 0.3,
+                            centerX + radius * 0.6, centerY - radius * 0.2
+                        );
+                        ctx.stroke();
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(centerX - radius * 0.2, centerY + radius * 0.3);
+                        ctx.lineTo(centerX - radius * 0.5, centerY + radius * 0.5);
+                        ctx.moveTo(centerX + radius * 0.3, centerY - radius * 0.3);
+                        ctx.lineTo(centerX + radius * 0.5, centerY - radius * 0.6);
+                        ctx.stroke();
+                        
+                        ctx.fillStyle = '#777777';
+                        ctx.beginPath();
+                        ctx.arc(centerX - radius * 0.4, centerY - radius * 0.4, radius * 0.15, 0, PI2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'tarpit':
+                        // Draw tarpit
+                        ctx.fillStyle = '#8B4513';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y + this.height, this.width/2 + 5, this.height/2 + 2, 0, 0, PI2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#1A1A1A';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y + this.height, this.width/2, this.height/2, 0, 0, PI2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = 'rgba(40, 40, 40, 0.6)';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2 - 5, this.y + this.height - 2, this.width/3, this.height/4, 0, 0, PI2);
+                        ctx.fill();
+                        
+                        for (let i = 0; i < 6; i++) {
+                            const bubbleX = this.x + this.width/6 + (this.width/6) * i;
+                            const bubbleY = this.y + this.height - Math.random() * 8;
+                            const bubbleSize = 2 + Math.random() * 3;
+                            
+                            ctx.fillStyle = '#2D2D2D';
+                            ctx.beginPath();
+                            ctx.arc(bubbleX, bubbleY, bubbleSize, 0, PI2);
+                            ctx.fill();
+                            
+                            ctx.fillStyle = '#3A3A3A';
+                            ctx.beginPath();
+                            ctx.arc(bubbleX - bubbleSize/3, bubbleY - bubbleSize/3, bubbleSize/3, 0, PI2);
+                            ctx.fill();
+                        }
+                        
+                        ctx.fillStyle = '#C4A484';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width/4, this.y + this.height - 5);
+                        ctx.lineTo(this.x + this.width/4 + 15, this.y + this.height - 12);
+                        ctx.lineTo(this.x + this.width/4 + 17, this.y + this.height - 10);
+                        ctx.lineTo(this.x + this.width/4 + 2, this.y + this.height - 3);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                        
+                    case 'lava':
+                        // Draw lava
+                        ctx.fillStyle = '#4D3B36';
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y + this.height, this.width/2 + 7, this.height/2 + 3, 0, 0, PI2);
+                        ctx.fill();
+                        
+                        const gradient = ctx.createRadialGradient(
+                            this.x + this.width/2, this.y + this.height - 5, 0,
+                            this.x + this.width/2, this.y + this.height, this.width/2
+                        );
+                        gradient.addColorStop(0, '#FFCC00');
+                        gradient.addColorStop(0.4, '#FF4500');
+                        gradient.addColorStop(0.8, '#8B0000');
+                        
+                        ctx.fillStyle = gradient;
+                        ctx.beginPath();
+                        ctx.ellipse(this.x + this.width/2, this.y + this.height, this.width/2, this.height/2, 0, 0, PI2);
+                        ctx.fill();
+                        
+                        const brightColors = ['#FFFF00', '#FFCC00', '#FFA500'];
+                        for (let i = 0; i < 8; i++) {
+                            const spotX = this.x + 10 + Math.random() * (this.width - 20);
+                            const spotY = this.y + this.height - 2 - Math.random() * (this.height/2 - 2);
+                            const spotSize = 2 + Math.random() * 4;
+                            
+                            ctx.fillStyle = brightColors[Math.floor(Math.random() * 3)];
+                            ctx.beginPath();
+                            ctx.arc(spotX, spotY, spotSize, 0, PI2);
+                            ctx.fill();
+                        }
+                        
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.lineWidth = 0.5;
+                        for (let i = 0; i < 3; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + this.width/4 + i * this.width/4, this.y + this.height - this.height/2);
+                            ctx.quadraticCurveTo(
+                                this.x + this.width/4 + i * this.width/4 + (Math.random() * 8 - 4),
+                                this.y + this.height - this.height/4,
+                                this.x + this.width/4 + i * this.width/4, 
+                                this.y + this.height - 2
+                            );
+                            ctx.stroke();
+                        }
+                        break;
+                        
+                    case 'sabertooth':
+                        // Draw sabertooth
+                        const facingRight = this.direction === 1;
+                        
+                        ctx.fillStyle = '#C87533';
+                        
+                        ctx.beginPath();
+                        ctx.rect(this.x + 10, this.y + 22, this.width - 20, this.height - 32);
+                        ctx.fill();
+                        
+                        const headX = facingRight ? this.x + this.width - 18 : this.x + 2;
+                        ctx.beginPath();
+                        ctx.rect(headX, this.y + 15, 16, 12);
+                        ctx.fill();
+                        
+                        ctx.fillRect(this.x + 12, this.y + this.height - 10, 8, 10);
+                        ctx.fillRect(this.x + this.width - 20, this.y + this.height - 10, 8, 10);
+                        
+                        ctx.beginPath();
+                        if (facingRight) {
+                            ctx.moveTo(this.x + 10, this.y + 25);
+                            ctx.lineTo(this.x, this.y + 20);
+                            ctx.lineTo(this.x, this.y + 25);
+                        } else {
+                            ctx.moveTo(this.x + this.width - 10, this.y + 25);
+                            ctx.lineTo(this.x + this.width, this.y + 20);
+                            ctx.lineTo(this.x + this.width, this.y + 25);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        ctx.fillStyle = 'black';
+                        if (facingRight) {
+                            ctx.fillRect(this.x + this.width - 8, this.y + 18, 2, 2);
+                        } else {
+                            ctx.fillRect(this.x + 6, this.y + 18, 2, 2);
+                        }
+                        
+                        ctx.fillStyle = 'white';
+                        if (facingRight) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + this.width - 2, this.y + 22);
+                            ctx.lineTo(this.x + this.width - 2, this.y + 30);
+                            ctx.lineTo(this.x + this.width - 4, this.y + 30);
+                            ctx.lineTo(this.x + this.width - 4, this.y + 22);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + this.width - 6, this.y + 22);
+                            ctx.lineTo(this.x + this.width - 6, this.y + 28);
+                            ctx.lineTo(this.x + this.width - 8, this.y + 28);
+                            ctx.lineTo(this.x + this.width - 8, this.y + 22);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + 2, this.y + 22);
+                            ctx.lineTo(this.x + 2, this.y + 30);
+                            ctx.lineTo(this.x + 4, this.y + 30);
+                            ctx.lineTo(this.x + 4, this.y + 22);
+                            ctx.closePath();
+                            ctx.fill();
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + 6, this.y + 22);
+                            ctx.lineTo(this.x + 6, this.y + 28);
+                            ctx.lineTo(this.x + 8, this.y + 28);
+                            ctx.lineTo(this.x + 8, this.y + 22);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                        
+                        ctx.fillStyle = '#9E5D28';
+                        for (let i = 0; i < 4; i++) {
+                            ctx.fillRect(this.x + 15 + i * 7, this.y + 25, 4, 4);
+                        }
+                        break;
+                        
+                    case 'mammoth':
+                        // Draw mammoth
+                        const mammothFacingRight = this.direction === 1;
+                        
+                        ctx.fillStyle = '#654321';
+                        
+                        ctx.fillRect(this.x + 10, this.y + 15, this.width - 20, this.height - 25);
+                        
+                        const mammothHeadX = mammothFacingRight ? this.x + this.width - 25 : this.x + 5;
+                        
+                        ctx.fillRect(mammothHeadX, this.y + 5, 20, 15);
+                        
+                        ctx.fillRect(this.x + 15, this.y + this.height - 10, 10, 10);
+                        ctx.fillRect(this.x + this.width - 25, this.y + this.height - 10, 10, 10);
+                        
+                        ctx.fillStyle = 'black';
+                        if (mammothFacingRight) {
+                            ctx.fillRect(this.x + this.width - 10, this.y + 10, 2, 2);
+                        } else {
+                            ctx.fillRect(this.x + 10, this.y + 10, 2, 2);
+                        }
+                        
+                        ctx.fillStyle = '#654321';
+                        if (mammothFacingRight) {
+                            ctx.fillRect(this.x + this.width - 5, this.y + 15, 5, 10);
+                            ctx.fillRect(this.x + this.width, this.y + 22, 5, 8);
+                        } else {
+                            ctx.fillRect(this.x, this.y + 15, 5, 10);
+                            ctx.fillRect(this.x - 5, this.y + 22, 5, 8);
+                        }
+                        
+                        ctx.fillStyle = 'ivory';
+                        if (mammothFacingRight) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + this.width - 10, this.y + 20);
+                            ctx.lineTo(this.x + this.width + 5, this.y + 15);
+                            ctx.lineTo(this.x + this.width + 5, this.y + 18);
+                            ctx.lineTo(this.x + this.width - 10, this.y + 23);
+                            ctx.closePath();
+                            ctx.fill();
+                        } else {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + 10, this.y + 20);
+                            ctx.lineTo(this.x - 5, this.y + 15);
+                            ctx.lineTo(this.x - 5, this.y + 18);
+                            ctx.lineTo(this.x + 10, this.y + 23);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                        
+                        ctx.strokeStyle = '#7E5835';
+                        ctx.lineWidth = 2;
+                        for (let i = 0; i < 5; i++) {
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + 15 + i * 8, this.y + 15);
+                            ctx.lineTo(this.x + 15 + i * 8, this.y + 8);
+                            ctx.stroke();
+                        }
+                        break;
+                }
+            }
         };
     }
-
-    function returnObstacleToPool(obstacle) {
-        obstaclePool.push(obstacle);
-    }
-
-    function spawnObstacle() {
-        const typeIndex = Math.floor(Math.random() * obstacleTypes.length);
-        const type = obstacleTypes[typeIndex];
-        const obstacle = getObstacleFromPool();
-
-        obstacle.x = canvasWidth;
-        obstacle.y = groundY - type.height; // Position on top of the ground
-        obstacle.width = type.width;
-        obstacle.height = type.height;
-        obstacle.type = type.name;
-        obstacle.passed = false;
-        obstacle.isAnimal = type.isAnimal;
-        obstacle.speedMultiplier = type.speedMultiplier;
-        // Removed animal-specific properties like direction, paceSpeed etc. as they weren't used in the provided update logic
-
-        activeObstacles.push(obstacle);
-    }
-
-    // Centralized obstacle drawing function for better management and potential batching
-    function drawObstacle(obs) {
-        // Optimization: Batch drawing by color where possible within each type
-        ctx.save(); // Save context state if changing many properties like fill/stroke/linewidth
-        ctx.translate(obs.x, obs.y); // Translate origin to obstacle position for simpler drawing coords
-
-        switch(obs.type) {
-            case 'fossil':
-                // Draw fossil (Simplified representation for brevity, focusing on batching)
-                ctx.fillStyle = '#D2B48C'; // Main rock color
-                ctx.fillRect(0, obs.height / 2, obs.width, obs.height / 2); // Bottom part
-                ctx.beginPath();
-                ctx.moveTo(0, obs.height/2); // Placeholder top shape
-                ctx.lineTo(obs.width/2, 0);
-                ctx.lineTo(obs.width, obs.height/2);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = '#F5F5DC'; // Bone color
-                // Draw simplified bones (e.g., circles/rects)
-                ctx.fillRect(obs.width*0.2, obs.height*0.1, obs.width*0.6, obs.height*0.4);
-                break;
-
-            case 'boulder':
-                // Draw boulder (using the bumpy shape)
-                const centerX = obs.width / 2;
-                const centerY = obs.height / 2;
-                const radius = obs.width / 2;
-
-                // Main boulder shape (Gray)
-                ctx.fillStyle = '#696969';
-                ctx.beginPath();
-                ctx.moveTo(centerX + radius, centerY);
-                for (let i = 0, len = 12; i < len; i++) {
-                    const angle = (PI2 * i) / len;
-                    const bumpFactor = 0.8 + Math.random() * 0.4; // Keep random bumps
-                    const x = centerX + radius * bumpFactor * Math.cos(angle);
-                    const y = centerY + radius * bumpFactor * Math.sin(angle);
-                    ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
-
-                // Details (Darker Gray) - Batch stroke calls
-                ctx.strokeStyle = '#505050';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                // Crack 1
-                ctx.moveTo(centerX - radius * 0.5, centerY - radius * 0.5);
-                ctx.quadraticCurveTo(centerX, centerY + radius * 0.3, centerX + radius * 0.6, centerY - radius * 0.2);
-                // Crack 2
-                ctx.moveTo(centerX - radius * 0.2, centerY + radius * 0.3);
-                ctx.lineTo(centerX - radius * 0.5, centerY + radius * 0.5);
-                // Crack 3
-                ctx.moveTo(centerX + radius * 0.3, centerY - radius * 0.3);
-                ctx.lineTo(centerX + radius * 0.5, centerY - radius * 0.6);
-                ctx.stroke(); // Stroke all cracks at once
-
-                // Small detail fill (Lighter Gray)
-                ctx.fillStyle = '#777777';
-                ctx.beginPath();
-                ctx.arc(centerX - radius * 0.4, centerY - radius * 0.4, radius * 0.15, 0, PI2);
-                ctx.fill();
-                break;
-
-             case 'tarpit':
-                // Draw tarpit (ellipses)
-                const tarCenterX = obs.width / 2;
-                const tarCenterY = obs.height; // Bottom edge for ellipse center
-
-                // Outer edge (Brown)
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.ellipse(tarCenterX, tarCenterY, obs.width / 2 + 5, obs.height / 2 + 2, 0, 0, PI2);
-                ctx.fill();
-
-                // Main tar (Black)
-                ctx.fillStyle = '#1A1A1A';
-                ctx.beginPath();
-                ctx.ellipse(tarCenterX, tarCenterY, obs.width / 2, obs.height / 2, 0, 0, PI2);
-                ctx.fill();
-
-                // Highlights/Bubbles (Dark Gray/Gray) - batch fills
-                ctx.fillStyle = 'rgba(40, 40, 40, 0.6)'; // Highlight
-                ctx.beginPath();
-                ctx.ellipse(tarCenterX - 5, tarCenterY - 2, obs.width / 3, obs.height / 4, 0, 0, PI2);
-                ctx.fill();
-
-                ctx.fillStyle = '#2D2D2D'; // Dark bubble color
-                // Simplified bubbles - draw all dark parts
-                ctx.beginPath();
-                for (let i = 0; i < 3; i++) {
-                    ctx.arc(obs.width*0.2 + i*obs.width*0.3, tarCenterY - 5, 3, 0, PI2);
-                }
-                ctx.fill();
-
-                 ctx.fillStyle = '#3A3A3A'; // Light bubble tops
-                 // Simplified bubbles - draw all light parts
-                 ctx.beginPath();
-                 for (let i = 0; i < 3; i++) {
-                     ctx.arc(obs.width*0.2 + i*obs.width*0.3 - 1, tarCenterY - 5 - 1, 1, 0, PI2);
-                 }
-                 ctx.fill();
-
-                // Bone (Light Brown)
-                ctx.fillStyle = '#C4A484';
-                ctx.beginPath(); // Simple bone shape
-                ctx.moveTo(obs.width/4, obs.height - 5);
-                ctx.lineTo(obs.width/4 + 15, obs.height - 12);
-                ctx.lineTo(obs.width/4 + 17, obs.height - 10);
-                ctx.lineTo(obs.width/4 + 2, obs.height - 3);
-                ctx.closePath();
-                ctx.fill();
-                break;
-
-            case 'lava':
-                // Draw lava
-                const lavaCenterX = obs.width / 2;
-                const lavaCenterY = obs.height;
-
-                // Outer rock edge (Dark Brown/Gray)
-                ctx.fillStyle = '#4D3B36';
-                ctx.beginPath();
-                ctx.ellipse(lavaCenterX, lavaCenterY, obs.width/2 + 7, obs.height/2 + 3, 0, 0, PI2);
-                ctx.fill();
-
-                // Lava Gradient Fill
-                const gradient = ctx.createRadialGradient(
-                    lavaCenterX, lavaCenterY - 5, 0, // Inner center (bright)
-                    lavaCenterX, lavaCenterY, obs.width/2 // Outer edge (darker)
-                );
-                gradient.addColorStop(0, '#FFCC00');
-                gradient.addColorStop(0.4, '#FF4500');
-                gradient.addColorStop(0.8, '#8B0000');
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.ellipse(lavaCenterX, lavaCenterY, obs.width/2, obs.height/2, 0, 0, PI2);
-                ctx.fill();
-
-                // Bright Spots (batch fills)
-                ctx.fillStyle = '#FFFF00'; // Brightest yellow
-                ctx.beginPath();
-                 // Draw a few spots
-                ctx.arc(lavaCenterX - 10, lavaCenterY - 4, 3, 0, PI2);
-                ctx.arc(lavaCenterX + 5, lavaCenterY - 7, 4, 0, PI2);
-                ctx.fill();
-
-                ctx.fillStyle = '#FFA500'; // Orange
-                ctx.beginPath();
-                // Draw a few spots
-                ctx.arc(lavaCenterX + 15, lavaCenterY - 5, 3, 0, PI2);
-                ctx.arc(lavaCenterX, lavaCenterY - 3, 2, 0, PI2);
-                ctx.fill();
-                break;
-
-             case 'sabertooth':
-                // Draw sabertooth (Simplified blocky style retained)
-                ctx.fillStyle = '#C87533'; // Main body color
-                ctx.fillRect(10, 22, obs.width - 20, obs.height - 32); // Body
-                ctx.fillRect(2, 15, 16, 12); // Head (assuming facing left initially)
-                ctx.fillRect(12, obs.height - 10, 8, 10); // Front Leg
-                ctx.fillRect(obs.width - 20, obs.height - 10, 8, 10); // Back Leg
-                // Tail
-                ctx.beginPath();
-                ctx.moveTo(obs.width - 10, 25);
-                ctx.lineTo(obs.width, 20);
-                ctx.lineTo(obs.width, 25);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = 'black'; // Eye
-                ctx.fillRect(6, 18, 2, 2);
-
-                ctx.fillStyle = 'white'; // Tusks (batch)
-                ctx.beginPath();
-                // Tusk 1
-                ctx.moveTo(2, 22); ctx.lineTo(2, 30); ctx.lineTo(4, 30); ctx.lineTo(4, 22); ctx.closePath();
-                 // Tusk 2
-                ctx.moveTo(6, 22); ctx.lineTo(6, 28); ctx.lineTo(8, 28); ctx.lineTo(8, 22); ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = '#9E5D28'; // Stripes (batch)
-                ctx.beginPath();
-                for (let i = 0; i < 4; i++) {
-                    ctx.rect(15 + i * 7, 25, 4, 4);
-                }
-                ctx.fill();
-                break;
-
-            case 'mammoth':
-                // Draw mammoth (Simplified blocky style retained)
-                ctx.fillStyle = '#654321'; // Main body color
-                ctx.fillRect(10, 15, obs.width - 20, obs.height - 25); // Body
-                ctx.fillRect(5, 5, 20, 15); // Head (assuming facing left initially)
-                ctx.fillRect(15, obs.height - 10, 10, 10); // Front Leg
-                ctx.fillRect(obs.width - 25, obs.height - 10, 10, 10); // Back Leg
-                // Trunk
-                ctx.fillRect(0, 15, 5, 10);
-                ctx.fillRect(-5, 22, 5, 8);
-
-
-                ctx.fillStyle = 'black'; // Eye
-                ctx.fillRect(10, 10, 2, 2);
-
-                ctx.fillStyle = 'ivory'; // Tusks (use a standard color name or hex)
-                ctx.beginPath();
-                ctx.moveTo(10, 20);
-                ctx.lineTo(-5, 15);
-                ctx.lineTo(-5, 18);
-                ctx.lineTo(10, 23);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.strokeStyle = '#7E5835'; // Fur lines
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                for (let i = 0; i < 5; i++) {
-                    ctx.moveTo(15 + i * 8, 15);
-                    ctx.lineTo(15 + i * 8, 8);
-                }
-                ctx.stroke();
-                break;
-        }
-        ctx.restore(); // Restore context state
-    }
-
-
-    // --- Background Elements ---
+    
+    // Background element types - predefine
     const elementTypes = [
-        { name: 'mountain', width: 100, height: 80, speedMultiplier: 0.4 }, // Slower parallax
-        { name: 'tree', width: 15, height: 50, speedMultiplier: 0.5 },
-        { name: 'volcano', width: 80, height: 100, speedMultiplier: 0.35 } // Slowest
+        { name: 'mountain', width: 100, height: 80 },
+        { name: 'tree', width: 15, height: 50 },
+        { name: 'volcano', width: 80, height: 100 }
     ];
-    const activeBackgroundElements = []; // Renamed
-
-    function getBackgroundElementFromPool() {
+    
+    // Active clouds and background elements
+    const clouds = [];
+    const backgroundElements = [];
+    
+    // Get/create background element
+    function getBackgroundElement() {
         if (backgroundElementPool.length > 0) {
-            return backgroundElementPool.pop();
+            const element = backgroundElementPool.pop();
+            const type = elementTypes[Math.floor(Math.random() * elementTypes.length)];
+            
+            element.x = canvasWidth;
+            element.y = groundY - type.height;
+            element.width = type.width;
+            element.height = type.height;
+            element.type = type.name;
+            element.speed = gameSpeed * 0.5;
+            
+            return element;
         }
+        return createBackgroundElement();
+    }
+    
+    // Create background element
+    function createBackgroundElement() {
+        const type = elementTypes[Math.floor(Math.random() * elementTypes.length)];
         return {
-             x: 0, y: 0, width: 0, height: 0,
-             type: '', speedMultiplier: 0,
-             update: function(gameSpeedPxPerSec, deltaTime) {
-                 this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
-             },
-             draw: function() { drawBackgroundElement(this); }
+            x: canvasWidth,
+            y: groundY - type.height,
+            width: type.width,
+            height: type.height,
+            type: type.name,
+            speed: gameSpeed * 0.5,
+            draw: function() {
+                switch(this.type) {
+                    case 'mountain':
+                        ctx.fillStyle = '#A9A9A9';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y + this.height);
+                        ctx.lineTo(this.x + this.width / 2, this.y);
+                        ctx.lineTo(this.x + this.width, this.y + this.height);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width / 2 - 10, this.y + 20);
+                        ctx.lineTo(this.x + this.width / 2, this.y);
+                        ctx.lineTo(this.x + this.width / 2 + 10, this.y + 20);
+                        ctx.fill();
+                        break;
+                        
+                    case 'tree':
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(this.x + this.width / 2 - 5, this.y + this.height / 2, 10, this.height / 2);
+                        
+                        ctx.fillStyle = '#006400';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y + this.height / 2);
+                        ctx.lineTo(this.x + this.width / 2, this.y);
+                        ctx.lineTo(this.x + this.width, this.y + this.height / 2);
+                        ctx.fill();
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y + this.height / 3);
+                        ctx.lineTo(this.x + this.width / 2, this.y - this.height / 4);
+                        ctx.lineTo(this.x + this.width, this.y + this.height / 3);
+                        ctx.fill();
+                        break;
+                        
+                    case 'volcano':
+                        ctx.fillStyle = '#8B4513';
+                        ctx.beginPath();
+                        ctx.moveTo(this.x, this.y + this.height);
+                        ctx.lineTo(this.x + this.width / 2, this.y);
+                        ctx.lineTo(this.x + this.width, this.y + this.height);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#FF4500';
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width / 2, this.y + 15, 10, 0, PI2);
+                        ctx.fill();
+                        break;
+                }
+            }
         };
     }
-
-    function returnBackgroundElementToPool(element) {
-        backgroundElementPool.push(element);
-    }
-
-     function spawnBackgroundElement() {
-        const typeIndex = Math.floor(Math.random() * elementTypes.length);
-        const type = elementTypes[typeIndex];
-        const element = getBackgroundElementFromPool();
-
-        element.x = canvasWidth;
-        element.width = type.width;
-        element.height = type.height;
-        element.y = groundY - type.height; // Place on ground
-        element.type = type.name;
-        element.speedMultiplier = type.speedMultiplier;
-
-        activeBackgroundElements.push(element);
-    }
-
-    // Centralized background drawing
-    function drawBackgroundElement(el) {
-        ctx.save();
-        ctx.translate(el.x, el.y);
-
-        switch(el.type) {
-            case 'mountain':
-                // Main Mountain (Gray)
-                ctx.fillStyle = '#A9A9A9';
-                ctx.beginPath();
-                ctx.moveTo(0, el.height);
-                ctx.lineTo(el.width / 2, 0);
-                ctx.lineTo(el.width, el.height);
-                ctx.closePath();
-                ctx.fill();
-
-                // Snow Cap (White)
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                ctx.moveTo(el.width / 2 - 15, 25); // Adjusted shape slightly
-                ctx.lineTo(el.width / 2, 0);
-                ctx.lineTo(el.width / 2 + 15, 25);
-                ctx.closePath(); // Close the snow cap path
-                ctx.fill();
-                break;
-
-            case 'tree':
-                 // Trunk (Brown)
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(el.width / 2 - 5, el.height / 2, 10, el.height / 2);
-
-                // Leaves (Green - batch fills)
-                ctx.fillStyle = '#006400';
-                ctx.beginPath();
-                // Lower leaves section
-                ctx.moveTo(0, el.height / 2);
-                ctx.lineTo(el.width / 2, 0);
-                ctx.lineTo(el.width, el.height / 2);
-                ctx.closePath();
-                 // Upper leaves section (slightly higher)
-                 ctx.moveTo(el.width * 0.1, el.height / 3);
-                 ctx.lineTo(el.width / 2, -el.height / 4); // Pointier top
-                 ctx.lineTo(el.width * 0.9, el.height / 3);
-                 ctx.closePath();
-                ctx.fill(); // Fill both leaf sections
-                break;
-
-            case 'volcano':
-                // Main Cone (Brown)
-                ctx.fillStyle = '#8B4513';
-                ctx.beginPath();
-                ctx.moveTo(0, el.height);
-                ctx.lineTo(el.width / 2, 0);
-                ctx.lineTo(el.width, el.height);
-                ctx.closePath();
-                ctx.fill();
-
-                // Lava Top (Orange/Red)
-                ctx.fillStyle = '#FF4500';
-                ctx.beginPath();
-                ctx.ellipse(el.width / 2, 15, el.width * 0.2, el.height * 0.1, 0, 0, PI2); // Elliptical top
-                ctx.fill();
-
-                // Smoke/Ash (Dark Gray, semi-transparent)
-                ctx.fillStyle = 'rgba(50, 50, 50, 0.5)';
-                ctx.beginPath();
-                ctx.arc(el.width/2 - 5, 5, 8, 0, PI2); // Puff 1
-                ctx.arc(el.width/2 + 5, 2, 10, 0, PI2); // Puff 2
-                ctx.fill();
-                break;
-        }
-        ctx.restore();
-    }
-
-    // --- Clouds ---
-    const activeClouds = []; // Renamed
-    function getCloudFromPool() {
+    
+    // Get/create cloud
+    function getCloud() {
         if (cloudPool.length > 0) {
-            return cloudPool.pop();
+            const cloud = cloudPool.pop();
+            cloud.x = canvasWidth;
+            cloud.y = Math.random() * (groundY / 2);
+            cloud.width = 40 + Math.random() * 60;
+            cloud.height = 20 + Math.random() * 30;
+            cloud.speed = gameSpeed * (0.2 + Math.random() * 0.2);
+            return cloud;
         }
-         return {
-             x: 0, y: 0, width: 0, height: 0, speedMultiplier: 0,
-             update: function(gameSpeedPxPerSec, deltaTime) {
-                 this.x -= gameSpeedPxPerSec * this.speedMultiplier * deltaTime;
-             },
-             draw: function() { drawCloud(this); }
-         };
+        return createCloud();
     }
-    function returnCloudToPool(cloud) {
-        cloudPool.push(cloud);
+    
+    // Create cloud
+    function createCloud() {
+        return {
+            x: canvasWidth,
+            y: Math.random() * (groundY / 2),
+            width: 40 + Math.random() * 60,
+            height: 20 + Math.random() * 30,
+            speed: gameSpeed * (0.2 + Math.random() * 0.2),
+            draw: function() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x + this.width / 4, this.y + this.height / 2, this.height / 2, 0, PI2);
+                ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.height / 1.5, 0, PI2);
+                ctx.arc(this.x + (this.width / 4) * 3, this.y + this.height / 2, this.height / 2, 0, PI2);
+                ctx.fill();
+            }
+        };
     }
-
-    function spawnCloud() {
-        const cloud = getCloudFromPool();
-        cloud.width = 40 + Math.random() * 60;
-        cloud.height = 20 + Math.random() * 30;
-        cloud.x = canvasWidth;
-        cloud.y = Math.random() * (groundY * 0.4); // Keep clouds in upper 40%
-        cloud.speedMultiplier = 0.2 + Math.random() * 0.2; // Cloud parallax speed
-
-        activeClouds.push(cloud);
-    }
-
-    function drawCloud(cloud) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.beginPath();
-        // Simplified cloud shape with fewer arcs for performance
-        const arcRadius = cloud.height / 2;
-        ctx.arc(cloud.x + arcRadius, cloud.y + arcRadius, arcRadius, Math.PI * 0.5, Math.PI * 1.5); // Left part
-        ctx.arc(cloud.x + cloud.width - arcRadius, cloud.y + arcRadius, arcRadius, Math.PI * 1.5, Math.PI * 0.5); // Right part
-        ctx.closePath(); // Connect top and bottom lines implicitly
-        // Optional: Add a middle arc for fluffiness if needed, but keep it simple
-        // ctx.arc(cloud.x + cloud.width / 2, cloud.y + arcRadius * 0.5, arcRadius * 0.8, Math.PI, 0); // Top middle arc
-        ctx.fill();
-    }
-
-
-    // --- Game State & Loop ---
-
-    function updateGameDimensions() {
-        groundY = canvasHeight - ground.height;
-        ground.y = groundY;
-        player.y = groundY - player.height; // Reset player Y position relative to ground
-        skyGradient.create(); // Recreate gradient when dimensions change
-    }
-
+    
+    // Initialize canvas size
     function resizeCanvas() {
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
-
-        // Check if size actually changed to avoid unnecessary redraws/recalculations
-        if (canvas.width !== containerWidth || canvas.height !== containerHeight) {
-            canvas.width = containerWidth;
-            canvas.height = containerHeight;
-            canvasWidth = canvas.width;
-            canvasHeight = canvas.height;
-            updateGameDimensions();
-            // console.log(`Canvas resized to: ${canvasWidth}x${canvasHeight}`);
-        }
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        canvasWidth = canvas.width;
+        canvasHeight = canvas.height;
+        updateGameDimensions();
     }
-
+    
+    // Update game dimensions
+    function updateGameDimensions() {
+        groundY = canvasHeight - 30;
+        ground.y = groundY;
+        player.y = groundY - player.height;
+    }
+    
+    // Random obstacle interval with better performance
     function getRandomObstacleInterval() {
-        const baseMinGapTime = 1.2; // seconds
-        const baseMaxGapTime = 2.5; // seconds
-        const speedFactor = baseGameSpeedCurrent / BASE_GAME_SPEED; // How much faster than start speed
-        // Reduce gap time as speed increases, but maintain a minimum gap
-        const minGap = Math.max(baseMinGapTime / (difficultyFactor * speedFactor), 0.5); // Min 0.5 sec gap
-        const maxGap = Math.max(baseMaxGapTime / (difficultyFactor * speedFactor * 0.9), minGap + 0.3); // Ensure max > min
-        return (minGap + Math.random() * (maxGap - minGap)) * 1000; // Convert to ms
+        const baseMinGap = 1200;
+        const baseMaxGap = 2500;
+        const speedFactor = 1 + (gameSpeed - 6) * 0.1;
+        const minGap = Math.max(baseMinGap * speedFactor / difficultyFactor, 800 * speedFactor);
+        const maxGap = Math.max(baseMaxGap * speedFactor / (difficultyFactor * 0.8), minGap + 500);
+        return minGap + Math.random() * (maxGap - minGap);
     }
-
-    function update(deltaTime) { // deltaTime in seconds
-        const gameSpeedPxPerSec = baseGameSpeedCurrent * difficultyFactor;
-
-        // --- Update Background Elements ---
-        backgroundTimer += deltaTime * 1000; // Timer uses ms
-        if (backgroundTimer > 4000 / (gameSpeedPxPerSec / BASE_GAME_SPEED)) { // Spawn faster as game speeds up
-             spawnBackgroundElement();
-             backgroundTimer = 0;
+    
+    // Game loop variables
+    let lastTime = 0;
+    let obstacleTimer = 0;
+    let cloudTimer = 0;
+    let backgroundTimer = 0;
+    let multiObstacleChance = 0;
+    let animationFrameId;
+    
+    // Optimized game loop
+    function gameLoop(timestamp) {
+        // Calculate delta time
+        const deltaTime = timestamp - lastTime;
+        lastTime = timestamp;
+        
+        // Check if canvas dimensions have changed
+        if (canvasWidth !== container.clientWidth || canvasHeight !== container.clientHeight) {
+            resizeCanvas();
         }
-        for (let i = activeBackgroundElements.length - 1; i >= 0; i--) {
-            const element = activeBackgroundElements[i];
-            element.update(gameSpeedPxPerSec, deltaTime);
+        
+        // Clear canvas - faster with direct values
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        
+        // Draw sky
+        ctx.fillStyle = skyGradient.create();
+        ctx.fillRect(0, 0, canvasWidth, groundY);
+        
+        // Update background elements
+        backgroundTimer += deltaTime;
+        if (backgroundTimer > 2000) {
+            backgroundElements.push(getBackgroundElement());
+            backgroundTimer = 0;
+        }
+        
+        // Optimization: Bulk updates
+        const bgElementLen = backgroundElements.length;
+        for (let i = bgElementLen - 1; i >= 0; i--) {
+            const element = backgroundElements[i];
+            element.x -= element.speed;
+            element.draw();
+            
             if (element.x + element.width < 0) {
-                returnBackgroundElementToPool(element);
-                activeBackgroundElements.splice(i, 1);
+                backgroundElementPool.push(backgroundElements.splice(i, 1)[0]);
             }
         }
-
-        // --- Update Clouds ---
-        cloudTimer += deltaTime * 1000;
-        if (cloudTimer > 5000 / (gameSpeedPxPerSec / BASE_GAME_SPEED)) { // Spawn faster
-             spawnCloud();
-             cloudTimer = 0;
+        
+        // Update clouds
+        cloudTimer += deltaTime;
+        if (cloudTimer > 3000) {
+            clouds.push(getCloud());
+            cloudTimer = 0;
         }
-        for (let i = activeClouds.length - 1; i >= 0; i--) {
-            const cloud = activeClouds[i];
-            cloud.update(gameSpeedPxPerSec, deltaTime);
+        
+        const cloudLen = clouds.length;
+        for (let i = cloudLen - 1; i >= 0; i--) {
+            const cloud = clouds[i];
+            cloud.x -= cloud.speed;
+            cloud.draw();
+            
             if (cloud.x + cloud.width < 0) {
-                returnCloudToPool(cloud);
-                activeClouds.splice(i, 1);
+                cloudPool.push(clouds.splice(i, 1)[0]);
             }
         }
-
-        // --- Update Player ---
-        player.update(deltaTime);
-
-        // --- Update Obstacles ---
-        obstacleTimer += deltaTime * 1000;
-        if (obstacleTimer > currentObstacleInterval) {
-             spawnObstacle();
-             // Potentially spawn multiple obstacles based on score/difficulty
-             const multiObstacleChance = Math.min(score / 30, 0.6); // Chance increases with score
-             if (Math.random() < multiObstacleChance && activeObstacles.length > 0) {
-                 // Simple approach: add a delay then spawn another
-                 // A more robust approach would calculate safe spacing based on jump distance
-                 setTimeout(spawnObstacle, 300 + Math.random() * 200); // Spawn 2nd slightly later
-
-                 if (score > 20 && Math.random() < multiObstacleChance * 0.7) {
-                     setTimeout(spawnObstacle, 600 + Math.random() * 300); // Spawn 3rd even later
-                 }
-             }
-
-             obstacleTimer = 0;
-             currentObstacleInterval = getRandomObstacleInterval();
+        
+        // Draw ground
+        ground.draw();
+        
+        // Update player
+        player.update();
+        player.draw();
+        
+        // Multiple obstacle chance calculation
+        multiObstacleChance = Math.min(score / 30, 0.6);
+        
+        // Update obstacles
+        obstacleTimer += deltaTime;
+        if (obstacleTimer > obstacleInterval) {
+            // Add primary obstacle
+            const firstObstacle = getObstacle();
+            obstacles.push(firstObstacle);
+            
+            // Determine if we should add multiple obstacles
+            const randomChance = Math.random();
+            
+            // Calculate minimum safe gap
+            const playerMaxJump = player.maxJumpDistance();
+            const minimumSafeGap = playerMaxJump * 0.7; 
+            
+            // Create array for new obstacles
+            const newObstacles = [firstObstacle];
+            
+            if (randomChance < multiObstacleChance) {
+                // Add second obstacle
+                const secondObstacle = getObstacle();
+                const secondObstaclePosition = newObstacles[0].x + newObstacles[0].width + minimumSafeGap + Math.random() * 80;
+                secondObstacle.x = secondObstaclePosition;
+                newObstacles.push(secondObstacle);
+                
+                // Add third obstacle at higher scores
+                if (score > 20 && randomChance < multiObstacleChance * 0.7) {
+                    const thirdObstacle = getObstacle();
+                    const thirdObstaclePosition = secondObstaclePosition + secondObstacle.width + minimumSafeGap + Math.random() * 60;
+                    thirdObstacle.x = thirdObstaclePosition;
+                    newObstacles.push(thirdObstacle);
+                }
+            }
+            
+            // Verify safe spacing and add obstacles
+            for (let i = 1; i < newObstacles.length; i++) {
+                const prevObstacle = newObstacles[i-1];
+                const currentObstacle = newObstacles[i];
+                
+                const currentGap = currentObstacle.x - (prevObstacle.x + prevObstacle.width);
+                
+                if (currentGap < minimumSafeGap) {
+                    if (i < newObstacles.length - 1) {
+                        currentObstacle.x = prevObstacle.x + prevObstacle.width + minimumSafeGap + 20;
+                    } else {
+                        continue;
+                    }
+                }
+                
+                obstacles.push(currentObstacle);
+            }
+            
+            obstacleTimer = 0;
+            obstacleInterval = getRandomObstacleInterval();
         }
-
-        let collisionDetected = false;
-        for (let i = activeObstacles.length - 1; i >= 0; i--) {
-            const obstacle = activeObstacles[i];
-            obstacle.update(gameSpeedPxPerSec, deltaTime);
-
-            // Check collision
-            if (!collisionDetected && player.checkCollision(obstacle)) {
-                collisionDetected = true; // Set flag, but continue updating/removing obstacles
+        
+        const obstacleLen = obstacles.length;
+        for (let i = obstacleLen - 1; i >= 0; i--) {
+            const obstacle = obstacles[i];
+            
+            if (obstacle.type !== 'mammoth' && obstacle.type !== 'sabertooth') {
+                obstacle.x -= gameSpeed;
+            }
+            
+            obstacle.update();
+            obstacle.draw();
+            
+            // Check collision - stop checking after first collision
+            if (player.checkCollision(obstacle)) {
                 gameOver();
-                // Don't return yet, let drawing happen for the collision frame
+                return; // Exit early
             }
-
-            // Score points & increase difficulty
+            
+            // Score points
             if (!obstacle.passed && obstacle.x + obstacle.width < player.x) {
                 score++;
                 scoreElement.textContent = `Score: ${score}`;
                 obstacle.passed = true;
-
-                // Increase base game speed every 5 points
-                if (score > 0 && score % 5 === 0) {
-                    baseGameSpeedCurrent += GAME_SPEED_INCREMENT;
-                    // console.log("Speed increased to:", baseGameSpeedCurrent / TARGET_FPS);
+                
+                // Increase game speed
+                if (score % 5 === 0) {
+                    gameSpeed += 0.3;
                 }
-
-                // Increase difficulty factor every 15 points
-                if (score > 0 && score % 15 === 0) {
-                    difficultyFactor = Math.min(difficultyFactor + DIFFICULTY_INCREMENT, MAX_DIFFICULTY_FACTOR);
-                     // console.log("Difficulty increased to:", difficultyFactor);
+                
+                // Increase difficulty
+                if (score % 15 === 0) {
+                    difficultyFactor = Math.min(difficultyFactor + 0.2, 2.5);
                 }
             }
-
+            
             // Remove off-screen obstacles
             if (obstacle.x + obstacle.width < 0) {
-                returnObstacleToPool(obstacle);
-                activeObstacles.splice(i, 1);
+                obstaclePool.push(obstacles.splice(i, 1)[0]);
             }
         }
+        
+        // Continue game loop
+        if (playing) {
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
     }
-
-    function draw() {
-        // --- Clear Canvas ---
-        // Optimization: Using sky color/gradient as background effectively clears previous frame
-        // ctx.clearRect(0, 0, canvasWidth, canvasHeight); // Less efficient if sky covers everything
-
-        // --- Draw Sky ---
-        if (skyGradient.gradient) {
-            ctx.fillStyle = skyGradient.gradient;
-        } else {
-            ctx.fillStyle = skyGradient.colors[0]; // Fallback solid color
-        }
-        ctx.fillRect(0, 0, canvasWidth, groundY); // Draw sky down to ground level
-
-        // --- Draw Background Elements ---
-        // Draw farther elements first (mountains/volcanoes before trees) for correct layering
-        // Simple loop order works if spawn order is random enough, or sort by type/speedMultiplier if needed
-        for (const element of activeBackgroundElements) {
-            element.draw();
-        }
-
-        // --- Draw Clouds ---
-        for (const cloud of activeClouds) {
-            cloud.draw();
-        }
-
-        // --- Draw Ground ---
-        ground.draw();
-
-        // --- Draw Obstacles ---
-        for (const obstacle of activeObstacles) {
-            obstacle.draw();
-        }
-
-        // --- Draw Player ---
-        player.draw();
-    }
-
-    function gameLoop(timestamp) {
-        if (!playing) return; // Stop loop if game over
-
-        // --- Calculate Delta Time ---
-        const deltaTime = (timestamp - lastTime) / 1000; // Delta time in seconds
-        lastTime = timestamp;
-        accumulator += deltaTime;
-
-        // --- Check for Resize ---
-        // Check resize less frequently or via event listener if preferred
-        if (timestamp % 100 < 17) { // Rough check ~once per 6 frames
-             resizeCanvas();
-        }
-
-
-        // --- Fixed Time Step Update ---
-        // Ensures physics/game logic runs consistently regardless of frame rate fluctuations
-        while (accumulator >= TIME_STEP / 1000) {
-             update(TIME_STEP / 1000); // Update with fixed step time in seconds
-             accumulator -= TIME_STEP / 1000;
-        }
-
-        // --- Draw ---
-        // Drawing happens every frame, regardless of update steps
-        draw();
-
-        // --- Request Next Frame ---
-        animationFrameId = requestAnimationFrame(gameLoop);
-    }
-
+    
+    // Game over
     function gameOver() {
-        if (!playing) return; // Prevent multiple calls
         playing = false;
         finalScoreElement.textContent = score;
         gameOverElement.style.display = 'block';
-        instructionsElement.style.display = 'none'; // Hide instructions on game over
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null; // Clear ID
-        }
-        // console.log("Game Over! Score:", score);
+        cancelAnimationFrame(animationFrameId);
     }
-
+    
+    // Restart game
     function restartGame() {
-        // console.log("Restarting game...");
         score = 0;
-        baseGameSpeedCurrent = BASE_GAME_SPEED; // Reset speed
+        gameSpeed = 6;
+        playing = true;
         difficultyFactor = 1;
-        restartDisabled = false; // Re-enable restart button functionality if it was disabled
-
-        // Clear active elements and return to pools
-        while(activeObstacles.length > 0) returnObstacleToPool(activeObstacles.pop());
-        while(activeClouds.length > 0) returnCloudToPool(activeClouds.pop());
-        while(activeBackgroundElements.length > 0) returnBackgroundElementToPool(activeBackgroundElements.pop());
-
-        // Reset player state
-        updateGameDimensions(); // Recalculate positions based on current canvas size
+        
+        // Return obstacles to pool
+        while(obstacles.length > 0) {
+            obstaclePool.push(obstacles.pop());
+        }
+        
+        // Return clouds to pool
+        while(clouds.length > 0) {
+            cloudPool.push(clouds.pop());
+        }
+        
+        // Return background elements to pool
+        while(backgroundElements.length > 0) {
+            backgroundElementPool.push(backgroundElements.pop());
+        }
+        
+        updateGameDimensions();
         player.velocity = 0;
         player.jumping = false;
-        player.jumpCount = 0;
-
-        // Reset UI
         scoreElement.textContent = `Score: ${score}`;
         gameOverElement.style.display = 'none';
-        instructionsElement.style.display = 'block'; // Show instructions again
-
-        // Reset timers and intervals
-        currentObstacleInterval = getRandomObstacleInterval();
-        obstacleTimer = currentObstacleInterval; // Start timer full so first obstacle spawns quickly
+        obstacleInterval = getRandomObstacleInterval();
+        
+        // Reset timers
+        lastTime = 0;
+        obstacleTimer = 0;
         cloudTimer = 0;
         backgroundTimer = 0;
-        accumulator = 0; // Reset accumulator for fixed step loop
-
-        // Start game loop
-        playing = true;
-        lastTime = performance.now(); // Use performance.now for higher precision timing
+        
         if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId); // Clear any existing loop
+            cancelAnimationFrame(animationFrameId);
         }
+        
         animationFrameId = requestAnimationFrame(gameLoop);
-
-        // Hide restart button if needed immediately after restart (e.g., controlled by parent)
-        if (window.parent && window.parent !== window) {
-            // Optional: Inform parent game has restarted if necessary
-            // window.parent.postMessage({ type: 'gameRestarted' }, '*');
-        }
     }
-
-    // --- Event Listeners ---
-    function handleJumpInput(event) {
+    
+    // Event listeners
+    function handleJump(event) {
         if (playing) {
             player.jump();
-        } else if (gameOverElement.style.display === 'block' && !restartDisabled) {
-            // Only allow jump input to restart if the game over screen is visible
-            // And the restart button isn't explicitly disabled (by parent message)
-            // restartGame(); // Let the button handle restart clicks
-        }
-        if (event) event.preventDefault(); // Prevent space scroll / touch scroll
-    }
-
-    // Listen to the custom jump event dispatched by the top-level spacebar handler
-    window.addEventListener('game-perform-jump', handleJumpInput);
-    // Touch input for jump
-    container.addEventListener('touchstart', handleJumpInput, { passive: false }); // passive:false needed for preventDefault
-    // Restart button click
-    restartButton.addEventListener('click', () => {
-        if (!restartDisabled) {
+        } else {
             restartGame();
         }
+        if (event) event.preventDefault();
+    }
+    
+    // Optimized event binding
+    document.addEventListener('keydown', function(event) {
+        if (event.code === 'Space') {
+            handleJump(event);
+        }
     });
-
-    // Window resize listener
+    
+    document.addEventListener('touchstart', handleJump);
+    restartButton.addEventListener('click', restartGame);
+    
+    // Initialize and start
+    resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+    // Add this listener for messages from the viewer
+window.addEventListener('message', (event) => {
+    // Basic security - replace '*' with your viewer's origin in production
+    // if (event.origin !== 'YOUR_VIEWER_ORIGIN') return;
 
-    // --- Message Listener from Parent ---
-    window.addEventListener('message', (event) => {
-        // Basic security - replace '*' with your viewer's origin in production
-        // if (event.origin !== 'YOUR_VIEWER_ORIGIN') return;
+    if (event.data && event.data.type) {
+        console.log('Game received message:', event.data.type); // Optional debug
 
-        if (event.data && event.data.type) {
-            console.log('Game received message:', event.data.type); // Optional debug
-
-            if (event.data.type === 'disableRestart') {
-                // Hide the 'Play Again' button when viewer is ready
-                if (restartButton) {
-                    restartButton.style.display = 'none';
-                }
-                restartDisabled = true; // Logic flag
-            } else if (event.data.type === 'focusGame') {
-                // Focus the game window/canvas when told by the viewer
-                // Focusing canvas can help capture key events if needed, window.focus is general
-                canvas.focus(); // Attempt focus on canvas first
-                window.focus(); // Fallback or general focus
-            } else if (event.data.type === 'blurYourself') {
-                console.log('Game received blurYourself message.');
-                if (document.activeElement && document.activeElement !== document.body) {
-                    document.activeElement.blur();
-                }
-                window.blur(); // General blur for the iframe window
+        if (event.data.type === 'disableRestart') {
+            // Hide the 'Play Again' button when viewer is ready
+            if (restartButton) {
+                restartButton.style.display = 'none';
             }
+        } else if (event.data.type === 'focusGame') {
+            // Focus the game window when told by the viewer
+            window.focus();
         }
-    });
+    }
+});
 
-    // --- Initialization ---
-    window.onload = () => {
-        console.log("Window loaded.");
-        resizeCanvas(); // Initial size calculation
+// Initialize, start game, AND tell viewer it's ready
+window.onload = () => {
+    resizeCanvas(); // Make sure canvas is sized correctly first
+    restartGame(); // Start the game logic
 
-        // Don't start the game immediately; wait for interaction or message?
-        // Let's start it paused, showing instructions. A click/tap/space will start it via restartGame.
-        playing = false; // Ensure game starts paused
-        instructionsElement.style.display = 'block';
-        gameOverElement.style.display = 'none'; // Ensure game over is hidden
-        draw(); // Draw initial static frame (sky, ground, player idle)
-
-        // Tell the parent window the game is loaded and ready
-        console.log('Game initialized, sending gameLoaded message.');
-        if (window.parent && window.parent !== window) {
-             try {
-                // IMPORTANT: Use '*' for origin ONLY during testing. Replace with your site's actual origin for security.
-                window.parent.postMessage({ type: 'gameLoaded' }, '*');
-                console.log("gameLoaded message sent.");
-             } catch(e) {
-                console.error("Error posting gameLoaded message:", e);
-             }
-        } else {
-             console.log("No parent window detected or same window.");
-             // Optionally auto-start if not in an iframe
-             // restartGame();
-        }
-
-         // Add a listener to start the game on the first interaction if not already started
-         const startGameHandler = () => {
-            if (!playing && gameOverElement.style.display === 'none') {
-                restartGame();
-                // Remove this listener after the first start
-                window.removeEventListener('game-perform-jump', startGameHandler);
-                container.removeEventListener('touchstart', startGameHandler);
-            }
-         };
-         window.addEventListener('game-perform-jump', startGameHandler);
-         container.addEventListener('touchstart', startGameHandler, { passive: false });
-
-    };
-
+    // Tell the parent window the game is loaded
+    console.log('Game loaded, sending gameLoaded message.');
+    if (window.parent && window.parent !== window) {
+         try {
+            // IMPORTANT: Use '*' for origin ONLY during testing. Replace with your site's actual origin for security.
+            window.parent.postMessage({ type: 'gameLoaded' }, '*');
+         } catch(e) {
+            console.error("Error posting gameLoaded message:", e);
+         }
+    }
+};
 })();
     </script>
-        <!-- Add this script just before </body> (kept from original) -->
+        <!-- Add this script just before </body> -->
     <script>
-        // This script seems redundant as the main game script now handles these messages
-        // but keeping it just in case it serves a subtle purpose or for comparison.
-        // The main script's message handler is more integrated.
-        /*
         window.addEventListener('message', (event) => {
             // Basic security: Check origin in production if needed
             // if (event.origin !== 'YOUR_EXPECTED_ORIGIN') return;
 
             if (event.data && event.data.type === 'blurYourself') {
-                console.log('Game (secondary script) received blurYourself message.');
+                console.log('Game received blurYourself message.');
                 // Try blurring the body or the currently focused element within the iframe
                 if (document.activeElement && document.activeElement !== document.body) {
                     document.activeElement.blur();
@@ -1098,17 +1106,24 @@
                 document.body.blur(); // Attempt to blur body as well
             }
 
+            // --- Add this part IF your game has an explicit FOCUS function ---
             if (event.data && event.data.type === 'focusGame') {
-                console.log('Game (secondary script) received focusGame message.');
-                const gameCanvas = document.getElementById('game-canvas'); // Use correct ID
+                console.log('Game received focusGame message.');
+                // If your game has a canvas or main element that needs focus:
+                const gameCanvas = document.getElementById('gameCanvas'); // Or your game's main element ID
                 if (gameCanvas) {
                     gameCanvas.focus();
                 } else {
                      window.focus(); // Fallback
                 }
+                // Or call a specific focus function if your game library provides one:
+                // if (typeof gameInstance !== 'undefined' && gameInstance.focus) {
+                //     gameInstance.focus();
+                // }
             }
+             // --- End optional focus part ---
+
         });
-        */
     </script>
 </body>
 </html>
