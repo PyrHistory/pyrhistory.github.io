@@ -806,7 +806,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     height: 20%; /* Covers top half vertically */
     z-index: 19; /* Below button (z-index 20) */
     pointer-events: auto; /* Must capture hover */
-    /* background: rgba(0, 255, 0, 0.1); */ /* Optional: for debugging hover area */
+    cursor: pointer;
 }
 
 /* NEW: Disable rotate hover trigger in single page (fullscreen) mode */
@@ -4610,6 +4610,18 @@ function showNotesNavAndResetTimer() {
         ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
         ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
         // --- END: ADDED LISTENERS ---
+
+        // --- START: Prevent Toolbar Trigger when hovering Page Rotate Trigger ---
+        const rotateTriggers = document.querySelectorAll('.page-rotate-hover-trigger');
+        rotateTriggers.forEach(trigger => {
+            trigger.addEventListener('mouseenter', (e) => {
+                // Stop this hover event from reaching the toolbar trigger area underneath
+                e.stopPropagation();
+                // console.log('Stopped propagation from page rotate trigger'); // Optional debug
+            });
+        });
+updateStatus("Added event stoppers for rotate triggers.");
+// --- END: Prevent Toolbar Trigger ---
 
         // --- Page Interaction (Edges & Rotate Button) ---
         ui.bookSpread?.addEventListener('click', (e) => {
