@@ -3519,6 +3519,30 @@ function calculateVideoDuration(url) {
         }
     }
 
+        // --- Notes Data Processing (Keep from New Code) ---
+    function processNotesData(rawData) {
+        const mapping = {};
+        if (!Array.isArray(rawData)) {
+            console.error("Invalid raw notes data: Expected an array."); return mapping;
+        }
+        rawData.forEach((entry, index) => {
+            if (typeof entry === 'object' && entry !== null &&
+                typeof entry.chapterPage === 'number' && Number.isInteger(entry.chapterPage) && entry.chapterPage > 0 &&
+                typeof entry.path === 'string' && entry.path.trim() !== '' &&
+                typeof entry.notesPage === 'number' && Number.isInteger(entry.notesPage) && entry.notesPage > 0)
+            {
+                const chapterPageStr = entry.chapterPage.toString();
+                if (mapping[chapterPageStr]) {
+                    console.warn(`Duplicate chapterPage ${entry.chapterPage} found in notes data at index ${index}. Overwriting previous entry.`);
+                }
+                mapping[chapterPageStr] = { pdf: entry.path, page: entry.notesPage };
+            } else {
+                console.warn(`Invalid notes data entry at index ${index}. Skipping:`, entry);
+            }
+        });
+        updateStatus(`Notes mapping processed: ${Object.keys(mapping).length} valid entries found.`);
+        return mapping;
+    }
 
     async function loadIframeData(pdfUrl) {
         const iframeDataUrl = pdfUrl.replace(/\.pdf$/i, '-iframes.json');
