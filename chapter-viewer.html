@@ -3215,25 +3215,49 @@ function calculateVideoDuration(url) {
     }
 
     function updateSliderInfoText(pageValue) {
-         if (ui.currentPageDisplay && ui.totalPagesDisplay) {
-            let displayPageStart = pageValue;
-            // Adjust display for double page view based on current effective mode
-            const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-            const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-            const isCurrentlyEffectiveDoubleView = pdfState.isDoublePageView && !isFullscreenCurrent && !isContentRotatedCurrent;
-
-            if (isCurrentlyEffectiveDoubleView && displayPageStart > 1 && displayPageStart % 2 === 0) {
-                 displayPageStart--; // Show the pair's starting page
-            }
-            let pageText;
-            if (isCurrentlyEffectiveDoubleView && displayPageStart + 1 <= pdfState.totalPages) {
-                pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
-            } else {
-                pageText = `Page ${pageValue}`; // Show single page number
-            }
-            ui.currentPageDisplay.textContent = pageText;
-        }
+    // Ensure the function only runs if the necessary elements exist.
+    if (!ui.currentPageDisplay || !ui.totalPagesDisplay) {
+        console.warn("updateSliderInfoText: Missing UI elements for page display.");
+        return;
     }
+
+    // Validate pageValue is a usable number, default to 1 if not
+    const currentPageValue = Number.isInteger(pageValue) && pageValue >= 1 ? pageValue : 1;
+
+    // Determine the current effective view mode
+    const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+    const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isSingleEffective = isFullscreenCurrent || isContentRotatedCurrent || !pdfState.isDoublePageView;
+    const isDoubleEffective = !isSingleEffective;
+
+    let pageText; // Variable to hold the final display text
+
+    if (isDoubleEffective) {
+        // --- Double Page View Logic ---
+        let displayPageStart = currentPageValue;
+        // If the slider value corresponds to an even page, adjust the display
+        // to show the pair starting from the previous odd page.
+        if (displayPageStart > 1 && displayPageStart % 2 === 0) {
+            displayPageStart--;
+        }
+
+        // Check if the *next* page exists to form a valid pair
+        if (displayPageStart + 1 <= pdfState.totalPages) {
+            // Display as a pair "Page X-Y"
+            pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
+        } else {
+            // It's the very last page, display singly "Page X" using the actual last page number
+            pageText = `Page ${pdfState.totalPages}`; // Use pdfState.totalPages directly here
+        }
+    } else {
+        // --- Single Page View Logic ---
+        // Display singly "Page X" using the exact value from the slider/navigation
+        pageText = `Page ${currentPageValue}`;
+    }
+
+    // Update the text content of the span
+    ui.currentPageDisplay.textContent = pageText;
+}
 
     function updateSliderTotalPages() {
         if (ui.slider && ui.totalPagesDisplay) {
