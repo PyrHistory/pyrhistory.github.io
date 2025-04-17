@@ -547,7 +547,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 #lo-achievement-popup em#lo-achievement-tip {
     font-family: var(--font-body); /* Open Sans */
     display: block;
-    font-size: 0.78rem; /* Smaller tip text */
+    font-size: 0.85rem; /* Smaller tip text */
     color: #666;
     margin-bottom: 20px;
     font-style: italic;
@@ -3519,30 +3519,6 @@ function calculateVideoDuration(url) {
         }
     }
 
-        // --- Notes Data Processing (Keep from New Code) ---
-    function processNotesData(rawData) {
-        const mapping = {};
-        if (!Array.isArray(rawData)) {
-            console.error("Invalid raw notes data: Expected an array."); return mapping;
-        }
-        rawData.forEach((entry, index) => {
-            if (typeof entry === 'object' && entry !== null &&
-                typeof entry.chapterPage === 'number' && Number.isInteger(entry.chapterPage) && entry.chapterPage > 0 &&
-                typeof entry.path === 'string' && entry.path.trim() !== '' &&
-                typeof entry.notesPage === 'number' && Number.isInteger(entry.notesPage) && entry.notesPage > 0)
-            {
-                const chapterPageStr = entry.chapterPage.toString();
-                if (mapping[chapterPageStr]) {
-                    console.warn(`Duplicate chapterPage ${entry.chapterPage} found in notes data at index ${index}. Overwriting previous entry.`);
-                }
-                mapping[chapterPageStr] = { pdf: entry.path, page: entry.notesPage };
-            } else {
-                console.warn(`Invalid notes data entry at index ${index}. Skipping:`, entry);
-            }
-        });
-        updateStatus(`Notes mapping processed: ${Object.keys(mapping).length} valid entries found.`);
-        return mapping;
-    }
 
     async function loadIframeData(pdfUrl) {
         const iframeDataUrl = pdfUrl.replace(/\.pdf$/i, '-iframes.json');
@@ -3721,7 +3697,7 @@ async function loadNotesData(pdfUrl) {
         const pdfPathParts = pdfUrl.split('/');
         const pdfFilename = pdfPathParts.pop() || '';
         const baseFilename = pdfFilename.replace(/\.pdf$/i, '');
-        const notesJsonFilename = `${baseFilename}.notes.json`;
+        const notesJsonFilename = `${baseFilename}-notes.json`;
         // Reconstruct URL in the same directory
         const pdfDir = pdfUrl.substring(0, pdfUrl.lastIndexOf('/') + 1);
         notesJsonUrl = pdfDir + notesJsonFilename;
