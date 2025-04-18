@@ -103,7 +103,36 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 }
 /* --- END: Toolbar & Slider Base Positioning --- */
 
+/* --- START: Rotation Block Indication --- */
+@keyframes rotateButtonWiggleGlow {
+  0%, 100% {
+    transform: rotate(0deg);
+    box-shadow: 0 0 8px rgba(245, 166, 35, 0); /* Transparent start/end */
+    filter: drop-shadow(0 0 0px var(--accent));
+  }
+  25% {
+    transform: rotate(-5deg);
+    box-shadow: 0 0 15px 5px rgba(249, 115, 22, 0.7); /* Fiery orange glow */
+    filter: drop-shadow(0 0 8px var(--fiery-orange));
+  }
+  50% {
+    transform: rotate(5deg);
+    box-shadow: 0 0 18px 6px rgba(245, 166, 35, 0.8); /* Accent glow */
+     filter: drop-shadow(0 0 10px var(--accent));
+  }
+  75% {
+    transform: rotate(-2deg);
+    box-shadow: 0 0 15px 5px rgba(249, 115, 22, 0.7); /* Fiery orange glow */
+    filter: drop-shadow(0 0 8px var(--fiery-orange));
+  }
+}
 
+#return-view-fixed-btn.indicate-rotation-block {
+  animation: rotateButtonWiggleGlow 0.6s ease-in-out 1; /* Apply animation once */
+}
+/* --- END: Rotation Block Indication --- */
+
+        
 /* Base button style (Keep New Code's Version) */
 .new-btn{
     background:rgba(44,62,80,.8)!important;
@@ -547,7 +576,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 #lo-achievement-popup em#lo-achievement-tip {
     font-family: var(--font-body); /* Open Sans */
     display: block;
-    font-size: 0.73rem; /* Smaller tip text */
+    font-size: 0.76rem; /* Smaller tip text */
     color: #666;
     margin-bottom: 20px;
     font-style: italic;
@@ -1844,6 +1873,31 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
         HOVER_COLORED: 'hover-colored', // New class for temp coloring on hover
     };
 
+    // --- START: ADD THIS NEW FUNCTION ---
+function triggerRotateButtonIndication() {
+    if (!ui.returnViewFixedBtn) return;
+
+    const button = ui.returnViewFixedBtn;
+    const animationClassName = 'indicate-rotation-block';
+    const animationDuration = 600; // Match CSS duration in ms
+
+    // Remove class first to allow re-triggering if called rapidly
+    button.classList.remove(animationClassName);
+
+    // Force reflow/repaint to ensure animation restarts
+    void button.offsetWidth;
+
+    // Add class to start animation
+    button.classList.add(animationClassName);
+    updateStatus("Triggered rotate button indication animation.");
+
+    // Set timeout to remove the class after animation completes
+    setTimeout(() => {
+        button.classList.remove(animationClassName);
+    }, animationDuration);
+}
+// --- END: ADD THIS NEW FUNCTION ---
+    
     // --- UI Elements Cache (Keep from New Code, removed loading bar elements, added LO elements) ---
     const ui = {
         body: document.body,
@@ -2462,6 +2516,13 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
     const rightEdgeNavLeft = ui.rightPageDiv?.querySelector('.page-edge-left');
     const rightEdgeNavRight = ui.rightPageDiv?.querySelector('.page-edge-right');
 
+    if (isContentRotated) {
+        // Explicitly hide ALL edge navs in rotated view
+        if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = 'none';
+        if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
+        if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
+        if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
+    }
     if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = ''; // Always show left-most edge
     if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none'; // Hide by default
     if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none'; // Hide by default
@@ -3181,6 +3242,25 @@ function calculateVideoDuration(url) {
         };
 
         const handlePointerUpOrChange = (event) => { // Added event
+            
+            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
+        updateStatus("Slider interaction blocked: Content Rotated Mode active.");
+        triggerRotateButtonIndication(); // Trigger the glow/wiggle effect
+        // Reset slider visually to the actual current page immediately
+        updateSliderPosition(pdfState.currentPage);
+        event.preventDefault(); // Stop any potential default slider behavior
+        event.stopPropagation(); // Stop the event from bubbling further
+        // If dragging ended, ensure the state is reset
+        if (appState.isDraggingSlider) {
+             appState.isDraggingSlider = false;
+             // Restart hide timer if needed (mouse might be outside area now)
+             if (!appState.isSliderAreaHovered) {
+                startSliderHideTimer();
+             }
+        }
+        return; // Stop further processing for this event
+    } 
+            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return; // Prevent updates if rotated
              if (!appState.isDraggingSlider && event.type !== 'change') return;
              const wasDragging = appState.isDraggingSlider;
              appState.isDraggingSlider = false;
