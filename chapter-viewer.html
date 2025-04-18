@@ -808,8 +808,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) .book-spread::before {
     pointer-events: auto; /* Must capture hover */
 }
 
-
-        
 /* NEW: Disable rotate hover trigger in single page (fullscreen) mode */
 body.fullscreen-mode .page-rotate-hover-trigger {
     pointer-events: none; /* Makes the trigger area ignore mouse hover */
@@ -1580,6 +1578,58 @@ body.right-handle-floated .toolbar-trigger-area {
 
 /* === END: Floating Toolbar Handle Styles === */
 
+/* --- Hover Glow Effect for Toolbar Triggers --- */
+
+/* Ensure Trigger Areas are set up for positioning */
+#toolbar-trigger-area,
+#left-toolbar-trigger-area {
+    position: fixed; /* Must be fixed */
+    width: 30px;
+    height: 100%;
+    top: 0;
+    z-index: 9998;
+    pointer-events: auto; /* Critical for hover */
+    /* Remove any background/border from the trigger area itself */
+    background: transparent;
+    border: none;
+}
+#toolbar-trigger-area { right: 0; }
+#left-toolbar-trigger-area { left: 0; }
+/* NEW: Adjust Right Toolbar Trigger in Double Page View */
+body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
+    top: 60px;                 /* Lower the top edge */
+    height: calc(100% - 60px); /* Reduce height to keep bottom edge in place */
+}
+
+
+/* Common Glow Styles (Hidden by default) */
+#toolbar-trigger-area::after,
+#left-toolbar-trigger-area::after {
+    content: '';
+    position: absolute;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    width: 60px;  /* Width of the glow */
+    height: 90px; /* Height of the glow (slightly taller) */
+    /* Create the orange glow gradient */
+    
+    );
+    border-radius: 50%; /* Make it elliptical/circular */
+    filter: blur(15px); /* Soften the glow */
+    /* Start hidden */
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8); /* Center and slightly scaled down */
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    pointer-events: none; /* Glow itself doesn't intercept clicks */
+    z-index: -1; /* Behind potential trigger content */
+}
+
+/* Show Glow on Trigger Area Hover */
+#toolbar-trigger-area:hover::after,
+#left-toolbar-trigger-area:hover::after {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1); /* Scale up to full size */
+}
 
         /* Keyframes for the text shimmer effect */
 @keyframes shimmerText {
@@ -2654,62 +2704,57 @@ body.right-handle-floated .toolbar-trigger-area {
     }
 
 
-    // Modified to accept an optional lockTypeToPass ('pdf', 'iframe', 'notes')
-// If lockTypeToPass is provided, it only checks and potentially completes THAT type of lock.
-function checkReadingTimeLock(lockTypeToPass = null) {
-    // Called by jumpToPage (for 'pdf') or hidePopup functions (implicitly checking 'iframe'/'notes')
+    // --- Reading Time Lock Check (REVERTED from Old Code) ---
+    function checkReadingTimeLock() {
+        // Called by jumpToPage only when moving forward.
 
-    // *** FIRST: Check if timelock is globally enabled ***
-    if (!isTimelockGloballyEnabled) {
-        // If lockTypeToPass is specified, log which check is being bypassed
-        if (lockTypeToPass) updateStatus(`Time lock check (${lockTypeToPass}): Globally DISABLED. Allowing action.`);
-        else updateStatus(`Time lock check: Globally DISABLED. Allowing action.`);
-        return false; // Not blocking
-    }
-
-    // *** SECOND: Check if *any* lock is currently active ***
-    if (!isTimeLockActive) {
-        if (lockTypeToPass) updateStatus(`Time lock check (${lockTypeToPass}): Lock is INACTIVE. Allowing action.`);
-        else updateStatus(`Time lock check: Lock is INACTIVE. Allowing action.`);
-        return false; // Not blocking
-    }
-
-    // *** THIRD: Check if the active lock matches the type we need to pass (if specified) ***
-    if (lockTypeToPass !== null && currentLockType !== lockTypeToPass) {
-        updateStatus(`Time lock check (${lockTypeToPass}): Active lock is for '${currentLockType}', not the required type. Allowing action.`);
-        return false; // Active lock is for something else, don't block this specific action
-    }
-
-    // --- A relevant lock IS active. Check the time ---
-    const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
-    const lockAssociatedPage = pdfState.currentPage; // Page lock was associated with when set
-
-    if (elapsedSeconds < requiredReadingTime) {
-        // Time is NOT up. Block the action.
-        updateStatus(`Time lock ACTIVE (${currentLockType || 'unknown'} type, Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Blocking action.`);
-        // The calling function (jumpToPage or hidePopup) is responsible for showing the alert
-        return true; // Indicate lock IS preventing the action
-    } else {
-        // Time IS up. Allow the action and handle completion.
-        updateStatus(`Time lock FINISHED (${currentLockType || 'unknown'} type, Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Allowing action.`);
-
-        // Mark completion for PDF page locks permanently in the Set
-        // Only do this for 'pdf' type locks, iframe/notes locks are transient per-popup instance
-        if (currentLockType === 'pdf' && !completedTimeLockPages.has(lockAssociatedPage)) {
-            completedTimeLockPages.add(lockAssociatedPage);
-            updateStatus(`PDF Page/Pair ${lockAssociatedPage} added to completed time lock set.`);
+        // *** FIRST: Check if timelock is globally enabled ***
+        if (!isTimelockGloballyEnabled) {
+            updateStatus(`Time lock check: Globally DISABLED. Allowing navigation.`);
+            return false; // Not blocking
         }
 
-        // Important: Deactivate the lock *for this specific check*.
-        // updateDisplay will reset isTimeLockActive anyway before potentially setting a new one.
-        // hidePopup functions also reset this after a successful check.
-        isTimeLockActive = false;
-        requiredReadingTime = 0;
-        currentPageLockStartTime = 0;
-        currentLockType = null; // ** CRITICAL: Reset lock type **
-        return false; // Indicate lock is NOT preventing the action for this attempt
+        if (!isTimeLockActive) {
+            // No lock is currently active (either pair or single even page), so allow navigation.
+            updateStatus(`Time lock check: Lock is INACTIVE. Allowing navigation.`);
+            return false; // Not blocking
+        }
+
+            // *** ADD THIS CHECK: Only block PDF nav if the lock is for PDF ***
+    if (currentLockType !== null && currentLockType !== 'pdf') {
+        updateStatus(`Time lock check (PDF Nav): Active lock is for '${currentLockType}', not PDF. Allowing PDF navigation.`);
+        return false; // Don't block PDF nav because of an active popup lock
     }
-}
+
+        // A lock IS active.
+        const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
+        // 'pdfState.currentPage' holds the page number the active lock is associated with
+        // (odd start for pair lock, even page num for single lock) as set by updateDisplay.
+        const lockAssociatedPage = pdfState.currentPage;
+
+        if (elapsedSeconds < requiredReadingTime) {
+            // Time is NOT up. Block navigation.
+            updateStatus(`Time lock ACTIVE (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Blocking forward nav.`);
+            showReadingTimeAlert(); // Alert will only show if globally enabled due to its own check
+            return true; // Indicate lock IS preventing navigation
+        } else {
+            // Time IS up. Allow navigation and handle completion.
+            updateStatus(`Time lock FINISHED (Page/Pair ${lockAssociatedPage}): ${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s. Allowing forward nav.`);
+
+            // Mark completion for this page/pair permanently in the Set using the associated page number.
+            if (!completedTimeLockPages.has(lockAssociatedPage)) {
+                completedTimeLockPages.add(lockAssociatedPage);
+                updateStatus(`Page/Pair ${lockAssociatedPage} added to completed time lock set.`);
+            }
+
+            // Important: Deactivate lock for this *specific check*.
+            // updateDisplay will reset isTimeLockActive anyway before potentially setting a new one for the *next* page view.
+            isTimeLockActive = false; // Lock is passed/completed *for this navigation attempt*.
+            requiredReadingTime = 0; // Reset required time as well
+            currentPageLockStartTime = 0;
+            return false; // Indicate lock is NOT preventing navigation for this attempt
+        }
+    }
 
     // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
@@ -2786,114 +2831,77 @@ function checkReadingTimeLock(lockTypeToPass = null) {
         // Otherwise, already on page 1, do nothing.
     }
 
-    function jumpToPage(pageNum) {
-    if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages) {
-        console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
-        return;
-    }
+    // --- JumpToPage (REVERTED Timelock Logic, uses new pdfState/UI) ---
+    function jumpToPage(pageNum){
+        if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
+            console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
+            return;
+        }
 
-    let targetStartPage = pageNum;
-    // Ensure targetStartPage is always odd for double page view (unless it's page 1 or the very last page if odd)
-    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+        let targetStartPage = pageNum;
+        // Ensure targetStartPage is always odd for double page view (unless it's page 1 or the very last page if odd)
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-    if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
-        targetStartPage--;
-    }
+        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
+            targetStartPage--;
+        }
 
-    const currentStartPage = pdfState.currentPage;
-    if (targetStartPage === currentStartPage) {
-         updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
-         if (document.activeElement === ui.slider) { updateSliderPosition(); } // Keep slider updated if user clicked current value
-         return;
-    }
+        const currentStartPage = pdfState.currentPage;
+        if (targetStartPage === currentStartPage) {
+             updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
+             // Keep slider updated if user clicked the current page value on the slider
+             if (document.activeElement === ui.slider) {
+                 updateSliderPosition();
+             }
+             return;
+        }
 
-    // --- NEW: Check for blocking popups BEFORE checking PDF timelock ---
-    const isIframePopupVisible = ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE);
-    const isNotesPopupVisible = ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE);
+        const isMovingForward = targetStartPage > currentStartPage;
 
-    if (isTimelockGloballyEnabled && isTimeLockActive) { // Check if *any* lock is active
-        const elapsedSeconds = (Date.now() - currentPageLockStartTime) / 1000;
-
-        // Block if IFRAME popup is visible and its lock is active
-        if (isIframePopupVisible && currentLockType === 'iframe') {
-            if (elapsedSeconds < requiredReadingTime) {
-                updateStatus(`Navigation blocked: Iframe popup timelock active (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s).`);
-                showReadingTimeAlert('<em>Please watch the video first!</em>');
-                if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) { updateSliderPosition(); } // Reset slider if it triggered
-                return; // BLOCK JUMP
-            } else {
-                 updateStatus("Iframe timelock completed, but popup still visible. User must close it manually before navigating.");
-                 // Don't automatically close, but also don't block the *next* attempt once closed.
-                 // The lock state is reset by hideIframePopup when user closes it.
+        // *** REVERTED Lock Check Logic ***
+        if (isMovingForward) {
+            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
+            if (checkReadingTimeLock()) { // Calls the reverted function
+                updateStatus(`Navigation blocked by time lock.`);
+                if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
+                    updateSliderPosition(); // Reset slider if it triggered the block
+                }
+                return; // Block the jump
+            }
+            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
+        } else { // Moving backward
+            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
+            // Clear any active lock if moving backward (using reverted globals)
+            if (isTimeLockActive) {
+                 currentLockType = null; // *** Reset type ***
+                 updateStatus("Clearing active time lock due to backward navigation.");
+                 isTimeLockActive = false;
+                 requiredReadingTime = 0;
+                 currentPageLockStartTime = 0;
             }
         }
-        // Block if NOTES popup is visible and its lock is active
-        else if (isNotesPopupVisible && currentLockType === 'notes') {
-            if (elapsedSeconds < requiredReadingTime) {
-                updateStatus(`Navigation blocked: Notes popup timelock active (${elapsedSeconds.toFixed(1)}s / ${requiredReadingTime}s).`);
-                showReadingTimeAlert(); // Generic alert for notes
-                 if (ui.notesInstruction) { // Trigger notes wiggle on block
-                    ui.notesInstruction.classList.remove(CSS_CLASS.WIGGLE_NOW); void ui.notesInstruction.offsetWidth;
-                    ui.notesInstruction.classList.add(CSS_CLASS.WIGGLE_NOW);
-                 }
-                if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) { updateSliderPosition(); } // Reset slider if it triggered
-                return; // BLOCK JUMP
-            } else {
-                 updateStatus("Notes timelock completed, but popup still visible. User must close it manually before navigating.");
-            }
+        // *** End REVERTED Lock Check Logic ***
+
+        // --- Perform Navigation (Uses New Code State) ---
+        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
+        pdfState.currentPage = targetStartPage;
+        updateSliderPosition(targetStartPage);
+        
+        // Update furthest read page if moving forward (tracks highest *starting* page of a view)
+        if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
+            userState.readingProgress.furthestPage = targetStartPage;
+            updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
+            // In a real app, you might save userState.readingProgress here
         }
+
+        resetPopupStates(); // Hide any open popups (including LO popup)
+
+        updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
+        manageToolbar(false); // Hide toolbars (using reverted function)
+        manageLeftToolbar(false); // Hide toolbars (using reverted function)
     }
-    // --- End NEW Popup Check ---
-
-
-    const isMovingForward = targetStartPage > currentStartPage;
-
-    // Check PDF Reading Time Lock ONLY if moving forward and lock type is PDF or null/inactive
-    if (isMovingForward) {
-        updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking PDF time lock...`);
-        // Pass the 'pdf' type to check specifically for PDF locks
-        if (checkReadingTimeLock('pdf')) { // <-- MODIFIED: Pass 'pdf'
-            updateStatus(`Navigation blocked by PDF time lock.`);
-            if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
-                updateSliderPosition(); // Reset slider if it triggered the block
-            }
-            return; // Block the jump
-        }
-        updateStatus(`PDF Time lock passed/completed/disabled. Proceeding with jump.`);
-    } else { // Moving backward
-        updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping PDF time lock check.`);
-        // Clear any active PDF lock if moving backward
-        if (isTimeLockActive && (currentLockType === 'pdf' || currentLockType === null)) {
-             updateStatus("Clearing active PDF time lock due to backward navigation.");
-             isTimeLockActive = false;
-             requiredReadingTime = 0;
-             currentPageLockStartTime = 0;
-             currentLockType = null; // Ensure type is cleared
-        }
-    }
-
-    // --- Perform Navigation (State update and rendering) ---
-    updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
-    pdfState.currentPage = targetStartPage; // Update the application state
-    updateSliderPosition(targetStartPage); // Update slider visuals and text
-
-    // Update furthest read page if moving forward
-    if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
-        userState.readingProgress.furthestPage = targetStartPage;
-        updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
-        // In a real app, you might save userState.readingProgress here
-    }
-
-    // *** REMOVED resetPopupStates() call from here ***
-    // Popups are now handled by updateDisplay checking the new page's mappings
-
-    updateDisplay(); // Render new page(s), calculates next lock state, handles showing/hiding popups based on NEW page
-
-    manageToolbar(false); // Hide toolbars
-    manageLeftToolbar(false);
-}
 
     // --- START: New function to check handle state ---
     function checkAndApplyHandleState() {
