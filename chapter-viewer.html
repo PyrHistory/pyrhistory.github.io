@@ -3194,36 +3194,7 @@ function calculateVideoDuration(url) {
              }
          };
 
-                 const handlePointerUpOrChange = (event) => { // Added event
-
-            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
-                updateStatus("Slider interaction blocked: Content Rotated Mode active.");
-                triggerRotateButtonIndication(); // Trigger the glow/wiggle effect
-                updateSliderPosition(pdfState.currentPage);
-                event.preventDefault();
-                event.stopPropagation();
-                if (appState.isDraggingSlider) {
-                     appState.isDraggingSlider = false;
-                     if (!appState.isSliderAreaHovered) {
-                        startSliderHideTimer();
-                     }
-                }
-                return;
-            }
-            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
-             if (!appState.isDraggingSlider && event.type !== 'change') return;
-             const wasDragging = appState.isDraggingSlider;
-             appState.isDraggingSlider = false;
-
-             const targetPageValue = parseInt(ui.slider.value, 10);
-             updateStatus(`Slider action ended at value: ${targetPageValue}`);
-             // *** MODIFIED HERE ***
-             jumpToPage(targetPageValue, true); // Pass true - slider navigation should trigger popups
-
-             if (!appState.isSliderAreaHovered) {
-                 startSliderHideTimer();
-             }
-         };
+               
 
         ui.slider.addEventListener('input', handleSliderInput);
         ui.slider.addEventListener('pointerdown', handlePointerDown);
