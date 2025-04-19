@@ -686,16 +686,18 @@ body:not(.loading-game-active) .main-container {
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
-    position: relative; /* Important for positioning layers */
-    /* Use original width/height calculations */
-    width: calc(100% - 2 * var(--page-padding));
-    height: calc(100% - 2 * var(--page-padding));
-    margin: var(--page-padding);
+    position: relative; /* Keep for layers */
+    /* Make container slightly larger than page padding allows */
+    /* E.g., if --page-padding is 7px, make it effectively -3px padding */
+    width: calc(100% + 10px);  /* Adjust 10px as needed */
+    height: calc(100% + 10px); /* Adjust 10px as needed */
+    /* Remove margin as size increase handles it */
+    /* margin: var(--page-padding); */
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden; /* Clip layers */
-    /* Ensure no transform properties remain from previous attempts */
+    overflow: hidden; /* CRITICAL: This performs the crop */
+    /* Ensure no transforms are applied */
     transform: none;
     transform-origin: center center;
 }
@@ -2174,109 +2176,113 @@ function triggerRotateButtonIndication() {
     // --- Keyword Overlays (Keep from New Code) ---
     // Replacement createKeywordOverlays function // <<<< CONFIRMED: Correct Block Start
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
-        const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
-        const overlayContainer = document.getElementById(overlayContainerId);
-        const canvasContainer = getCanvasContainer(pageElement);
+    const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
+    const overlayContainer = document.getElementById(overlayContainerId);
+    const canvasContainer = getCanvasContainer(pageElement);
 
-        if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer) {
-            console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements.`); return;
-        }
-        overlayContainer.innerHTML = ''; // Clear previous highlights
-
-        const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
-        if (keywordsForPage.length === 0) return;
-
-        const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
-        const lowerCaseDefs = {};
-        // Prepare definitions map expecting array format: [PoS, Definition]
-        for (const key in pdfState.keywordDefinitions) {
-            // Store the array directly under the lowercase key
-            lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key];
-        }
-
-        try {
-            const page = await pdfState.pdfDocument.getPage(pageNum);
-            const textContent = await page.getTextContent({ normalizeWhitespace: true });
-            const items = textContent.items;
-
-            for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-                const item = items[itemIndex];
-                const itemText = item.str;
-                const itemTextLength = itemText.length;
-                if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0) continue;
-
-                keywordsForPage.forEach((originalKeyword, keywordIndex) => {
-                    const keywordLower = lowerCaseKeywords[keywordIndex];
-                    const definitionData = lowerCaseDefs[keywordLower]; // This is now expected to be an array
-
-                    // *** Validate the new array structure ***
-                    if (!Array.isArray(definitionData) || definitionData.length < 2 || typeof definitionData[1] !== 'string' || !definitionData[1]) {
-                        // console.warn(`Invalid/missing definition data for keyword: ${originalKeyword} (lowercase: ${keywordLower}) on page ${pageNum}`);
-                        return; // Skip this keyword if data format is wrong or definition is missing
-                    }
-                    const partOfSpeech = definitionData[0] || ''; // PoS is index 0, default to empty string
-                    const actualDefinition = definitionData[1]; // Definition is index 1
-
-                    const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                    const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
-                    let match;
-
-                    while ((match = regex.exec(itemText)) !== null) {
-                        const matchedString = match[1];
-                        const matchIndex = match.index;
-                        const matchLength = matchedString.length;
-
-                        if (matchLength === 0) { regex.lastIndex++; continue; }
-
-                        const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                        const itemWidth = item.width;
-                        const itemHeight = item.height;
-                        const itemLeft = tx[4];
-                        const itemTop = tx[5] - itemHeight;
-
-                        const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
-                        const highlightWidth = (matchLength / itemTextLength) * itemWidth;
-
-                        const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
-                        const finalTop = Math.max(0, itemTop);
-                        const finalWidth = Math.max(1, highlightWidth);
-                        const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
-
-                        const highlightDiv = document.createElement('div');
-                        highlightDiv.className = 'keyword-highlight';
-                        highlightDiv.style.left = `${finalLeft}px`;
-                        highlightDiv.style.top = `${finalTop}px`;
-                        highlightDiv.style.width = `${finalWidth}px`;
-                        highlightDiv.style.height = `${finalHeight}px`;
-        
-                        // *** Store keyword, PoS, and definition separately ***
-                        highlightDiv.dataset.keyword = originalKeyword;
-                        highlightDiv.dataset.pos = partOfSpeech; // Store Part of Speech
-                        highlightDiv.dataset.definition = actualDefinition; // Store Definition text
-                        highlightDiv.title = 'Click for definition';
-                        
-                        const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
-                        if (firstLoc && firstLoc.pageNum === pageNum && firstLoc.itemIndex === itemIndex && firstLoc.matchIndex === matchIndex) {
-                            highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
-                        }
-
-                        highlightDiv.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
-                            const currentHighlight = e.currentTarget;
-                            // Pass the clicked element itself to showDefinitionPopup
-                            showDefinitionPopup(currentHighlight); // *** Pass the element ***
-                        });
-                        overlayContainer.appendChild(highlightDiv);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
-            overlayContainer.innerHTML = '';
-        }
+    if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer || !viewport) { // Added viewport check
+        console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements or viewport.`); return;
     }
-    // <<<< CONFIRMED: Correct Block End
+    overlayContainer.innerHTML = ''; // Clear previous highlights
+
+    const keywordsForPage = pdfState.pageKeywords[pageNum.toString()] || [];
+    if (keywordsForPage.length === 0) return;
+
+    const lowerCaseKeywords = keywordsForPage.map(k => k.toLowerCase());
+    const lowerCaseDefs = {};
+    for (const key in pdfState.keywordDefinitions) {
+        lowerCaseDefs[key.toLowerCase()] = pdfState.keywordDefinitions[key];
+    }
+
+    try {
+        const page = await pdfState.pdfDocument.getPage(pageNum);
+        const textContent = await page.getTextContent({ normalizeWhitespace: true });
+        const items = textContent.items;
+
+        // --- ORIGINAL Coordinate Calculation (for normal viewport) ---
+        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+            const item = items[itemIndex];
+            const itemText = item.str;
+            const itemTextLength = itemText.length;
+             // Added item.transform check for safety
+            if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0 || !item.transform) continue;
+
+            keywordsForPage.forEach((originalKeyword, keywordIndex) => {
+                const keywordLower = lowerCaseKeywords[keywordIndex];
+                const definitionData = lowerCaseDefs[keywordLower];
+                if (!Array.isArray(definitionData) || definitionData.length < 2 || typeof definitionData[1] !== 'string' || !definitionData[1]) {
+                    return;
+                }
+                const partOfSpeech = definitionData[0] || '';
+                const actualDefinition = definitionData[1];
+
+                const escapedKeyword = originalKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(`\\b(${escapedKeyword})\\b`, 'gi');
+                let match;
+
+                while ((match = regex.exec(itemText)) !== null) {
+                    const matchedString = match[1];
+                    const matchIndex = match.index;
+                    const matchLength = matchedString.length;
+
+                    if (matchLength === 0) { regex.lastIndex++; continue; }
+
+                    // Use pdfjs utils to get coordinates relative to viewport
+                    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                    const itemWidth = item.width;
+                    const itemHeight = item.height; // Use actual height
+                    // Calculate position based on transformed matrix
+                    const itemLeft = tx[4];
+                    const itemTop = tx[5] - itemHeight; // PDF origin is bottom-left, viewport top-left
+
+                    // Calculate highlight offset and width within the item
+                    const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
+                    const highlightWidth = (matchLength / itemTextLength) * itemWidth;
+
+                    // Final coordinates for the highlight div
+                    const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
+                    const finalTop = Math.max(0, itemTop);
+                    const finalWidth = Math.max(1, highlightWidth); // Ensure min width
+                    // Use item height, fallback if needed
+                    const finalHeight = itemHeight > 0 ? itemHeight : parseFloat(getComputedStyle(overlayContainer).fontSize) || 12;
+
+                    if (finalWidth <= 0 || finalHeight <=0) {
+                        // console.warn("Calculated zero or negative dimensions for keyword highlight, skipping.", { finalWidth, finalHeight });
+                        continue;
+                    }
+
+                    const highlightDiv = document.createElement('div');
+                    highlightDiv.className = 'keyword-highlight';
+                    // Apply viewport coordinates
+                    highlightDiv.style.left = `${finalLeft}px`;
+                    highlightDiv.style.top = `${finalTop}px`;
+                    highlightDiv.style.width = `${finalWidth}px`;
+                    highlightDiv.style.height = `${finalHeight}px`;
+
+                    highlightDiv.dataset.keyword = originalKeyword;
+                    highlightDiv.dataset.pos = partOfSpeech;
+                    highlightDiv.dataset.definition = actualDefinition;
+                    highlightDiv.title = 'Click for definition';
+
+                    const firstLoc = pdfState.globalFirstInstanceLocation[keywordLower];
+                    if (firstLoc && firstLoc.pageNum === pageNum && firstLoc.itemIndex === itemIndex && firstLoc.matchIndex === matchIndex) {
+                        highlightDiv.classList.add(CSS_CLASS.FIRST_KEYWORD_INSTANCE);
+                    }
+
+                    highlightDiv.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return;
+                        showDefinitionPopup(e.currentTarget);
+                    });
+                    overlayContainer.appendChild(highlightDiv);
+                }
+            });
+        }
+    } catch (error) {
+        console.error(`Error processing text content for keyword overlays on page ${pageNum}:`, error);
+        overlayContainer.innerHTML = '';
+    }
+}
 
     // --- Text & Annotation Layer Rendering (Keep from New Code) ---
     async function renderAndEnhanceTextLayer(page, container, viewport) {
@@ -2386,18 +2392,17 @@ function triggerRotateButtonIndication() {
 
             const defaultViewport = page.getViewport({ scale: 1 });
 
-            // --- Calculate scale and APPLY MULTIPLIER ---
-            let scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-            scale *= PDF_RENDER_SCALE_MULTIPLIER; // <<< Apply the multiplier HERE
-            // --- END Scaling ---
+            // --- Calculate scale to fit NORMALLY (NO MULTIPLIER HERE) ---
+            const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+            // --- END Normal Scaling ---
 
-            viewport = page.getViewport({ scale: scale }); // Create the final, scaled viewport
+            viewport = page.getViewport({ scale: scale }); // Create the final, normal-fit viewport
             pdfState.currentViewports[canvasId] = viewport; // Store it
 
             const outputScale = window.devicePixelRatio || 1;
             canvas.width = Math.floor(viewport.width * outputScale);
             canvas.height = Math.floor(viewport.height * outputScale);
-            // Set canvas style size based on the scaled viewport
+            // Set canvas style size based on the normal-fit viewport
             canvas.style.width = `${Math.floor(viewport.width)}px`;
             canvas.style.height = `${Math.floor(viewport.height)}px`;
 
@@ -2420,10 +2425,10 @@ function triggerRotateButtonIndication() {
             hidePageLoading(canvasId);
         }
 
-        // --- Render enhancement layers using the SAME scaled viewport ---
+        // --- Render enhancement layers using the SAME NORMAL viewport ---
         await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
         await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-        await createKeywordOverlays(pageNum, pageElement, viewport); // Pass the scaled viewport
+        await createKeywordOverlays(pageNum, pageElement, viewport); // Pass the normal viewport
 
     } catch (error) {
         console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
