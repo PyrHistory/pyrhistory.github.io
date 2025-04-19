@@ -687,14 +687,24 @@ body:not(.loading-game-active) .main-container {
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
     position: relative; /* Important for positioning layers */
-    width: calc(100% - 2 * var(--page-padding));
-    height: calc(100% - 2 * var(--page-padding));
-    margin: var(--page-padding);
+    /* Original width/height commented out, now calculated */
+    /* width: calc(100% - 2 * var(--page-padding)); */
+    /* height: calc(100% - 2 * var(--page-padding)); */
+    margin: var(--page-padding); /* Keep original margin */
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden; /* Clip layers */
+
+    /* --- NEW Scaling Properties --- */
+    width: calc(100% / var(--pdf-content-scale, 1)); /* Adjust width based on scale */
+    height: calc(100% / var(--pdf-content-scale, 1)); /* Adjust height based on scale */
+    transform-origin: center center; /* Scale from the center */
+    transform: scale(var(--pdf-content-scale, 1)); /* Apply the scaling */
+    transition: transform 0.1s ease-out; /* Optional: smooth transition if scale changes */
+    /* --- END NEW Scaling Properties --- */
 }
+        
 .pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; top: 0; left: 0; z-index: 1; } /* Canvas layer */
 .page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
@@ -5021,91 +5031,94 @@ ui.gameIframe?.addEventListener('focus', () => {
 
     // --- Initialization (Uses reverted timelock reset, reverted setupToolbarHover/setupLeftToolbarHover, LO loading) ---
     async function init() {
-        updateStatus("Initializing application...");
-        // Body starts with 'loading-game-active' class
+    updateStatus("Initializing application...");
+    appState.previousPageBeforeNavigation = null;
+    // --- NEW: Set global CSS variable for scaling ---
+    document.documentElement.style.setProperty('--pdf-content-scale', PDF_RENDER_SCALE_MULTIPLIER);
+    // --- END NEW ---
 
-        appState.previousPageBeforeNavigation = null;
+    // Body starts with 'loading-game-active' class
 
+    try {
+        // Determine page padding from CSS variable
         try {
-            // Determine page padding from CSS variable
-            try {
-                 appState.pagePadding = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15;
-             } catch(e){
-                 appState.pagePadding = 15;
-                 console.warn("CSS var --page-padding read failed, using default.");
-             }
+             appState.pagePadding = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-padding')) || 15;
+         } catch(e){
+             appState.pagePadding = 15;
+             console.warn("CSS var --page-padding read failed, using default.");
+         }
 
 
-            // Setup core event listeners and UI handlers
-            setupEvents(); // Calls reverted timelock listener, LO popup listener
-            setupToolbarHover(); // REVERTED Hover logic
-            setupLeftToolbarHover(); // REVERTED Hover logic
-            updateTimelockButtonVisuals(); // Set initial timelock icon state (uses reverted globals)
-            initPageSlider(); // Setup slider interaction (uses reverted jump/lock logic, LO milestone rendering/interaction)
+        // Setup core event listeners and UI handlers
+        setupEvents(); // Calls reverted timelock listener, LO popup listener
+        setupToolbarHover(); // REVERTED Hover logic
+        setupLeftToolbarHover(); // REVERTED Hover logic
+        updateTimelockButtonVisuals(); // Set initial timelock icon state (uses reverted globals)
+        initPageSlider(); // Setup slider interaction (uses reverted jump/lock logic, LO milestone rendering/interaction)
 
-            // Get PDF URL from query parameter
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfUrlParam = urlParams.get('pdf');
+        // Get PDF URL from query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const pdfUrlParam = urlParams.get('pdf');
 
-            if (pdfUrlParam) {
-                updateStatus(`PDF URL parameter found: ${pdfUrlParam}. Starting background load...`);
-                loadPdf(pdfUrlParam); // Start loading the PDF asynchronously (calls reverted lock reset, loads LOs)
-            } else {
-                // No PDF specified - show message and exit loading state
-                updateStatus("No PDF specified in URL parameter (?pdf=...). Reader content will not load.");
-                appState.isReaderReady = false;
-                if (ui.goToChapterBtn) { // Ensure button is hidden
-                     ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-                }
-                ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE); // Exit loading state
-
-                // Display message in main container
-                if(ui.mainContainer) {
-                    ui.mainContainer.style.visibility = 'visible';
-                    ui.mainContainer.style.opacity = '1';
-                    ui.mainContainer.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
-                }
-                // Hide loading game elements if no PDF is provided
-                if (ui.gameContainer) ui.gameContainer.style.display = 'none';
+        if (pdfUrlParam) {
+            updateStatus(`PDF URL parameter found: ${pdfUrlParam}. Starting background load...`);
+            loadPdf(pdfUrlParam); // Start loading the PDF asynchronously (calls reverted lock reset, loads LOs)
+        } else {
+            // No PDF specified - show message and exit loading state
+            updateStatus("No PDF specified in URL parameter (?pdf=...). Reader content will not load.");
+            appState.isReaderReady = false;
+            if (ui.goToChapterBtn) { // Ensure button is hidden
+                 ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
             }
+            ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE); // Exit loading state
 
-            // Cleanup on unload
-            window.addEventListener('beforeunload', () => {
-                updateStatus("Unloading - Performing Cleanup.");
-                // Clear all timeouts
-                clearTimeout(appState.gameOverTimeoutId);
-                clearTimeout(appState.alertTimeout);
-                clearTimeout(appState.alertWiggleTimeout);
-                clearTimeout(toolbarTimer); // Use reverted timer variable
-                clearTimeout(leftToolbarTimer); // Use reverted timer variable
-                clearTimeout(appState.resizeTimer);
-                clearTimeout(appState.sliderHideTimeout);
-                // Clear cache and destroy PDF documents
-                pdfState.pageCache.clear();
-                if (pdfState.pdfDocument?.destroy) { try { pdfState.pdfDocument.destroy(); } catch(e){} }
-                if (pdfState.currentNotesPdfDoc?.destroy) { try { pdfState.currentNotesPdfDoc.destroy(); } catch(e){} }
-                pdfState.pdfDocument = null;
-                pdfState.currentNotesPdfDoc = null;
-                // Hide any remaining popups (though they should be closed by normal flow)
-                hideNotesPopup();
-                hideIframePopup();
-                hideDefinitionPopup();
-                hideLoAchievementPopup(); // Added
-            });
-
-            updateStatus("Initialization sequence complete. Background PDF loading may be in progress.");
-
-        } catch (initError) {
-            console.error("CRITICAL Initialization failed:", initError);
-            // Display error prominently if init fails catastrophically
-            document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace; position: fixed; top: 10px; left: 10px; z-index: 11000; max-width: calc(100% - 20px); overflow: auto;"><pre>Application Initialization Error:\n${initError.stack || initError}</pre></div>`;
-            // Ensure loading state is visually consistent with error
-            ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
-            if (ui.goToChapterBtn) { // Ensure button is hidden on failure
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
+            // Display message in main container
+            if(ui.mainContainer) {
+                ui.mainContainer.style.visibility = 'visible';
+                ui.mainContainer.style.opacity = '1';
+                ui.mainContainer.innerHTML = `<div style="color: var(--text-on-dark); background: rgba(28,37,54,.8); border-radius: 8px; padding: 40px; text-align: center; max-width: 500px; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"><h2>Interactive Reader</h2><p style="margin-top: 15px;">Add <code>?pdf=URL_TO_PDF</code> to the address bar.</p></div>`;
             }
+            // Hide loading game elements if no PDF is provided
+            if (ui.gameContainer) ui.gameContainer.style.display = 'none';
+        }
+
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            updateStatus("Unloading - Performing Cleanup.");
+            // Clear all timeouts
+            clearTimeout(appState.gameOverTimeoutId);
+            clearTimeout(appState.alertTimeout);
+            clearTimeout(appState.alertWiggleTimeout);
+            clearTimeout(toolbarTimer); // Use reverted timer variable
+            clearTimeout(leftToolbarTimer); // Use reverted timer variable
+            clearTimeout(appState.resizeTimer);
+            clearTimeout(appState.sliderHideTimeout);
+            // Clear cache and destroy PDF documents
+            pdfState.pageCache.clear();
+            if (pdfState.pdfDocument?.destroy) { try { pdfState.pdfDocument.destroy(); } catch(e){} }
+            if (pdfState.currentNotesPdfDoc?.destroy) { try { pdfState.currentNotesPdfDoc.destroy(); } catch(e){} }
+            pdfState.pdfDocument = null;
+            pdfState.currentNotesPdfDoc = null;
+            // Hide any remaining popups (though they should be closed by normal flow)
+            hideNotesPopup();
+            hideIframePopup();
+            hideDefinitionPopup();
+            hideLoAchievementPopup(); // Added
+        });
+
+        updateStatus("Initialization sequence complete. Background PDF loading may be in progress.");
+
+    } catch (initError) {
+        console.error("CRITICAL Initialization failed:", initError);
+        // Display error prominently if init fails catastrophically
+        document.body.innerHTML = `<div style="color: red; background: white; padding: 20px; border: 2px solid red; font-family: monospace; position: fixed; top: 10px; left: 10px; z-index: 11000; max-width: calc(100% - 20px); overflow: auto;"><pre>Application Initialization Error:\n${initError.stack || initError}</pre></div>`;
+        // Ensure loading state is visually consistent with error
+        ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
+        if (ui.goToChapterBtn) { // Ensure button is hidden on failure
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
         }
     }
+}
 
 // --- Start the application ---
 document.addEventListener('DOMContentLoaded', init);
