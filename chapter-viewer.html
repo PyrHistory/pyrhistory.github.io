@@ -687,22 +687,17 @@ body:not(.loading-game-active) .main-container {
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
     position: relative; /* Important for positioning layers */
-    /* Original width/height commented out, now calculated */
-    /* width: calc(100% - 2 * var(--page-padding)); */
-    /* height: calc(100% - 2 * var(--page-padding)); */
-    margin: var(--page-padding); /* Keep original margin */
+    /* Use original width/height calculations */
+    width: calc(100% - 2 * var(--page-padding));
+    height: calc(100% - 2 * var(--page-padding));
+    margin: var(--page-padding);
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden; /* Clip layers */
-
-    /* --- NEW Scaling Properties --- */
-    width: calc(100% / var(--pdf-content-scale, 1)); /* Adjust width based on scale */
-    height: calc(100% / var(--pdf-content-scale, 1)); /* Adjust height based on scale */
-    transform-origin: center center; /* Scale from the center */
-    transform: scale(var(--pdf-content-scale, 1)); /* Apply the scaling */
-    transition: transform 0.1s ease-out; /* Optional: smooth transition if scale changes */
-    /* --- END NEW Scaling Properties --- */
+    /* Ensure no transform properties remain from previous attempts */
+    transform: none;
+    transform-origin: center center;
 }
         
 .pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; top: 0; left: 0; z-index: 1; } /* Canvas layer */
@@ -2330,99 +2325,113 @@ function triggerRotateButtonIndication() {
 
     // --- Page Rendering (Keep from New Code - Uses new pdfState) ---
     async function renderPage(pageNum, canvasId) {
-        const canvas = (canvasId === 'left-page-canvas') ? ui.leftPageCanvas : ui.rightPageCanvas;
-        const ctx = canvas?.getContext('2d');
-        const pageElement = getPageElement(canvasId);
-        const canvasContainer = getCanvasContainer(pageElement);
-        const textLayerContainer = pageElement?.querySelector('.textLayer'); // ui.leftTextLayer / ui.rightTextLayer
-        const annotationLayerContainer = pageElement?.querySelector('.annotationLayer'); // ui.leftAnnotationLayer / ui.rightAnnotationLayer
-        const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container'); // ui.leftKeywordOverlay / ui.rightKeywordOverlay
+    const canvas = (canvasId === 'left-page-canvas') ? ui.leftPageCanvas : ui.rightPageCanvas;
+    const ctx = canvas?.getContext('2d');
+    const pageElement = getPageElement(canvasId);
+    const canvasContainer = getCanvasContainer(pageElement);
+    const textLayerContainer = pageElement?.querySelector('.textLayer');
+    const annotationLayerContainer = pageElement?.querySelector('.annotationLayer');
+    const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container'); // Get reference early
 
-        delete pdfState.currentViewports[canvasId];
-        clearPageLayers(pageElement);
-        if (pageElement?.querySelector('.keyword-overlay-container')) {
-             pageElement.querySelector('.keyword-overlay-container').classList.remove('keyword-overlay-scaled'); // Reset scale class on clear
-             pageElement.querySelector('.keyword-overlay-container').style.removeProperty('--pdf-content-scale');
-        }
+    // --- Reset keyword overlay scaling from previous attempts ---
+    if (pageElement?.querySelector('.keyword-overlay-container')) {
+         pageElement.querySelector('.keyword-overlay-container').classList.remove('keyword-overlay-scaled');
+         pageElement.querySelector('.keyword-overlay-container').style.removeProperty('--pdf-content-scale');
+    }
+    // --- End Reset ---
 
-        if (!pdfState.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > pdfState.totalPages) {
-            if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (pageElement) pageElement.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
+    delete pdfState.currentViewports[canvasId]; // Clear previous viewport for this canvas
+    clearPageLayers(pageElement); // Clear layers BEFORE rendering
+
+    if (!pdfState.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > pdfState.totalPages) {
+        if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (pageElement) pageElement.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
+        hidePageLoading(canvasId);
+        return;
+    }
+
+    showPageLoading(canvasId);
+    pageElement.classList.remove(CSS_CLASS.PLACEHOLDER_PAGE);
+    let page;
+    let viewport;
+
+    try {
+        if (pdfState.pageCache.has(pageNum)) {
+            // --- Use Cached Page ---
+            const cachedData = pdfState.pageCache.get(pageNum);
+            canvas.width = cachedData.width; canvas.height = cachedData.height;
+            canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
+            ctx.putImageData(cachedData.imageData, 0, 0);
+            page = await pdfState.pdfDocument.getPage(pageNum); // Still need page object for layers
+            viewport = cachedData.viewport; // Use the EXACT viewport from cache
+            pdfState.currentViewports[canvasId] = viewport; // Store it
+
+            // Move accessed item to the end (most recently used)
+            pdfState.pageCache.delete(pageNum);
+            pdfState.pageCache.set(pageNum, cachedData);
             hidePageLoading(canvasId);
-            return;
-        }
+        } else {
+            // --- Render New Page ---
+            page = await pdfState.pdfDocument.getPage(pageNum);
+            const containerStyle = getComputedStyle(canvasContainer);
+            // Use the container's clientWidth/Height for available space calculation
+            const availableWidth = canvasContainer.clientWidth;
+            const availableHeight = canvasContainer.clientHeight;
 
-        showPageLoading(canvasId);
-        pageElement.classList.remove(CSS_CLASS.PLACEHOLDER_PAGE);
-        let page;
-        let viewport;
-
-        try {
-            if (pdfState.pageCache.has(pageNum)) {
-                const cachedData = pdfState.pageCache.get(pageNum);
-                canvas.width = cachedData.width; canvas.height = cachedData.height;
-                canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
-                ctx.putImageData(cachedData.imageData, 0, 0);
-                page = await pdfState.pdfDocument.getPage(pageNum); // Still need page object for layers
-                viewport = cachedData.viewport;
-                pdfState.currentViewports[canvasId] = viewport;
-                // Move accessed item to the end (most recently used)
-                pdfState.pageCache.delete(pageNum);
-                pdfState.pageCache.set(pageNum, cachedData);
+            if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
+                console.warn(`Canvas container ${canvasId} has invalid dimensions during renderPage call for page ${pageNum}. Skipping render.`);
                 hidePageLoading(canvasId);
-            } else {
-                page = await pdfState.pdfDocument.getPage(pageNum);
-                const containerStyle = getComputedStyle(canvasContainer);
-                const availableWidth = parseFloat(containerStyle.width);
-                const availableHeight = parseFloat(containerStyle.height);
-
-                if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
-                    console.warn(`Canvas container ${canvasId} has invalid dimensions during renderPage call for page ${pageNum}. Skipping render.`);
-                    hidePageLoading(canvasId);
-                    return;
-                }
-
-                const defaultViewport = page.getViewport({ scale: 1 });
-                let scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-scale *= PDF_RENDER_SCALE_MULTIPLIER; // Apply the multiplier
-                viewport = page.getViewport({ scale: scale });
-                pdfState.currentViewports[canvasId] = viewport;
-
-                const outputScale = window.devicePixelRatio || 1;
-                canvas.width = Math.floor(viewport.width * outputScale);
-                canvas.height = Math.floor(viewport.height * outputScale);
-                canvas.style.width = `${Math.floor(viewport.width)}px`;
-                canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-                await page.render({ canvasContext: ctx, transform, viewport }).promise;
-
-                // Cache the rendered image data and viewport info
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                pdfState.pageCache.set(pageNum, {
-                    imageData,
-                    width: canvas.width,
-                    height: canvas.height,
-                    styleWidth: Math.floor(viewport.width),
-                    styleHeight: Math.floor(viewport.height),
-                    viewport
-                });
-                trimCache(); // Ensure cache doesn't exceed max size
-                hidePageLoading(canvasId);
+                return;
             }
 
-            // Render enhancement layers after canvas is drawn
-            await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
-            await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-            await createKeywordOverlays(pageNum, pageElement, viewport); // Pass necessary elements
+            const defaultViewport = page.getViewport({ scale: 1 });
 
-        } catch (error) {
-            console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
-            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // --- Calculate scale and APPLY MULTIPLIER ---
+            let scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+            scale *= PDF_RENDER_SCALE_MULTIPLIER; // <<< Apply the multiplier HERE
+            // --- END Scaling ---
+
+            viewport = page.getViewport({ scale: scale }); // Create the final, scaled viewport
+            pdfState.currentViewports[canvasId] = viewport; // Store it
+
+            const outputScale = window.devicePixelRatio || 1;
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            // Set canvas style size based on the scaled viewport
+            canvas.style.width = `${Math.floor(viewport.width)}px`;
+            canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+            // Render the PDF content onto the canvas
+            await page.render({ canvasContext: ctx, transform, viewport }).promise;
+
+            // Cache the rendered image data and viewport info
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            pdfState.pageCache.set(pageNum, {
+                imageData,
+                width: canvas.width,
+                height: canvas.height,
+                styleWidth: Math.floor(viewport.width), // Cache style size
+                styleHeight: Math.floor(viewport.height), // Cache style size
+                viewport // Cache the exact viewport used
+            });
+            trimCache(); // Ensure cache doesn't exceed max size
             hidePageLoading(canvasId);
-            pageElement?.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
         }
+
+        // --- Render enhancement layers using the SAME scaled viewport ---
+        await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
+        await renderAnnotationLayer(page, annotationLayerContainer, viewport);
+        await createKeywordOverlays(pageNum, pageElement, viewport); // Pass the scaled viewport
+
+    } catch (error) {
+        console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hidePageLoading(canvasId);
+        pageElement?.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
     }
+}
 
     // --- Reading Time Calculation (Keep from New Code - Uses new pdfState) ---
     async function calculatePageReadingTime(pageNum, viewport) {
@@ -5032,10 +5041,8 @@ ui.gameIframe?.addEventListener('focus', () => {
     // --- Initialization (Uses reverted timelock reset, reverted setupToolbarHover/setupLeftToolbarHover, LO loading) ---
     async function init() {
     updateStatus("Initializing application...");
-    appState.previousPageBeforeNavigation = null;
-    // --- NEW: Set global CSS variable for scaling ---
-    document.documentElement.style.setProperty('--pdf-content-scale', PDF_RENDER_SCALE_MULTIPLIER);
-    // --- END NEW ---
+    appState.previousPageBeforeNavigation = null; // Keep this reset
+    // REMOVED: document.documentElement.style.setProperty('--pdf-content-scale', PDF_RENDER_SCALE_MULTIPLIER);
 
     // Body starts with 'loading-game-active' class
 
