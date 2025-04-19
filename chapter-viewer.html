@@ -2210,9 +2210,10 @@ function triggerRotateButtonIndication() {
     async function createKeywordOverlays(pageNum, pageElement, viewport) {
     const overlayContainerId = pageElement.classList.contains('left') ? 'left-keyword-overlay' : 'right-keyword-overlay';
     const overlayContainer = document.getElementById(overlayContainerId);
-    const canvasContainer = getCanvasContainer(pageElement);
+    const canvasContainer = getCanvasContainer(pageElement); // Not directly used for coords, but good to have ref
 
-    if (!pdfState.pdfDocument || !overlayContainer || !canvasContainer || !viewport) { // Added viewport check
+    // Need viewport for calculations
+    if (!pdfState.pdfDocument || !overlayContainer || !viewport) {
         console.warn(`Skipping keyword overlay for page ${pageNum}: Missing elements or viewport.`); return;
     }
     overlayContainer.innerHTML = ''; // Clear previous highlights
@@ -2231,12 +2232,12 @@ function triggerRotateButtonIndication() {
         const textContent = await page.getTextContent({ normalizeWhitespace: true });
         const items = textContent.items;
 
-        // --- ORIGINAL Coordinate Calculation (for normal viewport) ---
+        // --- Simple Coordinate Calculation (for normal viewport) ---
         for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
             const item = items[itemIndex];
             const itemText = item.str;
             const itemTextLength = itemText.length;
-             // Added item.transform check for safety
+            // Added item.transform check for safety
             if (!itemText || itemText.trim().length === 0 || itemTextLength === 0 || item.width === 0 || !item.transform) continue;
 
             keywordsForPage.forEach((originalKeyword, keywordIndex) => {
@@ -2265,7 +2266,9 @@ function triggerRotateButtonIndication() {
                     const itemHeight = item.height; // Use actual height
                     // Calculate position based on transformed matrix
                     const itemLeft = tx[4];
-                    const itemTop = tx[5] - itemHeight; // PDF origin is bottom-left, viewport top-left
+                    // Viewport Y origin is top-left, PDF item transform Y origin is bottom-left
+                    // So itemTop in viewport coords is tx[5] (bottom) - itemHeight (height)
+                    const itemTop = tx[5] - itemHeight;
 
                     // Calculate highlight offset and width within the item
                     const highlightOffsetX = (matchIndex / itemTextLength) * itemWidth;
@@ -2366,20 +2369,13 @@ function triggerRotateButtonIndication() {
     const canvas = (canvasId === 'left-page-canvas') ? ui.leftPageCanvas : ui.rightPageCanvas;
     const ctx = canvas?.getContext('2d');
     const pageElement = getPageElement(canvasId);
-    const canvasContainer = getCanvasContainer(pageElement);
+    const canvasContainer = getCanvasContainer(pageElement); // Container for dimensions
     const textLayerContainer = pageElement?.querySelector('.textLayer');
     const annotationLayerContainer = pageElement?.querySelector('.annotationLayer');
-    const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container'); // Get reference early
+    const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container');
 
-    // --- Reset keyword overlay scaling from previous attempts ---
-    if (pageElement?.querySelector('.keyword-overlay-container')) {
-         pageElement.querySelector('.keyword-overlay-container').classList.remove('keyword-overlay-scaled');
-         pageElement.querySelector('.keyword-overlay-container').style.removeProperty('--pdf-content-scale');
-    }
-    // --- End Reset ---
-
-    delete pdfState.currentViewports[canvasId]; // Clear previous viewport for this canvas
-    clearPageLayers(pageElement); // Clear layers BEFORE rendering
+    delete pdfState.currentViewports[canvasId]; // Clear previous viewport
+    clearPageLayers(pageElement); // Clear layers
 
     if (!pdfState.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > pdfState.totalPages) {
         if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2394,68 +2390,34 @@ function triggerRotateButtonIndication() {
     let viewport;
 
     try {
-        if (pdfState.pageCache.has(pageNum)) {
-            // --- Use Cached Page ---
-            const cachedData = pdfState.pageCache.get(pageNum);
-            canvas.width = cachedData.width; canvas.height = cachedData.height;
-            canvas.style.width = `${cachedData.styleWidth}px`; canvas.style.height = `${cachedData.styleHeight}px`;
-            ctx.putImageData(cachedData.imageData, 0, 0);
-            page = await pdfState.pdfDocument.getPage(pageNum); // Still need page object for layers
-            viewport = cachedData.viewport; // Use the EXACT viewport from cache
-            pdfState.currentViewports[canvasId] = viewport; // Store it
+        // --- Get Page & Calculate NORMAL Viewport ---
+        page = await pdfState.pdfDocument.getPage(pageNum);
+        // Use the canvas-container's current client dimensions
+        const availableWidth = canvasContainer.clientWidth;
+        const availableHeight = canvasContainer.clientHeight;
 
-            // Move accessed item to the end (most recently used)
-            pdfState.pageCache.delete(pageNum);
-            pdfState.pageCache.set(pageNum, cachedData);
-            hidePageLoading(canvasId);
-        } else {
-            // --- Render New Page ---
-            page = await pdfState.pdfDocument.getPage(pageNum);
-            const containerStyle = getComputedStyle(canvasContainer);
-            // Use the container's clientWidth/Height for available space calculation
-            const availableWidth = canvasContainer.clientWidth;
-            const availableHeight = canvasContainer.clientHeight;
-
-            if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
-                console.warn(`Canvas container ${canvasId} has invalid dimensions during renderPage call for page ${pageNum}. Skipping render.`);
-                hidePageLoading(canvasId);
-                return;
-            }
-
-            const defaultViewport = page.getViewport({ scale: 1 });
-
-            // --- Calculate scale to fit NORMALLY (NO MULTIPLIER HERE) ---
-            const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-            // --- END Normal Scaling ---
-
-            viewport = page.getViewport({ scale: scale }); // Create the final, normal-fit viewport
-            pdfState.currentViewports[canvasId] = viewport; // Store it
-
-            const outputScale = window.devicePixelRatio || 1;
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            // Set canvas style size based on the normal-fit viewport
-            canvas.style.width = `${Math.floor(viewport.width)}px`;
-            canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-            const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
-
-            // Render the PDF content onto the canvas
-            await page.render({ canvasContext: ctx, transform, viewport }).promise;
-
-            // Cache the rendered image data and viewport info
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            pdfState.pageCache.set(pageNum, {
-                imageData,
-                width: canvas.width,
-                height: canvas.height,
-                styleWidth: Math.floor(viewport.width), // Cache style size
-                styleHeight: Math.floor(viewport.height), // Cache style size
-                viewport // Cache the exact viewport used
-            });
-            trimCache(); // Ensure cache doesn't exceed max size
-            hidePageLoading(canvasId);
+        if (isNaN(availableWidth) || isNaN(availableHeight) || availableWidth <= 0 || availableHeight <= 0) {
+            throw new Error(`Canvas container ${canvasId} has invalid dimensions.`);
         }
+
+        const defaultViewport = page.getViewport({ scale: 1 });
+        // Calculate scale to fit NORMALLY (NO SCALING MULTIPLIER)
+        const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+        viewport = page.getViewport({ scale: scale }); // Final viewport for rendering
+        pdfState.currentViewports[canvasId] = viewport; // Store viewport
+
+        // --- Prepare Canvas ---
+        const outputScale = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+        // Style size should MATCH viewport size for 1:1 rendering display
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+        // --- Render PDF to Canvas ---
+        const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+        await page.render({ canvasContext: ctx, transform, viewport }).promise;
+        hidePageLoading(canvasId); // Hide loading AFTER rendering
 
         // --- Render enhancement layers using the SAME NORMAL viewport ---
         await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
