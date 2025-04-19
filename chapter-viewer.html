@@ -24,7 +24,7 @@
     --page-w:650px;
     --page-h:842px;
     --gradient-flame: linear-gradient(90deg, var(--fiery-orange), var(--accent), var(--fiery-orange)); /* Orange -> Amber -> Orange */
-    --page-padding: -20px;
+    --page-padding: 0.1px;
     --font-heading: 'Roboto', sans-serif;
     --font-body: 'Open Sans', sans-serif;
     /* Modern Font Stack */
@@ -1860,6 +1860,7 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
     const LOADING_BAR_ANIMATION_BUFFER = 600; // Kept constant from new code (used for button transition timing)
     const NOTES_WIGGLE_DURATION = 500; // Kept constant from new code
     const LO_TOOLTIP_OFFSET_Y = 5; // Offset below emoji for tooltip
+    const PDF_RENDER_SCALE_MULTIPLIER = 1.1; // 1.1 = 10% larger
 
     const CSS_CLASS = {
         VISIBLE: 'visible',
@@ -2365,7 +2366,8 @@ function triggerRotateButtonIndication() {
                 }
 
                 const defaultViewport = page.getViewport({ scale: 1 });
-                const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+                let scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
+scale *= PDF_RENDER_SCALE_MULTIPLIER; // Apply the multiplier
                 viewport = page.getViewport({ scale: scale });
                 pdfState.currentViewports[canvasId] = viewport;
 
