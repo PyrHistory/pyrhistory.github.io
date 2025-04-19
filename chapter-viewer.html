@@ -686,51 +686,43 @@ body:not(.loading-game-active) .main-container {
     width: var(--page-w);
     height: var(--page-h);
     background-color: var(--page);
-    position: relative; /* CRITICAL for absolute children */
-    overflow: hidden; /* CRITICAL for cropping */
+    position: relative; /* Needed for absolute canvas-container */
+    overflow: hidden; /* CRITICAL: Clips the canvas-container */
     flex-shrink: 0;
-    /* REMOVE flex centering, padding handled by container margin */
-    /* display: flex; */
-    /* justify-content: center; */
-    /* align-items: center; */
+    /* ADD PADDING to create the crop margin */
+    /* Adjust 5px to control crop amount */
+    padding: 5px;
     border: 1px solid rgba(255, 255, 255, .08);
-    padding: 0; /* Ensure no padding */
+    /* Remove flex properties if they were removed before */
+     display: block; /* Or remove display property */
 }
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
-    position: absolute; /* Stack within book-page */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Negative margin makes it LARGER than book-page's content box */
-    /* Adjust -5px to control crop amount (crops 5px from each side) */
-    margin: -14px;
-    overflow: hidden; /* Still needed to clip canvas if aspect ratio differs */
-    /* NO flex, NO transform */
-    display: block;
+    position: absolute; /* Position within book-page */
+    inset: 0; /* Fill the parent completely (top:0, left:0, width:100%, height:100%) */
+    /* REMOVE negative margin */
+    margin: 0;
+    overflow: hidden; /* Still clip canvas if aspect ratio differs from container */
+    display: flex; /* Use flex again to center canvas */
+    justify-content: center;
+    align-items: center;
+    /* Ensure no transforms */
     transform: none;
 }
         
 .pdf-canvas {
-    display: block;
+    display: block; /* Default display */
     box-shadow: none;
-    /* --- POSITION ABSOLUTELY within canvas-container --- */
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;  /* Added */
-    bottom: 0; /* Added */
-    /* --- SIZE: Fill container, respect aspect ratio --- */
-    width: 100%;
-    height: 100%;
-    max-width: 100%;  /* Allow shrinking */
-    max-height: 100%; /* Allow shrinking */
-    object-fit: contain; /* Use object-fit for centering/aspect */
-    /* --- CENTER within absolute bounds --- */
-    margin: auto;     /* Centers based on remaining space */
-    z-index: 1;       /* Below overlays */
+    /* --- SIZE: Fit within the container --- */
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Let flexbox handle centering now */
+    /* --- REMOVE Absolute Positioning & Margins --- */
+    /* position: absolute; */
+    /* top: 0; left: 0; right: 0; bottom: 0; */
+    /* margin: auto; */
+    z-index: 1; /* (Harmless without position) */
 } /* Canvas layer */
 .page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
