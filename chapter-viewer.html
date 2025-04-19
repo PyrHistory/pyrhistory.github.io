@@ -3833,166 +3833,159 @@ async function loadNotesData(pdfUrl) {
 }
 // --- END NEW ---
     
-    // --- PDF Loading (MODIFIED Timelock Reset, uses new pdfState otherwise + Button Logic + LO Load) ---
+        // --- PDF Loading (MODIFIED Timelock Reset, uses new pdfState otherwise + Button Logic + LO Load + FINAL BUTTON FIX) ---
     async function loadPdf(pdfUrl) {
-    updateStatus(`loadPdf started for: ${pdfUrl}`);
-    // --- Reset State ---
-    pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = []; // Reset LOs
-    pdfState.notesMapping = {}; // *** Ensure notes mapping is also reset ***
-    if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
-    pdfState.totalPages = 0; pdfState.currentPage = 1; pdfState.title = "No Document"; pdfState.isDoublePageView = true; // Reset intended view
+        updateStatus(`loadPdf started for: ${pdfUrl}`);
+        let pdfLoadSuccessful = false; // Flag to track success
 
-    // Reset time lock state completely on new PDF load
-    updateStatus("Resetting time lock state for new PDF.");
-    isTimelockGloballyEnabled = true;
-    updateTimelockButtonVisuals();
-    isTimeLockActive = false;
-    completedTimeLockPages.clear();
-    currentPageLockStartTime = 0;
-    requiredReadingTime = 0;
-    currentLockType = null; // Make sure lock type is reset
+        // --- Reset State ---
+        pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = [];
+        pdfState.notesMapping = {};
+        if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
+        pdfState.totalPages = 0; pdfState.currentPage = 1; pdfState.title = "No Document"; pdfState.isDoublePageView = true;
 
-    // --- Reset Notes Specific State (already handled by general resets, but good practice) ---
-    pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
-    if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
+        updateStatus("Resetting time lock state for new PDF.");
+        isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); isTimeLockActive = false; completedTimeLockPages.clear(); currentPageLockStartTime = 0; requiredReadingTime = 0; currentLockType = null;
 
-    // --- Reset User Progress ---
-    userState.readingProgress.furthestPage = 1;
-    // --- Reset UI ---
-    resetPopupStates();
-    document.title = "Pyr Course Viewer";
-
-    // --- Set 'Go To Chapter' button to loading state ---
-    if (ui.goToChapterBtn) {
-        updateStatus("Setting button to 'Loading Chapter...' state.");
-        ui.goToChapterBtn.textContent = 'Loading Chapter...';
-        ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-    }
-
-    let filename = "Document";
-    try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
-    pdfState.title = filename;
-
-    try {
-        updateStatus("Starting background PDF document loading...");
-        console.log("Internal Status: Loading PDF document...");
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-
-        // Load overlay/iframe/LO/Notes data concurrently with PDF document
-        const overlayPromise = loadOverlayData(pdfUrl);
-        const iframeDataPromise = loadIframeData(pdfUrl);
-        const loPromise = loadLearningOutcomes(pdfUrl);
-        const notesDataPromise = loadNotesData(pdfUrl); // *** This promise loads external notes ***
-
-        pdfState.pdfDocument = await loadingTask.promise;
-        pdfState.totalPages = pdfState.pdfDocument.numPages;
-        pdfState.currentPage = 1; // Start at page 1
-        updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
-        document.title = `${pdfState.title} - Pyr Course Viewer`;
-        updateSliderTotalPages(); // Update slider max value (will also render milestones now)
-
-        // Wait for overlay/iframe/LO/Notes data loading
-        // *** Corrected Promise.all handling ***
-        const [overlayLoaded, iframeDataLoaded, loLoaded, notesDataLoaded] = await Promise.all([
-            overlayPromise,
-            iframeDataPromise,
-            loPromise,
-            notesDataPromise // Wait for notes data too
-        ]);
-        updateStatus(`Overlay data loaded: ${overlayLoaded}`);
-        updateStatus(`Iframe data loaded: ${iframeDataLoaded}`);
-        updateStatus(`LO data loaded: ${loLoaded}`);
-        updateStatus(`External Notes data loaded: ${notesDataLoaded}`); // Log status for notes
-
-        // Re-render milestones after LO data is loaded (if total pages was already set)
-        renderSliderMilestones();
-
-        // Pre-scan for keywords if overlay data was loaded
-        if (overlayLoaded && pdfState.pdfDocument) {
-            console.log("Internal Status: Scanning for keywords...");
-            await findFirstKeywordInstances();
-        }
-
-        // Determine initial view mode based on window size
-        if (window.innerWidth < 1000) {
-            updateStatus("Initial setup: Small screen detected, setting intended view to Single Page (Fullscreen).");
-            pdfState.isDoublePageView = false;
-            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
-            ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
-        } else {
-             updateStatus("Initial setup: Large screen detected, setting intended view to Double Page.");
-            pdfState.isDoublePageView = true;
-            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE);
-             pdfState.currentPage = 1; // Ensure starting on page 1 for double view
-        }
-
-        updateSliderPosition(); // Set initial slider position/text/LO colors
-
-        // Wait for next frame before initial render to ensure layout is stable
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        await updateDisplay(); // Perform initial render
-
-        // --- READER IS READY ---
-        appState.isReaderReady = true;
-        updateStatus("Reader is ready!");
-        // Notify game iframe that the chapter is ready
-        if (ui.gameIframe?.contentWindow) {
-            try {
-                ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*');
-                updateStatus("Sent 'chapterReady' message to game iframe.");
-            } catch (e) {
-                console.error("Error posting 'chapterReady' message to iframe:", e);
-            }
-        } else {
-            console.warn("Cannot send 'chapterReady' message: Game iframe or contentWindow not accessible.");
-        }
-
-        // --- Show 'Go to Chapter' button with animation ---
-        setTimeout(() => {
-            if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
-                ui.goToChapterBtn.textContent = 'Go to Chapter';
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
-            }
-        }, LOADING_BAR_ANIMATION_BUFFER);
-
-        // Notify game iframe that reader is ready (to prevent auto-restart)
-        if (ui.gameIframe?.contentWindow) {
-                    try {
-                        ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
-                        updateStatus("Sent disableRestart message to game iframe.");
-                    } catch (e) { console.error("Error posting disableRestart message to iframe:", e); }
-                } else {
-                    console.warn("Cannot send disableRestart message: iframe or contentWindow not accessible.");
-                }
-
-    } catch (error) {
-        console.error("FATAL: Error loading PDF document:", error);
-        appState.isReaderReady = false;
-        // Reset all state again on critical failure
-        pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = []; pdfState.notesMapping = {};
-        completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); currentLockType = null;
         pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
-        document.title="Pyr Course Viewer - Error";
-        updateSliderTotalPages(); updateSliderPosition();
-        if (ui.bookSpread) {
-            ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
-        }
-        updateStatus("loadPdf failed. Reader will not be available.");
-        ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
-        if (ui.goToChapterBtn) {
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-        }
-        if (ui.gameContainer) ui.gameContainer.style.display = 'none';
-         if(ui.iframeLoadingText) ui.iframeLoadingText.textContent = `Error loading PDF: ${error.message}`;
-         if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'block';
+        if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
 
-    } finally {
-         updateStatus("loadPdf finished (background process).");
-    }
-}
+        userState.readingProgress.furthestPage = 1;
+        resetPopupStates();
+        document.title = "Pyr Course Viewer";
+
+        // --- Set 'Go To Chapter' button to loading state ---
+        if (ui.goToChapterBtn) {
+            updateStatus("Setting button to 'Loading Chapter...' state.");
+            ui.goToChapterBtn.textContent = 'Loading Chapter...';
+            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+        }
+
+        let filename = "Document";
+        try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
+        pdfState.title = filename;
+
+        try {
+            updateStatus("Starting background PDF document loading...");
+            console.log("Internal Status: Loading PDF document...");
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+
+            const overlayPromise = loadOverlayData(pdfUrl);
+            const iframeDataPromise = loadIframeData(pdfUrl);
+            const loPromise = loadLearningOutcomes(pdfUrl);
+            const notesDataPromise = loadNotesData(pdfUrl);
+
+            pdfState.pdfDocument = await loadingTask.promise;
+            pdfState.totalPages = pdfState.pdfDocument.numPages;
+            pdfState.currentPage = 1;
+            updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
+            document.title = `${pdfState.title} - Pyr Course Viewer`;
+            updateSliderTotalPages();
+
+            const [overlayLoaded, iframeDataLoaded, loLoaded, notesDataLoaded] = await Promise.all([
+                overlayPromise, iframeDataPromise, loPromise, notesDataPromise
+            ]);
+            updateStatus(`Overlay data loaded: ${overlayLoaded}`); updateStatus(`Iframe data loaded: ${iframeDataLoaded}`); updateStatus(`LO data loaded: ${loLoaded}`); updateStatus(`External Notes data loaded: ${notesDataLoaded}`);
+            renderSliderMilestones();
+
+            if (overlayLoaded && pdfState.pdfDocument) {
+                console.log("Internal Status: Scanning for keywords...");
+                await findFirstKeywordInstances();
+            }
+
+            if (window.innerWidth < 1000) {
+                updateStatus("Initial setup: Small screen detected, setting intended view to Single Page (Fullscreen).");
+                pdfState.isDoublePageView = false; ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE); ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
+            } else {
+                updateStatus("Initial setup: Large screen detected, setting intended view to Double Page.");
+                pdfState.isDoublePageView = true; ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE); pdfState.currentPage = 1;
+            }
+            updateSliderPosition();
+
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            // Perform initial render, but catch errors locally
+            try {
+                await updateDisplay(false); // Pass false for initial render
+            } catch (initialRenderError) {
+                console.error("Error during initial updateDisplay in loadPdf:", initialRenderError);
+                updateStatus("Initial render failed, but proceeding to finalize reader state.");
+                // Error occurred, but we still want the button to show
+            }
+
+            // If we reached here without throwing an error in the main try block
+            pdfLoadSuccessful = true; // Mark as successful
+
+        } catch (error) {
+            console.error("FATAL: Error during PDF document loading or setup:", error);
+            pdfLoadSuccessful = false; // Mark as failed
+            // Reset state again on critical failure
+            pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = []; pdfState.notesMapping = {};
+            completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); currentLockType = null;
+            pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
+            document.title="Pyr Course Viewer - Error";
+            updateSliderTotalPages(); updateSliderPosition();
+            if (ui.bookSpread) { ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`; }
+            updateStatus("loadPdf failed critically. Reader will not be available.");
+            // Don't remove loading game class here, let finally handle button
+
+        } finally {
+            // --- THIS BLOCK ALWAYS RUNS (Success or Failure) ---
+            updateStatus("loadPdf finally block executing...");
+
+            // Set reader ready state based on success flag
+            appState.isReaderReady = pdfLoadSuccessful;
+            updateStatus(`Reader state set: isReaderReady = ${appState.isReaderReady}`);
+
+            // Notify game iframe about chapter readiness status
+            if (ui.gameIframe?.contentWindow) {
+                try {
+                    // Send 'chapterReady' only if successful, otherwise send nothing or an error state if desired
+                    if (appState.isReaderReady) {
+                        ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*');
+                        updateStatus("Sent 'chapterReady' message to game iframe.");
+                    }
+                    // Always send disableRestart, even on failure, to prevent loops
+                    ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*');
+                    updateStatus("Sent disableRestart message to game iframe.");
+                } catch (e) {
+                    console.error("Error posting message(s) to iframe:", e);
+                }
+            } else {
+                console.warn("Cannot send messages: Game iframe or contentWindow not accessible.");
+            }
+
+            // Update the 'Go to Chapter' button state reliably
+            // Use a small delay to ensure the game has processed any messages
+            setTimeout(() => {
+                if (ui.goToChapterBtn) {
+                    if (appState.isReaderReady) {
+                        updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
+                        ui.goToChapterBtn.textContent = 'Go to Chapter';
+                        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+                        // Ensure it becomes visible only if the game loading screen is still active
+                        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                             ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
+                        }
+                    } else {
+                        // PDF failed to load, handle button state
+                        updateStatus("Reader failed to load. Hiding loading button.");
+                        // Option 1: Hide the button completely
+                         ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
+                         ui.goToChapterBtn.textContent = 'Go to Chapter'; // Reset text
+                        // Option 2: Show an error state (e.g., "Load Failed") - Keep hidden for now
+                        // ui.goToChapterBtn.textContent = 'Load Failed';
+                        // ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+                        // ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Make it visible
+                        // ui.goToChapterBtn.disabled = true; // Disable clicking
+                    }
+                }
+            }, 100); // Small delay (100ms)
+
+            updateStatus("loadPdf finished.");
+        } // --- END finally ---
+    } // --- END loadPdf ---
 
     // --- Popup Handling (Keep from New Code) ---
     // Replacement showDefinitionPopup function // <<<< CONFIRMED: Correct Block Start
