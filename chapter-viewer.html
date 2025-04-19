@@ -2427,6 +2427,7 @@ function triggerRotateButtonIndication() {
 
     // --- Update Display (REVERTED Timelock Logic, Uses New Code's state/UI, Added LO update) ---
     async     // --- Update Display (REVERTED Timelock Logic, Uses New Code's state/UI, Added LO update, MODIFIED popup triggering) ---
+    async     // --- Update Display (REVERTED Timelock Logic, Uses New Code's state/UI, Added LO update, MODIFIED popup triggering, FIXED slider text update timing) ---
     async function updateDisplay(triggerPopups = false) { // <-- Parameter added
         if (!pdfState.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
 
@@ -2588,8 +2589,12 @@ function triggerRotateButtonIndication() {
         } // End if(triggerPopups)
 
         updateStatus("Display update complete.");
-        updateSliderInfoText(); // <-- ADDED THIS LINE
-    }
+
+        // Only update slider text if the reader is fully initialized
+        if (appState.isReaderReady) { // <-- CHECK ADDED HERE
+            updateSliderInfoText();
+        } // <-- CHECK ADDED HERE
+    } // End of updateDisplay function
 
     // --- Preloading (Keep from New Code - Uses new pdfState) ---
      function preloadAdjacentPages(currentPage) {
