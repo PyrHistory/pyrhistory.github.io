@@ -3043,80 +3043,75 @@ function triggerRotateButtonIndication() {
     }
 }
 
+        // --- Navigation (REPLACEMENT jumpToPage) ---
     function jumpToPage(pageNum){
-    if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
-        console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
-        return;
-    }
+        if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
+            console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
+            // If slider triggered this bad jump, reset it visually
+             if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
+                 updateSliderPosition(pdfState.currentPage); // Reset slider to actual current page
+             }
+            return;
+        }
 
-    let targetStartPage = pageNum;
-    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+        let targetStartPage = pageNum;
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-    if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
-        targetStartPage--;
-    }
+        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
+            targetStartPage--;
+        }
 
-    const currentStartPage = pdfState.currentPage;
+        const currentStartPage = pdfState.currentPage;
+        appState.previousPageBeforeNavigation = currentStartPage; // Store for popup logic
 
-    // *** Store current page BEFORE checking if it's the same ***
-    appState.previousPageBeforeNavigation = currentStartPage;
+        if (targetStartPage === currentStartPage) {
+            updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
+            updateSliderPosition(currentStartPage); // Ensure slider is accurate even if no jump
+            appState.previousPageBeforeNavigation = null;
+            return;
+        }
 
-    if (targetStartPage === currentStartPage) {
-         updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
-         if (document.activeElement === ui.slider) {
-             updateSliderPosition();
-         }
-         appState.previousPageBeforeNavigation = null; // Reset if no action taken
-         return;
-    }
+        const isMovingForward = targetStartPage > currentStartPage;
 
-    const isMovingForward = targetStartPage > currentStartPage;
-
-    // *** REVERTED Lock Check Logic ***
-    if (isMovingForward) {
-        updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
-        if (checkReadingTimeLock()) { // Calls the reverted function
-            updateStatus(`Navigation blocked by time lock.`);
-            if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
-                updateSliderPosition(); // Reset slider if it triggered the block
+        // *** REVERTED Lock Check Logic ***
+        if (isMovingForward) {
+            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
+            if (checkReadingTimeLock()) { // Calls the reverted function
+                updateStatus(`Navigation blocked by time lock.`);
+                updateSliderPosition(currentStartPage); // Reset slider if it triggered the block
+                appState.previousPageBeforeNavigation = null;
+                return; // Block the jump
             }
-            appState.previousPageBeforeNavigation = null; // Reset if blocked
-            return; // Block the jump
+            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
+        } else { // Moving backward
+            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
+            if (isTimeLockActive) {
+                currentLockType = null;
+                updateStatus("Clearing active time lock due to backward navigation.");
+                isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0;
+            }
         }
-        updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
-    } else { // Moving backward
-        updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
-        // Clear any active lock if moving backward (using reverted globals)
-        if (isTimeLockActive) {
-             currentLockType = null; // *** Reset type ***
-             updateStatus("Clearing active time lock due to backward navigation.");
-             isTimeLockActive = false;
-             requiredReadingTime = 0;
-             currentPageLockStartTime = 0;
+        // *** End REVERTED Lock Check Logic ***
+
+        // --- Perform Navigation ---
+        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
+        pdfState.currentPage = targetStartPage; // Update page state HERE
+        updateSliderPosition(targetStartPage); // <<<< UPDATE SLIDER IMMEDIATELY
+
+        // Update furthest read page
+        if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
+            userState.readingProgress.furthestPage = targetStartPage;
+            updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
         }
+
+        resetPopupStates(); // Hide popups
+        updateDisplay(); // Render new page(s), calculate next lock, check popups
+        manageToolbar(false);
+        manageLeftToolbar(false);
     }
-    // *** End REVERTED Lock Check Logic ***
-
-    // --- Perform Navigation (Uses New Code State) ---
-    updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
-    pdfState.currentPage = targetStartPage; // Current page state is updated HERE
-    updateSliderPosition(targetStartPage);
-
-    // Update furthest read page if moving forward (tracks highest *starting* page of a view)
-    if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
-        userState.readingProgress.furthestPage = targetStartPage;
-        updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
-        // In a real app, you might save userState.readingProgress here
-    }
-
-    resetPopupStates(); // Hide any open popups (including LO popup)
-
-    updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
-    manageToolbar(false);
-    manageLeftToolbar(false);
-}
+    // --- End of jumpToPage Replacement ---
 
     // --- START: New function to check handle state ---
     function checkAndApplyHandleState() {
@@ -3191,77 +3186,74 @@ function triggerRotateButtonIndication() {
         checkAndApplyHandleState(); // Check if handles need floating after scaling
     }
 
-    async function setRotatedView(targetPageNum = null) { // Accept optional target page
-    const wasRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-
-    if (wasRotated) {
-        updateStatus("Setting back to previous view (Double/Single)");
-        ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
-        appState.rotatedViewTargetPageNum = null; // Clear target when leaving rotated view
-        // Restore intended view mode (fullscreen if book was set to single page)
-        if (!pdfState.isDoublePageView) {
-            ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
+        // --- View Modes (REPLACEMENT BLOCK) ---
+    async function setRotatedView(targetPageNum = null) {
+        const wasRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        if (wasRotated) {
+            updateStatus("Setting back to previous view (Double/Single)");
+            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
+            appState.rotatedViewTargetPageNum = null;
+            if (!pdfState.isDoublePageView) {
+                ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
+            }
+            if (pdfState.isDoublePageView && pdfState.currentPage > 1 && pdfState.currentPage % 2 === 0) {
+                updateStatus(`Adjusting current page from ${pdfState.currentPage} to ${pdfState.currentPage - 1} for double view restore.`);
+                pdfState.currentPage--; // Adjust state BEFORE updateDisplay
+            }
+        } else if (targetPageNum !== null) {
+            updateStatus(`Setting Content Rotated View for page ${targetPageNum}`);
+            appState.rotatedViewTargetPageNum = targetPageNum;
+            ui.body.classList.remove(CSS_CLASS.FULLSCREEN_MODE);
+            ui.body.classList.add(CSS_CLASS.CONTENT_ROTATED_MODE);
+        } else {
+            console.warn("setRotatedView called without a target page number when entering rotated mode.");
+            return;
         }
-         // Adjust current page if needed when going back TO double view from rotated
-         if (pdfState.isDoublePageView && pdfState.currentPage > 1 && pdfState.currentPage % 2 === 0) {
-             updateStatus(`Adjusting current page from ${pdfState.currentPage} to ${pdfState.currentPage - 1} for double view restore.`);
-             pdfState.currentPage--;
-         }
-    } else if (targetPageNum !== null) { // Only rotate if a valid target was provided
-        updateStatus(`Setting Content Rotated View for page ${targetPageNum}`);
-        appState.rotatedViewTargetPageNum = targetPageNum; // Store the target page
-        ui.body.classList.remove(CSS_CLASS.FULLSCREEN_MODE); // Ensure fullscreen is off
-        ui.body.classList.add(CSS_CLASS.CONTENT_ROTATED_MODE);
-    } else {
-         console.warn("setRotatedView called without a target page number when entering rotated mode.");
-         return; // Don't proceed if no target page provided
+        resetPopupStates();
+        await updateDisplay(); // Render first
+        manageToolbar(false); manageLeftToolbar(false);
+        updateSliderTotalPages(); // Update total/milestones
+        updateSliderPosition(); // THEN update slider position/text based on final state
     }
-
-    resetPopupStates();
-    await updateDisplay(); // Recalculates lock (using reverted logic), renders based on new classes
-    manageToolbar(false); manageLeftToolbar(false); // Use reverted functions
-    updateSliderTotalPages(); // Slider max might change if view conceptually changes pages displayed
-    updateSliderPosition();
-}
 
     async function setSinglePageView() {
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
         const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        // If already in the desired state (single page view = fullscreen, not rotated)
-        if (!pdfState.isDoublePageView && isFullscreen && !isContentRotated) return;
+        if (!pdfState.isDoublePageView && isFullscreen && !isContentRotated) return; // Already in correct state
 
         updateStatus("Setting Single Page View (Fullscreen Mode)");
-        pdfState.isDoublePageView = false; // Set the book's *intended* view state
+        pdfState.isDoublePageView = false; // Set intended state flag
         ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
         ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
 
         resetPopupStates();
-        await updateDisplay(); // Render based on new state (calls reverted lock logic)
-        manageToolbar(false); manageLeftToolbar(false); // Use reverted functions
-        updateSliderTotalPages(); updateSliderPosition();
+        await updateDisplay(); // Render first
+        manageToolbar(false); manageLeftToolbar(false);
+        updateSliderTotalPages(); // Update total/milestones
+        updateSliderPosition(); // THEN update slider position/text
     }
 
     async function setDoublePageView() {
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
         const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        // If already in the desired state (double page intended, not fullscreen, not rotated)
-        if (pdfState.isDoublePageView && !isFullscreen && !isContentRotated) return;
+        if (pdfState.isDoublePageView && !isFullscreen && !isContentRotated) return; // Already in correct state
 
         updateStatus("Setting Double Page View");
-        pdfState.isDoublePageView = true; // Set the book's *intended* view state
+        pdfState.isDoublePageView = true; // Set intended state flag
         ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE);
 
-        // If current page is even, adjust to the previous odd page for double view start
         if (pdfState.currentPage > 1 && pdfState.currentPage % 2 === 0) {
             updateStatus(`Adjusting current page from ${pdfState.currentPage} to ${pdfState.currentPage - 1} for double view.`);
-            pdfState.currentPage--;
+            pdfState.currentPage--; // Adjust state BEFORE updateDisplay
         }
 
         resetPopupStates();
-        await updateDisplay(); // Render based on new state (calls reverted lock logic)
-        manageToolbar(false); manageLeftToolbar(false); // Use reverted functions
-        updateSliderTotalPages(); updateSliderPosition(); // Update slider value and text
+        await updateDisplay(); // Render first
+        manageToolbar(false); manageLeftToolbar(false);
+        updateSliderTotalPages(); // Update total/milestones
+        updateSliderPosition(); // THEN update slider position/text
     }
+    // --- End of View Modes Replacement Block ---
 
 // --- NEW: Calculate Video Duration for Timelock ---
 function calculateVideoDuration(url) {
@@ -3330,15 +3322,14 @@ function calculateVideoDuration(url) {
     }
     function hideLoading() { toggleVisibility(ui.loadingOverlay, false); }
 
-    // --- Slider Logic (Keep from New Code - Uses reverted jumpToPage internally, MODIFIED for LOs) ---
+        // --- Slider Logic (REPLACEMENT BLOCK) ---
     function showPageSlider() {
         if (!ui.sliderContainer || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-        clearTimeout(appState.sliderHideTimeout); // Always clear timer when showing
-        toggleVisibility(ui.sliderContainer, true); // Add .visible class
+        clearTimeout(appState.sliderHideTimeout);
+        toggleVisibility(ui.sliderContainer, true);
     }
 
     function hidePageSlider() {
-        // Only hide if not dragging and not hovered
         if (!appState.isDraggingSlider && !appState.isSliderAreaHovered) {
             toggleVisibility(ui.sliderContainer, false);
         }
@@ -3356,210 +3347,163 @@ function calculateVideoDuration(url) {
 
         setTimeout(checkAndApplyHandleState, 500);
 
-        // --- Hover Logic ---
         const handleSliderAreaEnter = () => {
             if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
             appState.isSliderAreaHovered = true;
-            showPageSlider(); // This also clears the hide timer
+            showPageSlider();
         };
-
         const handleSliderAreaLeave = () => {
             appState.isSliderAreaHovered = false;
-            // Start timer only if not currently dragging the slider thumb
             if (!appState.isDraggingSlider) {
                 startSliderHideTimer();
             }
         };
-
-        // Apply hover logic to BOTH the trigger zone and the slider container itself
         ui.sliderTriggerZone.addEventListener('mouseenter', handleSliderAreaEnter);
         ui.sliderTriggerZone.addEventListener('mouseleave', handleSliderAreaLeave);
         ui.sliderContainer.addEventListener('mouseenter', handleSliderAreaEnter);
         ui.sliderContainer.addEventListener('mouseleave', handleSliderAreaLeave);
 
-        // --- Drag/Input Logic ---
         const handleSliderInput = () => {
-            if (!appState.isDraggingSlider) return; // Only update display during drag
+            if (!appState.isDraggingSlider) return;
             const targetPageValue = parseInt(ui.slider.value, 10);
-            updateSliderInfoText(targetPageValue); // Update text dynamically
+            updateSliderInfoText(targetPageValue); // Update text dynamically during drag
             updateSliderStyle(ui.slider, targetPageValue);
-            updateMilestoneColors(targetPageValue); // Update LO colors during drag
-            // clearTimeout(appState.sliderHideTimeout); // Keep slider visible while interacting // Already done in handlePointerDown
+            updateMilestoneColors(targetPageValue);
         };
 
-        const handlePointerDown = () => {
+        const handlePointerDown = (event) => {
              if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+             if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
+                 updateStatus("Slider drag blocked: Content Rotated Mode active.");
+                 triggerRotateButtonIndication();
+                 updateSliderPosition(pdfState.currentPage); // Reset visual
+                 event.preventDefault();
+                 return;
+             }
              appState.isDraggingSlider = true;
-             clearTimeout(appState.sliderHideTimeout); // Prevent hiding while dragging
-             // Add class to body? Optional, for styling during drag
-
+             clearTimeout(appState.sliderHideTimeout);
         };
 
-        const handlePointerUpOrChange = (event) => { // Added event
-            
+        const handlePointerUpOrChange = (event) => {
             if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
-        updateStatus("Slider interaction blocked: Content Rotated Mode active.");
-        triggerRotateButtonIndication(); // Trigger the glow/wiggle effect
-        // Reset slider visually to the actual current page immediately
-        updateSliderPosition(pdfState.currentPage);
-        event.preventDefault(); // Stop any potential default slider behavior
-        event.stopPropagation(); // Stop the event from bubbling further
-        // If dragging ended, ensure the state is reset
-        if (appState.isDraggingSlider) {
-             appState.isDraggingSlider = false;
-             // Restart hide timer if needed (mouse might be outside area now)
-             if (!appState.isSliderAreaHovered) {
-                startSliderHideTimer();
-             }
-        }
-        return; // Stop further processing for this event
-    } 
-            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) return; // Prevent updates if rotated
-             if (!appState.isDraggingSlider && event.type !== 'change') return;
+                updateStatus("Slider interaction blocked: Content Rotated Mode active.");
+                triggerRotateButtonIndication();
+                updateSliderPosition(pdfState.currentPage); // Reset visual
+                event.preventDefault();
+                event.stopPropagation();
+                if (appState.isDraggingSlider) { // Reset drag state if needed
+                    appState.isDraggingSlider = false;
+                    if (!appState.isSliderAreaHovered) startSliderHideTimer();
+                }
+                return;
+            }
+             // Prevent jump on simple pointerup without value change or drag end
+             if (!appState.isDraggingSlider && event.type === 'pointerup') return;
+
              const wasDragging = appState.isDraggingSlider;
              appState.isDraggingSlider = false;
-             // Remove class from body?
-
              const targetPageValue = parseInt(ui.slider.value, 10);
              updateStatus(`Slider action ended at value: ${targetPageValue}`);
-             jumpToPage(targetPageValue); // Navigate (calls reverted lock logic)
+             jumpToPage(targetPageValue); // Navigate
 
-             // Restart hide timer if the mouse isn't still over the slider area
-             if (!appState.isSliderAreaHovered) {
-                 startSliderHideTimer();
-             }
+             if (!appState.isSliderAreaHovered) startSliderHideTimer();
          };
 
          const handleLostPointer = () => {
+            if (ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE)) {
+                 if (appState.isDraggingSlider) {
+                    updateStatus("Slider lost pointer in rotated mode, resetting visual state.");
+                    appState.isDraggingSlider = false;
+                    updateSliderPosition(pdfState.currentPage); // Reset visual
+                    if (!appState.isSliderAreaHovered) startSliderHideTimer();
+                 }
+                return;
+            }
             if (appState.isDraggingSlider) {
                 appState.isDraggingSlider = false;
-                // Remove class from body?
                 const targetPageValue = parseInt(ui.slider.value, 10);
                 updateStatus(`Slider lost capture at value: ${targetPageValue}`);
-                jumpToPage(targetPageValue); // Navigate (calls reverted lock logic)
-                 // Restart hide timer if the mouse isn't still over the slider area
-                 if (!appState.isSliderAreaHovered) {
-                    startSliderHideTimer();
-                 }
+                jumpToPage(targetPageValue); // Navigate
+                if (!appState.isSliderAreaHovered) startSliderHideTimer();
             }
         };
 
         ui.slider.addEventListener('input', handleSliderInput);
         ui.slider.addEventListener('pointerdown', handlePointerDown);
         ui.slider.addEventListener('pointerup', handlePointerUpOrChange);
-        ui.slider.addEventListener('change', handlePointerUpOrChange); // Handles clicks without drag
+        ui.slider.addEventListener('change', handlePointerUpOrChange);
         ui.slider.addEventListener('lostpointercapture', handleLostPointer);
 
-        renderSliderMilestones(); // Initial render of milestones
+        renderSliderMilestones();
         updateSliderTotalPages();
-        updateSliderPosition(); // Set initial state including milestone colors
+        updateSliderPosition(); // Set initial state
     }
 
+    // Helper to calculate and set the "Page X" or "Page X-Y" text
     function updateSliderInfoText(pageValue) {
-    // Ensure the function only runs if the necessary elements exist.
-    if (!ui.currentPageDisplay || !ui.totalPagesDisplay) {
-        console.warn("updateSliderInfoText: Missing UI elements for page display.");
-        return;
-    }
-
-    // Validate pageValue is a usable number, default to 1 if not
-    const currentPageValue = Number.isInteger(pageValue) && pageValue >= 1 ? pageValue : 1;
-
-    // Determine the current effective view mode
-    const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-    const isSingleEffective = isFullscreenCurrent || isContentRotatedCurrent || !pdfState.isDoublePageView;
-    const isDoubleEffective = !isSingleEffective;
-
-    let pageText; // Variable to hold the final display text
-
-    if (isDoubleEffective) {
-        // --- Double Page View Logic ---
-        let displayPageStart = currentPageValue;
-        // If the slider value corresponds to an even page, adjust the display
-        // to show the pair starting from the previous odd page.
-        if (displayPageStart > 1 && displayPageStart % 2 === 0) {
-            displayPageStart--;
-        }
-
-        // Check if the *next* page exists to form a valid pair
-        if (displayPageStart + 1 <= pdfState.totalPages) {
-            // Display as a pair "Page X-Y"
-            pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
+        if (!ui.currentPageDisplay || !ui.totalPagesDisplay) return;
+        const currentPageValue = Number.isInteger(pageValue) && pageValue >= 1 ? pageValue : 1;
+        const totalPages = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
+        const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isSingleEffective = isFullscreenCurrent || isContentRotatedCurrent || !pdfState.isDoublePageView;
+        const isDoubleEffective = !isSingleEffective;
+        let pageText;
+        if (isDoubleEffective) {
+            let displayPageStart = currentPageValue;
+            if (displayPageStart > 1 && displayPageStart % 2 === 0) displayPageStart--;
+            pageText = (displayPageStart + 1 <= totalPages) ? `Page ${displayPageStart}-${displayPageStart + 1}` : `Page ${totalPages}`;
         } else {
-            // It's the very last page, display singly "Page X" using the actual last page number
-            pageText = `Page ${pdfState.totalPages}`; // Use pdfState.totalPages directly here
+            const singlePageDisplayValue = Math.min(currentPageValue, totalPages);
+            pageText = `Page ${singlePageDisplayValue}`;
         }
-    } else {
-        // --- Single Page View Logic ---
-        // Display singly "Page X" using the exact value from the slider/navigation
-        pageText = `Page ${currentPageValue}`;
+        ui.currentPageDisplay.textContent = pageText;
     }
 
-    // Update the text content of the span
-    ui.currentPageDisplay.textContent = pageText;
-}
-
+    // Updates the slider's max value and total pages display
     function updateSliderTotalPages() {
         if (ui.slider && ui.totalPagesDisplay) {
             const total = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
             ui.slider.max = total;
             ui.totalPagesDisplay.textContent = total;
-            renderSliderMilestones(); // Re-render milestones if total pages changes
-            updateSliderStyle(ui.slider, ui.slider.value); // Update visual style
-            updateMilestoneColors(parseInt(ui.slider.value, 10)); // Update colors based on current value
+            renderSliderMilestones();
+            updateSliderPosition(pdfState.currentPage); // Update slider value/style after total changes
         }
     }
 
-        function updateSliderPosition(currentPageForSlider) { // Takes page number as argument
-        // Ensure all necessary UI elements and the PDF state are ready
-        if (!ui.slider || !ui.currentPageDisplay || !ui.totalPagesDisplay) {
-             console.warn("updateSliderPosition: Missing UI elements.");
-             return; // Exit if essential UI is missing
-        }
-
-        let pageToUpdate = 1; // Default fallback
-
-        // Determine the page number to use for the update
-        if (pdfState.totalPages > 0 && currentPageForSlider !== undefined && currentPageForSlider !== null) {
-            // Prioritize the passed argument if valid
-            pageToUpdate = Math.max(1, Math.min(currentPageForSlider, pdfState.totalPages));
-        } else if (pdfState.totalPages > 0) {
-            // Fallback to current state if argument missing/invalid but PDF is loaded
-            pageToUpdate = Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages));
-             if (currentPageForSlider === undefined && appState.isReaderReady) {
-                 // Only warn if called without argument when reader should be ready
-                 console.warn("updateSliderPosition called without page number argument during active state. Using pdfState.currentPage as fallback.");
-             }
+    // The single source of truth for setting the slider's visual state
+    function updateSliderPosition(currentPageForSlider) {
+        if (!ui.slider || !ui.currentPageDisplay || !ui.totalPagesDisplay) return;
+        let pageToUpdate = 1;
+        const totalPages = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
+        if (currentPageForSlider !== undefined && currentPageForSlider !== null && Number.isInteger(currentPageForSlider) && currentPageForSlider >= 1) {
+            pageToUpdate = Math.min(currentPageForSlider, totalPages);
+        } else if (pdfState.pdfDocument && pdfState.currentPage >= 1) {
+            pageToUpdate = Math.min(pdfState.currentPage, totalPages);
         } else {
-            // Fallback if PDF isn't loaded or totalPages is 0
             pageToUpdate = parseInt(ui.slider.min || 1);
         }
-
-        // --- Perform the UI Updates ---
-
-        // 1. Update the slider handle's numerical value
-        ui.slider.value = pageToUpdate;
-
-        // 2. Update the display text (e.g., "Page 5" or "Page 6-7")
-        updateSliderInfoText(pageToUpdate); // Use the determined page number
-
-        // 3. Update the slider's track fill style (visual progress)
-        updateSliderStyle(ui.slider, pageToUpdate); // Use the determined page number
-
-        // 4. Update the Learning Outcome milestone colors
-        updateMilestoneColors(pageToUpdate); // Use the determined page number
+        // Update Value (only if different)
+        if (parseInt(ui.slider.value, 10) !== pageToUpdate) ui.slider.value = pageToUpdate;
+        // Update Text
+        updateSliderInfoText(pageToUpdate);
+        // Update Style (Track Fill)
+        updateSliderStyle(ui.slider, pageToUpdate);
+        // Update LO Milestone Colors
+        updateMilestoneColors(pageToUpdate);
     }
 
-    // Updates the slider's track fill percentage
+    // Helper to update the track fill percentage
     function updateSliderStyle(slider, value) {
         if (!slider) return;
         const min = parseInt(slider.min || 1);
         const max = parseInt(slider.max || 1);
         const range = max > min ? max - min : 1;
-        const percentage = ((parseInt(value) - min) / range) * 100;
+        const pageValue = parseInt(value) || min;
+        const percentage = ((Math.max(min, Math.min(pageValue, max)) - min) / range) * 100;
         slider.style.setProperty('--slider-percent', `${Math.max(0, Math.min(100, percentage))}%`);
     }
+    // --- End of Slider Logic Replacement Block ---
 
     // --- NEW: LO Milestone Functions ---
     function renderSliderMilestones() {
