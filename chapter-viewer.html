@@ -1990,21 +1990,23 @@ function triggerRotateButtonIndication() {
 
     // --- Application State (Reverted toolbar/timelock state, added LO state) ---
     const appState = { // Keep non-reverted state from new code
-        isReaderReady: false,
-        resizeTimer: null,
-        sliderHideTimeout: null,
-        gameOverTimeoutId: null,
-        alertTimeout: null,
-        alertWiggleTimeout: null,
-        rotatedViewTargetPageNum: null, 
-        isDraggingSlider: false,
-        pagePadding: 15, // Default, updated on init
-        isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
-        learningOutcomes: [], // NEW: Store loaded LOs [{emoji, learning_outcome, page_number}, ...]
-        loPopupTargetPage: null, // NEW: Store target page for after LO popup
-        originalSliderInfoText: null,
-        sliderInfoFadeTimeout: null,
-    };
+    isReaderReady: false,
+    resizeTimer: null,
+    sliderHideTimeout: null,
+    gameOverTimeoutId: null,
+    alertTimeout: null,
+    alertWiggleTimeout: null,
+    rotatedViewTargetPageNum: null,
+    isDraggingSlider: false,
+    pagePadding: 15, // Default, updated on init
+    isSliderAreaHovered: false, // NEW: Track hover over trigger zone OR slider container
+    learningOutcomes: [], // NEW: Store loaded LOs [{emoji, learning_outcome, page_number}, ...]
+    loPopupTargetPage: null, // NEW: Store target page for after LO popup
+    originalSliderInfoText: null,
+    sliderInfoFadeTimeout: null,
+    previousPageBeforeNavigation: null, // <<< ADDED THIS LINE (initialize to null)
+};
+    
     // REVERTED: Global state variables for toolbar/timer from old code
     let toolbarTimer=null;
     let toolbarHover=!1;
@@ -2073,6 +2075,40 @@ function triggerRotateButtonIndication() {
             }
         }
     };
+
+        // START: PASTE THIS ENTIRE BLOCK
+    /**
+     * Checks if the navigation to the targetPage originated from the
+     * immediately preceding page in the current view mode.
+     * Relies on appState.previousPageBeforeNavigation being set correctly before navigation.
+     * @param {number} targetPage The page number being navigated TO.
+     * @returns {boolean} True if it was a sequential forward navigation, false otherwise.
+     */
+    function checkNavigationSource(targetPage) {
+        if (appState.previousPageBeforeNavigation === null || appState.previousPageBeforeNavigation === 0) {
+            // updateStatus("checkNavigationSource: No previous page recorded. Not sequential forward.");
+            return false; // Can't be sequential on first load or after reset
+        }
+
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        // Check the *intended* view mode for calculating the jump increment
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+        const increment = isEffectiveDoublePageView ? 2 : 1;
+
+        // Calculate what the target page *should* be if it was a sequential jump
+        const expectedTargetPage = appState.previousPageBeforeNavigation + increment;
+
+        const wasSequentialForward = (targetPage === expectedTargetPage);
+
+        // updateStatus(`checkNavigationSource: Prev=${appState.previousPageBeforeNavigation}, Target=${targetPage}, Expected=${expectedTargetPage}, Sequential=${wasSequentialForward}`);
+
+        // IMPORTANT: Do NOT reset appState.previousPageBeforeNavigation here.
+        // It needs to persist until the end of updateDisplay.
+
+        return wasSequentialForward;
+    }
+    // END: PASTE THIS ENTIRE BLOCK
 
 
     const resetPopupStates = () => {
@@ -2432,8 +2468,6 @@ function triggerRotateButtonIndication() {
     const leftPageNum = pdfState.currentPage; // This is the current *start* page of the view
     const potentialRightPageNum = pdfState.isDoublePageView ? pdfState.currentPage + 1 : 0;
 
-    // updateStatus(`Updating display for page(s): Start=${leftPageNum}${potentialRightPageNum > 0 ? ' (Intended Double View)' : ''}`);
-
     if (!ui.leftPageDiv || !ui.rightPageDiv || !ui.leftPageNumDisplay || !ui.rightPageNumDisplay) {
         console.error("Critical page elements missing! Cannot update display."); return;
     }
@@ -2441,35 +2475,28 @@ function triggerRotateButtonIndication() {
     const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
     const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE); // Check this first
     const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-    // updateStatus(`Effective View Mode: ${isContentRotated ? 'Rotated' : (isEffectiveDoublePageView ? 'Double' : 'Single')}`);
 
     let renderPromises = [];
     let leftPageNumToRender = pdfState.currentPage; // Default
 
-    // *** START CHANGE: Determine correct page for render ***
     if (isContentRotated && appState.rotatedViewTargetPageNum !== null) {
         leftPageNumToRender = appState.rotatedViewTargetPageNum;
         updateStatus(`Rotated view active. Rendering target page ${leftPageNumToRender} into left canvas.`);
     } else if (!isContentRotated) {
-        // Normal logic for non-rotated view
         leftPageNumToRender = pdfState.currentPage;
     } else {
-        // Rotated mode, but no target page set? Fallback or log error.
         console.warn("In rotated view but no target page number set in appState. Defaulting to currentPage.");
         leftPageNumToRender = pdfState.currentPage;
     }
-    // *** END CHANGE ***
 
     // *** REVERTED: Reset current lock state before evaluation (uses reverted globals) ***
     isTimeLockActive = false;
     currentPageLockStartTime = 0;
     requiredReadingTime = 0;
     currentLockType = null; // Reset lock type on every display update
-    // *** END Reset time lock state ***
 
     // --- Render Left Page (Using determined page number) ---
     if (leftPageNumToRender >= 1 && leftPageNumToRender <= pdfState.totalPages) {
-        // *** USE leftPageNumToRender HERE ***
         ui.leftPageNumDisplay.textContent = String(leftPageNumToRender);
         renderPromises.push(renderPage(leftPageNumToRender, 'left-page-canvas'));
     } else {
@@ -2482,7 +2509,7 @@ function triggerRotateButtonIndication() {
     }
 
     // --- Prepare Right Page (Hide if rotated or single) ---
-    ui.rightPageDiv.style.display = 'none'; // Hide initially or if rotated/single
+    ui.rightPageDiv.style.display = 'none';
     ui.rightPageDiv.classList.remove(CSS_CLASS.PLACEHOLDER_PAGE);
     const rCtx = ui.rightPageCanvas?.getContext('2d');
     if (rCtx) rCtx.clearRect(0, 0, ui.rightPageCanvas.width, ui.rightPageCanvas.height);
@@ -2490,25 +2517,22 @@ function triggerRotateButtonIndication() {
     ui.rightPageNumDisplay.textContent = '';
     delete pdfState.currentViewports['right-page-canvas'];
 
-    let actualRightPageNum = 0; // Initialize
+    let actualRightPageNum = 0;
 
     // --- Render Right Page (ONLY if in effective double-page view) ---
     if (isEffectiveDoublePageView) {
-        // *** Keep existing logic for double page view ***
-        actualRightPageNum = pdfState.currentPage + 1; // Calculate potential right page
+        actualRightPageNum = pdfState.currentPage + 1;
         if (actualRightPageNum >= 1 && actualRightPageNum <= pdfState.totalPages) {
             ui.rightPageNumDisplay.textContent = String(actualRightPageNum);
-            ui.rightPageDiv.style.display = 'flex'; // Show right page div ONLY in double view
+            ui.rightPageDiv.style.display = 'flex';
             renderPromises.push(renderPage(actualRightPageNum, 'right-page-canvas'));
         } else if (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages) {
-            // Show placeholder if left exists but right is beyond total (in double view)
             ui.rightPageDiv.style.display = 'flex';
             ui.rightPageDiv.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
             ui.rightPageNumDisplay.textContent = '';
-            actualRightPageNum = 0; // No actual content page rendered
+            actualRightPageNum = 0;
         }
     }
-    // *** If not isEffectiveDoublePageView (i.e., single or rotated), right page remains hidden ***
 
     // Wait for page rendering to complete
     await Promise.all(renderPromises);
@@ -2520,114 +2544,96 @@ function triggerRotateButtonIndication() {
     const rightEdgeNavRight = ui.rightPageDiv?.querySelector('.page-edge-right');
 
     if (isContentRotated) {
-        // Explicitly hide ALL edge navs in rotated view
         if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = 'none';
         if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
         if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
         if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
-    }
-    if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = ''; // Always show left-most edge
-    if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none'; // Hide by default
-    if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none'; // Hide by default
-    if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none'; // Hide by default
+    } else { // Not rotated
+        if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = '';
+        if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
+        if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
+        if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
 
-    if (isEffectiveDoublePageView) {
-        if (rightEdgeNavRight && !ui.rightPageDiv?.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
-            rightEdgeNavRight.style.display = ''; // Show right-most edge if not placeholder
+        if (isEffectiveDoublePageView) {
+            if (rightEdgeNavRight && !ui.rightPageDiv?.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
+                rightEdgeNavRight.style.display = '';
+            }
+        } else { // Single Page (Fullscreen)
+            if (leftEdgeNavRight) leftEdgeNavRight.style.display = '';
         }
-        // Hide inner edges in double view
-    } else { // Single Page / Rotated View
-            if (leftEdgeNavRight) leftEdgeNavRight.style.display = ''; // Show right edge of the single page
     }
 
-
-    // *** REVERTED: Calculate and set reading time lock based on EFFECTIVE view mode ***
-    // *** MODIFIED: Added handling for isContentRotated ***
+    // *** REVERTED/MODIFIED Reading Time Logic ***
     if (isTimelockGloballyEnabled) {
         if (isContentRotated) {
-            // --- Rotated View Lock Logic ---
-            const rotatedPageNum = leftPageNumToRender; // The page actually being viewed
+            const rotatedPageNum = leftPageNumToRender;
             const rotatedViewport = pdfState.currentViewports['left-page-canvas'];
             let timeRotated = 0;
             if (rotatedPageNum >= 1 && rotatedPageNum <= pdfState.totalPages && rotatedViewport) {
                 timeRotated = await calculatePageReadingTime(rotatedPageNum, rotatedViewport);
             }
-
-            // Lock is associated with the specific rotated page number
             if (completedTimeLockPages.has(rotatedPageNum)) {
                 updateStatus(`Time lock previously completed for rotated page ${rotatedPageNum}. Skipping set.`);
             } else if (timeRotated > 0) {
                 requiredReadingTime = timeRotated;
                 currentPageLockStartTime = Date.now();
                 isTimeLockActive = true;
-                currentLockType = 'pdf'; // Still a PDF lock
+                currentLockType = 'pdf';
                 updateStatus(`Time lock SET (Rotated View) for page ${rotatedPageNum}. Time: ${requiredReadingTime}s`);
             } else {
-                    updateStatus(`Time lock NOT SET for rotated page ${rotatedPageNum} (time=0 or already completed).`);
+                updateStatus(`Time lock NOT SET for rotated page ${rotatedPageNum} (time=0 or already completed).`);
             }
-                // --- End Rotated View Lock Logic ---
         } else if (isEffectiveDoublePageView) {
-            // --- Double Page View Lock Logic (existing reverted logic) ---
-                const leftViewport = pdfState.currentViewports['left-page-canvas'];
-                const rightViewport = pdfState.currentViewports['right-page-canvas']; // Will be null if right page isn't rendered
-
-                let timeLeft = 0;
-                if (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages && leftViewport) {
-                    timeLeft = await calculatePageReadingTime(pdfState.currentPage, leftViewport);
-                }
-                let timeRight = 0;
-                // Only add right page time if it was actually rendered (not placeholder)
-                if (actualRightPageNum > 0 && rightViewport) {
-                    timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
-                }
-
-                const timeForPair = timeLeft + timeRight;
-                const firstPageOfCurrentPair = pdfState.currentPage; // Lock associated with the ODD starting page
-
-                if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
-                    updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
-                } else if (timeForPair > 0) {
-                    requiredReadingTime = timeForPair;
-                    currentPageLockStartTime = Date.now();
-                    isTimeLockActive = true;
-                    currentLockType = 'pdf';
-                    updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
-                } else {
-                        updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
-                }
-            // --- End Double Page View Lock Logic ---
+            const leftViewport = pdfState.currentViewports['left-page-canvas'];
+            const rightViewport = pdfState.currentViewports['right-page-canvas'];
+            let timeLeft = 0;
+            if (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages && leftViewport) {
+                timeLeft = await calculatePageReadingTime(pdfState.currentPage, leftViewport);
+            }
+            let timeRight = 0;
+            if (actualRightPageNum > 0 && rightViewport) {
+                timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
+            }
+            const timeForPair = timeLeft + timeRight;
+            const firstPageOfCurrentPair = pdfState.currentPage;
+            if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
+                updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
+            } else if (timeForPair > 0) {
+                requiredReadingTime = timeForPair;
+                currentPageLockStartTime = Date.now();
+                isTimeLockActive = true;
+                currentLockType = 'pdf';
+                updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
+            } else {
+                 updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
+            }
         } else { // Single (Fullscreen) View
-            // --- Single Page (Fullscreen) View Lock Logic (existing reverted logic) ---
-            const currentPageNum = pdfState.currentPage; // The single page being displayed
-                const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
-
-                if (isEvenPage) {
-                    if (completedTimeLockPages.has(currentPageNum)) {
-                        updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
-                    } else {
-                        const singlePageViewPort = pdfState.currentViewports['left-page-canvas'];
-                        let timeSingle = 0;
-                        if (currentPageNum >= 1 && currentPageNum <= pdfState.totalPages && singlePageViewPort) {
-                            timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
-                        }
-
-                        if (timeSingle > 0) {
-                            requiredReadingTime = timeSingle;
-                            currentPageLockStartTime = Date.now();
-                            isTimeLockActive = true;
-                            currentLockType = 'pdf';
-                            updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
-                        } else {
-                                updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
-                        }
-                    }
+            const currentPageNum = pdfState.currentPage;
+            const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
+            if (isEvenPage) {
+                if (completedTimeLockPages.has(currentPageNum)) {
+                    updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
                 } else {
-                    updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
+                    const singlePageViewPort = pdfState.currentViewports['left-page-canvas'];
+                    let timeSingle = 0;
+                    if (currentPageNum >= 1 && currentPageNum <= pdfState.totalPages && singlePageViewPort) {
+                        timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
+                    }
+                    if (timeSingle > 0) {
+                        requiredReadingTime = timeSingle;
+                        currentPageLockStartTime = Date.now();
+                        isTimeLockActive = true;
+                        currentLockType = 'pdf';
+                        updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
+                    } else {
+                         updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
+                    }
                 }
-            // --- End Single Page (Fullscreen) View Lock Logic ---
+            } else {
+                updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
+            }
         }
     } else {
-        // Timelock is globally disabled, ensure no lock is set
         isTimeLockActive = false;
         requiredReadingTime = 0;
         currentPageLockStartTime = 0;
@@ -2636,15 +2642,20 @@ function triggerRotateButtonIndication() {
     }
     // --- End REVERTED/MODIFIED Reading Time Logic ---
 
-    // --- Final Updates ---
-    preloadAdjacentPages(pdfState.currentPage);
-    applyCurrentViewModeStyles(); // Apply scaling/rotation
-
-    // --- Check for Popups (Keep from New Code) ---
+    // --- Check for Popups (MODIFIED TO CHECK NAVIGATION SOURCE) ---
     let shouldShowNotesPopup = false;
-    const currentPageToCheckPopups = isContentRotated ? leftPageNumToRender : pdfState.currentPage; // Check popups based on the *content* being viewed
+    const currentPageToCheckPopups = isContentRotated ? leftPageNumToRender : pdfState.currentPage;
 
-    if (currentPageToCheckPopups >= 1 && currentPageToCheckPopups <= pdfState.totalPages) {
+    // *** Check if navigation source allows popups for this load ***
+    let allowPopupsOnThisLoad = checkNavigationSource(pdfState.currentPage);
+    if (isContentRotated) {
+        // Suppress popups in rotated view for now
+        allowPopupsOnThisLoad = false;
+    }
+
+    // *** Gate popup checks with allowPopupsOnThisLoad ***
+    if (allowPopupsOnThisLoad && currentPageToCheckPopups >= 1 && currentPageToCheckPopups <= pdfState.totalPages) {
+        updateStatus(`Sequential navigation detected to page ${pdfState.currentPage}. Checking for Notes/Iframe popups...`);
         // Check Notes
         const notesInfo = pdfState.notesMapping[currentPageToCheckPopups.toString()];
         if (notesInfo) {
@@ -2665,12 +2676,25 @@ function triggerRotateButtonIndication() {
                 hideIframePopupIfNeeded(); // Hide if no iframe for this page
             }
         } else {
-                hideIframePopupIfNeeded(); // Hide if notes are showing
+             hideIframePopupIfNeeded(); // Hide if notes are showing
         }
     } else {
-            hideNotesPopupIfNeeded(); // Hide if current page is invalid
-            hideIframePopupIfNeeded();
+        // If navigation wasn't sequential OR page is invalid, ensure popups are hidden
+        if (!allowPopupsOnThisLoad && appState.isReaderReady) { // Only log if reader is ready
+             updateStatus(`Navigation to page ${pdfState.currentPage} was not sequential forward (or page invalid). Popups suppressed.`);
+        }
+         hideNotesPopupIfNeeded();
+         hideIframePopupIfNeeded();
+         // LO Achievement popup is handled in nextPage, not here.
     }
+    // *** END Gated Popup Check ***
+
+    // --- Final Updates ---
+    preloadAdjacentPages(pdfState.currentPage);
+    applyCurrentViewModeStyles();
+
+    // *** Reset navigation state variable at the END ***
+    appState.previousPageBeforeNavigation = null;
 
     updateStatus("Display update complete.");
 }
@@ -2880,92 +2904,100 @@ function triggerRotateButtonIndication() {
     }
 
     function prevPage() {
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-        const decrement = isEffectiveDoublePageView ? 2 : 1;
-        const targetPage = pdfState.currentPage - decrement;
+    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-        if (targetPage >= 1) {
-            jumpToPage(targetPage);
-        } else if (pdfState.currentPage > 1) {
-            // If decrement goes below 1, just jump to page 1
-            jumpToPage(1);
-        }
-        // Otherwise, already on page 1, do nothing.
+    // *** Store current page BEFORE calculating previous ***
+    appState.previousPageBeforeNavigation = pdfState.currentPage;
+
+    const decrement = isEffectiveDoublePageView ? 2 : 1;
+    const targetPage = pdfState.currentPage - decrement;
+
+    if (targetPage >= 1) {
+        jumpToPage(targetPage);
+    } else if (pdfState.currentPage > 1) {
+        jumpToPage(1);
+    } else {
+        // If already on page 1, reset the flag as no navigation occurred
+        appState.previousPageBeforeNavigation = null;
     }
+}
 
-    // --- JumpToPage (REVERTED Timelock Logic, uses new pdfState/UI) ---
     function jumpToPage(pageNum){
-        if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
-            console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
-            return;
-        }
-
-        let targetStartPage = pageNum;
-        // Ensure targetStartPage is always odd for double page view (unless it's page 1 or the very last page if odd)
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-
-        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
-            targetStartPage--;
-        }
-
-        const currentStartPage = pdfState.currentPage;
-        if (targetStartPage === currentStartPage) {
-             updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
-             // Keep slider updated if user clicked the current page value on the slider
-             if (document.activeElement === ui.slider) {
-                 updateSliderPosition();
-             }
-             return;
-        }
-
-        const isMovingForward = targetStartPage > currentStartPage;
-
-        // *** REVERTED Lock Check Logic ***
-        if (isMovingForward) {
-            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
-            if (checkReadingTimeLock()) { // Calls the reverted function
-                updateStatus(`Navigation blocked by time lock.`);
-                if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
-                    updateSliderPosition(); // Reset slider if it triggered the block
-                }
-                return; // Block the jump
-            }
-            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
-        } else { // Moving backward
-            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
-            // Clear any active lock if moving backward (using reverted globals)
-            if (isTimeLockActive) {
-                 currentLockType = null; // *** Reset type ***
-                 updateStatus("Clearing active time lock due to backward navigation.");
-                 isTimeLockActive = false;
-                 requiredReadingTime = 0;
-                 currentPageLockStartTime = 0;
-            }
-        }
-        // *** End REVERTED Lock Check Logic ***
-
-        // --- Perform Navigation (Uses New Code State) ---
-        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
-        pdfState.currentPage = targetStartPage;
-        updateSliderPosition(targetStartPage);
-        
-        // Update furthest read page if moving forward (tracks highest *starting* page of a view)
-        if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
-            userState.readingProgress.furthestPage = targetStartPage;
-            updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
-            // In a real app, you might save userState.readingProgress here
-        }
-
-        resetPopupStates(); // Hide any open popups (including LO popup)
-
-        updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
-        manageToolbar(false); // Hide toolbars (using reverted function)
-        manageLeftToolbar(false); // Hide toolbars (using reverted function)
+    if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
+        console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
+        return;
     }
+
+    let targetStartPage = pageNum;
+    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+
+    if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
+        targetStartPage--;
+    }
+
+    const currentStartPage = pdfState.currentPage;
+
+    // *** Store current page BEFORE checking if it's the same ***
+    appState.previousPageBeforeNavigation = currentStartPage;
+
+    if (targetStartPage === currentStartPage) {
+         updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
+         if (document.activeElement === ui.slider) {
+             updateSliderPosition();
+         }
+         appState.previousPageBeforeNavigation = null; // Reset if no action taken
+         return;
+    }
+
+    const isMovingForward = targetStartPage > currentStartPage;
+
+    // *** REVERTED Lock Check Logic ***
+    if (isMovingForward) {
+        updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
+        if (checkReadingTimeLock()) { // Calls the reverted function
+            updateStatus(`Navigation blocked by time lock.`);
+            if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
+                updateSliderPosition(); // Reset slider if it triggered the block
+            }
+            appState.previousPageBeforeNavigation = null; // Reset if blocked
+            return; // Block the jump
+        }
+        updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
+    } else { // Moving backward
+        updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
+        // Clear any active lock if moving backward (using reverted globals)
+        if (isTimeLockActive) {
+             currentLockType = null; // *** Reset type ***
+             updateStatus("Clearing active time lock due to backward navigation.");
+             isTimeLockActive = false;
+             requiredReadingTime = 0;
+             currentPageLockStartTime = 0;
+        }
+    }
+    // *** End REVERTED Lock Check Logic ***
+
+    // --- Perform Navigation (Uses New Code State) ---
+    updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
+    pdfState.currentPage = targetStartPage; // Current page state is updated HERE
+    updateSliderPosition(targetStartPage);
+
+    // Update furthest read page if moving forward (tracks highest *starting* page of a view)
+    if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
+        userState.readingProgress.furthestPage = targetStartPage;
+        updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
+        // In a real app, you might save userState.readingProgress here
+    }
+
+    resetPopupStates(); // Hide any open popups (including LO popup)
+
+    updateDisplay(); // Render new page(s), calculates next lock state (using reverted logic), check for popups
+    manageToolbar(false);
+    manageLeftToolbar(false);
+}
 
     // --- START: New function to check handle state ---
     function checkAndApplyHandleState() {
@@ -3867,6 +3899,7 @@ async function loadNotesData(pdfUrl) {
     async function loadPdf(pdfUrl) {
     updateStatus(`loadPdf started for: ${pdfUrl}`);
     // --- Reset State ---
+    appState.previousPageBeforeNavigation = null;
     pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = []; // Reset LOs
     pdfState.notesMapping = {}; // *** Ensure notes mapping is also reset ***
     if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
@@ -4791,6 +4824,7 @@ updateStatus("Added event stoppers for rotate triggers.");
             clearTimeout(appState.resizeTimer);
             appState.resizeTimer = setTimeout(() => {
                 updateStatus("Resize detected.");
+                appState.previousPageBeforeNavigation = null;
                 resetPopupStates(); // Hide popups on resize
                 applyCurrentViewModeStyles(); // Recalculate scale
                 renderSliderMilestones(); // Re-render milestones on resize
@@ -4980,6 +5014,8 @@ ui.gameIframe?.addEventListener('focus', () => {
     async function init() {
         updateStatus("Initializing application...");
         // Body starts with 'loading-game-active' class
+
+        appState.previousPageBeforeNavigation = null;
 
         try {
             // Determine page padding from CSS variable
