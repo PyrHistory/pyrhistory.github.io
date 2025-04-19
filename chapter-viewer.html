@@ -88,14 +88,17 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     border-right: none!important; /* Border only on left/top/bottom */
 }
 
-.toolbar-trigger-area{ /* REVERTED: Trigger zone for hover from old code */
-    position:fixed;
-    top:0;
-    right:0; /* Always on the right edge */
-    width:30px;
-    height:100%;
-    z-index:9998;
-    transition:none!important; /* No transition needed */
+.toolbar-trigger-area { /* Trigger zone limited vertically */
+    position: fixed;
+    top: 15px; /* Match the toolbar's top position */
+    right: 0;
+    width: 30px; /* Keep the same width */
+    height: 250px; /* << ADJUST Height to cover your toolbar area */
+    /* Removed height: 100% */
+    bottom: auto; /* Ensure bottom doesn't interfere */
+    z-index: 9998;
+    transition: none !important;
+    /* background: rgba(0, 255, 0, 0.1); */ /* Optional: Uncomment to see the green trigger zone */
 }
 #new-toolbar.visible{
     right:0!important; /* Slide in from the right */
@@ -4828,6 +4831,15 @@ function showNotesNavAndResetTimer() {
         ui.closeIframePopupBtn?.addEventListener('click', hideIframePopup);
         ui.iframePopupBackdrop?.addEventListener('click', hideIframePopup);
         ui.notesPopupBackdrop?.addEventListener('click', hideNotesPopup);
+        // --- ADD THIS LISTENER ---
+ui.notesPopupContainer?.addEventListener('click', (e) => {
+    // Close only if the click is directly on the container itself,
+    // not on the canvas container, canvas, buttons, or instructions within it.
+    if (e.target === ui.notesPopupContainer) {
+         hideNotesPopup(); // Call the existing close function (handles timelock)
+    }
+});
+// --- END ADD ---
         ui.loContinueBtn?.addEventListener('click', hideLoAchievementPopup); // NEW
         ui.loAchievementBackdrop?.addEventListener('click', hideLoAchievementPopup); // NEW: Click backdrop to close
 
