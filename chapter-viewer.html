@@ -2119,6 +2119,7 @@ function triggerRotateButtonIndication() {
     originalSliderInfoText: null,
     sliderInfoFadeTimeout: null,
     previousPageBeforeNavigation: null, // <<< ADDED THIS LINE (initialize to null)
+    isNavigating: false, 
 };
     
     // REVERTED: Global state variables for toolbar/timer from old code
@@ -2944,81 +2945,106 @@ function triggerRotateButtonIndication() {
 
     // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-
-        const currentActualPage = pdfState.currentPage;
-        const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
-        let targetPageForJump = currentActualPage + jumpIncrement;
-
-        // Clamp target page if it exceeds total pages
-        if (targetPageForJump > pdfState.totalPages) {
-             if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) {
-                 // If in single page view and not on the last page, go to the last page
-                 targetPageForJump = pdfState.totalPages;
-             } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && targetPageForJump > pdfState.totalPages && currentActualPage % 2 !== 0) {
-                 // If in double page view, on an odd page, and the next pair would exceed total, go to the last page (which will be shown alone)
-                 targetPageForJump = pdfState.totalPages;
-             } else {
-                 // Already on the last possible view, do nothing.
-                 updateStatus("NextPage called on last view. No action.");
-                 return;
-             }
-        }
-
-        // --- NEW: Check for LO Achievement ---
-        // Find the LO milestone for the current view's LAST page.
-        let potentialLoPage = -1;
-        const currentRightPage = isEffectiveDoublePageView ? currentActualPage + 1 : -1;
-        const lastPageInView = Math.max(currentActualPage, currentRightPage);
-
-        // Find the specific LO matching the last page of the *current* view
-        const currentLo = appState.learningOutcomes.find(lo => lo.page_number === lastPageInView);
-
-        if (currentLo) {
-             potentialLoPage = currentLo.page_number;
-             // Check if this LO has *already been passed* using the milestone's class
-             const milestoneElement = ui.loMilestonesContainer?.querySelector(`.lo-milestone[data-lo-page="${potentialLoPage}"]`);
-             const alreadyPassed = milestoneElement?.classList.contains(CSS_CLASS.LO_PASSED);
-
-             if (!alreadyPassed) {
-                updateStatus(`LO Milestone found on page ${potentialLoPage}. Showing achievement popup before navigating to ${targetPageForJump}.`);
-                showLoAchievementPopup(currentLo, targetPageForJump);
-                return; // Stop nextPage here, popup handler will call jumpToPage
-             } else {
-                updateStatus(`LO Milestone on page ${potentialLoPage} already passed. Skipping popup.`);
-             }
-        }
-        // --- END NEW LO CHECK ---
-
-        // If no relevant LO popup, proceed with jump directly
-        if (targetPageForJump >= 1 && targetPageForJump <= pdfState.totalPages) {
-            jumpToPage(targetPageForJump);
-        } else if (targetPageForJump > pdfState.totalPages) {
-            // This handles the case where the clamped targetPageForJump was the very last page
-            jumpToPage(pdfState.totalPages);
-        }
+    // --- Check if already navigating ---
+    if (appState.isNavigating) {
+        updateStatus("Navigation blocked: Another navigation/render is already in progress.");
+        return; // Exit if already navigating
     }
+    // NOTE: We don't set appState.isNavigating = true here.
+    // It will be set inside jumpToPage if navigation proceeds.
 
-    function prevPage() {
     const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
     const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
     const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-    // *** Store current page BEFORE calculating previous ***
-    appState.previousPageBeforeNavigation = pdfState.currentPage;
+    const currentActualPage = pdfState.currentPage;
+    appState.previousPageBeforeNavigation = currentActualPage; // Set for popup logic
+
+    const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
+    let targetPageForJump = currentActualPage + jumpIncrement;
+
+    // Clamp target page if it exceeds total pages
+    if (targetPageForJump > pdfState.totalPages) {
+         if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) {
+             targetPageForJump = pdfState.totalPages;
+         } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && targetPageForJump > pdfState.totalPages && currentActualPage % 2 !== 0) {
+             targetPageForJump = pdfState.totalPages;
+         } else {
+             // Already on the last possible view, do nothing.
+             updateStatus("NextPage called on last view. No action.");
+             appState.previousPageBeforeNavigation = null; // Reset if no action taken
+             // No navigation lock was set, so nothing to release.
+             return;
+         }
+    }
+
+    // --- Check for LO Achievement ---
+    let potentialLoPage = -1;
+    const currentRightPage = isEffectiveDoublePageView ? currentActualPage + 1 : -1;
+    const lastPageInView = Math.max(currentActualPage, currentRightPage);
+    const currentLo = appState.learningOutcomes.find(lo => lo.page_number === lastPageInView);
+    let allowPopup = checkNavigationSource(targetPageForJump); // Check if sequential
+
+    if (allowPopup && currentLo) { // Only check LO if navigation is sequential
+         potentialLoPage = currentLo.page_number;
+         const milestoneElement = ui.loMilestonesContainer?.querySelector(`.lo-milestone[data-lo-page="${potentialLoPage}"]`);
+         const alreadyPassed = milestoneElement?.classList.contains(CSS_CLASS.LO_PASSED);
+
+         if (!alreadyPassed) {
+            updateStatus(`LO Milestone found on page ${potentialLoPage}. Sequential nav confirmed. Showing achievement popup before navigating to ${targetPageForJump}.`);
+            // Let the popup handler call jumpToPage, which will set the lock
+            showLoAchievementPopup(currentLo, targetPageForJump);
+            // Do NOT reset previousPageBeforeNavigation here
+            return; // Stop nextPage here
+         } else {
+            updateStatus(`LO Milestone on page ${potentialLoPage} already passed (or nav not sequential). Skipping popup.`);
+         }
+    } else if (currentLo) {
+        updateStatus(`LO Milestone on page ${lastPageInView} exists, but navigation to ${targetPageForJump} was not sequential forward. Skipping LO popup.`);
+    }
+    // --- End Gated LO check ---
+
+    // If no relevant LO popup OR navigation wasn't sequential, proceed with jump directly
+    if (targetPageForJump >= 1 && targetPageForJump <= pdfState.totalPages) {
+        jumpToPage(targetPageForJump); // jumpToPage handles the isNavigating flag
+    } else if (targetPageForJump > pdfState.totalPages) {
+        // Handles the clamped targetPageForJump being the very last page
+        jumpToPage(pdfState.totalPages); // jumpToPage handles the isNavigating flag
+    } else {
+         // This 'else' case should ideally not be reached due to clamping logic above.
+         // If jump didn't happen for some reason, reset the nav source flag.
+         appState.previousPageBeforeNavigation = null;
+         // No navigation lock was set if jumpToPage wasn't called.
+    }
+}
+
+    function prevPage() {
+    // --- Check if already navigating ---
+    if (appState.isNavigating) {
+        updateStatus("Navigation blocked: Another navigation/render is already in progress.");
+        return; // Exit if already navigating
+    }
+    // NOTE: We don't set appState.isNavigating = true here.
+    // It will be set inside jumpToPage if navigation proceeds.
+
+    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+
+    appState.previousPageBeforeNavigation = pdfState.currentPage; // Set for popup logic
 
     const decrement = isEffectiveDoublePageView ? 2 : 1;
     const targetPage = pdfState.currentPage - decrement;
 
     if (targetPage >= 1) {
-        jumpToPage(targetPage);
+        jumpToPage(targetPage); // jumpToPage handles the isNavigating flag
     } else if (pdfState.currentPage > 1) {
-        jumpToPage(1);
+        // If decrement goes below 1, just jump to page 1
+        jumpToPage(1); // jumpToPage handles the isNavigating flag
     } else {
-        // If already on page 1, reset the flag as no navigation occurred
-        appState.previousPageBeforeNavigation = null;
+        // Already on page 1, do nothing.
+        appState.previousPageBeforeNavigation = null; // Reset if no jump
+        // No navigation lock was set if jumpToPage wasn't called.
     }
 }
 
