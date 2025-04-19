@@ -686,23 +686,37 @@ body:not(.loading-game-active) .main-container {
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
-    position: relative; /* Keep for layers */
-    /* Make container slightly larger than page padding allows */
-    /* E.g., if --page-padding is 7px, make it effectively -3px padding */
-    width: calc(100% + 10px);  /* Adjust 10px as needed */
+    position: relative; /* Needed for absolute children */
+    /* Make container slightly larger for cropping */
+    width: calc(100% + 10px);  /* Adjust 10px as needed for crop amount */
     height: calc(100% + 10px); /* Adjust 10px as needed */
-    /* Remove margin as size increase handles it */
-    /* margin: var(--page-padding); */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    /* Center the oversized container within book-page */
+    margin: auto;
     overflow: hidden; /* CRITICAL: This performs the crop */
-    /* Ensure no transforms are applied */
+    /* Remove flex properties */
+    display: block; /* Or remove display property */
+    /* Ensure no transforms */
     transform: none;
     transform-origin: center center;
 }
         
-.pdf-canvas{max-width:100%;max-height:100%;display:block;object-fit:contain;box-shadow: none; top: 0; left: 0; z-index: 1; } /* Canvas layer */
+.pdf-canvas{
+    max-width: 100%; /* Limit size based on container */
+    max-height: 100%;/* Limit size based on container */
+    display: block;   /* Make it block */
+    object-fit: contain; /* (Harmless, no effect on canvas) */
+    box-shadow: none;
+    /* --- RESTORE Original Positioning --- */
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* --- END Original Positioning --- */
+    /* Centering via transform (Needed because top/left is 0,0) */
+    right: 0; /* Add right/bottom 0 */
+    bottom: 0;
+    margin: auto; /* Auto margins center it */
+    z-index: 1; /* Keep below overlays */
+} /* Canvas layer */
 .page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
 .page-loading-spinner{width:32px;height:32px;border-radius:50%;border:3px solid rgba(0,0,0,.1);border-top-color:var(--primary);animation:spin 1s linear infinite}
