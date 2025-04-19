@@ -929,6 +929,10 @@ body.content-rotated-mode #return-view-fixed-btn {
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
 /* --- START: Custom Keyword Overlay & Popup Styles --- */
+.keyword-overlay-scaled {
+    transform-origin: top left;
+    transform: scale(var(--pdf-content-scale, 1)); /* Use CSS variable */
+}
 .keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 21; overflow: hidden; }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
 /* Hover effect still applies to ALL keyword highlights (when not in rotated mode) */
@@ -2235,12 +2239,11 @@ function triggerRotateButtonIndication() {
 
                         const highlightDiv = document.createElement('div');
                         highlightDiv.className = 'keyword-highlight';
-                        highlightDiv.style.left = `${finalLeft / PDF_RENDER_SCALE_MULTIPLIER}px`;
-                        highlightDiv.style.top = `${finalTop / PDF_RENDER_SCALE_MULTIPLIER}px`;
-                        highlightDiv.style.width = `${finalWidth / PDF_RENDER_SCALE_MULTIPLIER}px`;
-                        highlightDiv.style.height = `${finalHeight / PDF_RENDER_SCALE_MULTIPLIER}px`;
-
-       
+                        highlightDiv.style.left = `${finalLeft}px`;
+                        highlightDiv.style.top = `${finalTop}px`;
+                        highlightDiv.style.width = `${finalWidth}px`;
+                        highlightDiv.style.height = `${finalHeight}px`;
+        
                         // *** Store keyword, PoS, and definition separately ***
                         highlightDiv.dataset.keyword = originalKeyword;
                         highlightDiv.dataset.pos = partOfSpeech; // Store Part of Speech
@@ -2327,6 +2330,10 @@ function triggerRotateButtonIndication() {
 
         delete pdfState.currentViewports[canvasId];
         clearPageLayers(pageElement);
+        if (pageElement?.querySelector('.keyword-overlay-container')) {
+             pageElement.querySelector('.keyword-overlay-container').classList.remove('keyword-overlay-scaled'); // Reset scale class on clear
+             pageElement.querySelector('.keyword-overlay-container').style.removeProperty('--pdf-content-scale');
+        }
 
         if (!pdfState.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > pdfState.totalPages) {
             if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
