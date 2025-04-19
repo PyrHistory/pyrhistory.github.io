@@ -682,40 +682,55 @@ body:not(.loading-game-active) .main-container {
 
 
 .book-spread{display:flex;box-shadow:0 10px 35px rgba(0,0,0,.5);position:fixed!important;top:50%!important;left:50%!important;transform-origin:center center;width:auto!important;height:auto!important;transition:transform .3s ease; transform: translate(-50%, -50%)}
-.book-page{width:var(--page-w);height:var(--page-h);background-color:var(--page);position:relative;overflow:hidden; flex-shrink:0;display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,255,255,.08);padding:0;}
+.book-page {
+    width: var(--page-w);
+    height: var(--page-h);
+    background-color: var(--page);
+    position: relative; /* CRITICAL for absolute children */
+    overflow: hidden; /* CRITICAL for cropping */
+    flex-shrink: 0;
+    /* REMOVE flex centering, padding handled by container margin */
+    /* display: flex; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    border: 1px solid rgba(255, 255, 255, .08);
+    padding: 0; /* Ensure no padding */
+}
 .book-page.left{border-right:1px solid rgba(255,255,255,.15);border-radius:3px 0 0 3px}
 .book-page.right{border-left:1px solid rgba(255,255,255,.15);border-radius:0 3px 3px 0}
 .canvas-container {
-    position: relative; /* Needed for absolute children */
-    /* Make container slightly larger for cropping */
-    width: calc(100% + 10px);  /* Adjust 10px as needed for crop amount */
-    height: calc(100% + 10px); /* Adjust 10px as needed */
-    /* Center the oversized container within book-page */
-    margin: auto;
-    overflow: hidden; /* CRITICAL: This performs the crop */
-    /* Remove flex properties */
-    display: block; /* Or remove display property */
-    /* Ensure no transforms */
+    position: absolute; /* Stack within book-page */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Negative margin makes it LARGER than book-page's content box */
+    /* Adjust -5px to control crop amount (crops 5px from each side) */
+    margin: -5px;
+    overflow: hidden; /* Still needed to clip canvas if aspect ratio differs */
+    /* NO flex, NO transform */
+    display: block;
     transform: none;
-    transform-origin: center center;
 }
         
-.pdf-canvas{
-    max-width: 100%; /* Limit size based on container */
-    max-height: 100%;/* Limit size based on container */
-    display: block;   /* Make it block */
-    object-fit: contain; /* (Harmless, no effect on canvas) */
+.pdf-canvas {
+    display: block;
     box-shadow: none;
-    /* --- RESTORE Original Positioning --- */
+    /* --- POSITION ABSOLUTELY within canvas-container --- */
     position: absolute;
     top: 0;
     left: 0;
-    /* --- END Original Positioning --- */
-    /* Centering via transform (Needed because top/left is 0,0) */
-    right: 0; /* Add right/bottom 0 */
-    bottom: 0;
-    margin: auto; /* Auto margins center it */
-    z-index: 1; /* Keep below overlays */
+    right: 0;  /* Added */
+    bottom: 0; /* Added */
+    /* --- SIZE: Fill container, respect aspect ratio --- */
+    width: 100%;
+    height: 100%;
+    max-width: 100%;  /* Allow shrinking */
+    max-height: 100%; /* Allow shrinking */
+    object-fit: contain; /* Use object-fit for centering/aspect */
+    /* --- CENTER within absolute bounds --- */
+    margin: auto;     /* Centers based on remaining space */
+    z-index: 1;       /* Below overlays */
 } /* Canvas layer */
 .page-number{display:none}
 .page-loading-overlay{position:absolute;inset:var(--page-padding);background:rgba(255,255,255,.6);z-index:50;display:none;justify-content:center;align-items:center;border-radius:3px}
@@ -950,11 +965,15 @@ body.content-rotated-mode #return-view-fixed-btn {
 }
 /* --- END: Custom Keyword Overlay & Popup Styles --- */
 /* --- START: Custom Keyword Overlay & Popup Styles --- */
-.keyword-overlay-scaled {
-    transform-origin: center center;
-    transform: scale(var(--pdf-content-scale, 1)); /* Use CSS variable */
+
 }
-.keyword-overlay-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 21; overflow: hidden; }
+ .keyword-overlay-container {
+     position: absolute;
+     inset: 0; /* Equivalent to top:0; left:0; width:100%; height:100%; */
+     pointer-events: none;
+     z-index: 21;
+     overflow: hidden;
+ }
 .keyword-highlight { position: absolute; background: transparent; transition: background 0.2s ease-out, box-shadow 0.2s ease-out; pointer-events: auto; cursor: pointer; z-index: 5; box-sizing: border-box; border-radius: 3px; }
 /* Hover effect still applies to ALL keyword highlights (when not in rotated mode) */
 .keyword-highlight:hover { background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.25)); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
@@ -1884,7 +1903,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
     const LOADING_BAR_ANIMATION_BUFFER = 600; // Kept constant from new code (used for button transition timing)
     const NOTES_WIGGLE_DURATION = 500; // Kept constant from new code
     const LO_TOOLTIP_OFFSET_Y = 5; // Offset below emoji for tooltip
-    const PDF_RENDER_SCALE_MULTIPLIER = 1.20; // 1.20 = 20% larger
 
     const CSS_CLASS = {
         VISIBLE: 'visible',
