@@ -4404,28 +4404,58 @@ if (currentLockType === 'notes') {
 
     // --- Game Transition Logic (MODIFIED - Button logic changed) ---
     function transitionToChapter() {
-        updateStatus("Transitioning to chapter...");
-        clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
+    updateStatus("Transitioning to chapter...");
+    clearTimeout(appState.gameOverTimeoutId); // Cancel any pending auto-transition
 
-        // 1. Explicitly remove visibility classes from the button to start its fade-out transition.
-        if (ui.goToChapterBtn) {
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-            ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-            // The button's own opacity transition (0.3s) will handle the fade out.
-            updateStatus("Removed button visibility classes to initiate fade-out.");
-        }
+    // 1. Hide the button immediately and forcefully.
+    if (ui.goToChapterBtn) {
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+        // Setting style directly guarantees it starts hiding if transitions fail
+        ui.goToChapterBtn.style.opacity = '0';
+        ui.goToChapterBtn.style.visibility = 'hidden';
+        updateStatus("Forcefully hiding 'Go To Chapter' button.");
+    }
 
-        // 2. Remove the body class to hide the game container and reveal the reader UI.
-        //    This happens concurrently with the button fading out.
-        ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
-        window.focus(); // Try to bring focus back to the main window
+    // 2. Remove the body class to hide the game container and reveal the reader UI.
+    ui.body.classList.remove(CSS_CLASS.LOADING_GAME_ACTIVE);
+    window.focus(); // Try to bring focus back to the main window
 
-        // *** ADDED: Re-enable iframe input (though it's hidden now) ***
+    // Re-enable iframe input (though it's hidden now)
     if (ui.gameIframe) {
         ui.gameIframe.classList.remove('iframe-inactive');
         updateStatus("Re-enabled game iframe input class (though hidden).");
     }
-    // *** END ADDED ***
+
+    // Temporarily Show Toolbars
+    if (ui.rightToolbar && ui.leftToolbar) {
+         updateStatus("Temporarily showing toolbars for 7 seconds.");
+         ui.rightToolbar.classList.add('visible');
+         ui.leftToolbar.classList.add('visible');
+         clearTimeout(toolbarTimer);
+         clearTimeout(leftToolbarTimer);
+         setTimeout(() => {
+             if (!toolbarHover && ui.rightToolbar?.classList.contains('visible')) {
+                 ui.rightToolbar.classList.remove('visible'); updateStatus("Hiding right toolbar after 7s (not hovered).");
+             } else if(ui.rightToolbar?.classList.contains('visible')) { updateStatus("Keeping right toolbar visible after 7s (hovered)."); }
+             if (!leftToolbarHover && ui.leftToolbar?.classList.contains('visible')) {
+                 ui.leftToolbar.classList.remove('visible'); updateStatus("Hiding left toolbar after 7s (not hovered).");
+             } else if(ui.leftToolbar?.classList.contains('visible')) { updateStatus("Keeping left toolbar visible after 7s (hovered)."); }
+         }, 7000);
+     }
+
+    // 3. Apply reader scaling/resize shortly after the body class is removed.
+    setTimeout(() => {
+        applyCurrentViewModeStyles();
+        window.dispatchEvent(new Event('resize'));
+        updateStatus("Reader should be visible and scaled.");
+        // Remove direct styles on button after transition *should* have finished
+        if (ui.goToChapterBtn) {
+             ui.goToChapterBtn.style.opacity = '';
+             ui.goToChapterBtn.style.visibility = '';
+        }
+    }, 350); // Delay slightly longer than button transition (0.3s)
+}
 
 // --- START: Temporarily Show Toolbars ---
 if (ui.rightToolbar && ui.leftToolbar) {
@@ -4467,77 +4497,57 @@ if (ui.rightToolbar && ui.leftToolbar) {
     }
 
     function handleGameOverFromGame(score) {
-        updateStatus(`Game over message received. Score: ${score}`);
+    updateStatus(`Game over message received. Score: ${score}`);
 
-        // Always show the 'Go to Chapter' button on game over, if not already visible in loading state
-        if (ui.goToChapterBtn && !ui.goToChapterBtn.classList.contains(CSS_CLASS.LOADING_CHAPTER)) {
-            // If reader is already ready, show the animated button
-            if (appState.isReaderReady) {
-                ui.goToChapterBtn.textContent = 'Go to Chapter';
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER); // Ensure this is removed
-                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Trigger animation
-                updateStatus("Made 'Go to Chapter' button visible (Game Over - Reader Ready).");
-            } else {
-                // If reader isn't ready yet, show the static "Loading..." button
-                ui.goToChapterBtn.textContent = 'Loading Chapter...';
-                ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-                 updateStatus("Made 'Loading Chapter...' button visible (Game Over - Reader Not Ready).");
-            }
+    // Always show the 'Go to Chapter' button state on game over.
+    if (ui.goToChapterBtn) {
+        // Force reset classes first
+        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
 
-            // *** ADDED: Disable iframe input ***
-        if (ui.gameIframe) {
-            ui.gameIframe.classList.add('iframe-inactive');
-            // Try to remove focus to prevent keyboard input
-            ui.gameIframe.blur();
-             // More robust: tell the iframe's content to blur itself
-            if (ui.gameIframe.contentWindow) {
-                try {
-                    ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
-                     updateStatus("Sent 'blurYourself' message to game iframe.");
-                } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
-            }
-            updateStatus("Disabled game iframe input (Game Over).");
-        }
-        // *** END ADDED ***
-            
-        } else if (ui.goToChapterBtn) {
-             updateStatus("'Go to Chapter' button already visible in loading state.");
+        if (appState.isReaderReady) {
+            // If reader is already ready, show the animated ready button
+            updateStatus("Game Over: Reader Ready. Setting button to 'Go to Chapter'.");
+            ui.goToChapterBtn.textContent = 'Go to Chapter';
+            ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE); // Trigger ready animation
         } else {
-             console.error("'Go to Chapter' button not found!");
+            // If reader isn't ready yet, show the static "Loading..." button
+            updateStatus("Game Over: Reader Not Ready. Setting button to 'Loading Chapter...'.");
+            ui.goToChapterBtn.textContent = 'Loading Chapter...';
+            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER); // Show loading state
         }
-
-        if (ui.gameIframe) {
-            ui.gameIframe.classList.add('iframe-inactive');
-            // Try to remove focus to prevent keyboard input
-            ui.gameIframe.blur();
-            // More robust: tell the iframe's content to blur itself
-            if (ui.gameIframe.contentWindow) {
-                try {
-                    ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
-                    updateStatus("Sent 'blurYourself' message to game iframe.");
-                } catch(e){ console.warn("Could not post 'blurYourself' message:", e)}
-            }
-            updateStatus("Disabled game iframe input (Game Over).");
-        }
-
-        
-        // If reader is already loaded, start timer for automatic transition
-        if (appState.isReaderReady) { // Use appState from new code
-            updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
-            // Try to disable game restart as a safeguard
-            if (ui.gameIframe?.contentWindow) {
-                try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
-                 catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
-            }
-            clearTimeout(appState.gameOverTimeoutId); // Clear any existing timer
-            appState.gameOverTimeoutId = setTimeout(() => {
-                updateStatus("Game over timeout finished, transitioning now.");
-                transitionToChapter(); // Transition hides the button via body class
-            }, GAME_OVER_TRANSITION_DELAY);
-        } else {
-            updateStatus("Game over occurred, but reader is not ready yet. Button made visible for manual transition.");
-        }
+    } else {
+        console.error("'Go to Chapter' button not found!");
     }
+
+    // Disable iframe input
+    if (ui.gameIframe) {
+        ui.gameIframe.classList.add('iframe-inactive');
+        ui.gameIframe.blur();
+        if (ui.gameIframe.contentWindow) {
+            try {
+                ui.gameIframe.contentWindow.postMessage({ type: 'blurYourself' }, '*');
+                updateStatus("Sent 'blurYourself' message to game iframe.");
+            } catch (e) { console.warn("Could not post 'blurYourself' message:", e); }
+        }
+        updateStatus("Disabled game iframe input (Game Over).");
+    }
+
+    // If reader is already loaded, start timer for automatic transition
+    if (appState.isReaderReady) {
+        updateStatus(`Reader is ready, starting automatic transition timer (${GAME_OVER_TRANSITION_DELAY}ms) after game over.`);
+        if (ui.gameIframe?.contentWindow) {
+            try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); }
+            catch (e) { console.error("Error posting safeguard disableRestart message:", e); }
+        }
+        clearTimeout(appState.gameOverTimeoutId);
+        appState.gameOverTimeoutId = setTimeout(() => {
+            updateStatus("Game over timeout finished, transitioning now.");
+            transitionToChapter();
+        }, GAME_OVER_TRANSITION_DELAY);
+    } else {
+        updateStatus("Game over occurred, but reader is not ready yet. Button visible for manual transition.");
+    }
+}
 
     // --- Timelock UI and Toggle (REVERTED from Old Code) ---
     function updateTimelockButtonVisuals() { // REVERTED
