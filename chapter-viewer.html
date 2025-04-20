@@ -3044,74 +3044,74 @@ function triggerRotateButtonIndication() {
 }
 
         // --- Navigation (REPLACEMENT jumpToPage) ---
-        // --- View Modes (REPLACEMENT BLOCK) ---
-    async function setRotatedView(targetPageNum = null) {
-        const wasRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        if (wasRotated) {
-            updateStatus("Setting back to previous view (Double/Single)");
-            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
-            appState.rotatedViewTargetPageNum = null;
-            if (!pdfState.isDoublePageView) {
-                ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
-            }
-            if (pdfState.isDoublePageView && pdfState.currentPage > 1 && pdfState.currentPage % 2 === 0) {
-                updateStatus(`Adjusting current page from ${pdfState.currentPage} to ${pdfState.currentPage - 1} for double view restore.`);
-                pdfState.currentPage--; // Adjust state BEFORE updateDisplay
-            }
-        } else if (targetPageNum !== null) {
-            updateStatus(`Setting Content Rotated View for page ${targetPageNum}`);
-            appState.rotatedViewTargetPageNum = targetPageNum;
-            ui.body.classList.remove(CSS_CLASS.FULLSCREEN_MODE);
-            ui.body.classList.add(CSS_CLASS.CONTENT_ROTATED_MODE);
-        } else {
-            console.warn("setRotatedView called without a target page number when entering rotated mode.");
+    function jumpToPage(pageNum){
+        if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
+            console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
+            // If slider triggered this bad jump, reset it visually
+             if (ui.slider && (document.activeElement === ui.slider || (typeof event !== 'undefined' && event?.target === ui.slider))) {
+                 updateSliderPosition(pdfState.currentPage); // Reset slider to actual current page
+             }
             return;
         }
-        resetPopupStates();
-        await updateDisplay(); // Render first
-        manageToolbar(false); manageLeftToolbar(false);
-        updateSliderTotalPages(); // Update total/milestones
-        updateSliderPosition(); // THEN update slider position/text based on final state
-    }
 
-    async function setSinglePageView() {
+        let targetStartPage = pageNum;
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
         const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        if (!pdfState.isDoublePageView && isFullscreen && !isContentRotated) return; // Already in correct state
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-        updateStatus("Setting Single Page View (Fullscreen Mode)");
-        pdfState.isDoublePageView = false; // Set intended state flag
-        ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
-        ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
-
-        resetPopupStates();
-        await updateDisplay(); // Render first
-        manageToolbar(false); manageLeftToolbar(false);
-        updateSliderTotalPages(); // Update total/milestones
-        updateSliderPosition(); // THEN update slider position/text
-    }
-
-    async function setDoublePageView() {
-        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-        if (pdfState.isDoublePageView && !isFullscreen && !isContentRotated) return; // Already in correct state
-
-        updateStatus("Setting Double Page View");
-        pdfState.isDoublePageView = true; // Set intended state flag
-        ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE);
-
-        if (pdfState.currentPage > 1 && pdfState.currentPage % 2 === 0) {
-            updateStatus(`Adjusting current page from ${pdfState.currentPage} to ${pdfState.currentPage - 1} for double view.`);
-            pdfState.currentPage--; // Adjust state BEFORE updateDisplay
+        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
+            targetStartPage--;
         }
 
-        resetPopupStates();
-        await updateDisplay(); // Render first
-        manageToolbar(false); manageLeftToolbar(false);
-        updateSliderTotalPages(); // Update total/milestones
-        updateSliderPosition(); // THEN update slider position/text
+        const currentStartPage = pdfState.currentPage;
+        appState.previousPageBeforeNavigation = currentStartPage; // Store for popup logic
+
+        if (targetStartPage === currentStartPage) {
+            updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
+            updateSliderPosition(currentStartPage); // Ensure slider is accurate even if no jump
+            appState.previousPageBeforeNavigation = null;
+            return;
+        }
+
+        const isMovingForward = targetStartPage > currentStartPage;
+
+        // *** REVERTED Lock Check Logic ***
+        if (isMovingForward) {
+            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
+            if (checkReadingTimeLock()) { // Calls the reverted function
+                updateStatus(`Navigation blocked by time lock.`);
+                updateSliderPosition(currentStartPage); // Reset slider if it triggered the block
+                appState.previousPageBeforeNavigation = null;
+                return; // Block the jump
+            }
+            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
+        } else { // Moving backward
+            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
+            if (isTimeLockActive) {
+                currentLockType = null;
+                updateStatus("Clearing active time lock due to backward navigation.");
+                isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0;
+            }
+        }
+        // *** End REVERTED Lock Check Logic ***
+
+        // --- Perform Navigation ---
+        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
+        pdfState.currentPage = targetStartPage; // Update page state HERE
+        updateSliderPosition(targetStartPage); // <<<< UPDATE SLIDER IMMEDIATELY
+
+        // Update furthest read page
+        if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
+            userState.readingProgress.furthestPage = targetStartPage;
+            updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
+        }
+
+        resetPopupStates(); // Hide popups
+        updateDisplay(); // Render new page(s), calculate next lock, check popups
+        manageToolbar(false);
+        manageLeftToolbar(false);
     }
-    // --- End of View Modes Replacement Block ---
+    // --- End of jumpToPage Replacement ---
 
     // --- START: New function to check handle state ---
     function checkAndApplyHandleState() {
@@ -3322,7 +3322,7 @@ function calculateVideoDuration(url) {
     }
     function hideLoading() { toggleVisibility(ui.loadingOverlay, false); }
 
-       // --- Slider Logic (REPLACEMENT BLOCK) ---
+        // --- Slider Logic (REPLACEMENT BLOCK) ---
     function showPageSlider() {
         if (!ui.sliderContainer || ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
         clearTimeout(appState.sliderHideTimeout);
@@ -3340,6 +3340,67 @@ function calculateVideoDuration(url) {
         appState.sliderHideTimeout = setTimeout(hidePageSlider, SLIDER_HIDE_DELAY);
     }
 
+        // --- START: PASTE THIS NEW FUNCTION ---
+    /**
+     * Updates the text display in the page slider info area (e.g., "Page 5" or "Page 6-7").
+     * This function is the single source of truth for the slider's text.
+     * @param {number} pageValue The logical page number the slider should represent (e.g., from slider.value or pdfState.currentPage).
+     */
+    function updateSliderInfoText(pageValue) {
+        // Ensure the function only runs if the necessary elements exist and PDF is somewhat loaded.
+        if (!ui.currentPageDisplay || !ui.totalPagesDisplay || !ui.slider || pdfState.totalPages <= 0) {
+            // Set default text if elements exist but PDF isn't ready
+            if(ui.currentPageDisplay) ui.currentPageDisplay.textContent = "Page 1";
+            if(ui.totalPagesDisplay) ui.totalPagesDisplay.textContent = "1";
+             // console.warn("updateSliderInfoText: Missing UI elements or PDF not loaded. Setting default text.");
+            return;
+        }
+
+        const totalPages = pdfState.totalPages;
+        // Validate pageValue is a usable number within bounds, default to 1 if not
+        const currentPageValue = Number.isInteger(pageValue) && pageValue >= 1 && pageValue <= totalPages
+                                ? pageValue
+                                : parseInt(ui.slider.min || 1);
+
+        // Determine the current effective view mode for display purposes
+        const isFullscreenCurrent = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotatedCurrent = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        // Effective double page view means the *intent* is double AND we are *not* in fullscreen or rotated override modes.
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreenCurrent && !isContentRotatedCurrent;
+
+        let pageText; // Variable to hold the final display text
+
+        if (isEffectiveDoublePageView) {
+            // --- Double Page View Display Logic ---
+            let displayPageStart = currentPageValue;
+            // If the slider value points to an even page (the right page), adjust the display
+            // to show the pair starting from the preceding odd page.
+            if (displayPageStart > 1 && displayPageStart % 2 === 0) {
+                displayPageStart--; // Show pair starting from the left page (e.g., if value is 6, start display from 5)
+            }
+
+            // Check if the *next* page exists to form a valid pair for display
+            if (displayPageStart + 1 <= totalPages) {
+                // Display as a pair "Page X-Y"
+                pageText = `Page ${displayPageStart}-${displayPageStart + 1}`;
+            } else {
+                // It's the very last page, display singly "Page Z" using the actual last page number
+                pageText = `Page ${totalPages}`;
+            }
+        } else {
+            // --- Single Page View (Fullscreen or Rotated) Display Logic ---
+            // Display singly "Page X" using the exact value from the slider/navigation
+            pageText = `Page ${currentPageValue}`;
+        }
+
+        // Update the text content of the specific span for the current page display
+        ui.currentPageDisplay.textContent = pageText;
+
+        // Update the total pages display (this usually only changes on load)
+        ui.totalPagesDisplay.textContent = totalPages;
+    }
+    // --- END: PASTE THIS NEW FUNCTION ---
+    
     function initPageSlider() {
         if (!ui.slider || !ui.sliderContainer || !ui.sliderTriggerZone || !ui.loMilestonesContainer || !ui.loTooltip) {
             console.error("Slider elements, trigger zone, LO container, or LO tooltip not found"); return;
@@ -3363,12 +3424,18 @@ function calculateVideoDuration(url) {
         ui.sliderContainer.addEventListener('mouseenter', handleSliderAreaEnter);
         ui.sliderContainer.addEventListener('mouseleave', handleSliderAreaLeave);
 
+                // Find this part within initPageSlider:
         const handleSliderInput = () => {
-            if (!appState.isDraggingSlider) return;
+            if (!appState.isDraggingSlider) return; // Only update display during drag
+
+            // --- START: MODIFY THIS BLOCK ---
             const targetPageValue = parseInt(ui.slider.value, 10);
-            updateSliderInfoText(targetPageValue); // Update text dynamically during drag
+            // Replace the old way of updating text (if any existed here) with this:
+            updateSliderInfoText(targetPageValue); // Update text display LIVE using the slider's current value
+            // Keep these lines:
             updateSliderStyle(ui.slider, targetPageValue);
-            updateMilestoneColors(targetPageValue);
+            updateMilestoneColors(targetPageValue); // Update LO colors during drag
+            // --- END: MODIFY THIS BLOCK ---
         };
 
         const handlePointerDown = (event) => {
@@ -3460,38 +3527,77 @@ function calculateVideoDuration(url) {
         ui.currentPageDisplay.textContent = pageText;
     }
 
-    // Updates the slider's max value and total pages display
+        // --- START: MODIFY/REPLACE THIS FUNCTION ---
     function updateSliderTotalPages() {
-        if (ui.slider && ui.totalPagesDisplay) {
-            const total = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
-            ui.slider.max = total;
-            ui.totalPagesDisplay.textContent = total;
-            renderSliderMilestones();
-            updateSliderPosition(pdfState.currentPage); // Update slider value/style after total changes
+        const total = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
+        if (ui.slider) {
+            ui.slider.max = total; // Update the slider's max attribute
         }
-    }
+        // Update the total pages display text directly here or rely on updateSliderInfoText
+        // It's slightly more robust to let updateSliderInfoText handle it:
+        // if (ui.totalPagesDisplay) {
+        //     ui.totalPagesDisplay.textContent = total;
+        // }
 
-    // The single source of truth for setting the slider's visual state
+        renderSliderMilestones(); // Re-render milestones if total pages changes
+
+        // Crucially, call updateSliderPosition AFTER max is set and milestones rendered.
+        // This will update the slider's value, text (including total pages), style, and milestone colors.
+        updateSliderPosition(); // Call without args to use current state
+    }
+    // --- END: MODIFY/REPLACE THIS FUNCTION ---
+        // --- START: REPLACE THIS FUNCTION ---
+    /**
+     * Updates the slider's visual state (thumb position, track fill, milestone colors)
+     * AND its text display based on the provided logical page number.
+     * This is called after navigation or view changes.
+     * @param {number} [currentPageForSlider] - The logical page number to set the slider to. If omitted, uses pdfState.currentPage.
+     */
     function updateSliderPosition(currentPageForSlider) {
-        if (!ui.slider || !ui.currentPageDisplay || !ui.totalPagesDisplay) return;
-        let pageToUpdate = 1;
-        const totalPages = pdfState.totalPages > 0 ? pdfState.totalPages : 1;
-        if (currentPageForSlider !== undefined && currentPageForSlider !== null && Number.isInteger(currentPageForSlider) && currentPageForSlider >= 1) {
-            pageToUpdate = Math.min(currentPageForSlider, totalPages);
-        } else if (pdfState.pdfDocument && pdfState.currentPage >= 1) {
-            pageToUpdate = Math.min(pdfState.currentPage, totalPages);
+        // Ensure all necessary UI elements exist. sliderInfo is now optional as text is handled separately.
+        if (!ui.slider || !ui.currentPageDisplay || !ui.totalPagesDisplay) {
+             console.warn("updateSliderPosition: Missing critical UI elements (slider, page displays). Cannot update.");
+             return; // Exit if essential UI is missing
+        }
+
+        let pageToUpdate = 1; // Default fallback
+
+        // Determine the page number to use for the update, prioritizing the argument.
+        if (pdfState.totalPages > 0) {
+            // Use provided argument if it's a valid number within bounds
+            if (currentPageForSlider !== undefined && currentPageForSlider !== null && Number.isInteger(currentPageForSlider)) {
+                 pageToUpdate = Math.max(1, Math.min(currentPageForSlider, pdfState.totalPages));
+            } else {
+                // Otherwise, use the current state's page number
+                 pageToUpdate = Math.max(1, Math.min(pdfState.currentPage, pdfState.totalPages));
+                // Log if called without argument during active state (useful for debugging)
+                if (appState.isReaderReady && currentPageForSlider === undefined) {
+                    // console.log("updateSliderPosition: No page argument provided, using pdfState.currentPage:", pageToUpdate);
+                 }
+            }
         } else {
+            // Fallback if PDF isn't loaded or totalPages is 0 (e.g., during initial load)
             pageToUpdate = parseInt(ui.slider.min || 1);
         }
-        // Update Value (only if different)
-        if (parseInt(ui.slider.value, 10) !== pageToUpdate) ui.slider.value = pageToUpdate;
-        // Update Text
-        updateSliderInfoText(pageToUpdate);
-        // Update Style (Track Fill)
+
+        // --- Perform the UI Updates ---
+
+        // 1. Update the slider handle's numerical value (the input's actual value)
+        // Check if the value needs changing to avoid unnecessary updates/event triggers
+        if (parseInt(ui.slider.value, 10) !== pageToUpdate) {
+             ui.slider.value = pageToUpdate;
+        }
+
+        // 2. Update the display text (e.g., "Page 5" or "Page 6-7") using the CENTRALIZED function
+        updateSliderInfoText(pageToUpdate); // *** CALL THE NEW TEXT UPDATE FUNCTION ***
+
+        // 3. Update the slider's track fill style (visual progress)
         updateSliderStyle(ui.slider, pageToUpdate);
-        // Update LO Milestone Colors
+
+        // 4. Update the Learning Outcome milestone colors
         updateMilestoneColors(pageToUpdate);
     }
+    // --- END: REPLACE THIS FUNCTION ---
 
     // Helper to update the track fill percentage
     function updateSliderStyle(slider, value) {
@@ -3958,7 +4064,6 @@ async function loadNotesData(pdfUrl) {
 }
 // --- END NEW ---
     
-        // --- PDF Loading (REPLACEMENT loadPdf) ---
         // --- PDF Loading (REPLACEMENT loadPdf) ---
     async function loadPdf(pdfUrl) {
         updateStatus(`loadPdf started for: ${pdfUrl}`);
