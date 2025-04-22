@@ -2955,39 +2955,78 @@ function triggerRotateButtonIndication() {
         }
     }
 
-    // --- Navigation (MODIFIED for LO popup check) ---
+       // --- Navigation (MODIFIED for LO popup check) ---
     function nextPage() {
-    // --- Check if already navigating ---
-    if (appState.isNavigating) {
-        updateStatus("Navigation blocked: Another navigation/render is already in progress.");
-        return; // Exit if already navigating
-    }
-    // NOTE: We don't set appState.isNavigating = true here.
-    // It will be set inside jumpToPage if navigation proceeds.
+        // --- Check if already navigating ---
+        if (appState.isNavigating) {
+            updateStatus("Navigation blocked: Another navigation/render is already in progress.");
+            return; // Exit if already navigating
+        }
+        // NOTE: isNavigating flag is set inside jumpToPage if navigation proceeds.
 
-    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
+        const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
+        const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-    const currentActualPage = pdfState.currentPage;
-    appState.previousPageBeforeNavigation = currentActualPage; // Set for popup logic
+        const currentActualPage = pdfState.currentPage;
+        // *** Set previous page BEFORE any potential early returns or jumps ***
+        appState.previousPageBeforeNavigation = currentActualPage;
 
-    const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
-    let targetPageForJump = currentActualPage + jumpIncrement;
+        const jumpIncrement = isEffectiveDoublePageView ? 2 : 1;
+        let targetPageForJump = currentActualPage + jumpIncrement;
 
-    // Clamp target page if it exceeds total pages
-    if (targetPageForJump > pdfState.totalPages) {
-         if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) {
-             targetPageForJump = pdfState.totalPages;
-         } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && targetPageForJump > pdfState.totalPages && currentActualPage % 2 !== 0) {
-             targetPageForJump = pdfState.totalPages;
-         } else {
-             // Already on the last possible view, do nothing.
-             updateStatus("NextPage called on last view. No action.");
-             appState.previousPageBeforeNavigation = null; // Reset if no action taken
-             // No navigation lock was set, so nothing to release.
-             return;
-         }
+        // Clamp target page if it exceeds total pages
+        if (targetPageForJump > pdfState.totalPages) {
+            // If on second-to-last page in single view, jump to last page
+            if (currentActualPage < pdfState.totalPages && !isEffectiveDoublePageView) {
+                targetPageForJump = pdfState.totalPages;
+            // If on the last *pair* in double view (e.g., on 99 with 100 total), jump to 100
+            } else if (currentActualPage < pdfState.totalPages && isEffectiveDoublePageView && targetPageForJump > pdfState.totalPages && currentActualPage % 2 !== 0) {
+                targetPageForJump = pdfState.totalPages;
+            } else {
+                // Already on the last possible view, do nothing.
+                updateStatus("NextPage called on last view. No action.");
+                appState.previousPageBeforeNavigation = null; // Reset if no action taken
+                // No navigation lock was set, so nothing to release.
+                return;
+            }
+        }
+
+        // --- Check for LO Achievement (Gated by Sequential Navigation Check) ---
+        const currentRightPage = isEffectiveDoublePageView ? currentActualPage + 1 : -1;
+        const lastPageInView = Math.max(currentActualPage, currentRightPage);
+        const currentLo = appState.learningOutcomes.find(lo => lo.page_number === lastPageInView);
+
+        // Use checkNavigationSource to see if this *would* be a sequential jump
+        // This relies on previousPageBeforeNavigation being set correctly above.
+        const isSequentialForward = checkNavigationSource(targetPageForJump);
+
+        if (isSequentialForward && currentLo) { // Only check LO if navigation is sequential
+            const milestoneElement = ui.loMilestonesContainer?.querySelector(`.lo-milestone[data-lo-page="${lastPageInView}"]`);
+            const alreadyPassed = milestoneElement?.classList.contains(CSS_CLASS.LO_PASSED);
+
+            if (!alreadyPassed) {
+                updateStatus(`LO Milestone found on page ${lastPageInView}. Sequential nav confirmed. Showing achievement popup before navigating to ${targetPageForJump}.`);
+                // Let the popup handler call jumpToPage later
+                showLoAchievementPopup(currentLo, targetPageForJump);
+                // Do NOT reset previousPageBeforeNavigation here; popup handler needs it indirectly via jumpToPage call.
+                return; // Stop nextPage here; popup flow takes over.
+            } else {
+                 updateStatus(`LO Milestone on page ${lastPageInView} already passed. Skipping popup.`);
+            }
+        } else if (currentLo) {
+             updateStatus(`LO Milestone on page ${lastPageInView} exists, but navigation to ${targetPageForJump} was not sequential forward. Skipping LO popup.`);
+        }
+        // --- End Gated LO check ---
+
+        // If no relevant LO popup OR navigation wasn't sequential, proceed with jump directly
+        if (targetPageForJump >= 1 && targetPageForJump <= pdfState.totalPages) {
+            jumpToPage(targetPageForJump); // jumpToPage handles the isNavigating flag
+        } else {
+            // This case should ideally be covered by clamping, but as a safeguard:
+            appState.previousPageBeforeNavigation = null; // Reset if jump doesn't happen
+            updateStatus(`NextPage: targetPageForJump (${targetPageForJump}) is invalid, not jumping.`);
+        }
     }
 
     // --- Check for LO Achievement ---
@@ -3030,138 +3069,117 @@ function triggerRotateButtonIndication() {
     }
 }
 
-    function prevPage() {
-    // --- Check if already navigating ---
-    if (appState.isNavigating) {
-        updateStatus("Navigation blocked: Another navigation/render is already in progress.");
-        return; // Exit if already navigating
-    }
-    // NOTE: We don't set appState.isNavigating = true here.
-    // It will be set inside jumpToPage if navigation proceeds.
-
-    const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
-    const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
-
-    appState.previousPageBeforeNavigation = pdfState.currentPage; // Set for popup logic
-
-    const decrement = isEffectiveDoublePageView ? 2 : 1;
-    const targetPage = pdfState.currentPage - decrement;
-
-    if (targetPage >= 1) {
-        jumpToPage(targetPage); // jumpToPage handles the isNavigating flag
-    } else if (pdfState.currentPage > 1) {
-        // If decrement goes below 1, just jump to page 1
-        jumpToPage(1); // jumpToPage handles the isNavigating flag
-    } else {
-        // Already on page 1, do nothing.
-        appState.previousPageBeforeNavigation = null; // Reset if no jump
-        // No navigation lock was set if jumpToPage wasn't called.
-    }
-}
-
-            // --- Navigation (REPLACEMENT jumpToPage with improved Slider Reset) ---
-    function jumpToPage(pageNum){
-        // --- START: Add Navigation Lock ---
+        function prevPage() {
+        // --- Check if already navigating ---
         if (appState.isNavigating) {
-            updateStatus(`Navigation blocked: jumpToPage(${pageNum}) called while another navigation is in progress.`);
-            // Reset slider visually if it triggered this blocked jump
-            if (ui.slider && (document.activeElement === ui.slider || appState.isDraggingSlider)) {
-                 updateSliderPosition(pdfState.currentPage); // Use current page
-            }
-            return;
+            updateStatus("Navigation blocked: Another navigation/render is already in progress.");
+            return; // Exit if already navigating
         }
-        appState.isNavigating = true; // Set lock
-        // --- END: Add Navigation Lock ---
+        // NOTE: isNavigating flag is set inside jumpToPage if navigation proceeds.
 
-        updateStatus(`jumpToPage(${pageNum}) called.`); // Log entry
-
-        if (!pdfState.pdfDocument || pageNum < 1 || pageNum > pdfState.totalPages){
-            console.warn(`Jump to page ${pageNum} out of bounds (1-${pdfState.totalPages})`);
-             // Reset slider visually if it triggered this bad jump
-             if (ui.slider && (document.activeElement === ui.slider || appState.isDraggingSlider)) {
-                 updateSliderPosition(pdfState.currentPage); // Use current page
-             }
-            appState.isNavigating = false; // Release lock
-            return;
-        }
-
-        let targetStartPage = pageNum;
         const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
         const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
         const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
-        // Adjust target page for double-page view to always be the left page (odd)
-        if (isEffectiveDoublePageView && targetStartPage > 1 && targetStartPage % 2 === 0) {
-            targetStartPage--;
+        // *** Set previous page BEFORE any potential early returns or jumps ***
+        appState.previousPageBeforeNavigation = pdfState.currentPage;
+
+        const decrement = isEffectiveDoublePageView ? 2 : 1;
+        const targetPage = pdfState.currentPage - decrement;
+
+        if (targetPage >= 1) {
+            jumpToPage(targetPage); // jumpToPage handles the isNavigating flag
+        } else if (pdfState.currentPage > 1) {
+            // If decrement goes below 1, just jump to page 1
+            jumpToPage(1); // jumpToPage handles the isNavigating flag
+        } else {
+            // Already on page 1, do nothing.
+            updateStatus("PrevPage called on first page. No action.");
+            appState.previousPageBeforeNavigation = null; // Reset if no action taken
+            // No navigation lock was set if jumpToPage wasn't called.
         }
-
-        const currentStartPage = pdfState.currentPage;
-        appState.previousPageBeforeNavigation = currentStartPage; // Store for popup logic BEFORE changing pdfState.currentPage
-
-        // Check if the effective target is the same as the current page
-        if (targetStartPage === currentStartPage) {
-            updateStatus(`Jump target (${targetStartPage}) is same as current (${currentStartPage}). No action.`);
-            updateSliderPosition(currentStartPage); // Ensure slider is accurate even if no jump
-            appState.previousPageBeforeNavigation = null; // Reset if no jump
-            appState.isNavigating = false; // Release lock
+    }
+        async function jumpToPage(targetPage) {
+        if (!pdfState.pdfDocument || pdfState.totalPages === 0) {
+            updateStatus(`jumpToPage(${targetPage}) blocked: PDF not ready.`);
             return;
         }
+        targetPage = parseInt(targetPage, 10); // Ensure integer
 
-        const isMovingForward = targetStartPage > currentStartPage;
-
-        // *** REVERTED Lock Check Logic ***
-        if (isMovingForward) {
-            updateStatus(`Moving forward from ${currentStartPage} to ${targetStartPage}. Checking time lock...`);
-            if (checkReadingTimeLock()) { // Calls the reverted function
-                updateStatus(`Navigation blocked by time lock.`);
-                updateSliderPosition(currentStartPage); // Reset slider to actual current page
-                appState.previousPageBeforeNavigation = null; // Reset nav source flag
-                appState.isNavigating = false; // Release lock
-                return; // Block the jump
+        // --- Navigation Lock Start & Basic Validation ---
+        if (appState.isNavigating) {
+            updateStatus(`jumpToPage(${targetPage}) blocked: Navigation already in progress.`);
+            return;
+        }
+        // Check if target is valid and different from current
+        if (isNaN(targetPage) || targetPage < 1 || targetPage > pdfState.totalPages) {
+            updateStatus(`jumpToPage(${targetPage}) blocked: Target page out of range (1-${pdfState.totalPages}).`);
+            updateSliderPosition(); // Reset slider to current page if invalid jump attempted
+            return;
+        }
+        // Special check: In double page view, jumping to an even page N effectively means showing N-1 and N.
+        // We store N-1 as currentPage. If the user tries to jump *back* to N from N+1, targetPage is N.
+        // We need to ensure we don't block this jump back to the *start* of the pair.
+        const isDoubleEffective = pdfState.isDoublePageView && !ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE) && !ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+        let effectiveCurrentPage = pdfState.currentPage;
+        // If trying to jump to the same logical page, exit early.
+        if (targetPage === effectiveCurrentPage) {
+             updateStatus(`jumpToPage(${targetPage}) blocked: Target page is already the current page.`);
+             return;
+        }
+        // Handle jump *to* an even page in double view - treat as jump to previous odd page for state
+        if (isDoubleEffective && targetPage > 1 && targetPage % 2 === 0) {
+            // If we're already showing the pair N-1, N (currentPage = N-1)
+            // and the target is N, we don't need to do anything.
+            if (pdfState.currentPage === targetPage - 1) {
+                updateStatus(`jumpToPage(${targetPage}) blocked: Already showing pair starting at ${targetPage - 1}.`);
+                updateSliderPosition(); // Ensure slider reflects current state
+                return;
             }
-            updateStatus(`Time lock passed/completed/disabled. Proceeding with jump.`);
-        } else { // Moving backward
-            updateStatus(`Moving backward from ${currentStartPage} to ${targetStartPage}. Skipping time lock check.`);
-            // Clear any *active* lock when moving backward.
-            if (isTimeLockActive) {
-                updateStatus("Clearing active time lock due to backward navigation.");
-                isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; currentLockType = null;
+            // Otherwise, treat jump to N as jump to N-1
+            targetPage = targetPage - 1;
+            updateStatus(`jumpToPage adjusted target for double view to: ${targetPage}`);
+            // Re-check if adjusted target is now the current page
+             if (targetPage === effectiveCurrentPage) {
+                 updateStatus(`jumpToPage(${targetPage}) blocked: Adjusted target page is already the current page.`);
+                 return;
             }
         }
-        // *** End REVERTED Lock Check Logic ***
 
-        // --- Perform Navigation ---
-        updateStatus(`Jumping to page ${targetStartPage} (requested ${pageNum})`);
-        pdfState.currentPage = targetStartPage; // *** Update page state HERE ***
+        // --- Set Navigation Lock ---
+        appState.isNavigating = true;
+        updateStatus(`jumpToPage(${targetPage}) initiated.`);
 
-        // *** UPDATE SLIDER IMMEDIATELY after state change, before updateDisplay ***
-        updateSliderPosition(targetStartPage);
+        try {
+            // --- Timelock Check (Only for forward navigation) ---
+            // Compare target with the *actual* stored currentPage state BEFORE modification
+            if (targetPage > pdfState.currentPage) {
+                if (checkReadingTimeLock()) { // checkReadingTimeLock returns true if blocked
+                    updateStatus(`jumpToPage(${targetPage}) blocked by active time lock.`);
+                    // Reset slider to current page visually if jump is blocked
+                    updateSliderPosition();
+                    appState.isNavigating = false; // Release lock as navigation didn't happen
+                    return; // Exit jumpToPage
+                }
+            }
 
-        // Update furthest read page
-        if (isMovingForward && targetStartPage > userState.readingProgress.furthestPage) {
-            userState.readingProgress.furthestPage = targetStartPage;
-            updateStatus(`Furthest page updated to: ${userState.readingProgress.furthestPage}`);
-            // Optionally save progress here if needed
+            // --- Perform State Update & Render ---
+            pdfState.currentPage = targetPage;
+            updateSliderPosition(targetPage); // Update slider FIRST based on new target
+            resetPopupStates(); // Hide any open popups before rendering new page
+            await updateDisplay(); // Render the new page(s)
+
+            // Note: updateDisplay now handles resetting appState.previousPageBeforeNavigation at its end.
+
+        } catch (error) {
+            console.error(`Error during jumpToPage(${targetPage}):`, error);
+            // Attempt to recover or log, ensure lock is released
+        } finally {
+            // --- Release Navigation Lock ---
+            appState.isNavigating = false;
+            updateStatus(`jumpToPage(${targetPage}) finished.`);
         }
-
-        resetPopupStates(); // Hide popups before rendering new page
-        manageToolbar(false); // Hide toolbars
-        manageLeftToolbar(false);
-
-        // Call updateDisplay asynchronously, but don't wait here
-        updateDisplay().then(() => {
-             updateStatus(`updateDisplay completed successfully after jumpToPage(${targetStartPage}).`);
-             // Navigation lock is released inside updateDisplay
-        }).catch(error => {
-             console.error(`Error during updateDisplay after jumpToPage(${targetStartPage}):`, error);
-             appState.isNavigating = false; // Ensure lock is released on error
-        });
-
-        // NOTE: updateDisplay now releases the appState.isNavigating lock upon completion/error.
-        updateStatus(`jumpToPage(${pageNum}) finished initiating updateDisplay.`); // Log exit
     }
-    // --- End of jumpToPage Replacement ---
 
     // --- START: New function to check handle state ---
     function checkAndApplyHandleState() {
