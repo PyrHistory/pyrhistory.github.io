@@ -171,32 +171,6 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     stroke-width: 1.5;
 }
 
-        /* --- START: TC Folder Item --- */
-.tc-folder-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 5px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.tc-folder-item:hover {
-    background-color: #f0f0f0;
-}
-.tc-folder-item span:first-child { /* Icon */
-    font-size: 1.5em;
-    margin-right: 10px;
-    flex-shrink: 0;
-    width: 24px; /* Give icon fixed width */
-    text-align: center;
-}
-.tc-folder-item span:last-child { /* Title */
-    font-size: 0.9em;
-    color: #333;
-    flex-grow: 1;
-}
-/* --- END: TC Folder Item --- */
-        
 .new-btn:hover{
     background:rgba(52,73,94,.9)!important;
     border-color:rgba(255,255,255,.25)!important;
@@ -1963,8 +1937,8 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
             <button class="new-btn" id="back-btn" title="Go Back">↤</button>
             <button class="new-btn" id="single-page-btn" title="Single Page View" style="font-size: 28px; line-height: 1;">▯</button>
             <button class="new-btn" id="double-page-btn" title="Double Page View">◫</button>
-            <button class="new-btn" id="time-capsule-btn" title="Time Capsule">${boxIconSVG}</button>
-        `;
+            <button class="new-btn" id="time-capsule-btn" title="Time Capsule (TOC Disabled)">${boxIconSVG}</button>
+            `;
             // Note: Return button (#return-view-fixed-btn) is separate HTML outside this toolbar
         // TOC Panel removed from here, handled by Time Capsule button logic elsewhere if needed
         document.getElementById('left-toolbar').innerHTML = `
@@ -1979,144 +1953,6 @@ body:not(.fullscreen-mode):not(.content-rotated-mode) #toolbar-trigger-area {
     // --- END: HTML Population ---
 </script>
 
-function showTimeCapsuleFolder() {
-    const backdrop = document.getElementById('tc-folder-backdrop');
-    const popup = document.getElementById('tc-folder-popup');
-    if (!backdrop || !popup) return;
-
-    renderTimeCapsuleFolderContent(); // Render content *before* showing
-    backdrop.classList.add('visible');
-    popup.classList.add('visible');
-    // Force styles for visibility transition
-    requestAnimationFrame(() => {
-        popup.style.opacity = '1';
-        popup.style.transform = 'translate(-50%, -50%) scale(1)';
-    });
-}
-
-function hideTimeCapsuleFolder() {
-    const backdrop = document.getElementById('tc-folder-backdrop');
-    const popup = document.getElementById('tc-folder-popup');
-    if (!backdrop || !popup) return;
-
-    backdrop.classList.remove('visible');
-    popup.classList.remove('visible');
-    // Force styles for hiding transition
-    popup.style.opacity = '0';
-    popup.style.transform = 'translate(-50%, -50%) scale(0.95)';
-}
-
-function renderTimeCapsuleFolderContent() {
-    const listContainer = document.getElementById('tc-folder-list');
-    if (!listContainer || !pdfState.timeCapsuleElements || !userState.unlockedTimeCapsules) return;
-    listContainer.innerHTML = ''; // Clear previous content
-
-    const unlockedItems = pdfState.timeCapsuleElements.filter(item =>
-        userState.unlockedTimeCapsules.has(item.id)
-    );
-
-    // Optional: Sort by page number
-    unlockedItems.sort((a, b) => a.page - b.page);
-
-    if (unlockedItems.length === 0) {
-        listContainer.innerHTML = '<p style="color: #666; text-align: center; margin-top: 20px; font-style: italic;">No items unlocked yet.</p>';
-        return;
-    }
-
-    unlockedItems.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'tc-folder-item';
-        div.dataset.tcLink = item.link;
-        div.innerHTML = `
-            <span>${item.icon}</span>
-            <span>${item.title}</span>
-        `;
-        div.addEventListener('click', (e) => {
-            const link = e.currentTarget.dataset.tcLink;
-            if (link) {
-                hideTimeCapsuleFolder();
-                // Use setTimeout to allow folder to start closing before iframe popup opens
-                setTimeout(() => showIframePopup(link), 50);
-            }
-        });
-        listContainer.appendChild(div);
-    });
-}
-    
-async function renderTimeCapsuleOverlays(pageNum, pageElement, viewport) {
-    const overlayContainer = pageElement?.querySelector('.keyword-overlay-container'); // Reuse keyword container
-    if (!pdfState.pdfDocument || !overlayContainer || !viewport || !pageElement || !pdfState.timeCapsuleElements) return;
-
-    const tcItems = pdfState.timeCapsuleElements.filter(item =>
-        item.type === 'click-text' && item.page === pageNum && item.triggerText
-    );
-    if (tcItems.length === 0) return;
-
-    try {
-        const page = await pdfState.pdfDocument.getPage(pageNum);
-        const textContent = await page.getTextContent({ normalizeWhitespace: true });
-        const items = textContent.items;
-        const itemsToProcess = [...tcItems]; // Create a copy to modify while iterating
-
-        for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-            const item = items[itemIndex];
-            if (!item.str || item.width === 0 || !item.transform) continue;
-
-            for (let i = itemsToProcess.length - 1; i >= 0; i--) { // Iterate backwards for safe removal
-                const tcItem = itemsToProcess[i];
-                const matchIndex = item.str.indexOf(tcItem.triggerText);
-
-                if (matchIndex !== -1) {
-                    // --- Coordinate Calculation (Same as keywords) ---
-                    const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
-                    const itemWidth = item.width;
-                    const itemHeight = item.height || 12;
-                    const itemLeft = tx[4];
-                    const itemTop = tx[5] - itemHeight;
-                    const approxCharWidth = itemWidth / item.str.length;
-                    const highlightOffsetX = matchIndex * approxCharWidth;
-                    const highlightWidth = tcItem.triggerText.length * approxCharWidth;
-                    // --- End Coordinate Calculation ---
-
-                    const finalLeft = Math.max(0, itemLeft + highlightOffsetX);
-                    const finalTop = Math.max(0, itemTop);
-                    const finalWidth = Math.max(1, highlightWidth);
-                    const finalHeight = itemHeight > 0 ? itemHeight : 12;
-
-                    if (finalWidth <= 0 || finalHeight <= 0) continue;
-
-                    const overlayDiv = document.createElement('div');
-                    overlayDiv.className = 'tc-click-overlay';
-                    overlayDiv.style.left = `${finalLeft}px`;
-                    overlayDiv.style.top = `${finalTop}px`;
-                    overlayDiv.style.width = `${finalWidth}px`;
-                    overlayDiv.style.height = `${finalHeight}px`;
-
-                    overlayDiv.dataset.tcId = tcItem.id;
-                    overlayDiv.dataset.tcLink = tcItem.link;
-                    overlayDiv.title = tcItem.title || 'Click for Time Capsule content';
-
-                    overlayDiv.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const id = e.currentTarget.dataset.tcId;
-                        const link = e.currentTarget.dataset.tcLink;
-                        if (id && link) {
-                            showIframePopup(link);
-                            markTimeCapsuleUnlocked(id); // Unlock on click
-                        }
-                    });
-                    overlayContainer.appendChild(overlayDiv);
-
-                    itemsToProcess.splice(i, 1); // Remove found item
-                }
-            }
-            if (itemsToProcess.length === 0) break; // Exit outer loop if all found
-        }
-    } catch (error) {
-        console.error(`Error processing TC overlays for page ${pageNum}:`, error);
-    }
-}
-    
 <!-- Main application script block (Refactored & Reverted + MODIFIED) -->
 <script>
 (function() { // IIFE to encapsulate scope
@@ -2149,102 +1985,6 @@ async function renderTimeCapsuleOverlays(pageNum, pageElement, viewport) {
         HOVER_COLORED: 'hover-colored', // New class for temp coloring on hover
     };
 
-function markTimeCapsuleUnlocked(id) {
-    if (!id || !userState || !userState.unlockedTimeCapsules) return; // Safety checks
-    // Check if it's already unlocked
-    if (!userState.unlockedTimeCapsules.has(id)) {
-        userState.unlockedTimeCapsules.add(id);
-        updateStatus(`Time Capsule Unlocked: ${id}`);
-        saveUserProgress(); // Trigger save
-
-        // Optional: Update folder UI if open
-        const folderPopup = document.getElementById('tc-folder-popup');
-        if (folderPopup && folderPopup.classList.contains('visible')) {
-             renderTimeCapsuleFolderContent();
-        }
-    }
-}
-
-// --- User Progress Persistence (localStorage - Simple Version) ---
-function saveUserProgress() {
-    if (!pdfState.title || pdfState.title === "No Document" || pdfState.title === "Error Loading") {
-        return; // Don't save without context
-    }
-    try {
-        const unlockedIds = Array.from(userState.unlockedTimeCapsules);
-        const key = `unlockedTCs_${pdfState.title}`; // Key specific to the PDF title
-        localStorage.setItem(key, JSON.stringify(unlockedIds));
-        // updateStatus(`Saved ${unlockedIds.length} unlocked TC IDs`); // Optional log
-    } catch (error) {
-        console.warn("Failed to save user progress to localStorage:", error);
-    }
-}
-
-function loadUserProgress() {
-    // Ensure pdfState.title is set before calling this
-    if (!pdfState.title || pdfState.title === "No Document" || pdfState.title === "Error Loading") {
-        userState.unlockedTimeCapsules = new Set();
-        return;
-    }
-    try {
-        const key = `unlockedTCs_${pdfState.title}`;
-        const savedData = localStorage.getItem(key);
-        if (savedData) {
-            const unlockedIds = JSON.parse(savedData);
-            if (Array.isArray(unlockedIds)) {
-                userState.unlockedTimeCapsules = new Set(unlockedIds);
-                updateStatus(`Loaded ${userState.unlockedTimeCapsules.size} unlocked TC IDs from localStorage for ${pdfState.title}`);
-            } else {
-                 userState.unlockedTimeCapsules = new Set(); // Reset if data is invalid
-            }
-        } else {
-            userState.unlockedTimeCapsules = new Set(); // Initialize if nothing saved
-            updateStatus(`No saved TC progress found for ${pdfState.title}`);
-        }
-    } catch (error) {
-        console.warn("Failed to load user progress from localStorage:", error);
-        userState.unlockedTimeCapsules = new Set(); // Reset on error
-    }
-}
-// --- End User Progress ---
-    
-async function loadTimeCapsuleData(pdfUrl) {
-    // Derive filename (e.g., chapterX-tc-elements.json)
-    let tcJsonUrl = '';
-    try {
-        const pdfPathParts = pdfUrl.split('/');
-        const pdfFilename = pdfPathParts.pop() || '';
-        const baseFilename = pdfFilename.replace(/\.pdf$/i, '');
-        // --- ADJUST FILENAME PATTERN IF NEEDED ---
-        const tcJsonFilename = `${baseFilename}tc-elements.json`;
-        const pdfDir = pdfUrl.substring(0, pdfUrl.lastIndexOf('/') + 1);
-        tcJsonUrl = pdfDir + tcJsonFilename;
-    } catch (e) { console.warn("Error deriving TC JSON file name:", e); return false; }
-
-    updateStatus(`Attempting to load Time Capsule data from: ${tcJsonUrl}`);
-    pdfState.timeCapsuleElements = []; // Reset
-
-    try {
-        const response = await fetch(tcJsonUrl);
-        if (!response.ok) {
-            if (response.status === 404) { updateStatus(`TC data file not found: ${tcJsonUrl}`); }
-            else { console.warn(`TC data fetch failed: HTTP ${response.status} for ${tcJsonUrl}`); }
-            return false;
-        }
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-            console.warn(`Invalid TC data structure in ${tcJsonUrl}. Expected an array.`); return false;
-        }
-        // Basic validation
-        pdfState.timeCapsuleElements = data.filter(item => item.id && item.type && item.link && item.icon && item.title && typeof item.page === 'number');
-        updateStatus(`TC data loaded: ${pdfState.timeCapsuleElements.length} valid elements found.`);
-        return true;
-    } catch (error) {
-        console.warn(`TC data fetch/parse error for ${tcJsonUrl}: ${error.message}.`);
-        pdfState.timeCapsuleElements = []; return false;
-    }
-}
-    
     // --- START: ADD THIS NEW FUNCTION ---
 function triggerRotateButtonIndication() {
     if (!ui.returnViewFixedBtn) return;
@@ -2357,8 +2097,8 @@ function triggerRotateButtonIndication() {
     const linkService = new pdfjsViewer.SimpleLinkService();
     const eventBus = new pdfjsViewer.EventBus(); // Although not directly used, keep for potential compatibility
 
-    // --- Application State (Keep non-reverted state from new code, added TC/LO) ---
-const appState = { // Keep non-reverted state from new code
+    // --- Application State (Reverted toolbar/timelock state, added LO state) ---
+    const appState = { // Keep non-reverted state from new code
     isReaderReady: false,
     resizeTimer: null,
     sliderHideTimeout: null,
@@ -2373,52 +2113,50 @@ const appState = { // Keep non-reverted state from new code
     loPopupTargetPage: null, // NEW: Store target page for after LO popup
     originalSliderInfoText: null,
     sliderInfoFadeTimeout: null,
-    previousPageBeforeNavigation: null,
-    isNavigating: false,
+    previousPageBeforeNavigation: null, // <<< ADDED THIS LINE (initialize to null)
+    isNavigating: false, 
 };
+    
+    // REVERTED: Global state variables for toolbar/timer from old code
+    let toolbarTimer=null;
+    let toolbarHover=!1;
+    let leftToolbarTimer=null; // Timer for left toolbar
+    let leftToolbarHover=!1;  // Hover state for left toolbar
 
-// REVERTED: Global state variables for toolbar/timer from old code
-let toolbarTimer=null;
-let toolbarHover=!1;
-let leftToolbarTimer=null; // Timer for left toolbar
-let leftToolbarHover=!1;  // Hover state for left toolbar
+    // REVERTED: Timelock state variables from old code
+    let isTimelockGloballyEnabled = true;
+    let currentPageLockStartTime = 0;
+    let requiredReadingTime = 0;
+    let isTimeLockActive = false;
+    let completedTimeLockPages = new Set();
+    let currentLockType = null; // NEW: Tracks what the current lock applies to ('pdf', 'notes', 'iframe', or null)
 
-// REVERTED: Timelock state variables from old code
-let isTimelockGloballyEnabled = true;
-let currentPageLockStartTime = 0;
-let requiredReadingTime = 0;
-let isTimeLockActive = false;
-let completedTimeLockPages = new Set();
-let currentLockType = null;
+    // --- State related to PDF/Notes/Keywords (Keep from New Code) ---
+    const pdfState = {
+        pdfDocument: null,
+        title: "No Document",
+        totalPages: 0,
+        currentPage: 1,
+        isDoublePageView: true, // Initial assumption, adjusted on load based on screen size
+        pageCache: new Map(),
+        currentViewports: {}, // Stores viewport used for rendering { canvasId: viewport }
+        keywordDefinitions: {}, // Now expects values like ["(pos)", "definition"]
+        pageKeywords: {}, // { pageNumStr: [keyword1, keyword2] }
+        globalFirstInstanceLocation: {}, // { keywordLower: { pageNum, itemIndex, matchIndex } }
+        iframeMappings: {}, // { pageNumStr: urlString }
+        notesMapping: {}, // { chapterPageStr: { pdf: path, page: number } }
+        notesPdfLoadingTask: null,
+        currentNotesPdfDoc: null,
+        currentNotesPageNum: 1,
+        totalNotesPages: 0,
+        outline: [], // Added outline property
+    };
 
-// --- State related to PDF/Notes/Keywords/TC ---
-const pdfState = {
-    pdfDocument: null,
-    title: "No Document",
-    totalPages: 0,
-    currentPage: 1,
-    isDoublePageView: true, // Initial assumption, adjusted on load
-    pageCache: new Map(),
-    currentViewports: {}, // Stores viewport used for rendering { canvasId: viewport }
-    keywordDefinitions: {},
-    pageKeywords: {},
-    globalFirstInstanceLocation: {},
-    iframeMappings: {},
-    notesMapping: {},
-    timeCapsuleElements: [], // <<< ADDED FOR TC
-    notesPdfLoadingTask: null,
-    currentNotesPdfDoc: null,
-    currentNotesPageNum: 1,
-    totalNotesPages: 0,
-    outline: [],
-};
-
-const userState = {
-    readingProgress: {
-        furthestPage: 1,
-    },
-    unlockedTimeCapsules: new Set(), // <<< ADDED FOR TC
-};
+    const userState = {
+        readingProgress: {
+            furthestPage: 1,
+        },
+    };
 
    
 
@@ -2693,17 +2431,18 @@ const userState = {
         }
     }
 
+    // --- Page Rendering (Keep from New Code - Uses new pdfState) ---
     async function renderPage(pageNum, canvasId) {
     const canvas = (canvasId === 'left-page-canvas') ? ui.leftPageCanvas : ui.rightPageCanvas;
     const ctx = canvas?.getContext('2d');
     const pageElement = getPageElement(canvasId);
-    const canvasContainer = getCanvasContainer(pageElement);
+    const canvasContainer = getCanvasContainer(pageElement); // Container for dimensions
     const textLayerContainer = pageElement?.querySelector('.textLayer');
     const annotationLayerContainer = pageElement?.querySelector('.annotationLayer');
-    const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container'); // Used by TC overlays too
+    const keywordOverlayContainer = pageElement?.querySelector('.keyword-overlay-container');
 
-    delete pdfState.currentViewports[canvasId];
-    clearPageLayers(pageElement);
+    delete pdfState.currentViewports[canvasId]; // Clear previous viewport
+    clearPageLayers(pageElement); // Clear layers
 
     if (!pdfState.pdfDocument || !canvas || !ctx || !canvasContainer || !textLayerContainer || !annotationLayerContainer || !keywordOverlayContainer || !pageElement || pageNum < 1 || pageNum > pdfState.totalPages) {
         if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -2718,7 +2457,9 @@ const userState = {
     let viewport;
 
     try {
+        // --- Get Page & Calculate NORMAL Viewport ---
         page = await pdfState.pdfDocument.getPage(pageNum);
+        // Use the canvas-container's current client dimensions
         const availableWidth = canvasContainer.clientWidth;
         const availableHeight = canvasContainer.clientHeight;
 
@@ -2727,25 +2468,28 @@ const userState = {
         }
 
         const defaultViewport = page.getViewport({ scale: 1 });
+        // Calculate scale to fit NORMALLY (NO SCALING MULTIPLIER)
         const scale = Math.min(availableWidth / defaultViewport.width, availableHeight / defaultViewport.height);
-        viewport = page.getViewport({ scale: scale });
-        pdfState.currentViewports[canvasId] = viewport;
+        viewport = page.getViewport({ scale: scale }); // Final viewport for rendering
+        pdfState.currentViewports[canvasId] = viewport; // Store viewport
 
+        // --- Prepare Canvas ---
         const outputScale = window.devicePixelRatio || 1;
         canvas.width = Math.floor(viewport.width * outputScale);
         canvas.height = Math.floor(viewport.height * outputScale);
+        // Style size should MATCH viewport size for 1:1 rendering display
         canvas.style.width = `${Math.floor(viewport.width)}px`;
         canvas.style.height = `${Math.floor(viewport.height)}px`;
 
+        // --- Render PDF to Canvas ---
         const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
         await page.render({ canvasContext: ctx, transform, viewport }).promise;
-        hidePageLoading(canvasId);
+        hidePageLoading(canvasId); // Hide loading AFTER rendering
 
-        // Render enhancement layers
+        // --- Render enhancement layers using the SAME NORMAL viewport ---
         await renderAndEnhanceTextLayer(page, textLayerContainer, viewport);
         await renderAnnotationLayer(page, annotationLayerContainer, viewport);
-        await createKeywordOverlays(pageNum, pageElement, viewport);
-        await renderTimeCapsuleOverlays(pageNum, pageElement, viewport); // <<< ADDED THIS CALL
+        await createKeywordOverlays(pageNum, pageElement, viewport); // Pass the normal viewport
 
     } catch (error) {
         console.error(`Error rendering page ${pageNum} on ${canvasId}:`, error);
@@ -2811,10 +2555,11 @@ const userState = {
         }
     }
 
+    // --- Update Display (REVERTED Timelock Logic, Uses New Code's state/UI, Added LO update) ---
     async function updateDisplay() {
     if (!pdfState.pdfDocument) { updateStatus("UpdateDisplay skipped: No PDF loaded."); return; }
 
-    const leftPageNum = pdfState.currentPage;
+    const leftPageNum = pdfState.currentPage; // This is the current *start* page of the view
     const potentialRightPageNum = pdfState.isDoublePageView ? pdfState.currentPage + 1 : 0;
 
     if (!ui.leftPageDiv || !ui.rightPageDiv || !ui.leftPageNumDisplay || !ui.rightPageNumDisplay) {
@@ -2822,27 +2567,29 @@ const userState = {
     }
 
     const isFullscreen = ui.body.classList.contains(CSS_CLASS.FULLSCREEN_MODE);
-    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE);
+    const isContentRotated = ui.body.classList.contains(CSS_CLASS.CONTENT_ROTATED_MODE); // Check this first
     const isEffectiveDoublePageView = pdfState.isDoublePageView && !isFullscreen && !isContentRotated;
 
     let renderPromises = [];
-    let leftPageNumToRender = pdfState.currentPage;
+    let leftPageNumToRender = pdfState.currentPage; // Default
 
     if (isContentRotated && appState.rotatedViewTargetPageNum !== null) {
         leftPageNumToRender = appState.rotatedViewTargetPageNum;
+        updateStatus(`Rotated view active. Rendering target page ${leftPageNumToRender} into left canvas.`);
     } else if (!isContentRotated) {
         leftPageNumToRender = pdfState.currentPage;
     } else {
+        console.warn("In rotated view but no target page number set in appState. Defaulting to currentPage.");
         leftPageNumToRender = pdfState.currentPage;
     }
 
-    // Reset current lock state
+    // *** REVERTED: Reset current lock state before evaluation (uses reverted globals) ***
     isTimeLockActive = false;
     currentPageLockStartTime = 0;
     requiredReadingTime = 0;
-    currentLockType = null;
+    currentLockType = null; // Reset lock type on every display update
 
-    // Render Left Page
+    // --- Render Left Page (Using determined page number) ---
     if (leftPageNumToRender >= 1 && leftPageNumToRender <= pdfState.totalPages) {
         ui.leftPageNumDisplay.textContent = String(leftPageNumToRender);
         renderPromises.push(renderPage(leftPageNumToRender, 'left-page-canvas'));
@@ -2851,11 +2598,11 @@ const userState = {
         const lCtx = ui.leftPageCanvas?.getContext('2d');
         if (lCtx) lCtx.clearRect(0, 0, ui.leftPageCanvas.width, ui.leftPageCanvas.height);
         clearPageLayers(ui.leftPageDiv);
-        ui.leftPageDiv?.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
+        ui.leftPageDiv.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
         delete pdfState.currentViewports['left-page-canvas'];
     }
 
-    // Prepare Right Page
+    // --- Prepare Right Page (Hide if rotated or single) ---
     ui.rightPageDiv.style.display = 'none';
     ui.rightPageDiv.classList.remove(CSS_CLASS.PLACEHOLDER_PAGE);
     const rCtx = ui.rightPageCanvas?.getContext('2d');
@@ -2866,133 +2613,182 @@ const userState = {
 
     let actualRightPageNum = 0;
 
-    // Render Right Page
+    // --- Render Right Page (ONLY if in effective double-page view) ---
     if (isEffectiveDoublePageView) {
         actualRightPageNum = pdfState.currentPage + 1;
         if (actualRightPageNum >= 1 && actualRightPageNum <= pdfState.totalPages) {
             ui.rightPageNumDisplay.textContent = String(actualRightPageNum);
-            ui.rightPageDiv.style.display = 'flex'; // Use flex for consistency
+            ui.rightPageDiv.style.display = 'flex';
             renderPromises.push(renderPage(actualRightPageNum, 'right-page-canvas'));
         } else if (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages) {
-            ui.rightPageDiv.style.display = 'flex'; // Use flex for consistency
+            ui.rightPageDiv.style.display = 'flex';
             ui.rightPageDiv.classList.add(CSS_CLASS.PLACEHOLDER_PAGE);
             ui.rightPageNumDisplay.textContent = '';
             actualRightPageNum = 0;
         }
     }
 
+    // Wait for page rendering to complete
     await Promise.all(renderPromises);
 
-    // Manage Edge Navigation
+    // --- Manage Edge Navigation Button Visibility ---
     const leftEdgeNavLeft = ui.leftPageDiv?.querySelector('.page-edge-left');
     const leftEdgeNavRight = ui.leftPageDiv?.querySelector('.page-edge-right');
     const rightEdgeNavLeft = ui.rightPageDiv?.querySelector('.page-edge-left');
     const rightEdgeNavRight = ui.rightPageDiv?.querySelector('.page-edge-right');
-    if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = isContentRotated ? 'none' : '';
-    if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
-    if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
-    if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
-    if (!isContentRotated) {
+
+    if (isContentRotated) {
+        if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = 'none';
+        if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
+        if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
+        if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
+    } else { // Not rotated
+        if (leftEdgeNavLeft) leftEdgeNavLeft.style.display = '';
+        if (rightEdgeNavRight) rightEdgeNavRight.style.display = 'none';
+        if (leftEdgeNavRight) leftEdgeNavRight.style.display = 'none';
+        if (rightEdgeNavLeft) rightEdgeNavLeft.style.display = 'none';
+
         if (isEffectiveDoublePageView) {
             if (rightEdgeNavRight && !ui.rightPageDiv?.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
                 rightEdgeNavRight.style.display = '';
             }
-        } else {
+        } else { // Single Page (Fullscreen)
             if (leftEdgeNavRight) leftEdgeNavRight.style.display = '';
         }
     }
 
-    // Reading Time Lock Logic (using reverted logic)
+    // *** REVERTED/MODIFIED Reading Time Logic ***
     if (isTimelockGloballyEnabled) {
-        let timeLockPageNumForLog = -1;
-        let timeLockCalculationPromise = Promise.resolve(0);
-
         if (isContentRotated) {
             const rotatedPageNum = leftPageNumToRender;
-            timeLockPageNumForLog = rotatedPageNum;
-            if (rotatedPageNum >= 1 && rotatedPageNum <= pdfState.totalPages && pdfState.currentViewports['left-page-canvas'] && !completedTimeLockPages.has(rotatedPageNum)) {
-                timeLockCalculationPromise = calculatePageReadingTime(rotatedPageNum, pdfState.currentViewports['left-page-canvas']);
+            const rotatedViewport = pdfState.currentViewports['left-page-canvas'];
+            let timeRotated = 0;
+            if (rotatedPageNum >= 1 && rotatedPageNum <= pdfState.totalPages && rotatedViewport) {
+                timeRotated = await calculatePageReadingTime(rotatedPageNum, rotatedViewport);
+            }
+            if (completedTimeLockPages.has(rotatedPageNum)) {
+                updateStatus(`Time lock previously completed for rotated page ${rotatedPageNum}. Skipping set.`);
+            } else if (timeRotated > 0) {
+                requiredReadingTime = timeRotated;
+                currentPageLockStartTime = Date.now();
+                isTimeLockActive = true;
+                currentLockType = 'pdf';
+                updateStatus(`Time lock SET (Rotated View) for page ${rotatedPageNum}. Time: ${requiredReadingTime}s`);
+            } else {
+                updateStatus(`Time lock NOT SET for rotated page ${rotatedPageNum} (time=0 or already completed).`);
             }
         } else if (isEffectiveDoublePageView) {
-            timeLockPageNumForLog = pdfState.currentPage; // Lock associated with the pair start
-             if (!completedTimeLockPages.has(pdfState.currentPage)) {
-                const leftPromise = (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages && pdfState.currentViewports['left-page-canvas'])
-                    ? calculatePageReadingTime(pdfState.currentPage, pdfState.currentViewports['left-page-canvas']) : Promise.resolve(0);
-                const rightPromise = (actualRightPageNum > 0 && pdfState.currentViewports['right-page-canvas'])
-                    ? calculatePageReadingTime(actualRightPageNum, pdfState.currentViewports['right-page-canvas']) : Promise.resolve(0);
-                timeLockCalculationPromise = Promise.all([leftPromise, rightPromise]).then(([tLeft, tRight]) => tLeft + tRight);
+            const leftViewport = pdfState.currentViewports['left-page-canvas'];
+            const rightViewport = pdfState.currentViewports['right-page-canvas'];
+            let timeLeft = 0;
+            if (pdfState.currentPage >= 1 && pdfState.currentPage <= pdfState.totalPages && leftViewport) {
+                timeLeft = await calculatePageReadingTime(pdfState.currentPage, leftViewport);
+            }
+            let timeRight = 0;
+            if (actualRightPageNum > 0 && rightViewport) {
+                timeRight = await calculatePageReadingTime(actualRightPageNum, rightViewport);
+            }
+            const timeForPair = timeLeft + timeRight;
+            const firstPageOfCurrentPair = pdfState.currentPage;
+            if (completedTimeLockPages.has(firstPageOfCurrentPair)) {
+                updateStatus(`Time lock previously completed for pair starting ${firstPageOfCurrentPair}. Skipping set.`);
+            } else if (timeForPair > 0) {
+                requiredReadingTime = timeForPair;
+                currentPageLockStartTime = Date.now();
+                isTimeLockActive = true;
+                currentLockType = 'pdf';
+                updateStatus(`Time lock SET (Double View - Pair) for pair starting ${firstPageOfCurrentPair}. Time: ${requiredReadingTime}s`);
+            } else {
+                 updateStatus(`Time lock NOT SET for pair starting ${firstPageOfCurrentPair} (time=0 or already completed).`);
             }
         } else { // Single (Fullscreen) View
             const currentPageNum = pdfState.currentPage;
-            timeLockPageNumForLog = currentPageNum;
             const isEvenPage = currentPageNum > 0 && currentPageNum % 2 === 0;
-             if (isEvenPage && !completedTimeLockPages.has(currentPageNum) && pdfState.currentViewports['left-page-canvas']) {
-                timeLockCalculationPromise = calculatePageReadingTime(currentPageNum, pdfState.currentViewports['left-page-canvas']);
+            if (isEvenPage) {
+                if (completedTimeLockPages.has(currentPageNum)) {
+                    updateStatus(`Time lock previously completed for single page ${currentPageNum}. Skipping set.`);
+                } else {
+                    const singlePageViewPort = pdfState.currentViewports['left-page-canvas'];
+                    let timeSingle = 0;
+                    if (currentPageNum >= 1 && currentPageNum <= pdfState.totalPages && singlePageViewPort) {
+                        timeSingle = await calculatePageReadingTime(currentPageNum, singlePageViewPort);
+                    }
+                    if (timeSingle > 0) {
+                        requiredReadingTime = timeSingle;
+                        currentPageLockStartTime = Date.now();
+                        isTimeLockActive = true;
+                        currentLockType = 'pdf';
+                        updateStatus(`Time lock SET (Single View - Even Page) for page ${currentPageNum}. Time: ${requiredReadingTime}s`);
+                    } else {
+                         updateStatus(`Time lock NOT SET for single page ${currentPageNum} (time=0 or already completed).`);
+                    }
+                }
+            } else {
+                updateStatus(`Time lock NOT APPLICABLE (Single View - Odd/Invalid Page) for page ${currentPageNum}.`);
             }
         }
-
-        const calculatedTime = await timeLockCalculationPromise;
-        if (calculatedTime > 0 && !completedTimeLockPages.has(timeLockPageNumForLog)) {
-            requiredReadingTime = calculatedTime;
-            currentPageLockStartTime = Date.now();
-            isTimeLockActive = true;
-            currentLockType = 'pdf';
-            updateStatus(`Time lock SET for Page/Pair ${timeLockPageNumForLog}. Time: ${requiredReadingTime}s`);
-        } else if (timeLockPageNumForLog !== -1) {
-             updateStatus(`Time lock NOT SET for Page/Pair ${timeLockPageNumForLog} (time=0 or already completed).`);
-        }
-
     } else {
-        isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; currentLockType = null;
-        updateStatus("Time lock globally DISABLED. Skipping lock calculation.");
+        isTimeLockActive = false;
+        requiredReadingTime = 0;
+        currentPageLockStartTime = 0;
+        currentLockType = null;
+        updateStatus("Time lock globally DISABLED. Skipping lock calculation/set.");
     }
+    // --- End REVERTED/MODIFIED Reading Time Logic ---
 
-    // Check for Popups (Notes/Iframe)
+    // --- Check for Popups (MODIFIED TO CHECK NAVIGATION SOURCE) ---
     let shouldShowNotesPopup = false;
     const currentPageToCheckPopups = isContentRotated ? leftPageNumToRender : pdfState.currentPage;
-    let allowPopupsOnThisLoad = !isContentRotated && checkNavigationSource(pdfState.currentPage); // Use appState.currentPage
 
+    // *** Check if navigation source allows popups for this load ***
+    let allowPopupsOnThisLoad = checkNavigationSource(pdfState.currentPage);
+    if (isContentRotated) {
+        // Suppress popups in rotated view for now
+        allowPopupsOnThisLoad = false;
+    }
+
+    // *** Gate popup checks with allowPopupsOnThisLoad ***
     if (allowPopupsOnThisLoad && currentPageToCheckPopups >= 1 && currentPageToCheckPopups <= pdfState.totalPages) {
+        updateStatus(`Sequential navigation detected to page ${pdfState.currentPage}. Checking for Notes/Iframe popups...`);
+        // Check Notes
         const notesInfo = pdfState.notesMapping[currentPageToCheckPopups.toString()];
         if (notesInfo) {
+            updateStatus(`Notes Popup found for page ${currentPageToCheckPopups}. Showing.`);
             showNotesPopup(notesInfo.pdf, notesInfo.page);
             shouldShowNotesPopup = true;
-        } else { hideNotesPopupIfNeeded(); }
+        } else {
+            hideNotesPopupIfNeeded(); // Hide if no notes for this page
+        }
 
+        // Check Iframe (only if Notes not showing)
         if (!shouldShowNotesPopup) {
             const iframeUrl = pdfState.iframeMappings[currentPageToCheckPopups.toString()];
-            if (iframeUrl) { showIframePopup(iframeUrl); }
-            else { hideIframePopupIfNeeded(); }
-        } else { hideIframePopupIfNeeded(); }
+            if (iframeUrl) {
+                updateStatus(`Iframe Popup found for page ${currentPageToCheckPopups}. Showing.`);
+                showIframePopup(iframeUrl);
+            } else {
+                hideIframePopupIfNeeded(); // Hide if no iframe for this page
+            }
+        } else {
+             hideIframePopupIfNeeded(); // Hide if notes are showing
+        }
     } else {
-        hideNotesPopupIfNeeded(); hideIframePopupIfNeeded();
-        // if (!allowPopupsOnThisLoad && appState.isReaderReady) { updateStatus(`Navigation to page ${pdfState.currentPage} was not sequential. Popups suppressed.`); }
+        // If navigation wasn't sequential OR page is invalid, ensure popups are hidden
+        if (!allowPopupsOnThisLoad && appState.isReaderReady) { // Only log if reader is ready
+             updateStatus(`Navigation to page ${pdfState.currentPage} was not sequential forward (or page invalid). Popups suppressed.`);
+        }
+         hideNotesPopupIfNeeded();
+         hideIframePopupIfNeeded();
+         // LO Achievement popup is handled in nextPage, not here.
     }
+    // *** END Gated Popup Check ***
 
-    // Final Updates
+    // --- Final Updates ---
     preloadAdjacentPages(pdfState.currentPage);
     applyCurrentViewModeStyles();
-    appState.previousPageBeforeNavigation = null; // Reset nav history tracker
 
-    // --- Unlock Time Capsules (iframe type) on Page View --- <<< ADDED BLOCK
-    if (pdfState.timeCapsuleElements && pdfState.timeCapsuleElements.length > 0) {
-        const visiblePages = new Set();
-        if (leftPageNumToRender >= 1 && leftPageNumToRender <= pdfState.totalPages) {
-            visiblePages.add(leftPageNumToRender);
-        }
-        if (actualRightPageNum >= 1 && actualRightPageNum <= pdfState.totalPages) {
-            visiblePages.add(actualRightPageNum);
-        }
-
-        pdfState.timeCapsuleElements.forEach(tcItem => {
-            // Unlock 'iframe' type TCs when their page becomes visible
-            if (tcItem.type === 'iframe' && visiblePages.has(tcItem.page)) {
-                markTimeCapsuleUnlocked(tcItem.id);
-            }
-            // 'click-text' types are unlocked via their own click handler
-        });
-    }
-    // --- End Unlock Time Capsules ---
+    // *** Reset navigation state variable at the END ***
+    appState.previousPageBeforeNavigation = null;
 
     updateStatus("Display update complete.");
 }
@@ -4268,131 +4064,131 @@ async function loadNotesData(pdfUrl) {
 }
 // --- END NEW ---
     
+        // --- PDF Loading (REPLACEMENT loadPdf) ---
     async function loadPdf(pdfUrl) {
-    updateStatus(`loadPdf started for: ${pdfUrl}`);
-    appState.previousPageBeforeNavigation = null; // Reset nav history
-    // Reset PDF State
-    pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = []; pdfState.notesMapping = {}; pdfState.timeCapsuleElements = []; // Reset TC data
-    if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
-    pdfState.totalPages = 0; pdfState.currentPage = 1; pdfState.title = "No Document"; pdfState.isDoublePageView = true;
+        updateStatus(`loadPdf started for: ${pdfUrl}`);
+        appState.previousPageBeforeNavigation = null; // Reset nav history
+        // Reset PDF State
+        pdfState.pageCache.clear(); pdfState.currentViewports = {}; pdfState.keywordDefinitions = {}; pdfState.pageKeywords = {}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; pdfState.outline = []; appState.learningOutcomes = []; pdfState.notesMapping = {};
+        if (pdfState.pdfDocument) { try { pdfState.pdfDocument.destroy(); } catch (e) { console.warn("Error destroying previous PDF doc:", e); } pdfState.pdfDocument = null; }
+        pdfState.totalPages = 0; pdfState.currentPage = 1; pdfState.title = "No Document"; pdfState.isDoublePageView = true;
 
-    // Reset Time Lock State
-    updateStatus("Resetting time lock state for new PDF.");
-    isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
-    isTimeLockActive = false; completedTimeLockPages.clear(); currentPageLockStartTime = 0; requiredReadingTime = 0; currentLockType = null;
+        // Reset Time Lock State
+        updateStatus("Resetting time lock state for new PDF.");
+        isTimelockGloballyEnabled = true; updateTimelockButtonVisuals();
+        isTimeLockActive = false; completedTimeLockPages.clear(); currentPageLockStartTime = 0; requiredReadingTime = 0; currentLockType = null;
 
-    // Reset Notes State
-    pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
-    if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
-
-    // Reset User Progress & UI
-    userState.readingProgress.furthestPage = 1;
-    userState.unlockedTimeCapsules = new Set(); // Reset unlocked TCs here too
-    resetPopupStates(); document.title = "Pyr Course Viewer";
-
-    // Update Go To Chapter Button
-    if (ui.goToChapterBtn) {
-        updateStatus("Setting button to 'Loading Chapter...' state.");
-        ui.goToChapterBtn.textContent = 'Loading Chapter...';
-        ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
-        ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
-    }
-
-    let filename = "Document";
-    try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
-    pdfState.title = filename;
-
-    // --- Load User Progress (localStorage version) ---
-    loadUserProgress(); // Load progress after title is set, before fetching PDF
-
-    document.title = `${pdfState.title} - Pyr Course Viewer`;
-
-    try {
-        updateStatus("Starting background PDF document loading...");
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        const overlayPromise = loadOverlayData(pdfUrl);
-        const iframeDataPromise = loadIframeData(pdfUrl);
-        const loPromise = loadLearningOutcomes(pdfUrl);
-        const notesDataPromise = loadNotesData(pdfUrl);
-        const tcDataPromise = loadTimeCapsuleData(pdfUrl); // <<< ADDED
-
-        pdfState.pdfDocument = await loadingTask.promise;
-        pdfState.totalPages = pdfState.pdfDocument.numPages;
-        pdfState.currentPage = 1;
-        updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
-        updateSliderTotalPages(); // Update total FIRST
-
-        // Wait for all data files
-        const [overlayLoaded, iframeDataLoaded, loLoaded, notesDataLoaded, tcDataLoaded] = await Promise.all([ // <<< ADDED tcDataLoaded
-            overlayPromise, iframeDataPromise, loPromise, notesDataPromise,
-            tcDataPromise // <<< ADDED
-        ]);
-        updateStatus(`Overlay data loaded: ${overlayLoaded}, Iframe data loaded: ${iframeDataLoaded}, LO data loaded: ${loLoaded}, Notes data loaded: ${notesDataLoaded}, TC data loaded: ${tcDataLoaded}`); // <<< UPDATED Log
-
-        renderSliderMilestones(); // Render LOs now that data is loaded
-
-        if (overlayLoaded && pdfState.pdfDocument) {
-            await findFirstKeywordInstances();
-        }
-
-        // Determine initial view mode
-        if (window.innerWidth < 1000) {
-            updateStatus("Initial setup: Small screen detected, setting intended view to Single Page (Fullscreen).");
-            pdfState.isDoublePageView = false;
-            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
-            ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
-        } else {
-            updateStatus("Initial setup: Large screen detected, setting intended view to Double Page.");
-            pdfState.isDoublePageView = true;
-            ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE);
-            pdfState.currentPage = 1;
-        }
-
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        await updateDisplay(); // Perform initial render
-
-        // --- READER IS READY ---
-        appState.isReaderReady = true;
-        updateStatus("Reader is ready!");
-        updateSliderPosition(); // Update position/text LAST
-
-        // Notify game iframe and update button
-        if (ui.gameIframe?.contentWindow) {
-            try { ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*'); } catch (e) { console.error("Error posting 'chapterReady' message:", e); }
-        }
-        setTimeout(() => {
-            if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-                updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
-                ui.goToChapterBtn.textContent = 'Go to Chapter';
-                ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
-                ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
-            }
-        }, LOADING_BAR_ANIMATION_BUFFER);
-        if (ui.gameIframe?.contentWindow) {
-            try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); } catch (e) { console.error("Error posting disableRestart message:", e); }
-        }
-
-    } catch (error) {
-        console.error("FATAL: Error loading PDF document:", error);
-        appState.isReaderReady = false;
-        pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = []; pdfState.notesMapping = {}; pdfState.timeCapsuleElements = []; // Reset TC
-        completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); currentLockType = null; userState.unlockedTimeCapsules = new Set(); // Reset unlocked TC
+        // Reset Notes State
         pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
-        document.title="Pyr Course Viewer - Error";
-        updateSliderTotalPages(); updateSliderPosition();
-        if (ui.bookSpread) {
-            ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
+        if (pdfState.notesPdfLoadingTask?.destroy) { pdfState.notesPdfLoadingTask.destroy(); pdfState.notesPdfLoadingTask = null; }
+
+        // Reset User Progress & UI
+        userState.readingProgress.furthestPage = 1;
+        resetPopupStates(); document.title = "Pyr Course Viewer";
+
+        // Update Go To Chapter Button
+        if (ui.goToChapterBtn) {
+            updateStatus("Setting button to 'Loading Chapter...' state.");
+            ui.goToChapterBtn.textContent = 'Loading Chapter...';
+            ui.goToChapterBtn.classList.add(CSS_CLASS.LOADING_CHAPTER);
+            ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE);
         }
-        updateStatus("loadPdf failed. Reader will not be available.");
-        ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
-        if (ui.goToChapterBtn) ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
-        if (ui.gameContainer) ui.gameContainer.style.display = 'none';
-        if(ui.iframeLoadingText) ui.iframeLoadingText.textContent = `Error loading PDF: ${error.message}`;
-        if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'block';
-    } finally {
-        updateStatus("loadPdf finished (background process).");
+
+        let filename = "Document";
+        try { filename = decodeURIComponent(pdfUrl.split('/').pop() || filename).replace(/\.pdf$/i, ''); } catch (e) { console.warn("Error parsing filename from URL"); }
+        pdfState.title = filename;
+
+        try {
+            updateStatus("Starting background PDF document loading...");
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            const overlayPromise = loadOverlayData(pdfUrl);
+            const iframeDataPromise = loadIframeData(pdfUrl);
+            const loPromise = loadLearningOutcomes(pdfUrl);
+            const notesDataPromise = loadNotesData(pdfUrl);
+
+            pdfState.pdfDocument = await loadingTask.promise;
+            pdfState.totalPages = pdfState.pdfDocument.numPages;
+            pdfState.currentPage = 1;
+            updateStatus(`PDF loaded: ${pdfState.title}, Pages: ${pdfState.totalPages}`);
+            document.title = `${pdfState.title} - Pyr Course Viewer`;
+            // Initial update of total pages needed before first render/slider update
+            updateSliderTotalPages(); // << Update total FIRST
+
+            const [overlayLoaded, iframeDataLoaded, loLoaded, notesDataLoaded] = await Promise.all([
+                overlayPromise, iframeDataPromise, loPromise, notesDataPromise
+            ]);
+            updateStatus(`Overlay data loaded: ${overlayLoaded}, Iframe data loaded: ${iframeDataLoaded}, LO data loaded: ${loLoaded}, Notes data loaded: ${notesDataLoaded}`);
+
+            renderSliderMilestones(); // Render LOs now that data is loaded
+
+            if (overlayLoaded && pdfState.pdfDocument) {
+                console.log("Internal Status: Scanning for keywords...");
+                await findFirstKeywordInstances();
+            }
+
+            // Determine initial view mode
+            if (window.innerWidth < 1000) {
+                updateStatus("Initial setup: Small screen detected, setting intended view to Single Page (Fullscreen).");
+                pdfState.isDoublePageView = false;
+                ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE);
+                ui.body.classList.add(CSS_CLASS.FULLSCREEN_MODE);
+            } else {
+                updateStatus("Initial setup: Large screen detected, setting intended view to Double Page.");
+                pdfState.isDoublePageView = true;
+                ui.body.classList.remove(CSS_CLASS.CONTENT_ROTATED_MODE, CSS_CLASS.FULLSCREEN_MODE);
+                pdfState.currentPage = 1; // Ensure starting on page 1 for double view
+            }
+
+            // Wait for next frame before initial render
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            await updateDisplay(); // Perform initial render
+
+            // --- READER IS READY ---
+            appState.isReaderReady = true;
+            updateStatus("Reader is ready!");
+
+            // Update slider position/text AFTER initial render is complete
+            updateSliderPosition(); // << Update position/text LAST
+
+            // Notify game iframe and update button
+            if (ui.gameIframe?.contentWindow) {
+                try { ui.gameIframe.contentWindow.postMessage({ type: 'chapterReady' }, '*'); } catch (e) { console.error("Error posting 'chapterReady' message:", e); }
+            }
+            setTimeout(() => {
+                if (ui.goToChapterBtn && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+                    updateStatus("Reader ready, updating button to 'Go to Chapter' state and animating.");
+                    ui.goToChapterBtn.textContent = 'Go to Chapter';
+                    ui.goToChapterBtn.classList.remove(CSS_CLASS.LOADING_CHAPTER);
+                    ui.goToChapterBtn.classList.add(CSS_CLASS.VISIBLE);
+                }
+            }, LOADING_BAR_ANIMATION_BUFFER);
+            if (ui.gameIframe?.contentWindow) {
+                try { ui.gameIframe.contentWindow.postMessage({ type: 'disableRestart' }, '*'); } catch (e) { console.error("Error posting disableRestart message:", e); }
+            }
+
+        } catch (error) {
+            console.error("FATAL: Error loading PDF document:", error);
+            appState.isReaderReady = false;
+            // Reset all state again on critical failure
+            pdfState.pdfDocument=null; pdfState.totalPages=0; pdfState.currentPage=1; pdfState.title="Error Loading"; pdfState.keywordDefinitions={}; pdfState.pageKeywords={}; pdfState.globalFirstInstanceLocation = {}; pdfState.iframeMappings = {}; appState.learningOutcomes = []; pdfState.notesMapping = {};
+            completedTimeLockPages.clear(); isTimeLockActive = false; requiredReadingTime = 0; currentPageLockStartTime = 0; isTimelockGloballyEnabled = true; updateTimelockButtonVisuals(); currentLockType = null;
+            pdfState.currentNotesPdfDoc = null; pdfState.currentNotesPageNum = 1; pdfState.totalNotesPages = 0;
+            document.title="Pyr Course Viewer - Error";
+            updateSliderTotalPages(); updateSliderPosition(); // Try to update slider even on error
+            if (ui.bookSpread) {
+                ui.bookSpread.innerHTML = `<div style="color: red; background: white; padding: 30px; text-align: center; width: 100%; border: 1px solid red; border-radius: 5px;">Failed to load document: ${error.message}</div>`;
+            }
+            updateStatus("loadPdf failed. Reader will not be available.");
+            ui.body.classList.add(CSS_CLASS.LOADING_GAME_ACTIVE);
+            if (ui.goToChapterBtn) ui.goToChapterBtn.classList.remove(CSS_CLASS.VISIBLE, CSS_CLASS.LOADING_CHAPTER);
+            if (ui.gameContainer) ui.gameContainer.style.display = 'none';
+            if(ui.iframeLoadingText) ui.iframeLoadingText.textContent = `Error loading PDF: ${error.message}`;
+            if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'block';
+        } finally {
+             updateStatus("loadPdf finished (background process).");
+        }
     }
-}
+    // --- End of loadPdf Replacement ---
 
     // --- Popup Handling (Keep from New Code) ---
     // Replacement showDefinitionPopup function // <<<< CONFIRMED: Correct Block Start
@@ -5020,223 +4816,341 @@ function showNotesNavAndResetTimer() {
     startNotesNavFadeTimer();
 }
 
+    // --- Event Setup (REVERTED Timelock Toggle Listener, keeps other new listeners, MODIFIED Game/LO Listeners) ---
     function setupEvents() {
-    updateStatus("Setting up events");
+        updateStatus("Setting up events");
 
-    // --- Toolbar Clicks ---
-    ui.rightToolbar?.addEventListener('click', (e) => {
-         const btn = e.target.closest('.new-btn');
-         if (!btn) return;
-         switch (btn.id) {
-             case 'back-btn': window.history.back(); break;
-             case 'single-page-btn': setSinglePageView(); break;
-             case 'double-page-btn': setDoublePageView(); break;
-             case 'time-capsule-btn': // <<< MODIFIED
-                 updateStatus("Time Capsule button clicked.");
-                 showTimeCapsuleFolder();
-                 break;
-         }
-    });
-    ui.leftToolbar?.addEventListener('click', e => { // Timelock Toggle
-        const btn = e.target.closest('.new-btn');
-        if (!btn || btn.id !== 'timelock-toggle-btn') return;
-        toggleTimelock();
-    });
-    ui.returnViewFixedBtn?.addEventListener('click', setRotatedView);
+        // --- Toolbar Clicks ---
+        ui.rightToolbar?.addEventListener('click', (e) => {
+             const btn = e.target.closest('.new-btn');
+             if (!btn) return;
+             switch (btn.id) {
+                 case 'back-btn': window.history.back(); break;
+                 case 'single-page-btn': setSinglePageView(); break;
+                 case 'double-page-btn': setDoublePageView(); break;
+                 // Note: Rotate button is no longer here
+                 case 'time-capsule-btn': console.log("Time Capsule button clicked (feature disabled)."); break;
+             }
+             // Hiding managed by view change functions + reverted manageToolbar
+        });
+        // *** REVERTED Left Toolbar Click (Timelock Toggle) ***
+        ui.leftToolbar?.addEventListener('click', e => {
+            const btn = e.target.closest('.new-btn');
+            if (!btn || btn.id !== 'timelock-toggle-btn') return;
+            toggleTimelock(); // Calls reverted function
+        });
+        ui.returnViewFixedBtn?.addEventListener('click', setRotatedView);
 
-    // --- Popup Close Buttons & Backdrops ---
-    ui.closeIframePopupBtn?.addEventListener('click', hideIframePopup);
-    ui.iframePopupBackdrop?.addEventListener('click', hideIframePopup);
-    ui.notesPopupBackdrop?.addEventListener('click', hideNotesPopup);
-    ui.notesPopupContainer?.addEventListener('click', (e) => { // Click container to close notes
-        if (e.target === ui.notesPopupContainer) { hideNotesPopup(); }
-    });
-    ui.loContinueBtn?.addEventListener('click', hideLoAchievementPopup);
-    ui.loAchievementBackdrop?.addEventListener('click', hideLoAchievementPopup);
-    document.getElementById('close-tc-folder-btn')?.addEventListener('click', hideTimeCapsuleFolder); // <<< ADDED
-    document.getElementById('tc-folder-backdrop')?.addEventListener('click', hideTimeCapsuleFolder); // <<< ADDED
+        // --- Popup Close Buttons & Backdrops ---
+        ui.closeIframePopupBtn?.addEventListener('click', hideIframePopup);
+        ui.iframePopupBackdrop?.addEventListener('click', hideIframePopup);
+        ui.notesPopupBackdrop?.addEventListener('click', hideNotesPopup);
+        // --- ADD THIS LISTENER ---
+ui.notesPopupContainer?.addEventListener('click', (e) => {
+    // Close only if the click is directly on the container itself,
+    // not on the canvas container, canvas, buttons, or instructions within it.
+    if (e.target === ui.notesPopupContainer) {
+         hideNotesPopup(); // Call the existing close function (handles timelock)
+    }
+});
+// --- END ADD ---
+        ui.loContinueBtn?.addEventListener('click', hideLoAchievementPopup); // NEW
+        ui.loAchievementBackdrop?.addEventListener('click', hideLoAchievementPopup); // NEW: Click backdrop to close
 
-    // --- Notes Navigation & Fade ---
-    ui.notesPrevBtn?.addEventListener('click', notesPrevPage);
-    ui.notesNextBtn?.addEventListener('click', notesNextPage);
-    ui.notesPrevBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-    ui.notesNextBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-    ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
-    ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
+        // --- Notes Navigation ---
+        ui.notesPrevBtn?.addEventListener('click', notesPrevPage);
+        ui.notesNextBtn?.addEventListener('click', notesNextPage);
 
-    // --- Prevent Toolbar Trigger on Rotate Trigger Hover ---
-    const rotateTriggers = document.querySelectorAll('.page-rotate-hover-trigger');
-    rotateTriggers.forEach(trigger => {
-        trigger.addEventListener('mouseenter', (e) => { e.stopPropagation(); });
-    });
+        // --- START: ADDED LISTENERS for Notes Nav Fade ---
+        // Show buttons on hover/tap and reset timer
+        ui.notesPrevBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesNextBtn?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesPdfCanvasContainer?.addEventListener('mouseenter', showNotesNavAndResetTimer);
+        ui.notesPdfCanvasContainer?.addEventListener('touchstart', showNotesNavAndResetTimer, { passive: true });
+        // --- END: ADDED LISTENERS ---
 
-    // --- Page Interaction (Edges & Rotate Button) ---
-    ui.bookSpread?.addEventListener('click', (e) => {
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-        const pageEdgeNav = e.target.closest('.page-edge-nav');
-        const rotateBtn = e.target.closest('.page-rotate-btn');
-        const rotateTrigger = e.target.closest('.page-rotate-hover-trigger');
-        if (rotateTrigger) return; // Ignore clicks on the trigger itself
+        // --- START: Prevent Toolbar Trigger when hovering Page Rotate Trigger ---
+        const rotateTriggers = document.querySelectorAll('.page-rotate-hover-trigger');
+        rotateTriggers.forEach(trigger => {
+            trigger.addEventListener('mouseenter', (e) => {
+                // Stop this hover event from reaching the toolbar trigger area underneath
+                e.stopPropagation();
+                // console.log('Stopped propagation from page rotate trigger'); // Optional debug
+            });
+        });
+updateStatus("Added event stoppers for rotate triggers.");
+// --- END: Prevent Toolbar Trigger ---
 
-        if (pageEdgeNav) {
-            const pageDiv = pageEdgeNav.closest('.book-page');
-            if (!pageDiv || pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE) || pageEdgeNav.style.display === 'none') return;
-            if (pageEdgeNav.classList.contains('page-edge-left')) { prevPage(); }
-            else { nextPage(); }
+        // --- Page Interaction (Edges & Rotate Button) ---
+        ui.bookSpread?.addEventListener('click', (e) => {
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+
+            const pageEdgeNav = e.target.closest('.page-edge-nav');
+            const rotateBtn = e.target.closest('.page-rotate-btn'); // Keep listener for new button location
+            const rotateTrigger = e.target.closest('.page-rotate-hover-trigger'); // Check if click was on trigger
+
+            // Ignore clicks on the trigger itself from causing navigation
+            if (rotateTrigger) return;
+
+            if (pageEdgeNav) {
+                const pageDiv = pageEdgeNav.closest('.book-page');
+                // Check if edge nav is visible and page is not placeholder
+                if (!pageDiv || pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE) || pageEdgeNav.style.display === 'none') return;
+
+                if (pageEdgeNav.classList.contains('page-edge-left')) { prevPage(); } // Calls reverted lock logic & NEW LO check
+                else { nextPage(); } // Calls reverted lock logic & NEW LO check
+            }
+            else if (rotateBtn) { // Keep rotate button logic from new code
+    const btnStyle = window.getComputedStyle(rotateBtn);
+    // Button should only be clickable if visible (opacity 1, pointer-events auto)
+    if (btnStyle.opacity === '1' && btnStyle.pointerEvents !== 'none') {
+        const pageDiv = rotateBtn.closest('.book-page');
+        if (pageDiv && !pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
+            // *** START CHANGE ***
+            let targetPageNum;
+            if (pageDiv.classList.contains('left')) {
+                targetPageNum = pdfState.currentPage;
+            } else if (pageDiv.classList.contains('right')) {
+                targetPageNum = pdfState.currentPage + 1;
+            } else {
+                console.warn("Could not determine page number for rotation.");
+                return; // Don't rotate if we can't figure out the page
+            }
+
+            // Ensure the target page number is valid
+            if (targetPageNum >= 1 && targetPageNum <= pdfState.totalPages) {
+                updateStatus(`Page rotate button clicked for page ${targetPageNum}.`);
+                setRotatedView(targetPageNum); // Pass the target page number
+            } else {
+                 updateStatus(`Ignoring rotate click for invalid target page ${targetPageNum}.`);
+            }
+            // *** END CHANGE ***
         }
-        else if (rotateBtn) {
-            const btnStyle = window.getComputedStyle(rotateBtn);
-            if (btnStyle.opacity === '1' && btnStyle.pointerEvents !== 'none') {
-                const pageDiv = rotateBtn.closest('.book-page');
-                if (pageDiv && !pageDiv.classList.contains(CSS_CLASS.PLACEHOLDER_PAGE)) {
-                    let targetPageNum;
-                    if (pageDiv.classList.contains('left')) { targetPageNum = pdfState.currentPage; }
-                    else if (pageDiv.classList.contains('right')) { targetPageNum = pdfState.currentPage + 1; }
-                    else { return; }
-                    if (targetPageNum >= 1 && targetPageNum <= pdfState.totalPages) { setRotatedView(targetPageNum); }
+    }
+}
+        });
+
+        // --- Keyboard Navigation ---
+        document.addEventListener('keydown', (e) => {
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+
+            // Escape key for popups (Keep logic from new code, added LO popup)
+            if (e.key === 'Escape') {
+                if (ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE)) { hideLoAchievementPopup(); e.preventDefault(); return; } // NEW
+                if (ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) { hideNotesPopup(); e.preventDefault(); return; }
+                if (ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE)) { hideIframePopup(); e.preventDefault(); return; }
+                if (ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE)) { hideDefinitionPopup(); e.preventDefault(); return; }
+            }
+
+            // Ignore keyboard events if a popup/overlay is active, or if inside input fields
+             const isPopupActive = ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE) ||
+                                  ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE) ||
+                                  ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE) ||
+                                  ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE); // NEW
+            const isInputFocused = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+
+            if (isPopupActive || isInputFocused || e.ctrlKey || e.altKey || e.metaKey) return;
+
+            let navAction = false;
+            switch(e.key){
+                case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break; // Uses reverted lock logic & NEW LO check
+                case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break; // Uses reverted lock logic & NEW LO check
+                case 'Home': if(pdfState.totalPages > 0) jumpToPage(1); navAction = true; break; // Uses reverted lock logic
+                case 'End': if(pdfState.totalPages > 0) jumpToPage(pdfState.totalPages); navAction = true; break; // Uses reverted lock logic
+            }
+            if(navAction){ e.preventDefault(); } // Prevent default scroll behavior
+        });
+
+        // --- Resize Handling ---
+        window.addEventListener('resize', () => {
+            clearTimeout(appState.resizeTimer);
+            appState.resizeTimer = setTimeout(() => {
+                updateStatus("Resize detected.");
+                appState.previousPageBeforeNavigation = null;
+                resetPopupStates(); // Hide popups on resize
+                applyCurrentViewModeStyles(); // Recalculate scale
+                renderSliderMilestones(); // Re-render milestones on resize
+                // Re-render if reader is active and PDF loaded
+                if (!ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) && pdfState.pdfDocument) {
+                    updateDisplay(); // Calls reverted lock logic
                 }
+                 manageToolbar(); // Use reverted function
+                 manageLeftToolbar(); // Use reverted function
+                 showNotesNavAndResetTimer(); // Add this line - Resets notes button visibility/timer on resize
+             }, 250); // Debounce resize event
+        });
+
+        // --- Touch Swipes (Keep from New Code, modified for LO check) ---
+        let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
+        const swipeThresholdX = 40; // Min horizontal distance
+        const swipeMaxTime = 500; // Max duration for swipe
+        const swipeMaxVertical = 70; // Max vertical distance allowed
+
+        ui.body.addEventListener('touchstart', (e) => {
+            if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
+            // Ignore swipes starting on interactive elements
+            const ignoredElements = '#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn, #return-view-fixed-btn, .page-rotate-hover-trigger, .lo-milestone, #lo-achievement-popup, #lo-achievement-backdrop'; // Added rotate trigger, LO elements
+            if (e.target.closest(ignoredElements)) {
+                touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
             }
-        }
-    });
-
-    // --- Keyboard Navigation ---
-    document.addEventListener('keydown', (e) => {
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-
-        // Escape key closes popups in order
-        if (e.key === 'Escape') {
-            if (document.getElementById('tc-folder-popup')?.classList.contains('visible')) { hideTimeCapsuleFolder(); e.preventDefault(); return; } // <<< ADDED
-            if (ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE)) { hideLoAchievementPopup(); e.preventDefault(); return; }
-            if (ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) { hideNotesPopup(); e.preventDefault(); return; }
-            if (ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE)) { hideIframePopup(); e.preventDefault(); return; }
-            if (ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE)) { hideDefinitionPopup(); e.preventDefault(); return; }
-        }
-
-        // Ignore arrows if popups open or input focused
-        const isPopupActive = ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE) ||
-                              ui.iframePopupModal?.classList.contains(CSS_CLASS.VISIBLE) ||
-                              ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE) ||
-                              ui.loAchievementPopup?.classList.contains(CSS_CLASS.VISIBLE) ||
-                              document.getElementById('tc-folder-popup')?.classList.contains('visible'); // <<< ADDED
-        const isInputFocused = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
-        if (isPopupActive || isInputFocused || e.ctrlKey || e.altKey || e.metaKey) return;
-
-        let navAction = false;
-        switch(e.key){
-            case 'ArrowRight': case 'PageDown': nextPage(); navAction = true; break;
-            case 'ArrowLeft': case 'PageUp': prevPage(); navAction = true; break;
-            case 'Home': if(pdfState.totalPages > 0) jumpToPage(1); navAction = true; break;
-            case 'End': if(pdfState.totalPages > 0) jumpToPage(pdfState.totalPages); navAction = true; break;
-        }
-        if(navAction){ e.preventDefault(); }
-    });
-
-    // --- Resize Handling ---
-    window.addEventListener('resize', () => {
-        clearTimeout(appState.resizeTimer);
-        appState.resizeTimer = setTimeout(() => {
-            updateStatus("Resize detected.");
-            appState.previousPageBeforeNavigation = null;
-            resetPopupStates(); // Hide popups on resize
-            hideTimeCapsuleFolder(); // Also hide TC folder on resize
-            applyCurrentViewModeStyles();
-            renderSliderMilestones();
-            if (!ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) && pdfState.pdfDocument) {
-                updateDisplay();
+            // Track single touch start
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].screenX;
+                touchStartY = e.touches[0].screenY;
+                touchStartTime = Date.now();
+            } else { // Reset if multiple touches
+                touchStartX = 0; touchStartY = 0; touchStartTime = 0;
             }
-            manageToolbar();
-            manageLeftToolbar();
-            showNotesNavAndResetTimer();
-         }, 250);
-    });
+        }, { passive: true }); // Use passive listener for performance
 
-    // --- Touch Swipes (Body) ---
-    let touchStartX = 0, touchStartY = 0, touchStartTime = 0;
-    const swipeThresholdX = 40, swipeMaxTime = 500, swipeMaxVertical = 70;
-    ui.body.addEventListener('touchstart', (e) => {
-        if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) return;
-        const ignoredElements = '#new-toolbar,.toolbar-trigger-area,#left-toolbar,.left-toolbar-trigger-area,#page-slider-container,#page-slider-trigger-zone,.toc-panel,.page-edge-nav,.new-btn,button,input,a,#definition-popup,.keyword-highlight,.annotationLayer section,#iframe-popup-modal,#iframe-popup-backdrop,#notes-popup-container,#notes-popup-backdrop, .page-action-btn, #return-view-fixed-btn, .page-rotate-hover-trigger, .lo-milestone, #lo-achievement-popup, #lo-achievement-backdrop, #tc-folder-popup, #tc-folder-backdrop'; // Added TC folder
-        if (e.target.closest(ignoredElements)) { touchStartX = 0; touchStartY = 0; touchStartTime = 0; return; }
-        if (e.touches.length === 1) { touchStartX = e.touches[0].screenX; touchStartY = e.touches[0].screenY; touchStartTime = Date.now(); }
-        else { touchStartX = 0; touchStartY = 0; touchStartTime = 0; }
-    }, { passive: true });
-    ui.body.addEventListener('touchend', (e) => {
-         if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || touchStartTime === 0) return;
-         if (e.target.closest('#notes-pdf-canvas-container') || e.target.closest('#lo-achievement-popup') || e.target.closest('.page-rotate-hover-trigger') || e.target.closest('.lo-milestone') || e.target.closest('#tc-folder-popup')) { // Added TC folder
-             touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
-         }
-         if (e.changedTouches.length === 1) {
-             const touchEndX = e.changedTouches[0].screenX, touchEndY = e.changedTouches[0].screenY;
-             const elapsedTime = Date.now() - touchStartTime;
-             if (elapsedTime < swipeMaxTime) {
-                 const deltaX = touchEndX - touchStartX, deltaY = touchEndY - touchStartY;
-                 if (Math.abs(deltaX) > swipeThresholdX && Math.abs(deltaY) < swipeMaxVertical) {
-                     e.stopPropagation();
-                     if (deltaX > 0) { prevPage(); } else { nextPage(); }
+        ui.body.addEventListener('touchend', (e) => {
+             if (ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE) || touchStartTime === 0) return;
+             // Ignore swipes ending within notes canvas or LO popup
+             if (e.target.closest('#notes-pdf-canvas-container') || e.target.closest('#lo-achievement-popup')) {
+                 touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
+             }
+             // Ignore swipes ending on the rotate trigger or milestone
+             if (e.target.closest('.page-rotate-hover-trigger') || e.target.closest('.lo-milestone')) {
+                 touchStartX = 0; touchStartY = 0; touchStartTime = 0; return;
+             }
+
+             if (e.changedTouches.length === 1) {
+                 const touchEndX = e.changedTouches[0].screenX;
+                 const touchEndY = e.changedTouches[0].screenY;
+                 const elapsedTime = Date.now() - touchStartTime;
+
+                 if (elapsedTime < swipeMaxTime) { // Check duration
+                     const deltaX = touchEndX - touchStartX;
+                     const deltaY = touchEndY - touchStartY;
+                     const absDeltaX = Math.abs(deltaX);
+                     const absDeltaY = Math.abs(deltaY);
+
+                     // Check thresholds for horizontal swipe
+                     if (absDeltaX > swipeThresholdX && absDeltaY < swipeMaxVertical) {
+                         e.stopPropagation(); // Prevent other handlers if it's a swipe
+                         if (deltaX > 0) { // Swipe Right (-> Previous)
+                             updateStatus("Body Swipe Right Detected -> Previous Page");
+                             prevPage(); // Uses reverted lock logic
+                         } else { // Swipe Left (-> Next)
+                             updateStatus("Body Swipe Left Detected -> Next Page");
+                             nextPage(); // Uses reverted lock logic & NEW LO check
+                         }
+                     }
                  }
              }
-         }
-         touchStartX = 0; touchStartY = 0; touchStartTime = 0;
-    });
+             // Reset tracking state
+             touchStartX = 0; touchStartY = 0; touchStartTime = 0;
+        });
 
-    // --- Touch Swipes (Notes Popup) ---
-    let notesTouchStartX = 0, notesTouchStartY = 0, notesTouchStartTime = 0;
-    const notesSwipeThresholdX = 50;
-    ui.notesPdfCanvasContainer?.addEventListener('touchstart', (e) => {
-        if (!ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) return;
-        if (e.target.closest('.notes-nav-btn')) { notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0; return; }
-        if (e.touches.length === 1) { notesTouchStartX = e.touches[0].screenX; notesTouchStartY = e.touches[0].screenY; notesTouchStartTime = Date.now(); }
-        else { notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0; }
-    }, { passive: true });
-    ui.notesPdfCanvasContainer?.addEventListener('touchend', (e) => {
-        if (!ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE) || notesTouchStartTime === 0) return;
-        if (e.changedTouches.length === 1) {
-            const notesTouchEndX = e.changedTouches[0].screenX, notesTouchEndY = e.changedTouches[0].screenY;
-            const notesElapsedTime = Date.now() - notesTouchStartTime;
-            if (notesElapsedTime < swipeMaxTime) {
-                const notesDeltaX = notesTouchEndX - notesTouchStartX, notesDeltaY = notesTouchEndY - notesTouchStartY;
-                if (Math.abs(notesDeltaX) > notesSwipeThresholdX && Math.abs(notesDeltaY) < swipeMaxVertical) {
-                    e.stopPropagation();
-                    if (notesDeltaX > 0) { notesPrevPage(); } else { notesNextPage(); }
+        // --- Touch Swipes (Notes Popup) ---
+        let notesTouchStartX = 0, notesTouchStartY = 0, notesTouchStartTime = 0;
+        const notesSwipeThresholdX = 50;
+
+        ui.notesPdfCanvasContainer?.addEventListener('touchstart', (e) => {
+            if (!ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE)) return;
+            // Ignore swipes starting on nav buttons within the container
+            if (e.target.closest('.notes-nav-btn')) {
+                notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0; return;
+            }
+            if (e.touches.length === 1) {
+                notesTouchStartX = e.touches[0].screenX;
+                notesTouchStartY = e.touches[0].screenY;
+                notesTouchStartTime = Date.now();
+            } else {
+                notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0;
+            }
+        }, { passive: true });
+
+        ui.notesPdfCanvasContainer?.addEventListener('touchend', (e) => {
+            if (!ui.notesPopupContainer?.classList.contains(CSS_CLASS.VISIBLE) || notesTouchStartTime === 0) return;
+            if (e.changedTouches.length === 1) {
+                const notesTouchEndX = e.changedTouches[0].screenX;
+                const notesTouchEndY = e.changedTouches[0].screenY;
+                const notesElapsedTime = Date.now() - notesTouchStartTime;
+
+                if (notesElapsedTime < swipeMaxTime) {
+                    const notesDeltaX = notesTouchEndX - notesTouchStartX;
+                    const notesDeltaY = notesTouchEndY - notesTouchStartY;
+                    const notesAbsDeltaX = Math.abs(notesDeltaX);
+                    const notesAbsDeltaY = Math.abs(notesDeltaY);
+
+                    if (notesAbsDeltaX > notesSwipeThresholdX && notesAbsDeltaY < swipeMaxVertical) {
+                        e.stopPropagation(); // Prevent body swipe handler
+                        if (notesDeltaX > 0) { // Swipe Right -> Previous Notes Page
+                            updateStatus("Notes Swipe Right Detected -> Previous Notes Page");
+                            notesPrevPage();
+                        } else { // Swipe Left -> Next Notes Page
+                            updateStatus("Notes Swipe Left Detected -> Next Notes Page");
+                            notesNextPage();
+                        }
+                    }
                 }
             }
-        }
-        notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0;
-    });
+            // Reset tracking state
+            notesTouchStartX = 0; notesTouchStartY = 0; notesTouchStartTime = 0;
+        });
 
-    // --- Game Event Listeners ---
-    ui.goToChapterBtn?.addEventListener('click', transitionToChapter);
-    window.addEventListener('message', (event) => {
-        if (event.source !== ui.gameIframe?.contentWindow) { return; }
-        if (event.data?.type === 'gameOver') { handleGameOverFromGame(event.data.score); }
-        else if (event.data?.type === 'gameLoaded') {
-             if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none';
-             updateStatus("Game iframe reported 'gameLoaded'.");
-             try { if (ui.gameIframe?.contentWindow) { ui.gameIframe.contentWindow.postMessage({ type: 'focusGame' }, '*'); } }
-             catch (e) { console.warn("Error sending 'focusGame' message:", e); }
-        }
-    });
-    ui.gameIframe?.addEventListener('load', () => {
-        if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none';
-    });
 
-    // --- Global Click Listener for Popup Dismissal ---
-    document.addEventListener('click', (e) => {
-         if (ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE) && !ui.definitionPopup.contains(e.target) && !e.target.closest('.keyword-highlight')) {
-             hideDefinitionPopup();
+        // --- Game Event Listeners (MODIFIED Button Logic) ---
+        ui.goToChapterBtn?.addEventListener('click', transitionToChapter);
+
+        window.addEventListener('message', (event) => {
+            // Basic security check: ensure message is from the iframe source
+            if (event.source !== ui.gameIframe?.contentWindow) { return; }
+
+            if (event.data && event.data.type === 'gameOver') {
+                handleGameOverFromGame(event.data.score);
+            }
+            // PASTE THIS ENTIRE BLOCK:
+// PASTE THIS ENTIRE BLOCK:
+else if (event.data && event.data.type === 'gameLoaded') {
+     if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none'; // Hide "Loading game..." text
+     updateStatus("Game iframe reported 'gameLoaded'.");
+
+     // *** Tell the game iframe to focus itself ***
+     updateStatus("Sending 'focusGame' message back to iframe.");
+     try {
+         if (ui.gameIframe?.contentWindow) {
+             // IMPORTANT: Use '*' for origin during development, change for production
+             ui.gameIframe.contentWindow.postMessage({ type: 'focusGame' }, '*');
+             updateStatus("Successfully sent 'focusGame' message.");
+         } else {
+              console.warn("Cannot send 'focusGame' message: Game iframe or contentWindow not accessible.");
          }
-         // Note: Other popups (Notes, Iframe, LO, TC) use backdrop clicks or explicit close buttons.
-    }, true);
+     } catch (postMessageError) {
+         console.warn("Error sending 'focusGame' message:", postMessageError);
+     }
+} // END OF BLOCK TO PASTE
+        });
 
-    // --- Prevent Game Replay via iframe focus ---
-    ui.gameIframe?.addEventListener('focus', () => {
-        if (appState.isReaderReady && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
-            transitionToChapter();
-        }
-    }, true);
+        // Listener for the iframe's initial document load (less reliable than postMessage)
+        ui.gameIframe?.addEventListener('load', () => {
+            // Hide loading text earlier, but still wait for 'gameLoaded' message for full readiness
+            if(ui.iframeLoadingText) ui.iframeLoadingText.style.display = 'none';
+            updateStatus("Game iframe document structure loaded (waiting for gameLoaded message).");
+        });
 
-    updateStatus("Events setup complete");
-}
+        // --- Global Click Listener for Popup Dismissal (Keep from New Code) ---
+        document.addEventListener('click', (e) => {
+             if (ui.definitionPopup?.classList.contains(CSS_CLASS.VISIBLE) &&
+                 !ui.definitionPopup.contains(e.target) && // Clicked outside popup
+                 !e.target.closest('.keyword-highlight')) // And not on a keyword highlight
+             { hideDefinitionPopup(); }
+        }, true); // Use capture phase to catch clicks early
+
+// --- START: Prevent Game Replay via iframe focus ---
+ui.gameIframe?.addEventListener('focus', () => {
+    // Only trigger if the reader has loaded AND the game screen is still technically active
+    if (appState.isReaderReady && ui.body.classList.contains(CSS_CLASS.LOADING_GAME_ACTIVE)) {
+        updateStatus("Game iframe focused after reader ready. Forcing transition to chapter.");
+        // Call the same function the button calls
+        transitionToChapter();
+    }
+}, true); // Use capture phase: true
+// --- END: Prevent Game Replay via iframe focus ---
+        
+        updateStatus("Events setup complete");
+    }
 
     // --- Initialization (Uses reverted timelock reset, reverted setupToolbarHover/setupLeftToolbarHover, LO loading) ---
     async function init() {
@@ -5332,17 +5246,5 @@ document.addEventListener('DOMContentLoaded', init);
 
 })(); // End of IIFE
 </script>
-
-<!-- Time Capsule Folder Popup -->
-<div id="tc-folder-backdrop" class="iframe-popup-backdrop" style="z-index: 10005;"></div>
-<div id="tc-folder-popup" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); width: 90%; max-width: 350px; height: auto; max-height: 60vh; background-color: var(--page); border-radius: 8px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); z-index: 10006; opacity: 0; visibility: hidden; display: flex; flex-direction: column; overflow: hidden; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, visibility 0s linear 0.25s;">
-    <button id="close-tc-folder-btn" title="Close (Esc)" style="position: absolute; top: 5px; right: 5px; width: 28px; height: 28px; background-color: rgba(0, 0, 0, 0.4); color: white; border: none; border-radius: 50%; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10007;">×</button>
-    <h3 style="text-align: center; margin: 15px 0 10px; color: #333; font-size: 1.1em; padding: 0 30px;">Time Capsule</h3>
-    <div id="tc-folder-list" style="flex-grow: 1; overflow-y: auto; padding: 0 15px 15px 15px; border-top: 1px solid #eee;">
-        <!-- Unlocked items will be added here by JS -->
-        <p style="color: #666; text-align: center; margin-top: 20px; font-style: italic;">Loading unlocked items...</p>
-    </div>
-</div>
-                        
 </body>
 </html>
